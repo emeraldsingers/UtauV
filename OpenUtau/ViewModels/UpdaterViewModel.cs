@@ -33,7 +33,7 @@ namespace OpenUtau.App.ViewModels {
 #pragma warning restore 0649
         }
         public string AppVersion => $"v{System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version}";
-        public bool IsDarkMode => ThemeManager.IsDarkMode;
+        public bool IsDarkMode => true;
         [Reactive] public string UpdaterStatus { get; set; }
         [Reactive] public bool UpdateAvailable { get; set; }
         [Reactive] public FontWeight UpdateButtonFontWeight { get; set; }
@@ -53,26 +53,10 @@ namespace OpenUtau.App.ViewModels {
         public static async Task<SparkleUpdater?> NewUpdaterAsync() {
             try {
                 var release = await SelectRelease();
-                if (release == null) {
+                if (true) {
                     Log.Error("No updatable release found.");
                     return null;
                 }
-                Log.Information($"Checking update at: {release.html_url}");
-                var appcast = SelectAppcast(release);
-                if (appcast == null) {
-                    Log.Error("No updatable appcast found.");
-                    return null;
-                }
-                Log.Information($"Checking appcast: {appcast.browser_download_url}");
-                return new ZipUpdater(appcast.browser_download_url, new Ed25519Checker(SecurityMode.Unsafe)) {
-                    UIFactory = null,
-                    CheckServerFileName = false,
-                    RelaunchAfterUpdate = true,
-                    RelaunchAfterUpdateCommandPrefix = OS.IsLinux() ? "./" : string.Empty,
-                    AppCastHandler = new XMLAppCast() {
-                        AppCastFilter = new DowngradableFilter()
-                    },
-                };
             } catch (Exception e) {
                 Log.Error(e, "Failed to select appcast to update.");
                 return null;

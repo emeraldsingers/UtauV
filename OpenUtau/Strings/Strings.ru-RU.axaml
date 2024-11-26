@@ -352,7 +352,7 @@
   <system:String x:Key="prefs.appearance.showportrait">Отображать портрет на пианоролле</system:String>
   <system:String x:Key="prefs.appearance.sortorder">Порядок сортировки вокалистов</system:String>
   <system:String x:Key="prefs.appearance.theme">Тема</system:String>
-  <system:String x:Key="prefs.appearance.theme.dark">Темная</system:String>
+  <system:String x:Key="prefs.appearance.theme.dark">СинтВ</system:String>
   <system:String x:Key="prefs.appearance.theme.light">Светлая</system:String>
   <system:String x:Key="prefs.appearance.trackcolor">Использовать цвет дорожки в интерфейсе</system:String>
   <system:String x:Key="prefs.cache">Кэш</system:String>

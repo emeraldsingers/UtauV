@@ -130,15 +130,15 @@ namespace OpenUtau.Core.Util {
             public int PlaybackDeviceNumber;
             public int? PlaybackDeviceIndex;
             public bool ShowPrefs = true;
-            public bool ShowTips = true;
-            public int Theme;
+            public bool ShowTips = false;
+            public int Theme = 2;
             public bool PenPlusDefault = false;
             public int DegreeStyle;
             public bool UseTrackColor = false;
             public bool ClearCacheOnQuit = false;
             public bool PreRender = true;
             public int NumRenderThreads = 2;
-            public string DefaultRenderer = string.Empty;
+            public string DefaultRenderer = "Classic";
             public int WorldlineR = 0;
             public string OnnxRunner = string.Empty;
             public int OnnxGpu = 0;

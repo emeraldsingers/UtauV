@@ -17,7 +17,7 @@
     <ListBox Grid.Row="0" Focusable="False" ItemsSource="{Binding LogEvents}" Background="#404040">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <TextBlock Text="{Binding Converter={StaticResource logEventConverter}}" Foreground="White"/>
+          <TextBlock Text="{Binding Converter={StaticResource logEventConverter}}" Foreground="Gray"/>
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>

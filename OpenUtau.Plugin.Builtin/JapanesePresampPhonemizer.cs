@@ -92,7 +92,7 @@ namespace OpenUtau.Plugin.Builtin {
             var initial = $"-{vcvpad}{currentLyric}";
             var cfLyric = $"*{vcpad}{currentLyric}";
 
-            var vowelUpper = Regex.Match(currentLyric, "[あいうえおんン]").Value ?? currentLyric;
+            var vowelUpper = Regex.Match(currentLyric, "[あいうえおんンaAiIuUoOeEnN]").Value ?? currentLyric;
             var glottalCVtests = new List<string> { $"・{vcpad}{vowelUpper}", $"・{vowelUpper}", $"{vowelUpper}・", $"-{vcvpad}{vowelUpper}・", $"-{vcvpad}{vowelUpper}", initial, currentLyric };
 
             // Convert 1st phoneme
@@ -293,7 +293,7 @@ namespace OpenUtau.Plugin.Builtin {
                         if (nextLyric == "・") { // next is VC (VC is not needed)
                             return new Result { phonemes = result.ToArray() };
                         } else {
-                            vowelUpper = Regex.Match(nextLyric, "[あいうえおんン]").Value;
+                            vowelUpper = Regex.Match(nextLyric, "[あいうえおんンaAiIuUeEoOnN]").Value;
                             if (vowelUpper == null) {
                                 return new Result { phonemes = result.ToArray() };
                             }

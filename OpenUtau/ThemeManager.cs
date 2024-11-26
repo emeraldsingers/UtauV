@@ -37,6 +37,7 @@ namespace OpenUtau.App {
         public static IBrush BarNumberBrush = Brushes.Black;
         public static IPen BarNumberPen = new Pen(Brushes.White);
         public static IBrush FinalPitchBrush = Brushes.Gray;
+        public static IBrush TransSynthVTrack = Brushes.Transparent;
         public static IPen FinalPitchPen = new Pen(Brushes.Gray);
         public static IBrush WhiteKeyBrush = Brushes.White;
         public static IBrush WhiteKeyNameBrush = Brushes.Black;
@@ -81,9 +82,8 @@ namespace OpenUtau.App {
             IsDarkMode = false;
             var themeVariant = ThemeVariant.Default;
             if (resDict.TryGetResource("IsDarkMode", themeVariant, out outVar)) {
-                if (outVar is bool b) {
-                    IsDarkMode = b;
-                }
+                IsDarkMode = true;
+                
             }
             if (resDict.TryGetResource("SystemControlForegroundBaseHighBrush", themeVariant, out outVar)) {
                 ForegroundBrush = (IBrush)outVar!;
@@ -279,7 +279,7 @@ namespace OpenUtau.App {
             if (TrackColors.Any(c => c.Name == name)) {
                 return TrackColors.First(c => c.Name == name);
             }
-            return TrackColors.First(c => c.Name == "Blue");
+            return TrackColors.First(c => c.Name == "Green1");
         }
     }
 

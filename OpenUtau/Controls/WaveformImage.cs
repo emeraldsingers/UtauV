@@ -137,7 +137,7 @@ namespace OpenUtau.App.Controls {
         }
 
         private void DrawPeak(int[] data, int width, int x, int y1, int y2) {
-            const int color = 0x7F7F7F7F;
+            const int color = 0x7C535353;
             if (y1 > y2) {
                 int temp = y2;
                 y2 = y1;

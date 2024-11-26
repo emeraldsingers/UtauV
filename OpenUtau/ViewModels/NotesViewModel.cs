@@ -78,7 +78,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public Bitmap? Avatar { get; set; }
         [Reactive] public Bitmap? Portrait { get; set; }
         [Reactive] public IBrush? PortraitMask { get; set; }
-        [Reactive] public string WindowTitle { get; set; } = "Piano Roll";
+        [Reactive] public string WindowTitle { get; set; } = "SynthU Piano Roll";
         [Reactive] public SolidColorBrush TrackAccentColor { get; set; } = ThemeManager.GetTrackColor("Blue").AccentColor;
         public double ViewportTicks => viewportTicks.Value;
         public double ViewportTracks => viewportTracks.Value;
@@ -499,7 +499,7 @@ namespace OpenUtau.App.ViewModels {
                     Portrait = null;
                     portraitSource = null;
                 }
-                PortraitMask = new SolidColorBrush(Colors.White, singer.PortraitOpacity);
+                PortraitMask = new SolidColorBrush(Colors.Gray, singer.PortraitOpacity);
                 Task.Run(() => {
                     lock (portraitLock) {
                         try {
@@ -533,14 +533,14 @@ namespace OpenUtau.App.ViewModels {
 
         private void LoadTrackColor(UPart? part, UProject? project) {
             if (part == null || project == null) {
-                TrackAccentColor = ThemeManager.GetTrackColor("Blue").AccentColor;
-                ThemeManager.ChangePianorollColor("Blue");
+                TrackAccentColor = ThemeManager.GetTrackColor("Green1").AccentColor;
+                ThemeManager.ChangePianorollColor("Green1");
                 return;
             }
             TrackAccentColor = ThemeManager.GetTrackColor(project.tracks[part.trackNo].TrackColor).AccentColor;
             string name = Preferences.Default.UseTrackColor
                 ? project.tracks[part.trackNo].TrackColor
-                : "Blue";
+                : "Green1";
             ThemeManager.ChangePianorollColor(name);
         }
 
