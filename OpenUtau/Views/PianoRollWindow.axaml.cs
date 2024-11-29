@@ -10,6 +10,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using OpenUtau.App.Controls;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
@@ -1126,6 +1127,9 @@ namespace OpenUtau.App.Views {
                         return true;
                     }
                     break;
+
+
+
                 case Key.Escape:
                     if (isNone) {
                         // collapse/empty selection

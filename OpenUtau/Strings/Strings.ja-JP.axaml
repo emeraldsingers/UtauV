@@ -27,9 +27,9 @@
   <system:String x:Key="debug.copylog">ログをコピー</system:String>
   <system:String x:Key="debug.reverselogorder">古い順に並び変える</system:String>
 
-  <system:String x:Key="dialogs.about.caption">OpenUTAUについて</system:String>
+  <system:String x:Key="dialogs.about.caption">OpenUtauについて</system:String>
   <system:String x:Key="dialogs.about.message">
-    OpenUTAUは、最新のユーザー体験と聡明な音声合成についてのサポートを備えたUTAUコミュニティのためのオープンソースな編集環境を目指しています。私たちのGithubを訪れてください。
+    OpenUtauは、最新のユーザー体験と聡明な音声合成についてのサポートを備えたUTAUコミュニティのためのオープンソースな編集環境を目指しています。私たちのGithubを訪れてください。
   </system:String>
   <system:String x:Key="dialogs.exitsave.caption">OpenUtauを終了</system:String>
   <system:String x:Key="dialogs.exitsave.message">保存されていない変更があります。保存しますか？</system:String>
@@ -156,7 +156,7 @@
   <system:String x:Key="menu.edit.selectall">全て選択</system:String>
   <system:String x:Key="menu.edit.undo">元に戻す</system:String>
   <system:String x:Key="menu.file">ファイル</system:String>
-  <system:String x:Key="menu.file.exit">OpenUTAUを終了</system:String>
+  <system:String x:Key="menu.file.exit">OpenUtauを終了</system:String>
   <system:String x:Key="menu.file.exportaudio">音声をエクスポート</system:String>
   <system:String x:Key="menu.file.exportds">DiffSinger Scriptsをエクスポート...</system:String>
   <system:String x:Key="menu.file.exportds.v2">DiffSinger Scriptsをエクスポート(v2)...</system:String>
@@ -184,7 +184,7 @@
   <system:String x:Key="menu.file.saveas">別名で保存...</system:String>
   <system:String x:Key="menu.file.savetemplate">テンプレートを保存...</system:String>
   <system:String x:Key="menu.help">ヘルプ</system:String>
-  <system:String x:Key="menu.help.about">OpenUTAUについて</system:String>
+  <system:String x:Key="menu.help.about">OpenUtauについて</system:String>
   <system:String x:Key="menu.help.checkupdate">アップデートを確認</system:String>
   <system:String x:Key="menu.help.logslocation">ログの場所を開く</system:String>
   <system:String x:Key="menu.help.reportissue">問題を報告</system:String>
@@ -426,7 +426,7 @@
 3. moresamplerが不足しているllsmファイルを生成するのを辛抱強く待ってください。
   </system:String>
   <system:String x:Key="prefs.rendering.resampler.note">
-    Note: エンジンを使用するには、使用したいエンジンのDLLまたはEXEファイルをOpenUTAUフォルダ内のResamplersフォルダに追加し、選択してください。
+    Note: エンジンを使用するには、使用したいエンジンのDLLまたはEXEファイルをOpenUtauフォルダ内のResamplersフォルダに追加し、選択してください。
   </system:String>
   <system:String x:Key="prefs.rendering.skipmuted">ミュート中のトラックをレンダリングしない</system:String>
   <!--<system:String x:Key="prefs.rendering.threads.cpuwarn">

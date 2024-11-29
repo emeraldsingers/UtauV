@@ -27,9 +27,9 @@
   <system:String x:Key="debug.copylog">Copia Log</system:String>
   <system:String x:Key="debug.reverselogorder">Inverti l'ordine dei log</system:String>
 
-  <system:String x:Key="dialogs.about.caption">Informazioni su OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">Informazioni su OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
-		OpenUTAU punta ad essere un programma open source con un'esperienza utente moderna e supporto fonetico intelligente per la communità di UTAU. Visitaci su GitHub.
+		OpenUtau punta ad essere un programma open source con un'esperienza utente moderna e supporto fonetico intelligente per la communità di UTAU. Visitaci su GitHub.
   </system:String>
   <system:String x:Key="dialogs.exitsave.caption">Stai uscendo da OpenUtau</system:String>
   <system:String x:Key="dialogs.exitsave.message">Questo progetto attuale ha dei cambiamenti non salvati. Vuoi salvare?</system:String>
@@ -179,11 +179,11 @@
   <system:String x:Key="menu.file.saveas">Salva come</system:String>
   <system:String x:Key="menu.file.savetemplate">Salva Modello...</system:String>
   <system:String x:Key="menu.help">Aiuto</system:String>
-  <system:String x:Key="menu.help.about">Informazioni su OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">Informazioni su OpenUtau</system:String>
   <system:String x:Key="menu.help.checkupdate">Controlla aggiornamenti</system:String>
   <system:String x:Key="menu.help.logslocation">Apri percorso dei log</system:String>
   <system:String x:Key="menu.help.reportissue">Segnala un problema</system:String>
-  <system:String x:Key="menu.help.wiki">OpenUTAU Wiki</system:String>
+  <system:String x:Key="menu.help.wiki">OpenUtau Wiki</system:String>
   <!--<system:String x:Key="menu.project">Project</system:String>-->
   <!--<system:String x:Key="menu.project.expressions">Expressions...</system:String>-->
   <!--<system:String x:Key="menu.project.remaptimeaxis">Adjust Tempo (Preserve Timing)</system:String>-->

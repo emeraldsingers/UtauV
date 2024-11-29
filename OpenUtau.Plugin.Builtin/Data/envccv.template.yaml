@@ -72,7 +72,7 @@ symbols:
   - {symbol: dd, type: tap}
 
 entries:
-  - grapheme: openutau
+  - grapheme: OpenUtau
     phonemes: [ow, p, eh, n, w, uw, t, ah, w, uw]
   - grapheme: vccv
     phonemes: [v, E, s, E, s, E, v, E]

@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">로그 복사</system:String>
   <system:String x:Key="debug.reverselogorder">로그를 역순으로</system:String>
 
-  <system:String x:Key="dialogs.about.caption">OpenUTAU란?</system:String>
+  <system:String x:Key="dialogs.about.caption">OpenUtau란?</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtau(오픈우타우)는 세련된 사용자 경험과 유연한 음운 지원을 통해, UTAU 커뮤니티를 위한 오픈 소스 편집 환경이 되고자 합니다. 지금 GitHub의 OpenUtau 레포지토리를 방문해 보세요.
   </system:String>

@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">Kopieer Log</system:String>
   <system:String x:Key="debug.reverselogorder">Log volgorde omkeren</system:String>
 
-  <system:String x:Key="dialogs.about.caption">Over OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">Over OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
       OpenUtau wil een open-source bewerkingsomgeving zijn voor de UTAU-gemeenschap, met een moderne gebruikerservaring en intelligente fonologische ondersteuning. Bezoek ons op Github. (in engels)
   </system:String>
@@ -179,7 +179,7 @@
   <system:String x:Key="menu.file.saveas">Opslaan _als...</system:String>
   <system:String x:Key="menu.file.savetemplate">Sjabloon opslaan...</system:String>
   <system:String x:Key="menu.help">_Help</system:String>
-  <system:String x:Key="menu.help.about">Over OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">Over OpenUtau</system:String>
   <!--<system:String x:Key="menu.help.checkupdate">Check Update</system:String>-->
   <!--<system:String x:Key="menu.help.logslocation">Open Logs Location</system:String>-->
   <!--<system:String x:Key="menu.help.reportissue">Report Issue</system:String>-->

@@ -51,6 +51,37 @@ namespace OpenUtau.App {
         public static IBrush ExpShadowNameBrush = Brushes.White;
         public static IBrush ExpActiveBrush = Brushes.Black;
         public static IBrush ExpActiveNameBrush = Brushes.White;
+        public static IPen KekoPitch = new Pen(new SolidColorBrush(Color.Parse("#BA55D3")), 1);
+        public static IPen AkizoraPitch = new Pen(new SolidColorBrush(Color.Parse("#8b87a8")), 1);
+
+        public static IPen AsoqwerPhoneme = new Pen(new SolidColorBrush(Color.Parse("#efddc7")), 1);
+        public static IPen AsoqwerPhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#ffd79f")), 1);
+        public static IPen AsoqwerAccentPen2 = new Pen(new SolidColorBrush(Color.Parse("#ffd79f")), 1);
+        public static IPen AsoqwerAccentPen2Thickness3 = new Pen(new SolidColorBrush(Color.Parse("#ffd79f")), 3);
+        public static IBrush AsoqwerAccentColorSemi = new SolidColorBrush(Color.Parse("#ecefa8")) {
+            Opacity = 0.5
+        };
+        public static IPen KekoPhoneme = new Pen(new SolidColorBrush(Color.Parse("#1691c7")), 1);
+        public static IPen KekoPhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#20b8ff")), 1);
+        public static IPen KekoAccentPen2 = new Pen(new SolidColorBrush(Color.Parse("#73c9ff")), 1);
+        public static IPen KekoAccentPen2Thickness3 = new Pen(new SolidColorBrush(Color.Parse("#73c9ff")), 3);
+        public static IBrush KekoAccentColorSemi = new SolidColorBrush(Color.Parse("#4597e5")) {
+            Opacity = 0.5
+        };
+        public static IPen AkizoraPhoneme = new Pen(new SolidColorBrush(Color.Parse("#3daba9")), 1);
+        public static IPen AkizoraPhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#99aba9")), 1);
+        public static IPen AkizoraAccentPen2 = new Pen(new SolidColorBrush(Color.Parse("#82aba9")), 1);
+        public static IPen AkizoraAccentPen2Thickness3 = new Pen(new SolidColorBrush(Color.Parse("#82aba9")), 3);
+        public static IBrush AkizoraAccentColorSemi = new SolidColorBrush(Color.Parse("#41cdaf")) {
+            Opacity = 0.5
+        };
+        public static IPen TilkePhoneme = new Pen(new SolidColorBrush(Color.Parse("#f9df64")), 1);
+        public static IPen TilkePhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#f9dfc2")), 1);
+        public static IPen TilkeAccentPen2 = new Pen(new SolidColorBrush(Color.Parse("#ffcd80")), 1);
+        public static IPen TilkeAccentPen2Thickness3 = new Pen(new SolidColorBrush(Color.Parse("#ffcd80")), 3);
+        public static IBrush TilkeAccentColorSemi = new SolidColorBrush(Color.Parse("#f0e197")) {
+            Opacity = 0.5
+        };
 
         public static List<TrackColor> TrackColors = new List<TrackColor>(){
                 new TrackColor("Pink", "#F06292", "#EC407A", "#F48FB1", "#FAC7D8"),
@@ -71,6 +102,10 @@ namespace OpenUtau.App {
                 new TrackColor("Light Blue2", "#1976D2", "#0D47A1", "#2196F3", "#90CBF9"),
                 new TrackColor("Blue2", "#3949AB", "#283593", "#5C6BC0", "#AEB5E0"),
                 new TrackColor("Purple2", "#7B1FA2", "#4A148C", "#AB47BC", "#D5A3DE"),
+                new TrackColor("asoqwer", "#ecefa8", "#ffd79f", "#efddc7", "#ff9100"),
+                new TrackColor("keko", "#2a52be", "#BA55D3", "#4597e5", "#2a52be"),
+                new TrackColor("tilke", "#E3CA64", "#BA55D3", "#f0e197", "#FDDB85"),
+                new TrackColor("akizora", "#82aba9", "#BA55D3", "#66a5a4", "#FDDB85"),
             };
 
         public static void LoadTheme() {
@@ -286,6 +321,7 @@ namespace OpenUtau.App {
     public class TrackColor {
         public string Name { get; set; } = "";
         public SolidColorBrush AccentColor { get; set; }
+        // public SolidColorBrush AccentColorSemi { get; set; }
         public SolidColorBrush AccentColorDark { get; set; } // Pressed
         public SolidColorBrush AccentColorLight { get; set; } // PointerOver
         public SolidColorBrush AccentColorLightSemi { get; set; } // BackGround
@@ -294,6 +330,8 @@ namespace OpenUtau.App {
         public TrackColor(string name, string accentColor, string darkColor, string lightColor, string centerKey) {
             Name = name;
             AccentColor = SolidColorBrush.Parse(accentColor);
+            // AccentColorSemi = SolidColorBrush.Parse(accentColor);
+            // AccentColor.Opacity = 0.5;
             AccentColorDark = SolidColorBrush.Parse(darkColor);
             AccentColorLight = SolidColorBrush.Parse(lightColor);
             AccentColorLightSemi = SolidColorBrush.Parse(lightColor);

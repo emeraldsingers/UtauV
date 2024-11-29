@@ -46,5 +46,5 @@ symbols:
   - {symbol: z, type: fricative}
   - {symbol: zh, type: fricative}
 entries:
-  - grapheme: openutau
+  - grapheme: OpenUtau
     phonemes: [ow, p, eh, n, w, uw, t, ah, w, uw]

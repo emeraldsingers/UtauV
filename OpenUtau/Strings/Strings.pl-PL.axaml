@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">Skopiuj log</system:String>
   <system:String x:Key="debug.reverselogorder">Zamień kolejność logów</system:String>
 
-  <system:String x:Key="dialogs.about.caption">O OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">O OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtau ma na celu być otwartym środowiskiem do edytowania dla społeczności UTAU, z nowoczesnym UI/UX i inteligentym wsparciem fonemicznym. Odwiedź nas na Github.
   </system:String>
@@ -186,7 +186,7 @@
   <system:String x:Key="menu.file.saveas">Zapisz jako</system:String>
   <system:String x:Key="menu.file.savetemplate">Zapisz szablon...</system:String>
   <system:String x:Key="menu.help">Pomoc</system:String>
-  <system:String x:Key="menu.help.about">O OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">O OpenUtau</system:String>
   <system:String x:Key="menu.help.checkupdate">Sprawdź aktualizację...</system:String>
   <system:String x:Key="menu.help.logslocation">Otwórz lokalizację logów</system:String>
   <system:String x:Key="menu.help.reportissue">Zgłoś problem</system:String>

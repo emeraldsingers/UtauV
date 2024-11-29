@@ -24,7 +24,7 @@
   <PropertyGroup>
     <CFBundleName>OpenUtau SynthV Edition</CFBundleName>
     <CFBundleDisplayName>OpenUtau SynthV Edition | OpenV</CFBundleDisplayName>
-    <CFBundleIdentifier>com.stakira.openutau</CFBundleIdentifier>
+    <CFBundleIdentifier>com.stakira.OpenUtau</CFBundleIdentifier>
     <CFBundleVersion>0.0.0</CFBundleVersion>
     <CFBundleShortVersionString>0.0.0</CFBundleShortVersionString>
     <CFBundlePackageType>APPL</CFBundlePackageType>
@@ -48,7 +48,7 @@
                 <string>Editor</string>
                 <key>LSItemContentTypes</key>
                 <array>
-                    <string>com.stakira.openutau.ustx</string>
+                    <string>com.stakira.OpenUtau.ustx</string>
                 </array>
             </dict>
         </array>          

@@ -146,5 +146,5 @@ symbols:
   - {symbol: 't_}', type: stop}
 
 entries:
-  - grapheme: openutau
+  - grapheme: OpenUtau
     phonemes: [ow, p, ah, n, uw, t, aw]

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using OpenUtau.App.ViewModels;
+using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
 
@@ -101,6 +103,17 @@ namespace OpenUtau.App.Controls {
             if (viewModel == null) {
                 return;
             }
+
+            var project = DocManager.Inst.Project;
+            string singerName = string.Empty;
+
+            if (Part != null && project != null) {
+                int trackNo = Part.trackNo;
+                if (trackNo >= 0 && trackNo < project.tracks.Count) {
+                    singerName = project.tracks[trackNo].Singer?.Name ?? string.Empty;
+                }
+            }
+
             context.DrawRectangle(Background, null, Bounds.WithX(0).WithY(0));
             double leftTick = TickOffset - 480;
             double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
@@ -109,6 +122,9 @@ namespace OpenUtau.App.Controls {
 
             const double y = 35.5;
             const double height = 24;
+            if (Part == null) {
+                return;
+            }
             foreach (var phoneme in Part.phonemes) {
                 double leftBound = viewModel.Project.timeAxis.MsPosToTickPos(phoneme.PositionMs - phoneme.preutter) - Part.position;
                 double rightBound = phoneme.End;
@@ -129,10 +145,32 @@ namespace OpenUtau.App.Controls {
                     double y3 = (1 - phoneme.envelope.data[3].Y / 100) * height;
                     double x4 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[4].X) - Part.position, 0).X;
                     double y4 = (1 - phoneme.envelope.data[4].Y / 100) * height;
+                    bool isAsoqwer = singerName.IndexOf("Asoqwer", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isAkizora = singerName.IndexOf("Akizora", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isTilke = singerName.IndexOf("Tilke", StringComparison.OrdinalIgnoreCase) >= 0;
+                    IPen? pen;
+                    IBrush? brush;
+                    if (isAsoqwer) {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AsoqwerPhoneme2 : ThemeManager.AsoqwerPhoneme;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AsoqwerAccentColorSemi : ThemeManager.GetTrackColor("asoqwer").AccentColorLightSemi;
 
-                    var pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
-                    var brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                    } else if (isKeko) {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.KekoPhoneme2 : ThemeManager.KekoPhoneme;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.KekoAccentColorSemi : ThemeManager.GetTrackColor("keko").AccentColorLightSemi;
 
+                    } else if (isAkizora) {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AkizoraPhoneme2 : ThemeManager.AkizoraPhoneme;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AkizoraAccentColorSemi : ThemeManager.GetTrackColor("akizora").AccentColorLightSemi;
+
+                    } else if (isTilke) {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.TilkePhoneme2 : ThemeManager.TilkePhoneme;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.TilkeAccentColorSemi : ThemeManager.GetTrackColor("tilke").AccentColorLightSemi;
+
+                    } else {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                    }
                     var point0 = new Point(x0, y + y0);
                     var point1 = new Point(x1, y + y1);
                     var point2 = new Point(x2, y + y2);
@@ -150,10 +188,36 @@ namespace OpenUtau.App.Controls {
                         context.DrawGeometry(brush, pen, pointGeometry);
                     }
                 }
-
-                var penPos = ThemeManager.AccentPen2;
-                if (phoneme.rawPosition != phoneme.position) {
-                    penPos = ThemeManager.AccentPen2Thickness3;
+                bool isAsoqwer2 = singerName.IndexOf("Asoqwer", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isKeko2 = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isAkizora2 = singerName.IndexOf("Akizora", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isTilke2 = singerName.IndexOf("Tilke", StringComparison.OrdinalIgnoreCase) >= 0;
+                IPen? penPos;
+                if (isAsoqwer2) {
+                    penPos = ThemeManager.AsoqwerAccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.AsoqwerAccentPen2Thickness3;
+                    }
+                } else if (isKeko2) {
+                    penPos = ThemeManager.KekoAccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.KekoAccentPen2Thickness3;
+                    }
+                } else if (isAkizora2) {
+                    penPos = ThemeManager.AkizoraAccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.AkizoraAccentPen2Thickness3;
+                    }
+                } else if (isTilke2) {
+                    penPos = ThemeManager.TilkeAccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.TilkeAccentPen2Thickness3;
+                    }
+                } else {
+                    penPos = ThemeManager.AccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.AccentPen2Thickness3;
+                    }
                 }
                 context.DrawLine(penPos, new Point(x, y), new Point(x, y + height));
 

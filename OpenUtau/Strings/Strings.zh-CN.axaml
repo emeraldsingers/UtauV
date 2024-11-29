@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">复制日志</system:String>
   <system:String x:Key="debug.reverselogorder">反序</system:String>
 
-  <system:String x:Key="dialogs.about.caption">关于 OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">关于 OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtau 是一个开源编辑环境, 旨在为 UTAU 用户社区提供现代的用户体验和智能的语音学支持. 请到 Github 访问我们.
   </system:String>
@@ -179,7 +179,7 @@
   <system:String x:Key="menu.file.saveas">另存为...</system:String>
   <system:String x:Key="menu.file.savetemplate">保存模板...</system:String>
   <system:String x:Key="menu.help">帮助</system:String>
-  <system:String x:Key="menu.help.about">关于 OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">关于 OpenUtau</system:String>
   <system:String x:Key="menu.help.checkupdate">检查更新</system:String>
   <system:String x:Key="menu.help.logslocation">打开日志位置</system:String>
   <system:String x:Key="menu.help.reportissue">报告问题</system:String>

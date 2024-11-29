@@ -19,7 +19,7 @@ namespace OpenUtau.Core.Ustx {
         public string comment = string.Empty;
         public int trackNo;
         public int position = 0;
-
+        public UProject Project { get; set; } 
         [YamlIgnore] public virtual string DisplayName { get; }
         [YamlIgnore] public virtual int Duration { set; get; }
         [YamlIgnore] public int End { get { return position + Duration; } }
@@ -410,5 +410,9 @@ namespace OpenUtau.Core.Ustx {
             }
             Load(project);
         }
+        public static string GetSingerName(UTrack track) {
+            return track.Singer?.Name ?? "Unknown Singer";
+        }
+
     }
 }

@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">複製</system:String>
   <system:String x:Key="debug.reverselogorder">反轉記錄檔順序</system:String>
 
-  <system:String x:Key="dialogs.about.caption">關於 OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">關於 OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtau 致力於為 UTAU 社群建立開源編輯環境，提供現代化使用體驗與智慧型拆音功能。歡迎瀏覽我們的 GitHub。
   </system:String>

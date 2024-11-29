@@ -10,6 +10,7 @@ using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using ReactiveUI;
 
+
 namespace OpenUtau.App.Controls {
     class NotesCanvas : Control {
         public static readonly DirectProperty<NotesCanvas, double> TickWidthProperty =
@@ -177,17 +178,17 @@ namespace OpenUtau.App.Controls {
                 if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
                     continue;
                 }
-                RenderNoteBody(note, viewModel, context);
+                RenderNoteBody(note, Part, viewModel, context);
             }
             if (ShowFinalPitch && !hidePitch) {
-                RenderFinalPitch(leftTick, rightTick, viewModel, context);
+                RenderFinalPitch(Part, leftTick, rightTick, viewModel, context);
             }
             foreach (var note in Part.notes) {
                 if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
                     continue;
                 }
                 if (ShowPitch && !hidePitch) {
-                    RenderPitchBend(note, viewModel, context);
+                    RenderPitchBend(note, Part, viewModel, context);
                 }
                 if ((ShowPitch || ShowVibrato) && !hidePitch) {
                     RenderVibrato(note, viewModel, context);
@@ -203,32 +204,75 @@ namespace OpenUtau.App.Controls {
             context.DrawRectangle(Brushes.Transparent, null, Bounds.WithX(0).WithY(0));
         }
 
-        private void RenderNoteBody(UNote note, NotesViewModel viewModel, DrawingContext context) {
+        private void RenderNoteBody(UNote note, UPart? part, NotesViewModel viewModel, DrawingContext context) {
             Point leftTop = viewModel.TickToneToPoint(note.position, note.tone);
             leftTop = leftTop.WithX(leftTop.X + 1).WithY(Math.Round(leftTop.Y + 1));
             Size size = viewModel.TickToneToSize(note.duration, 1);
             size = size.WithWidth(size.Width - 1).WithHeight(Math.Floor(size.Height - 2));
             Point rightBottom = new Point(leftTop.X + size.Width, leftTop.Y + size.Height);
-            var brush = selectedNotes.Contains(note)
-                ? (note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2)
-                : (note.Error ? ThemeManager.AccentBrush1Semi : ThemeManager.AccentBrush1);
+
+            var project = DocManager.Inst.Project; 
+            var singerName = string.Empty;
+
+            if (part != null && project != null) {
+                var trackNo = part.trackNo;
+                if (trackNo >= 0 && trackNo < project.tracks.Count) {
+                    singerName = project.tracks[trackNo].Singer?.Name ?? string.Empty;
+                }
+            }
+
+            var singerColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                { "Asoqwer", "asoqwer" },
+                { "莠ｬ蟄", "keko" },
+                { "Akizora", "akizora" },
+                { "Tilke", "tilke" }
+            };
+            bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0;
+            IBrush brush;
+
+            string? matchedSinger = singerColors.Keys.FirstOrDefault(singer => singerName.IndexOf(singer, StringComparison.OrdinalIgnoreCase) >= 0);
+            if (matchedSinger != null) {
+                var manager = ThemeManager.GetTrackColor(singerColors[matchedSinger]);
+                brush = selectedNotes.Contains(note)
+                    ? (note.Error ? manager.AccentColorLightSemi : manager.AccentColorLight)
+                    : (note.Error ? manager.AccentColor : manager.AccentColor);
+            } else {
+                brush = selectedNotes.Contains(note)
+                    ? (note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2)
+                    : (note.Error ? ThemeManager.AccentBrush1Semi : ThemeManager.AccentBrush1);
+            }
+
+
+
+
+
+
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), 2, 2);
             if (TrackHeight < 10 || note.lyric.Length == 0) {
-                return;
+               return;
             }
             string displayLyric = note.lyric;
             int txtsize = 12;
+            IBrush textbrush = Brushes.Black;
             var textLayout = TextLayoutCache.Get(displayLyric, Brushes.Black, txtsize);
+            if (isKeko) {
+                textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
+            }
+            
             if (txtsize > size.Height) {
                 return;
             }
             if (textLayout.Height + 5 < size.Height) {
                 txtsize = (int)(12 * (size.Height / textLayout.Height));
-                textLayout = TextLayoutCache.Get(displayLyric, Brushes.Black, txtsize);
+                if (isKeko) {
+                    textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
+                }
             }
             if (textLayout.Width + 5 > size.Width) {
                 displayLyric = displayLyric[0] + "..";
-                textLayout = TextLayoutCache.Get(displayLyric, Brushes.Black, txtsize);
+                if (isKeko) {
+                    textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
+                }
                 if (textLayout.Width + 5 > size.Width) {
                     return;
                 }
@@ -239,7 +283,7 @@ namespace OpenUtau.App.Controls {
                 textLayout.Draw(context, new Point());
             }
         }
-
+        
         private void RenderGhostNote(UNote note, NotesViewModel viewModel, DrawingContext context, int partOffset, IBrush brush) {
             // REVIEW should ghost note be smaller?
             double relativeSize = 0.5d;
@@ -256,7 +300,7 @@ namespace OpenUtau.App.Controls {
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), 2, 2);
         }
 
-        private void RenderPitchBend(UNote note, NotesViewModel viewModel, DrawingContext context) {
+        private void RenderPitchBend(UNote note, UPart? part, NotesViewModel viewModel, DrawingContext context) {
             var pitchExp = note.pitch;
             var pts = pitchExp.data;
             if (pts.Count < 2 || viewModel.Part == null) return;
@@ -267,42 +311,42 @@ namespace OpenUtau.App.Controls {
             Point p0 = viewModel.TickToneToPoint(p0Tick, p0Tone - 0.5);
             points.Clear();
             points.Add(p0);
+            
+            IBrush? brush = ThemeManager.AccentBrush3;
+            IPen? pen = ThemeManager.AccentPen3;
+            context.DrawGeometry(brush, pen, pointGeometry);
+            
+            if (project != null) {
+                for (int i = 1; i < pts.Count; i++) {
+                    double p1Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[i].X) - viewModel.Part.position;
+                    double p1Tone = note.tone + pts[i].Y / 10.0;
+                    Point p1 = viewModel.TickToneToPoint(p1Tick, p1Tone - 0.5);
 
-            var brush = note.pitch.snapFirst ? ThemeManager.AccentBrush3 : null;
-            var pen = ThemeManager.AccentPen3;
-            using (var state = context.PushTransform(Matrix.CreateTranslation(p0.X, p0.Y))) {
-                context.DrawGeometry(brush, pen, pointGeometry);
-            }
-
-            for (int i = 1; i < pts.Count; i++) {
-                double p1Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[i].X) - viewModel.Part.position;
-                double p1Tone = note.tone + pts[i].Y / 10.0;
-                Point p1 = viewModel.TickToneToPoint(p1Tick, p1Tone - 0.5);
-
-                // Draw arc
-                double x0 = p0.X;
-                double y0 = p0.Y;
-                double x1 = p0.X;
-                double y1 = p0.Y;
-                if (p1.X - p0.X < 5) {
-                    points.Add(p1);
-                } else {
-                    points.Add(new Point(x0, y0));
-                    while (x0 < p1.X) {
-                        x1 = Math.Min(x1 + 4, p1.X);
-                        y1 = MusicMath.InterpolateShape(p0.X, p1.X, p0.Y, p1.Y, x1, pts[i - 1].shape);
-                        points.Add(new Point(x1, y1));
-                        x0 = x1;
-                        y0 = y1;
+                    // Draw arc
+                    double x0 = p0.X;
+                    double y0 = p0.Y;
+                    double x1 = p0.X;
+                    double y1 = p0.Y;
+                    if (p1.X - p0.X < 5) {
+                        points.Add(p1);
+                    } else {
+                        points.Add(new Point(x0, y0));
+                        while (x0 < p1.X) {
+                            x1 = Math.Min(x1 + 4, p1.X);
+                            y1 = MusicMath.InterpolateShape(p0.X, p1.X, p0.Y, p1.Y, x1, pts[i - 1].shape);
+                            points.Add(new Point(x1, y1));
+                            x0 = x1;
+                            y0 = y1;
+                        }
+                    }
+                    p0 = p1;
+                    using (var state = context.PushTransform(Matrix.CreateTranslation(p0.X, p0.Y))) {
+                        context.DrawGeometry(null, pen, pointGeometry);
                     }
                 }
-                p0 = p1;
-                using (var state = context.PushTransform(Matrix.CreateTranslation(p0.X, p0.Y))) {
-                    context.DrawGeometry(null, pen, pointGeometry);
-                }
+                polylineGeometry.Points = points;
+                context.DrawGeometry(null, pen, polylineGeometry);
             }
-            polylineGeometry.Points = points;
-            context.DrawGeometry(null, pen, polylineGeometry);
         }
 
         private void RenderVibrato(UNote note, NotesViewModel viewModel, DrawingContext context) {
@@ -370,9 +414,25 @@ namespace OpenUtau.App.Controls {
             context.DrawLine(pen, periodEnd, periodEnd + new Vector(0, height));
         }
 
-        private void RenderFinalPitch(double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context) {
+        private void RenderFinalPitch(UPart part, double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context) {
             var pen = ThemeManager.FinalPitchPen!;
             lock (Part!) {
+                var singerName = string.Empty;
+                var project = viewModel.Project;
+                if (part != null && project != null) {
+                    var trackNo = part.trackNo;
+                    if (trackNo >= 0 && trackNo < project.tracks.Count) {
+                        singerName = project.tracks[trackNo].Singer?.Name ?? string.Empty;
+                    }
+                }
+
+                bool iskeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isAkizora = singerName.IndexOf("Akizora", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (iskeko) {
+                    pen = ThemeManager.KekoPitch;
+                } else if (isAkizora) {
+                    pen = ThemeManager.AkizoraPitch;
+                }
                 foreach (var phrase in Part!.renderPhrases) {
                     if (phrase.position - Part.position > rightTick || phrase.end - Part.position < leftTick) {
                         continue;

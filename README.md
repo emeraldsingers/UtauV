@@ -6,7 +6,7 @@ OpenUtau is a free, open-source editor made for the UTAU community.
 [![Build](https://img.shields.io/github/actions/workflow/status/stakira/OpenUtau/build.yml?style=for-the-badge)](https://github.com/stakira/OpenUtau/actions/workflows/build.yml)
 [![Discord](https://img.shields.io/discord/551606189386104834?style=for-the-badge&label=discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/UfpMnqMmEM)
 [![QQ Qroup](https://img.shields.io/badge/QQ-485658015-blue?style=for-the-badge)](https://qm.qq.com/cgi-bin/qm/qr?k=8EtEpehB1a-nfTNAnngTVqX3o9xoIxmT&jump_from=webapi)
-[![Trello](https://img.shields.io/badge/trello-go-blue?style=for-the-badge&logo=trello)](https://trello.com/b/93ANoCIV/openutau)
+[![Trello](https://img.shields.io/badge/trello-go-blue?style=for-the-badge&logo=trello)](https://trello.com/b/93ANoCIV/OpenUtau)
 
 ## Getting started
 
@@ -21,7 +21,7 @@ It is **strongly recommended** that you read these Github wiki pages before usin
 - [Phonemizers](https://github.com/stakira/OpenUtau/wiki/Phonemizers)
 - [FAQ](https://github.com/stakira/OpenUtau/wiki/FAQ)
 
-- [中文使用说明](https://opensynth.miraheze.org/wiki/OpenUTAU/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
+- [中文使用说明](https://opensynth.miraheze.org/wiki/OpenUtau/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
 
 ## How to contribute
 
@@ -32,7 +32,7 @@ Tried OpenUtau and not satisfied? Don't just walk away! You can help:
 
 Know how to code? Got an idea for an improvement? Don't keep it to yourself!
 - Contribute fixes via pull requests.
-- Check out the development roadmap on [Trello](https://trello.com/b/93ANoCIV/openutau) and discuss it on Discord.
+- Check out the development roadmap on [Trello](https://trello.com/b/93ANoCIV/OpenUtau) and discuss it on Discord.
 
 ## Plugin development
 

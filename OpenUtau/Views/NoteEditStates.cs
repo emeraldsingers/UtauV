@@ -1192,7 +1192,7 @@ namespace OpenUtau.App.Views {
             DocManager.Inst.ExecuteCmd(new SetCurveCommand(
                 vm.NotesViewModel.Project,
                 vm.NotesViewModel.Part,
-                Core.Format.Ustx.PITD,
+                Core.Format.Ustx.   PITD,
                 vm.NotesViewModel.PointToTick(point),
                 (int)Math.Round(tone * 100 - pitch.Value),
                 vm.NotesViewModel.PointToTick(lastPitch == null ? point : lastPoint),

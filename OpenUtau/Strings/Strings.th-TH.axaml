@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">บันทึกการคัดลอก</system:String>
   <system:String x:Key="debug.reverselogorder">ย้อนกลับไปยังบันทึกคำสั่งเดิม</system:String>
 
-  <system:String x:Key="dialogs.about.caption">เกี่ยวกับ OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">เกี่ยวกับ OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtau มีเป้าหมายที่จะเป็นฐานข้อมูลแบบเปิดสำหรับชุมชนเสียงสังเคราะห์ UTAU ซึ่งทุกคนสามารถแก้ไขเขียนโค้ดโปรแกรมได้ ทำให้ได้รับประสบการณ์การใช้งานที่ทันสมัย และการออกเสียงที่เป็นอัจฉริยะมากยิ่งขึ้น เยี่ยมชมเราได้บน Github.
   </system:String>

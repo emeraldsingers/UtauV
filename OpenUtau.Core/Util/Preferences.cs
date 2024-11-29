@@ -160,9 +160,9 @@ namespace OpenUtau.Core.Util {
             public Dictionary<string, string> SingerPhonemizers = new Dictionary<string, string>();
             public List<string> RecentPhonemizers = new List<string>();
             public bool PreferPortAudio = false;
-            public double PlayPosMarkerMargin = 0.9;
+            public double PlayPosMarkerMargin = 0.5;
             public int LockStartTime = 0;
-            public int PlaybackAutoScroll = 2;
+            public int PlaybackAutoScroll = 1;
             public bool ReverseLogOrder = true;
             public bool ShowPortrait = true;
             public bool ShowIcon = true;

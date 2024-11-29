@@ -43,7 +43,7 @@ namespace OpenUtau.Plugin.Builtin {
         Scaler durationInScaler = new Scaler();
         Scaler durationOutScaler = new Scaler();
         
-        //information used by openutau phonemizer
+        //information used by OpenUtau phonemizer
         protected IG2p g2p;
         EnunuOnnxConfig enunuOnnxConfig;
         RedirectionDict redirectionDict;

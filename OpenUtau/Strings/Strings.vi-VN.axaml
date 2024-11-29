@@ -27,11 +27,11 @@
   <system:String x:Key="debug.copylog">Sao chép log</system:String>
   <system:String x:Key="debug.reverselogorder">Đảo thứ tự log</system:String>
 
-  <system:String x:Key="dialogs.about.caption">Thông tin về OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">Thông tin về OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
-    OpenUTAU nhắm đến việc tạo nên một môi trường làm việc mã nguồn mở dành cho cộng đồng UTAU, với một giao diện hiện đại và các tiện ích hỗ trợ âm vị thông minh. Thông tin chi tiết trên Github.
+    OpenUtau nhắm đến việc tạo nên một môi trường làm việc mã nguồn mở dành cho cộng đồng UTAU, với một giao diện hiện đại và các tiện ích hỗ trợ âm vị thông minh. Thông tin chi tiết trên Github.
   </system:String>
-  <system:String x:Key="dialogs.exitsave.caption">Thoát OpenUTAU</system:String>
+  <system:String x:Key="dialogs.exitsave.caption">Thoát OpenUtau</system:String>
   <system:String x:Key="dialogs.exitsave.message">Dự án đã bị chỉnh sửa. Bạn có muốn lưu không?</system:String>
   <system:String x:Key="dialogs.export.caption">Xuất thành</system:String>
   <system:String x:Key="dialogs.export.savefirst">Cần lưu dự án trước!</system:String>
@@ -186,7 +186,7 @@
   <system:String x:Key="menu.file.saveas">Lưu dưới dạng...</system:String>
   <system:String x:Key="menu.file.savetemplate">Lưu thành mẫu...</system:String>
   <system:String x:Key="menu.help">Hướng dẫn</system:String>
-  <system:String x:Key="menu.help.about">Thông tin về OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">Thông tin về OpenUtau</system:String>
   <system:String x:Key="menu.help.checkupdate">Kiểm tra cập nhật</system:String>
   <system:String x:Key="menu.help.logslocation">Mở thư mục chứa log</system:String>
   <system:String x:Key="menu.help.reportissue">Báo cáo lỗi</system:String>
@@ -380,7 +380,7 @@ Lưu ý: tuỳ chọn này cũng sẽ xoá các tổ hợp thiết lập của b
   <system:String x:Key="prefs.cache.clearonquit">Dọn bộ nhớ đệm khi thoát chương trình</system:String>
   <system:String x:Key="prefs.cache.diffsingertensorcache">Bộ nhớ đệm Tensor của DiffSinger </system:String>
   <system:String x:Key="prefs.caption">Tuỳ chọn</system:String>
-  <system:String x:Key="prefs.note.restart">Lưu ý: tắt mở lại OpenUTAU sau khi thay đổi thiết lập này.</system:String>
+  <system:String x:Key="prefs.note.restart">Lưu ý: tắt mở lại OpenUtau sau khi thay đổi thiết lập này.</system:String>
   <system:String x:Key="prefs.off">Tắt</system:String>
   <system:String x:Key="prefs.on">Mở</system:String>
   <system:String x:Key="prefs.otoeditor">Trình chỉnh thiết lập nguồn âm</system:String>
@@ -423,11 +423,11 @@ Lưu ý: tuỳ chọn này cũng sẽ xoá các tổ hợp thiết lập của b
     3. Patiently wait for moresampler to generate missing llsm files.
   </system:String>-->
   <system:String x:Key="prefs.rendering.resampler.note">
-    Ghi chú: để sử dụng resampler khác, thêm resampler định dạng EXE hoặc DLL vào trong thư mục Resamplers của OpenUTAU và chọn trong Tuỳ chỉnh.
+    Ghi chú: để sử dụng resampler khác, thêm resampler định dạng EXE hoặc DLL vào trong thư mục Resamplers của OpenUtau và chọn trong Tuỳ chỉnh.
   </system:String>
   <system:String x:Key="prefs.rendering.skipmuted">Không render track bị tắt tiếng</system:String>
   <system:String x:Key="prefs.rendering.threads.cpuwarn">
-    Cảnh báo: quá nhiều luồng render có thể làm OpenUTAU chạy chậm.
+    Cảnh báo: quá nhiều luồng render có thể làm OpenUtau chạy chậm.
   </system:String>
   <system:String x:Key="prefs.rendering.threads.numthreads">Luồng render tối đa</system:String>
   <!--<system:String x:Key="prefs.rendering.wavtool">Wavtool</system:String>-->
@@ -562,6 +562,6 @@ Tổng quát
   <system:String x:Key="updater.update">Cập nhật</system:String>
 
   <system:String x:Key="warning">Cảnh báo</system:String>
-  <system:String x:Key="warning.asciipath">Đường dẫn chứa OpenUTAU "{0}" có chứa kí tự không thuộc bảng mã ASCII. Resampler định dạng exe có thể không hoạt động.</system:String>
+  <system:String x:Key="warning.asciipath">Đường dẫn chứa OpenUtau "{0}" có chứa kí tự không thuộc bảng mã ASCII. Resampler định dạng exe có thể không hoạt động.</system:String>
   <system:String x:Key="warning.renderer">Trình render này không có tuỳ chỉnh nào cả.</system:String>
 </ResourceDictionary>

@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">Log kopieren</system:String>
   <system:String x:Key="debug.reverselogorder">Log Reihenfolge umkehren</system:String>
 
-  <system:String x:Key="dialogs.about.caption">Über OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">Über OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtaus Ziel ist es eine quelloffene Bearbeitungsumgebung für die UTAU Community mit einer modernen Benutzererfahrung und intelligenter phonologischer Unterstützung zu sein. Besuchen Sie uns auf Github.
   </system:String>

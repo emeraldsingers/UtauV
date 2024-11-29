@@ -53,5 +53,5 @@ symbols:
   - {symbol: z, type: fricative}
   - {symbol: zh, type: fricative}
 entries:
-  - grapheme: "openutau"
+  - grapheme: "OpenUtau"
     phonemes: [q, ooh, p, ax, n, q, uw, t, aw]

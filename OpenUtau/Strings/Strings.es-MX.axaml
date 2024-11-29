@@ -27,11 +27,11 @@
   <system:String x:Key="debug.copylog">Copiar registro</system:String>
   <system:String x:Key="debug.reverselogorder">Revertir orden del registro</system:String>
 
-  <system:String x:Key="dialogs.about.caption">Sobre OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">Sobre OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
-    OpenUTAU es un entorno de edición de código abierto para el programa de síntesis UTAU. Su objetivo es ofrecer una interfaz moderna, y soporte fonológico inteligente. ¡Visítanos en GitHub!
+    OpenUtau es un entorno de edición de código abierto para el programa de síntesis UTAU. Su objetivo es ofrecer una interfaz moderna, y soporte fonológico inteligente. ¡Visítanos en GitHub!
   </system:String>
-  <system:String x:Key="dialogs.exitsave.caption">Salir de OpenUTAU</system:String>
+  <system:String x:Key="dialogs.exitsave.caption">Salir de OpenUtau</system:String>
   <system:String x:Key="dialogs.exitsave.message">El projecto tiene cambios sin guardar. ¿Quieres guardar el archivo?</system:String>
   <system:String x:Key="dialogs.export.caption">Exportar</system:String>
   <system:String x:Key="dialogs.export.savefirst">Por favor, guarda el archivo antes de exportarlo.</system:String>
@@ -47,7 +47,7 @@
   <system:String x:Key="dialogs.messagebox.ok">OK</system:String>
   <system:String x:Key="dialogs.messagebox.yes">Sí</system:String>
   <system:String x:Key="dialogs.noresampler.caption">Resampler no encontrado</system:String>
-  <system:String x:Key="dialogs.noresampler.message">No se encontró un Resampler. Pone uno (sea .exe o .dll) en la carpeta Resamplers en la ruta de instalación de OpenUTAU.</system:String>
+  <system:String x:Key="dialogs.noresampler.message">No se encontró un Resampler. Pone uno (sea .exe o .dll) en la carpeta Resamplers en la ruta de instalación de OpenUtau.</system:String>
   <!--<system:String x:Key="dialogs.remaptimeaxis.message">This tool will change the tempo of the project without changing the actual positions and durations (in seconds) of notes.
   New BPM:</system:String>-->
   <system:String x:Key="dialogs.timesig.caption">Medida del compás</system:String>
@@ -179,11 +179,11 @@
   <system:String x:Key="menu.file.saveas">Guardar _como</system:String>
   <system:String x:Key="menu.file.savetemplate">Guardar plantilla</system:String>
   <system:String x:Key="menu.help">_Ayuda</system:String>
-  <system:String x:Key="menu.help.about">Sobre OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">Sobre OpenUtau</system:String>
   <system:String x:Key="menu.help.checkupdate">Buscar actualizaciones</system:String>
   <system:String x:Key="menu.help.logslocation">Abrir la ubicación de los registros</system:String>
   <system:String x:Key="menu.help.reportissue">Reportar problema</system:String>
-  <system:String x:Key="menu.help.wiki">Wiki de OpenUTAU</system:String>
+  <system:String x:Key="menu.help.wiki">Wiki de OpenUtau</system:String>
   <!--<system:String x:Key="menu.project">Project</system:String>-->
   <!--<system:String x:Key="menu.project.expressions">Expressions...</system:String>-->
   <!--<system:String x:Key="menu.project.remaptimeaxis">Adjust Tempo (Preserve Timing)</system:String>-->
@@ -359,7 +359,7 @@ Advertencia: Esta opción eliminará las bases personalizadas.</system:String>
   <!--<system:String x:Key="prefs.cache.clearonquit">Clear cache on quit</system:String>-->
   <!--<system:String x:Key="prefs.cache.diffsingertensorcache">DiffSinger Tensor Cache</system:String>-->
   <system:String x:Key="prefs.caption">Ajustes</system:String>
-  <system:String x:Key="prefs.note.restart">Nota: Por favor, reinicia OpenUTAU después de cambiar esta opción.</system:String>
+  <system:String x:Key="prefs.note.restart">Nota: Por favor, reinicia OpenUtau después de cambiar esta opción.</system:String>
   <system:String x:Key="prefs.off">No</system:String>
   <system:String x:Key="prefs.on">Sí</system:String>
   <system:String x:Key="prefs.otoeditor">Editor de OTO</system:String>
@@ -400,7 +400,7 @@ Advertencia: Moresampler no es totalmente compatible por ahora. Este puede ser l
 3. Espere pacientemente a que Moresampler genere los archivos llsm que faltan.
   </system:String>
   <system:String x:Key="prefs.rendering.resampler.note">
-    Nota: Para usar un Resampler externo, pon su archivo (sea .exe o .dll) en la carpeta Resamplers, en la ruta de instalación de OpenUTAU.
+    Nota: Para usar un Resampler externo, pon su archivo (sea .exe o .dll) en la carpeta Resamplers, en la ruta de instalación de OpenUtau.
   </system:String>
   <!--<system:String x:Key="prefs.rendering.skipmuted">Skip muted tracks</system:String>-->
   <!--<system:String x:Key="prefs.rendering.threads.cpuwarn">
@@ -528,11 +528,11 @@ General
   <system:String x:Key="updater.github">Abrir GitHub</system:String>
   <system:String x:Key="updater.status.available">Actualización disponible (v{0})</system:String>
   <system:String x:Key="updater.status.checking">Buscando actualizaciones...</system:String>
-  <system:String x:Key="updater.status.notavailable">OpenUTAU esta actualizado</system:String>
+  <system:String x:Key="updater.status.notavailable">OpenUtau esta actualizado</system:String>
   <system:String x:Key="updater.status.unknown">No se pueden buscar actualizaciones</system:String>
   <system:String x:Key="updater.update">Actualizar</system:String>
 
   <system:String x:Key="warning">Alerta</system:String>
-  <system:String x:Key="warning.asciipath">La ruta de OpenUTAU "{0}" contiene símbolos que no son ASCII. Puede que Resamplers en .exe no funcionen.</system:String>
+  <system:String x:Key="warning.asciipath">La ruta de OpenUtau "{0}" contiene símbolos que no son ASCII. Puede que Resamplers en .exe no funcionen.</system:String>
   <system:String x:Key="warning.renderer">Este renderizador no está configurado. Por favor, escoge CLASSIC.</system:String>
 </ResourceDictionary>

@@ -27,7 +27,7 @@
   <system:String x:Key="debug.copylog">Copier le rapport</system:String>
   <system:String x:Key="debug.reverselogorder">Inverser l'ordre du rapport</system:String>
 
-  <system:String x:Key="dialogs.about.caption">À propos de OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">À propos de OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtau est un logiciel de synthétiseur vocal open source pour la communauté UTAU, avec une interface moderne et un support phonétique intelligent. Plus d'informations sur notre Github.
   </system:String>
@@ -47,7 +47,7 @@
   <system:String x:Key="dialogs.messagebox.ok">Accepter</system:String>
   <system:String x:Key="dialogs.messagebox.yes">Oui</system:String>
   <system:String x:Key="dialogs.noresampler.caption">Aucun resampler</system:String>
-  <system:String x:Key="dialogs.noresampler.message">Aucun resampler ! Ajoutez le fichier .exe ou .dll du resampler dans le dossier "Resamplers" de OpenUTAU, puis choisissez-le dans Préférences.</system:String>
+  <system:String x:Key="dialogs.noresampler.message">Aucun resampler ! Ajoutez le fichier .exe ou .dll du resampler dans le dossier "Resamplers" de OpenUtau, puis choisissez-le dans Préférences.</system:String>
   <!--<system:String x:Key="dialogs.remaptimeaxis.message">This tool will change the tempo of the project without changing the actual positions and durations (in seconds) of notes.
   New BPM:</system:String>-->
   <system:String x:Key="dialogs.timesig.caption">Mesure</system:String>
@@ -179,7 +179,7 @@
   <system:String x:Key="menu.file.saveas">Enregistrer sous...</system:String>
   <system:String x:Key="menu.file.savetemplate">Enregistrer le modèle...</system:String>
   <system:String x:Key="menu.help">Aide</system:String>
-  <system:String x:Key="menu.help.about">À propos de OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">À propos de OpenUtau</system:String>
   <system:String x:Key="menu.help.checkupdate">Mises a jour</system:String>
   <system:String x:Key="menu.help.logslocation">Ouvrir la location du rapport</system:String>
   <system:String x:Key="menu.help.reportissue">Signaler un problème</system:String>
@@ -400,11 +400,11 @@ Avertissement : moresampler n'est pas entièrement pris en charge. Il peut être
 3. Attendez patiemment que moresampler génère les fichiers llsm manquants.
   </system:String>
   <system:String x:Key="prefs.rendering.resampler.note">
-    Note: pour utiliser des resamplers externes, ajoutez le fichier .exe ou .dll du resampler dans le dossier "Resamplers" de OpenUTAU, puis choisissez-le dans Préférences.
+    Note: pour utiliser des resamplers externes, ajoutez le fichier .exe ou .dll du resampler dans le dossier "Resamplers" de OpenUtau, puis choisissez-le dans Préférences.
   </system:String>
   <!--<system:String x:Key="prefs.rendering.skipmuted">Skip muted tracks</system:String>-->
   <system:String x:Key="prefs.rendering.threads.cpuwarn">
-    Attention : trop de thread pourrait ralentir OpenUTAU.
+    Attention : trop de thread pourrait ralentir OpenUtau.
   </system:String>
   <system:String x:Key="prefs.rendering.threads.numthreads">Threads maximum pour le rendu</system:String>
   <!--<system:String x:Key="prefs.rendering.wavtool">Wavtool</system:String>-->
@@ -533,6 +533,6 @@ Général
   <system:String x:Key="updater.update">Mettre à jour</system:String>
 
   <system:String x:Key="warning">Attention</system:String>
-  <system:String x:Key="warning.asciipath">Le dossier d'installation d'OpenUTAU "{0}" contient des lettres non-ASCII, les resamplers en .exe peuvent ne pas marcher.</system:String>
+  <system:String x:Key="warning.asciipath">Le dossier d'installation d'OpenUtau "{0}" contient des lettres non-ASCII, les resamplers en .exe peuvent ne pas marcher.</system:String>
   <system:String x:Key="warning.renderer">Pas de paramètres pour ce moteur de rendu.</system:String>
 </ResourceDictionary>

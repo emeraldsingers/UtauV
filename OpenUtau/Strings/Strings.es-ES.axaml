@@ -27,7 +27,7 @@
   <!--<system:String x:Key="debug.copylog">Copy Log</system:String>-->
   <!--<system:String x:Key="debug.reverselogorder">Reverse Log Order</system:String>-->
 
-  <system:String x:Key="dialogs.about.caption">Acerca de OpenUTAU</system:String>
+  <system:String x:Key="dialogs.about.caption">Acerca de OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
     OpenUtau busca ser un entorno de edición de código fuente libre para la comunidad de UTAU, junto a una moderna experiencia de usuario y soporte inteligente fonológico. Visita el proyecto en Github
   </system:String>
@@ -179,7 +179,7 @@
   <system:String x:Key="menu.file.saveas">Guardar como...</system:String>
   <!--<system:String x:Key="menu.file.savetemplate">Save Template...</system:String>-->
   <system:String x:Key="menu.help">Ayuda</system:String>
-  <system:String x:Key="menu.help.about">Acerca de OpenUTAU</system:String>
+  <system:String x:Key="menu.help.about">Acerca de OpenUtau</system:String>
   <!--<system:String x:Key="menu.help.checkupdate">Check Update</system:String>-->
   <!--<system:String x:Key="menu.help.logslocation">Open Logs Location</system:String>-->
   <!--<system:String x:Key="menu.help.reportissue">Report Issue</system:String>-->
@@ -404,7 +404,7 @@ Warning: this option removes custom presets.</system:String>-->
     3. Patiently wait for moresampler to generate missing llsm files.
   </system:String>-->
   <system:String x:Key="prefs.rendering.resampler.note">
-    Nota: Para usar resamplers externos, por favor, añada el archivo DLL o EXE en la carpeta "Resamplers" dentro de la ruta de instalación de OpenUTAU y selecciónelo en preferencias.
+    Nota: Para usar resamplers externos, por favor, añada el archivo DLL o EXE en la carpeta "Resamplers" dentro de la ruta de instalación de OpenUtau y selecciónelo en preferencias.
   </system:String>
   <!--<system:String x:Key="prefs.rendering.skipmuted">Skip muted tracks</system:String>-->
   <!--<system:String x:Key="prefs.rendering.threads.cpuwarn">
@@ -533,6 +533,6 @@ General
   <!--<system:String x:Key="updater.update">Update</system:String>-->
 
   <system:String x:Key="warning">Advertencia</system:String>
-  <system:String x:Key="warning.asciipath">Su ruta de instalación de OpenUTAU "{0}" contiene caracteres no-ASCII. Resamplers.exe probablemente no funcionen.</system:String>
+  <system:String x:Key="warning.asciipath">Su ruta de instalación de OpenUtau "{0}" contiene caracteres no-ASCII. Resamplers.exe probablemente no funcionen.</system:String>
   <!--<system:String x:Key="warning.renderer">No settings for this renderer.</system:String>-->
 </ResourceDictionary>

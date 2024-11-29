@@ -78,7 +78,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public Bitmap? Avatar { get; set; }
         [Reactive] public Bitmap? Portrait { get; set; }
         [Reactive] public IBrush? PortraitMask { get; set; }
-        [Reactive] public string WindowTitle { get; set; } = "SynthU Piano Roll";
+        [Reactive] public string WindowTitle { get; set; } = "UtauV Piano Roll";
         [Reactive] public SolidColorBrush TrackAccentColor { get; set; } = ThemeManager.GetTrackColor("Blue").AccentColor;
         public double ViewportTicks => viewportTicks.Value;
         public double ViewportTracks => viewportTracks.Value;
@@ -537,11 +537,21 @@ namespace OpenUtau.App.ViewModels {
                 ThemeManager.ChangePianorollColor("Green1");
                 return;
             }
+
+            var track = project.tracks[part.trackNo];
+            var singerName = track.Singer?.Name ?? string.Empty;
+            Console.WriteLine(singerName);
             TrackAccentColor = ThemeManager.GetTrackColor(project.tracks[part.trackNo].TrackColor).AccentColor;
-            string name = Preferences.Default.UseTrackColor
+            if (singerName.IndexOf("Asoqwer", StringComparison.OrdinalIgnoreCase) >= 0) {
+                ThemeManager.ChangePianorollColor("asoqwer");
+                Console.WriteLine("asoqwa");
+            } else {
+                string name = Preferences.Default.UseTrackColor
                 ? project.tracks[part.trackNo].TrackColor
                 : "Green1";
-            ThemeManager.ChangePianorollColor(name);
+                ThemeManager.ChangePianorollColor(name);
+                
+            }
         }
 
         private void UnloadPart() {

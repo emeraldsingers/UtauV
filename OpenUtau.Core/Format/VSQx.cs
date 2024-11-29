@@ -154,7 +154,7 @@ namespace OpenUtau.Core.Format {
                         var semitone = pbsList.FindLast(tuple => tuple.Item1 <= t)?.Item2 ?? pbsDefaultVal;
                         var pit = (int)Math.Round(v * semitone * 100);
                         if (Math.Abs(pit) > 1200) {
-                            // Exceed OpenUTAU's limit. clip value
+                            // Exceed OpenUtau's limit. clip value
                             pit = Math.Sign(pit) * 1200;
                         }
                         if (t > 0 && lastV.HasValue) {

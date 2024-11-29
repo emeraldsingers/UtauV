@@ -174,5 +174,5 @@ symbols:
   - {symbol: NN, type: vowel}
 
 entries:
-  - grapheme: openutau
+  - grapheme: OpenUtau
     phonemes: [ow, p, ah, n, uw, t, aw]
