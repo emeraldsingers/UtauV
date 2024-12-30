@@ -224,10 +224,13 @@ namespace OpenUtau.App.Controls {
             var singerColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 { "Asoqwer", "asoqwer" },
                 { "莠ｬ蟄", "keko" },
+                { "keko", "keko" },
                 { "Akizora", "akizora" },
                 { "Tilke", "tilke" }
             };
-            bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isTilke = singerName.IndexOf("tilke", StringComparison.OrdinalIgnoreCase) >= 0;
+
             IBrush brush;
 
             string? matchedSinger = singerColors.Keys.FirstOrDefault(singer => singerName.IndexOf(singer, StringComparison.OrdinalIgnoreCase) >= 0);
@@ -257,6 +260,8 @@ namespace OpenUtau.App.Controls {
             var textLayout = TextLayoutCache.Get(displayLyric, Brushes.Black, txtsize);
             if (isKeko) {
                 textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
+            } else if (isTilke) {
+                textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
             }
             
             if (txtsize > size.Height) {
@@ -265,6 +270,8 @@ namespace OpenUtau.App.Controls {
             if (textLayout.Height + 5 < size.Height) {
                 txtsize = (int)(12 * (size.Height / textLayout.Height));
                 if (isKeko) {
+                    textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
+                } else if (isTilke) {
                     textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
                 }
             }
@@ -311,9 +318,25 @@ namespace OpenUtau.App.Controls {
             Point p0 = viewModel.TickToneToPoint(p0Tick, p0Tone - 0.5);
             points.Clear();
             points.Add(p0);
+            var singerName = string.Empty;
+            if (part != null && project != null) {
+                var trackNo = part.trackNo;
+                if (trackNo >= 0 && trackNo < project.tracks.Count) {
+                    singerName = project.tracks[trackNo].Singer?.Name ?? string.Empty;
+                }
+            }
+            IBrush? brush; // = ThemeManager.AccentBrush3;
+            IPen? pen; //= ThemeManager.AccentPen3;
+            bool isAsoqwer = singerName.IndexOf("asoqwer", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (isAsoqwer) {
+                brush = ThemeManager.AsoqwerPitchBendBrush;
+                pen = ThemeManager.AsoqwerPitchBend;
+            } else {
+                brush = ThemeManager.AccentBrush3;
+                pen = ThemeManager.AccentPen3;
+            }
+
             
-            IBrush? brush = ThemeManager.AccentBrush3;
-            IPen? pen = ThemeManager.AccentPen3;
             context.DrawGeometry(brush, pen, pointGeometry);
             
             if (project != null) {
@@ -426,12 +449,15 @@ namespace OpenUtau.App.Controls {
                     }
                 }
 
-                bool iskeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool iskeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isTilke = singerName.IndexOf("Tilke", StringComparison.OrdinalIgnoreCase) >= 0;
                 bool isAkizora = singerName.IndexOf("Akizora", StringComparison.OrdinalIgnoreCase) >= 0;
                 if (iskeko) {
                     pen = ThemeManager.KekoPitch;
                 } else if (isAkizora) {
                     pen = ThemeManager.AkizoraPitch;
+                } else if (isTilke) {
+                    pen = ThemeManager.TilkePitch;
                 }
                 foreach (var phrase in Part!.renderPhrases) {
                     if (phrase.position - Part.position > rightTick || phrase.end - Part.position < leftTick) {

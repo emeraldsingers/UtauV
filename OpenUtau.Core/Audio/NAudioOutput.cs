@@ -1,18 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using NAudio.Wave;
+using NAudio.Dsp;
+
 using OpenUtau.Core.Util;
+using NWaves.Filters.BiQuad;
 
 namespace OpenUtau.Audio {
 #if !WINDOWS
     public class NAudioOutput : DummyAudioOutput { }
 #else
+
     public class NAudioOutput : IAudioOutput {
         const int Channels = 2;
 
         private readonly object lockObj = new object();
         private WaveOutEvent waveOutEvent;
         private int deviceNumber;
+        private NAudio.Dsp.BiQuadFilter highShelfFilter;
+
 
         public NAudioOutput() {
             if (Guid.TryParse(Preferences.Default.PlaybackDevice, out var guid)) {
@@ -41,6 +47,7 @@ namespace OpenUtau.Audio {
         }
 
         public void Init(ISampleProvider sampleProvider) {
+                
             lock (lockObj) {
                 if (waveOutEvent != null) {
                     waveOutEvent.Stop();
@@ -50,6 +57,11 @@ namespace OpenUtau.Audio {
                     DeviceNumber = deviceNumber,
                 };
                 waveOutEvent.Init(sampleProvider);
+                float sampleRate = sampleProvider.WaveFormat.SampleRate;
+                highShelfFilter = NAudio.Dsp.BiQuadFilter.HighShelf(sampleRate, 5000, 0.707f, 5.0f);
+
+                var filteredProvider = new SampleProviderWithFilter(sampleProvider, highShelfFilter);
+                waveOutEvent.Init(filteredProvider);
             }
         }
 
@@ -112,5 +124,25 @@ namespace OpenUtau.Audio {
             return outDevices;
         }
     }
+    public class SampleProviderWithFilter : ISampleProvider {
+        private readonly ISampleProvider source;
+        private readonly NAudio.Dsp.BiQuadFilter filter;
+
+        public SampleProviderWithFilter(ISampleProvider source, NAudio.Dsp.BiQuadFilter filter) {
+            this.source = source;
+            this.filter = filter;
+        }
+
+        public WaveFormat WaveFormat => source.WaveFormat;
+
+        public int Read(float[] buffer, int offset, int count) {
+            int read = source.Read(buffer, offset, count);
+            for (int i = 0; i < read; i++) {
+                buffer[offset + i] = filter.Transform(buffer[offset + i]);
+            }
+            return read;
+        }
+    }
+
 #endif
 }

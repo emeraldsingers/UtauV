@@ -416,16 +416,6 @@ namespace OpenUtau.Core.Editing {
             return PitchPointShape.l;
         }
 
-        //reference: https://github.com/sdercolin/utaformatix3/blob/0f026f7024386ca8362972043c3471c6f2ac9859/src/main/kotlin/process/RdpSimplification.kt#L43
-        /*
-        * The Ramer–Douglas–Peucker algorithm is a line simplification algorithm
-        * for reducing the number of points used to define its shape.
-        *
-        * Wikipedia: https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
-        * Implementation reference: https://rosettacode.org/wiki/Ramer-Douglas-Peucker_line_simplification
-        * */
-        //perpendicularDistance is replaced with deltaY, because the units of X and Y are different. 
-        //result doesn't contain the last point to enhance performance in recursion
         List<Point> simplifyShape(List<Point> pointList, Double epsilon) {
             if (pointList.Count <= 2) {
                 return pointList;

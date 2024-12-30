@@ -8,10 +8,13 @@ using OpenUtau.Core.Util;
 namespace OpenUtau.App {
     internal class FilePicker {
         public static FilePickerFileType ProjectFiles { get; } = new("Project Files") {
-            Patterns = new[] { "*.ustx", "*.vsqx", "*.ust", "*.mid", "*.midi", "*.ufdata" },
+            Patterns = new[] { "*.ustx", "*.vsqx", "*.ust", "*.mid", "*.midi", "*.ufdata", "*.svp" },
         };
         public static FilePickerFileType USTX { get; } = new("USTX") {
             Patterns = new[] { "*.ustx" },
+        };
+        public static FilePickerFileType SVP { get; } = new("SVP") {
+            Patterns = new[] { "*.svp" },
         };
         public static FilePickerFileType VSQX { get; } = new("VSQX") {
             Patterns = new[] { "*.vsqx" },

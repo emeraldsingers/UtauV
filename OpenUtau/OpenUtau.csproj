@@ -15,21 +15,21 @@
     <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>0.1.546</Version>
+    <Version>1.0.0.7</Version>
     <ApplicationIcon>Assets\open-utau.ico</ApplicationIcon>
     <PublishReadyToRun>true</PublishReadyToRun>
     <DebugType>embedded</DebugType>
     <StartupObject />
   </PropertyGroup>
   <PropertyGroup>
-    <CFBundleName>OpenUtau SynthV Edition</CFBundleName>
-    <CFBundleDisplayName>OpenUtau SynthV Edition | OpenV</CFBundleDisplayName>
-    <CFBundleIdentifier>com.stakira.OpenUtau</CFBundleIdentifier>
+    <CFBundleName>UtauV Emerald</CFBundleName>
+    <CFBundleDisplayName>UtauV Emerald</CFBundleDisplayName>
+    <CFBundleIdentifier>com.asoqwer.UtauV</CFBundleIdentifier>
     <CFBundleVersion>0.0.0</CFBundleVersion>
     <CFBundleShortVersionString>0.0.0</CFBundleShortVersionString>
     <CFBundlePackageType>APPL</CFBundlePackageType>
     <CFBundleSignature>????</CFBundleSignature>
-    <CFBundleExecutable>OpenUtau SynthV Edition</CFBundleExecutable>
+    <CFBundleExecutable>UtauV Emerald</CFBundleExecutable>
     <CFBundleIconFile>OpenUtau.icns</CFBundleIconFile>
     <NSPrincipalClass>NSApplication</NSPrincipalClass>
     <NSHighResolutionCapable>true</NSHighResolutionCapable>

@@ -82,7 +82,17 @@ namespace OpenUtau.Core {
         public string TemplatesPath => Path.Combine(DataPath, "Templates");
         public string LogsPath => Path.Combine(DataPath, "Logs");
         public string LogFilePath => Path.Combine(DataPath, "Logs", "log.txt");
-        public string PrefsFilePath => Path.Combine(DataPath, "prefs.json");
+        public string PrefsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "UtauV", "prefs.json");
+
+        public void EnsurePrefsDirectoryExists() {
+            string prefsDirectory = Path.GetDirectoryName(PrefsFilePath);
+
+            if (!Directory.Exists(prefsDirectory)) {
+                Directory.CreateDirectory(prefsDirectory);
+            }
+        }
+
+
         public string NotePresetsFilePath => Path.Combine(DataPath, "notepresets.json");
         public string BackupsPath => Path.Combine(DataPath, "Backups");
 

@@ -317,6 +317,13 @@
                   </DataTemplate>
                 </MenuItem.DataTemplates>
               </MenuItem>
+              <MenuItem Header="Pitch" ItemsSource="{Binding PitchBatchEdits}">
+                <MenuItem.DataTemplates>
+                  <DataTemplate DataType="vm:MenuItemViewModel">
+                    <MenuItem Header="{Binding Header}" Command="{Binding Command, FallbackValue={x:Null}}" CommandParameter="{Binding CommandParameter}"/>
+                  </DataTemplate>
+                </MenuItem.DataTemplates>
+              </MenuItem>
               <MenuItem Header="{DynamicResource pianoroll.menu.reset}" ItemsSource="{Binding ResetBatchEdits}">
                 <MenuItem.DataTemplates>
                   <DataTemplate DataType="vm:MenuItemViewModel">

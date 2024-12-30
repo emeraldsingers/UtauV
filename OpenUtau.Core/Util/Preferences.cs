@@ -18,13 +18,24 @@ namespace OpenUtau.Core.Util {
 
         public static void Save() {
             try {
-                File.WriteAllText(PathManager.Inst.PrefsFilePath,
+                string prefsDirectory = Path.GetDirectoryName(PathManager.Inst.PrefsFilePath);
+
+                if (!Directory.Exists(prefsDirectory)) {
+                    Directory.CreateDirectory(prefsDirectory);
+                }
+                if (!File.Exists(PathManager.Inst.PrefsFilePath)) {
+                    File.Create(PathManager.Inst.PrefsFilePath).Dispose(); 
+                }
+                File.WriteAllText(
+                    PathManager.Inst.PrefsFilePath,
                     JsonConvert.SerializeObject(Default, Formatting.Indented),
-                    Encoding.UTF8);
+                    Encoding.UTF8
+                );
             } catch (Exception e) {
                 Log.Error(e, "Failed to save prefs.");
             }
         }
+
 
         public static void Reset() {
             Default = new SerializablePreferences();

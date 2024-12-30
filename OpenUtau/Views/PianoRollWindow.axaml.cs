@@ -42,6 +42,7 @@ namespace OpenUtau.App.Views {
         private ReactiveCommand<Unit, Unit> noteDefaultsCommand;
         private ReactiveCommand<BatchEdit, Unit> noteBatchEditCommand;
 
+
         public PianoRollWindow() {
             InitializeComponent();
             DataContext = ViewModel = new PianoRollViewModel();
@@ -123,6 +124,7 @@ namespace OpenUtau.App.Views {
                 Command = noteBatchEditCommand,
                 CommandParameter = edit,
             }));
+            
             ViewModel.ResetBatchEdits.AddRange(new List<BatchEdit>() {
                 new ResetAll(),
                 new ResetPitchBends(),
@@ -131,19 +133,22 @@ namespace OpenUtau.App.Views {
                 new ResetVibratos(),
                 new ClearTimings(),
                 new ResetAliases(),
+                new PitchBatchEdit()
             }.Select(edit => new MenuItemViewModel() {
                 Header = ThemeManager.GetString(edit.Name),
                 Command = noteBatchEditCommand,
                 CommandParameter = edit,
             }));
             DocManager.Inst.AddSubscriber(this);
+            ViewModel.PitchBatchEdits.AddRange(new List<BatchEdit>() {
+                new PitchBatchEdit()
+            }.Select(edit => new MenuItemViewModel() {
+                Header = ThemeManager.GetString(edit.Name),
+                Command = noteBatchEditCommand,
+                CommandParameter = edit,
+            }));
 
-            ViewModel.NoteBatchEdits.Insert(5, new MenuItemViewModel() {
-                Header = ThemeManager.GetString("pianoroll.menu.notes.addbreath"),
-                Command = ReactiveCommand.Create(() => {
-                    AddBreathNote();
-                })
-            });
+
             ViewModel.NoteBatchEdits.Add(new MenuItemViewModel() {
                 Header = ThemeManager.GetString("pianoroll.menu.notes.lengthencrossfade"),
                 Command = ReactiveCommand.Create(() => {
