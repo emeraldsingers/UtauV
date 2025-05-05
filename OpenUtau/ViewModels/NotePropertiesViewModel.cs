@@ -189,7 +189,7 @@ namespace OpenUtau.App.ViewModels {
 
                     foreach (NotePropertyExpViewModel exp in Expressions) {
                         exp.IsNoteSelected = true;
-                        var phonemeExpression = note.phonemeExpressions.FirstOrDefault(e => e.abbr == exp.abbr);
+                        var phonemeExpression = note.phonemeExpressions.FirstOrDefault(e => e.abbr == exp.abbr && e.index == 0);
                         if (phonemeExpression != null) {
                             if (exp.IsNumerical) {
                                 exp.Value = phonemeExpression.value;
@@ -279,7 +279,7 @@ namespace OpenUtau.App.ViewModels {
                     }
                     this.RaisePropertyChanged(nameof(PortamentoLength));
                     this.RaisePropertyChanged(nameof(PortamentoStart));
-                } else if (cmd is SetPhonemeExpressionCommand || cmd is ResetExpressionsCommand) {
+                } else if (cmd is SetNoteExpressionCommand || cmd is SetNotesSameExpressionCommand || cmd is SetPhonemeExpressionCommand || cmd is ResetExpressionsCommand) {
                     AttachExpressions();
                 }
             } else if (cmd is NotePresetChangedNotification) {
@@ -470,28 +470,20 @@ namespace OpenUtau.App.ViewModels {
         public void SetNumericalExpressionsChanges(string abbr, float? value) {
             if (AllowNoteEdit && Part != null && selectedNotes.Count > 0) {
                 var track = DocManager.Inst.Project.tracks[Part.trackNo];
-
-                foreach (UNote note in selectedNotes) {
-                    foreach (UPhoneme phoneme in Part.phonemes) {
-                        if (phoneme.Parent == note) {
-                            DocManager.Inst.ExecuteCmd(new SetPhonemeExpressionCommand(DocManager.Inst.Project, track, Part, phoneme, abbr, value));
-                        }
-                    }
+                if (track.TryGetExpression(DocManager.Inst.Project, abbr, out UExpression expression) && expression.value == value) {
+                    value = null;
                 }
+                DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, abbr, value));
             }
         }
         public void SetOptionalExpressionsChanges(string abbr, int? value) {
             if (!NoteLoading && Part != null && selectedNotes.Count > 0) {
                 var track = DocManager.Inst.Project.tracks[Part.trackNo];
-                DocManager.Inst.StartUndoGroup();
-
-                foreach (UNote note in selectedNotes) {
-                    foreach (UPhoneme phoneme in Part.phonemes) {
-                        if (phoneme.Parent == note) {
-                            DocManager.Inst.ExecuteCmd(new SetPhonemeExpressionCommand(DocManager.Inst.Project, track, Part, phoneme, abbr, value));
-                        }
-                    }
+                if (track.TryGetExpression(DocManager.Inst.Project, abbr, out UExpression expression) && expression.value == value) {
+                    value = null;
                 }
+                DocManager.Inst.StartUndoGroup();
+                DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, abbr, value));
                 DocManager.Inst.EndUndoGroup();
             }
         }

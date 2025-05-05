@@ -3,12 +3,17 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using OpenUtau.Core;
 using OpenUtau.Core.Util;
 
 namespace OpenUtau.App {
     internal class FilePicker {
         public static FilePickerFileType ProjectFiles { get; } = new("Project Files") {
+<<<<<<< HEAD
             Patterns = new[] { "*.ustx", "*.vsqx", "*.ust", "*.mid", "*.midi", "*.ufdata", "*.svp", "*.ccs"},
+=======
+            Patterns = new[] { "*.ustx", "*.vsqx", "*.ust", "*.mid", "*.midi", "*.ufdata", "*.musicxml" },
+>>>>>>> stakira/master
         };
         public static FilePickerFileType USTX { get; } = new("USTX") {
             Patterns = new[] { "*.ustx" },
@@ -30,6 +35,9 @@ namespace OpenUtau.App {
         };
         public static FilePickerFileType UFDATA { get; } = new("UFDATA") {
             Patterns = new[] { "*.ufdata" },
+        };
+        public static FilePickerFileType MUSICXML { get; } = new("MUSICXML") {
+            Patterns = new[] { "*.musicxml" },
         };
         public static FilePickerFileType AudioFiles { get; } = new("Audio Files") {
             Patterns = new[] { "*.wav", "*.mp3", "*.ogg", "*.opus", "*.flac" },
@@ -167,7 +175,8 @@ namespace OpenUtau.App {
 
         public async static Task<string?> SaveFileAboutProject
             (Window window, string titleKey, params FilePickerFileType[] types) {
-            var path = await SaveFile(window, titleKey, Preferences.Default.RecentOpenProjectDirectory, null, types);
+            var path = await SaveFile(window, titleKey, Preferences.Default.RecentOpenProjectDirectory, 
+                Path.GetFileName(Path.ChangeExtension(DocManager.Inst.Project.FilePath, null)), types);
             var dir = Path.GetDirectoryName(path);
             if (dir != null) {
                 Preferences.Default.RecentOpenProjectDirectory = dir;
