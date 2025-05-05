@@ -147,9 +147,6 @@ namespace OpenUtau.App.Views {
             }));
             DocManager.Inst.AddSubscriber(this);
 
-
-<<<<<<< HEAD
-=======
             ViewModel.NoteBatchEdits.Insert(5, new MenuItemViewModel() {
                 Header = ThemeManager.GetString("pianoroll.menu.notes.addbreath"),
                 Command = ReactiveCommand.Create(() => {
@@ -162,7 +159,6 @@ namespace OpenUtau.App.Views {
                     QuantizeNotes();
                 })
             });
->>>>>>> stakira/master
             ViewModel.NoteBatchEdits.Add(new MenuItemViewModel() {
                 Header = ThemeManager.GetString("pianoroll.menu.notes.lengthencrossfade"),
                 Command = ReactiveCommand.Create(() => {

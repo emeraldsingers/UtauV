@@ -46,17 +46,10 @@
   <!--<system:String x:Key="dialogs.messagebox.no">No</system:String>-->
   <!--<system:String x:Key="dialogs.messagebox.ok">Ok</system:String>-->
   <system:String x:Key="dialogs.messagebox.yes">Sí</system:String>
-<<<<<<< HEAD
-  <system:String x:Key="dialogs.noresampler.caption">Resampler no encontrado</system:String>
-  <system:String x:Key="dialogs.noresampler.message">No se encontró un Resampler. Pone uno (sea .exe o .dll) en la carpeta Resamplers en la ruta de instalación de OpenUtau.</system:String>
-  <!--<system:String x:Key="dialogs.remaptimeaxis.message">This tool will change the tempo of the project without changing the actual positions and durations (in seconds) of notes.
-  New BPM:</system:String>-->
-=======
   <system:String x:Key="dialogs.noresampler.caption">Error de resampler</system:String>
   <system:String x:Key="dialogs.noresampler.message">No se encontró un resampler. Pone uno (sea .exe o .dll) en la carpeta Resamplers en la ruta de instalación de OpenUTAU.</system:String>
   <system:String x:Key="dialogs.remaptimeaxis.message">Esta herramienta cambia el tempo sin mover las notas ni cambiar su duración (en segundos).
   Nuevo BPM:</system:String>
->>>>>>> stakira/master
   <system:String x:Key="dialogs.timesig.caption">Medida del compás</system:String>
   <system:String x:Key="dialogs.tracksettings.caption">Ajustes de la pista</system:String>
   <system:String x:Key="dialogs.tracksettings.location">Ubicación</system:String>
@@ -197,17 +190,10 @@
   <system:String x:Key="menu.help.checkupdate">Buscar actualizaciones</system:String>
   <system:String x:Key="menu.help.logslocation">Abrir la ubicación de los registros</system:String>
   <system:String x:Key="menu.help.reportissue">Reportar problema</system:String>
-<<<<<<< HEAD
-  <system:String x:Key="menu.help.wiki">Wiki de OpenUtau</system:String>
-  <!--<system:String x:Key="menu.project">Project</system:String>-->
-  <!--<system:String x:Key="menu.project.expressions">Expressions...</system:String>-->
-  <!--<system:String x:Key="menu.project.remaptimeaxis">Adjust Tempo (Preserve Timing)</system:String>-->
-=======
   <system:String x:Key="menu.help.wiki">Wiki de OpenUTAU</system:String>
   <system:String x:Key="menu.project">Proyecto</system:String>
   <system:String x:Key="menu.project.expressions">Expresiones...</system:String>
   <system:String x:Key="menu.project.remaptimeaxis">Ajustar tempo (mantiene timing)</system:String>
->>>>>>> stakira/master
   <system:String x:Key="menu.tools">_Herramientas</system:String>
   <system:String x:Key="menu.tools.clearcache">Limpiar caché</system:String>
   <system:String x:Key="menu.tools.debugwindow">Ventana de depuración</system:String>
@@ -402,13 +388,9 @@ Advertencia: Esta opción eliminará las bases personalizadas.</system:String>
   <system:String x:Key="prefs.cache.clearonquit">Limpiar cache al salir</system:String>
   <system:String x:Key="prefs.cache.diffsingertensorcache">Cache de Tensor de DiffSinger</system:String>
   <system:String x:Key="prefs.caption">Ajustes</system:String>
-<<<<<<< HEAD
-  <system:String x:Key="prefs.note.restart">Nota: Por favor, reinicia OpenUtau después de cambiar esta opción.</system:String>
-=======
   <!--<system:String x:Key="prefs.diffsinger">DiffSinger</system:String>-->
   <system:String x:Key="prefs.editing">Edición</system:String>
   <system:String x:Key="prefs.note.restart">Nota: Por favor, reinicia OpenUTAU después de cambiar esta opción.</system:String>
->>>>>>> stakira/master
   <system:String x:Key="prefs.off">No</system:String>
   <system:String x:Key="prefs.on">Sí</system:String>
   <system:String x:Key="prefs.otoeditor">Editor de OTO</system:String>
@@ -587,11 +569,6 @@ General
   <system:String x:Key="updater.update">Actualizar</system:String>
 
   <system:String x:Key="warning">Alerta</system:String>
-<<<<<<< HEAD
-  <system:String x:Key="warning.asciipath">La ruta de OpenUtau "{0}" contiene símbolos que no son ASCII. Puede que Resamplers en .exe no funcionen.</system:String>
-  <system:String x:Key="warning.renderer">Este renderizador no está configurado. Por favor, escoge CLASSIC.</system:String>
-=======
   <system:String x:Key="warning.asciipath">La ruta de OpenUTAU "{0}" contiene símbolos que no son ASCII. Puede que Resamplers en .exe no funcionen.</system:String>
   <system:String x:Key="warning.renderer">Este renderizador no está configurado para esto.</system:String>
->>>>>>> stakira/master
 </ResourceDictionary>

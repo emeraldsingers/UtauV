@@ -836,13 +836,8 @@ namespace OpenUtau.App.Views {
                 return;
             }
             string file = storageItem.Path.LocalPath;
-<<<<<<< HEAD
             var ext = Path.GetExtension(file);
             if (ext == ".ustx" || ext == ".ust" || ext == ".vsqx" || ext == ".ufdata" || ext == ".svp" || ext == ".ccs") {
-=======
-            var ext = Path.GetExtension(file).ToLower();
-            if (ext == ".ustx" || ext == ".ust" || ext == ".vsqx" || ext == ".ufdata" || ext == ".musicxml") {
->>>>>>> stakira/master
                 if (!DocManager.Inst.ChangesSaved && !await AskIfSaveAndContinue()) {
                     return;
                 }

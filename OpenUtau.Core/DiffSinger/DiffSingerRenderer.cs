@@ -235,9 +235,6 @@ namespace OpenUtau.Core.DiffSinger {
                 .Reshape(new int[] { 1, durations.Count })));
             var f0Tensor = new DenseTensor<float>(f0, new int[] { f0.Length })
                 .Reshape(new int[] { 1, f0.Length });
-<<<<<<< HEAD
-            acousticInputs.Add(NamedOnnxValue.CreateFromTensor("f0", f0tensor));
-=======
             if (vocoder.pitch_controllable) {
                 var shiftedF0Tensor = new DenseTensor<float>(shiftedF0, new int[] { shiftedF0.Length })
                     .Reshape(new int[] { 1, shiftedF0.Length });
@@ -245,7 +242,6 @@ namespace OpenUtau.Core.DiffSinger {
             } else {
                 acousticInputs.Add(NamedOnnxValue.CreateFromTensor("f0", f0Tensor));
             }
->>>>>>> stakira/master
 
             // sampling acceleration related
             if (singer.dsConfig.useContinuousAcceleration) {
@@ -296,13 +292,8 @@ namespace OpenUtau.Core.DiffSinger {
             //Definition of GENC: 100 = 12 semitones of formant shift, positive GENC means shift down
             if (singer.dsConfig.useKeyShiftEmbed) {
                 var range = singer.dsConfig.augmentationArgs.randomPitchShifting.range;
-<<<<<<< HEAD
-                var positiveScale = (range[1] == 0) ? 0 : (12 / range[1] / 100);
-                var negativeScale = (range[0] == 0) ? 0 : (-12 / range[0] / 100);
-=======
                 var positiveScale = (range[1]==0) ? 0 : (12/range[1]/100);
                 var negativeScale = (range[0]==0) ? 0 : (-12/range[0]/100);
->>>>>>> stakira/master
                 float[] gender = DiffSingerUtils.SampleCurve(phrase, phrase.gender,
                     0, frameMs, totalFrames, headFrames, tailFrames,
                     x => (x < 0) ? (-x * positiveScale) : (-x * negativeScale))
@@ -361,11 +352,7 @@ namespace OpenUtau.Core.DiffSinger {
                             "The parameter \"energy\" required by acoustic model is not found in variance predictions.");
                     }
                     var predictedEnergy = DiffSingerUtils.ResampleCurve(varianceResult.energy, totalFrames);
-<<<<<<< HEAD
-                    var energy = predictedEnergy.Zip(userEnergy, (x, y) => (float)Math.Min(x + y * 12 / 100, 0)).ToArray();
-=======
                     var energy = predictedEnergy.Zip(userEnergy, (x,y)=>(float)Math.Min(x + y*12/100, 0)).ToArray();
->>>>>>> stakira/master
                     acousticInputs.Add(NamedOnnxValue.CreateFromTensor("energy",
                         new DenseTensor<float>(energy, new int[] { energy.Length })
                         .Reshape(new int[] { 1, energy.Length })));
@@ -379,11 +366,7 @@ namespace OpenUtau.Core.DiffSinger {
                             "The parameter \"breathiness\" required by acoustic model is not found in variance predictions.");
                     }
                     var predictedBreathiness = DiffSingerUtils.ResampleCurve(varianceResult.breathiness, totalFrames);
-<<<<<<< HEAD
-                    var breathiness = predictedBreathiness.Zip(userBreathiness, (x, y) => (float)Math.Min(x + y * 12 / 100, 0)).ToArray();
-=======
                     var breathiness = predictedBreathiness.Zip(userBreathiness, (x,y)=>(float)Math.Min(x + y*12/100, 0)).ToArray();
->>>>>>> stakira/master
                     acousticInputs.Add(NamedOnnxValue.CreateFromTensor("breathiness",
                         new DenseTensor<float>(breathiness, new int[] { breathiness.Length })
                         .Reshape(new int[] { 1, breathiness.Length })));
@@ -456,11 +439,7 @@ namespace OpenUtau.Core.DiffSinger {
             //waveform = session.run(['waveform'], {'mel': mel, 'f0': f0})[0]
             var vocoderInputs = new List<NamedOnnxValue>();
             vocoderInputs.Add(NamedOnnxValue.CreateFromTensor("mel", mel));
-<<<<<<< HEAD
-            vocoderInputs.Add(NamedOnnxValue.CreateFromTensor("f0", f0tensor));
-=======
             vocoderInputs.Add(NamedOnnxValue.CreateFromTensor("f0",f0Tensor));
->>>>>>> stakira/master
             var vocoderCache = Preferences.Default.DiffSingerTensorCache
                 ? new DiffSingerCache(vocoder.hash, vocoderInputs)
                 : null;

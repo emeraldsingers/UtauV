@@ -6,11 +6,7 @@ using OpenUtau.Core.Ustx;
 
 
 namespace OpenUtau.Core.Format {
-<<<<<<< HEAD
     public enum ProjectFormats { Unknown, Vsq3, Vsq4, Ust, Ustx, Midi, Ufdata, Svp, CCS};
-=======
-    public enum ProjectFormats { Unknown, Vsq3, Vsq4, Ust, Ustx, Midi, Ufdata, Musicxml };
->>>>>>> stakira/master
 
     public static class Formats {
         const string ustMatch = "[#SETTING]";
@@ -20,12 +16,8 @@ namespace OpenUtau.Core.Format {
         const string vsq4Match = VSQx.vsq4NameSpace;
         const string midiMatch = "MThd";
         const string ufdataMatch = "\"formatVersion\":";
-<<<<<<< HEAD
         const string svpMatch = "\"version\":";
         const string ccsMatch = "<Scenario";
-=======
-        const string musicxmlMatch = "score-partwise";
->>>>>>> stakira/master
 
         public static ProjectFormats DetectProjectFormat(string file) {
             var lines = new List<string>();
@@ -47,17 +39,12 @@ namespace OpenUtau.Core.Format {
                 return ProjectFormats.Midi;
             } else if (contents.Contains(ufdataMatch)) {
                 return ProjectFormats.Ufdata;
-<<<<<<< HEAD
             } else if (contents.Contains(svpMatch)) {
                 return ProjectFormats.Svp;
             } else if (contents.Contains(ccsMatch)) {
                 return ProjectFormats.CCS;
 
             
-=======
-            } else if (contents.Contains(musicxmlMatch)) {
-                return ProjectFormats.Musicxml;
->>>>>>> stakira/master
             } else {
                 return ProjectFormats.Unknown;
             }
@@ -90,7 +77,6 @@ namespace OpenUtau.Core.Format {
                 case ProjectFormats.Ufdata:
                     project = Ufdata.Load(files[0]);
                     break;
-<<<<<<< HEAD
                 case ProjectFormats.Svp:
                     project = SVP.Load(files[0]);
                     break;
@@ -98,11 +84,6 @@ namespace OpenUtau.Core.Format {
                     project = CCS.Load(files[0]);
                     break;
 
-=======
-                case ProjectFormats.Musicxml:
-                    project = MusicXML.LoadProject(files[0]);
-                    break;
->>>>>>> stakira/master
                 default:
                     throw new FileFormatException("Unknown file format");
             }

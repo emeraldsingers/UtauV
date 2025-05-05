@@ -29,11 +29,7 @@
 
   <system:String x:Key="dialogs.about.caption">Informazioni su OpenUtau</system:String>
   <system:String x:Key="dialogs.about.message">
-<<<<<<< HEAD
-		OpenUtau punta ad essere un programma open source con un'esperienza utente moderna e supporto fonetico intelligente per la communità di UTAU. Visitaci su GitHub.
-=======
     OpenUTAU punta ad essere un programma open source con un'esperienza utente moderna e supporto fonetico intelligente per la communità di UTAU. Visitaci su GitHub.
->>>>>>> stakira/master
   </system:String>
   <system:String x:Key="dialogs.exitsave.caption">Stai uscendo da OpenUtau</system:String>
   <system:String x:Key="dialogs.exitsave.message">Questo progetto attuale ha dei cambiamenti non salvati. Vuoi salvare?</system:String>

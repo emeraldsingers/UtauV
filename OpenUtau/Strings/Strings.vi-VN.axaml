@@ -388,13 +388,10 @@ Lưu ý: tuỳ chọn này cũng sẽ xoá các tổ hợp thiết lập của b
   <system:String x:Key="prefs.cache.clearonquit">Dọn bộ nhớ đệm khi thoát chương trình</system:String>
   <system:String x:Key="prefs.cache.diffsingertensorcache">Bộ nhớ đệm Tensor của DiffSinger</system:String>
   <system:String x:Key="prefs.caption">Tuỳ chọn</system:String>
-<<<<<<< HEAD
   <system:String x:Key="prefs.note.restart">Lưu ý: tắt mở lại OpenUtau sau khi thay đổi thiết lập này.</system:String>
-=======
   <!--<system:String x:Key="prefs.diffsinger">DiffSinger</system:String>-->
   <!--<system:String x:Key="prefs.editing">Editing</system:String>-->
   <system:String x:Key="prefs.note.restart">Lưu ý: tắt mở lại OpenUTAU sau khi thay đổi thiết lập này.</system:String>
->>>>>>> stakira/master
   <system:String x:Key="prefs.off">Tắt</system:String>
   <system:String x:Key="prefs.on">Mở</system:String>
   <system:String x:Key="prefs.otoeditor">Trình chỉnh thiết lập nguồn âm</system:String>

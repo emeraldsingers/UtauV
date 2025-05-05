@@ -1,11 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-<<<<<<< HEAD
-    <TargetFramework>net6.0-windows</TargetFramework>
-    <Platforms>AnyCPU;x86</Platforms>
-=======
     <TargetFramework>net8.0-windows</TargetFramework>
->>>>>>> stakira/master
   </PropertyGroup>
     
   <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
