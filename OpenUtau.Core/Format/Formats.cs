@@ -3,10 +3,10 @@ using System.IO;
 using System.Linq;
 using OpenUtau.Classic;
 using OpenUtau.Core.Ustx;
-using SVP.Core.Format;
+
 
 namespace OpenUtau.Core.Format {
-    public enum ProjectFormats { Unknown, Vsq3, Vsq4, Ust, Ustx, Midi, Ufdata, Svp};
+    public enum ProjectFormats { Unknown, Vsq3, Vsq4, Ust, Ustx, Midi, Ufdata, Svp, CCS};
 
     public static class Formats {
         const string ustMatch = "[#SETTING]";
@@ -16,7 +16,9 @@ namespace OpenUtau.Core.Format {
         const string vsq4Match = VSQx.vsq4NameSpace;
         const string midiMatch = "MThd";
         const string ufdataMatch = "\"formatVersion\":";
-        const string svpMatch = "{\"version\":";
+        const string svpMatch = "\"version\":";
+        const string ccsMatch = "<Scenario";
+
         public static ProjectFormats DetectProjectFormat(string file) {
             var lines = new List<string>();
             using (var reader = new StreamReader(file)) {
@@ -39,6 +41,10 @@ namespace OpenUtau.Core.Format {
                 return ProjectFormats.Ufdata;
             } else if (contents.Contains(svpMatch)) {
                 return ProjectFormats.Svp;
+            } else if (contents.Contains(ccsMatch)) {
+                return ProjectFormats.CCS;
+
+            
             } else {
                 return ProjectFormats.Unknown;
             }
@@ -72,8 +78,12 @@ namespace OpenUtau.Core.Format {
                     project = Ufdata.Load(files[0]);
                     break;
                 case ProjectFormats.Svp:
-                    project = SvpData.Load(files[0]);
+                    project = SVP.Load(files[0]);
                     break;
+                case ProjectFormats.CCS:
+                    project = CCS.Load(files[0]);
+                    break;
+
                 default:
                     throw new FileFormatException("Unknown file format");
             }

@@ -370,6 +370,7 @@ namespace OpenUtau.App.ViewModels {
             this.RaisePropertyChanged(nameof(AdditionalSingersPath));
         }
 
+
         public void SetVLabelerPath(string path) {
             Preferences.Default.VLabelerPath = path;
             Preferences.Save();

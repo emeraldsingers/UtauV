@@ -97,7 +97,8 @@
             </Grid>
           </StackPanel>
         </HeaderedContentControl>
-        <HeaderedContentControl Classes="groupbox" Header="{DynamicResource prefs.cache}">
+
+          <HeaderedContentControl Classes="groupbox" Header="{DynamicResource prefs.cache}">
             <StackPanel>
                 <Grid>
                     <TextBlock Text="{DynamicResource prefs.cache.clearonquit}" HorizontalAlignment="Left" />
@@ -257,6 +258,7 @@
               <TextBlock Text=" .ust" Grid.Column="1" Grid.Row="1" VerticalAlignment="Center"/>
               <CheckBox IsChecked="{Binding RememberVsqx}" Grid.Column="0" Grid.Row="2" VerticalAlignment="Center"/>
               <TextBlock Text=" .vsqx" Grid.Column="1" Grid.Row="2" VerticalAlignment="Center"/>
+
             </Grid>
             <TextBlock Text="{DynamicResource prefs.advanced.importtempo}" Margin="0,10,0,0"/>
             <ComboBox SelectedIndex="{Binding ImportTempo}">

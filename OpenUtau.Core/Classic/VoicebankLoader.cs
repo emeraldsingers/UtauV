@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
+// using Mocaloid;
 using OpenUtau.Core.Util;
 using Serilog;
 
@@ -66,8 +67,12 @@ namespace OpenUtau.Classic {
                     }
                 })
                 .OfType<Voicebank>());
+
+
             return result;
         }
+
+
 
         public static void LoadVoicebank(Voicebank voicebank) {
             LoadInfo(voicebank, voicebank.File, voicebank.BasePath);

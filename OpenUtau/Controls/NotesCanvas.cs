@@ -211,7 +211,7 @@ namespace OpenUtau.App.Controls {
             size = size.WithWidth(size.Width - 1).WithHeight(Math.Floor(size.Height - 2));
             Point rightBottom = new Point(leftTop.X + size.Width, leftTop.Y + size.Height);
 
-            var project = DocManager.Inst.Project; 
+            var project = DocManager.Inst.Project;
             var singerName = string.Empty;
 
             if (part != null && project != null) {
@@ -223,14 +223,19 @@ namespace OpenUtau.App.Controls {
 
             var singerColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 { "Asoqwer", "asoqwer" },
-                { "莠ｬ蟄", "keko" },
+                { "莠ｬ蟄", "keko"},
                 { "keko", "keko" },
+                { "K3K0", "keko" },
                 { "Akizora", "akizora" },
-                { "Tilke", "tilke" }
+                { "Tilke", "tilke" },
+                { "Simon", "simon" },
+                { "Mitsuo", "mitsuo" },
+                { "Shiroi", "shiroi" }
             };
-            bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("K3K0", StringComparison.OrdinalIgnoreCase) >= 0;
             bool isTilke = singerName.IndexOf("tilke", StringComparison.OrdinalIgnoreCase) >= 0;
-
+            bool isSimon = singerName.IndexOf("simon", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isShiroi = singerName.IndexOf("shiroi", StringComparison.OrdinalIgnoreCase) >= 0;
             IBrush brush;
 
             string? matchedSinger = singerColors.Keys.FirstOrDefault(singer => singerName.IndexOf(singer, StringComparison.OrdinalIgnoreCase) >= 0);
@@ -252,16 +257,16 @@ namespace OpenUtau.App.Controls {
 
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), 2, 2);
             if (TrackHeight < 10 || note.lyric.Length == 0) {
-               return;
+                return;
             }
             string displayLyric = note.lyric;
             int txtsize = 12;
             IBrush textbrush = Brushes.Black;
             var textLayout = TextLayoutCache.Get(displayLyric, Brushes.Black, txtsize);
-            if (isKeko) {
+            if (isKeko || isTilke || isShiroi) {
                 textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
-            } else if (isTilke) {
-                textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
+            } else if (isSimon) {
+                textLayout = TextLayoutCache.Get(displayLyric, Brushes.Black, txtsize);
             }
             
             if (txtsize > size.Height) {
@@ -269,15 +274,14 @@ namespace OpenUtau.App.Controls {
             }
             if (textLayout.Height + 5 < size.Height) {
                 txtsize = (int)(12 * (size.Height / textLayout.Height));
-                if (isKeko) {
+                if (isKeko || isTilke || isSimon) {
                     textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
-                } else if (isTilke) {
-                    textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
-                }
+                } 
+                
             }
             if (textLayout.Width + 5 > size.Width) {
                 displayLyric = displayLyric[0] + "..";
-                if (isKeko) {
+                if (isKeko ||  isSimon) {
                     textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize);
                 }
                 if (textLayout.Width + 5 > size.Width) {
@@ -328,9 +332,13 @@ namespace OpenUtau.App.Controls {
             IBrush? brush; // = ThemeManager.AccentBrush3;
             IPen? pen; //= ThemeManager.AccentPen3;
             bool isAsoqwer = singerName.IndexOf("asoqwer", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isShiroi = singerName.IndexOf("shiroi", StringComparison.OrdinalIgnoreCase) >= 0;
             if (isAsoqwer) {
                 brush = ThemeManager.AsoqwerPitchBendBrush;
                 pen = ThemeManager.AsoqwerPitchBend;
+            } else if (isShiroi) {
+                brush = ThemeManager.ShiroiPitchBendBrush;
+                pen = ThemeManager.ShiroiPitchBend;
             } else {
                 brush = ThemeManager.AccentBrush3;
                 pen = ThemeManager.AccentPen3;
@@ -449,7 +457,7 @@ namespace OpenUtau.App.Controls {
                     }
                 }
 
-                bool iskeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool iskeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("K3K0", StringComparison.OrdinalIgnoreCase) >= 0;
                 bool isTilke = singerName.IndexOf("Tilke", StringComparison.OrdinalIgnoreCase) >= 0;
                 bool isAkizora = singerName.IndexOf("Akizora", StringComparison.OrdinalIgnoreCase) >= 0;
                 if (iskeko) {

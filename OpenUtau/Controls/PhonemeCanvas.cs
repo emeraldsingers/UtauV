@@ -146,10 +146,13 @@ namespace OpenUtau.App.Controls {
                     double x4 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[4].X) - Part.position, 0).X;
                     double y4 = (1 - phoneme.envelope.data[4].Y / 100) * height;
                     bool isAsoqwer = singerName.IndexOf("Asoqwer", StringComparison.OrdinalIgnoreCase) >= 0;
-                    bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isKeko = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("K3K0", StringComparison.OrdinalIgnoreCase) >= 0;
 
                     bool isAkizora = singerName.IndexOf("Akizora", StringComparison.OrdinalIgnoreCase) >= 0;
                     bool isTilke = singerName.IndexOf("Tilke", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isSimon = singerName.IndexOf("Simon", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isMitsuo = singerName.IndexOf("Mitsuo", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isshiroi = singerName.IndexOf("shiroi", StringComparison.OrdinalIgnoreCase) >= 0;
                     IPen? pen;
                     IBrush? brush;
                     if (isAsoqwer) {
@@ -170,7 +173,22 @@ namespace OpenUtau.App.Controls {
                         pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.TilkePhoneme : ThemeManager.TilkePhoneme2;
                         brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.GetTrackColor("tilke").AccentColorLightSemi : ThemeManager.TilkeAccentColorSemi;
 
-                    } else {
+                    } else if (isshiroi) {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.ShiroiPhoneme : ThemeManager.ShiroiPhoneme2;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.ShiroiAccentColorSemi : new SolidColorBrush(Color.Parse("#781818")) {
+                            Opacity = 0.5
+                        };
+
+                    } else if (isSimon) {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.SimonPhoneme : ThemeManager.SimonPhoneme2;
+                        var SimonBrush1 = ThemeManager.GetTrackColor("simon").AccentColorCenterKey;
+                        SimonBrush1.Opacity = 0.5;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? SimonBrush1: ThemeManager.SimonAccentColorSemi;
+                    } else if (isMitsuo) {
+                        pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.MitsuoPhoneme : ThemeManager.MitsuoPhoneme2;
+                        brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.GetTrackColor("mitsuo").AccentColorLightSemi : ThemeManager.MitsuoAccentColorSemi;
+                    } 
+                    else {
                         pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
                         brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
                     }
@@ -192,10 +210,13 @@ namespace OpenUtau.App.Controls {
                     }
                 }
                 bool isAsoqwer2 = singerName.IndexOf("Asoqwer", StringComparison.OrdinalIgnoreCase) >= 0;
-                bool isKeko2 = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isKeko2 = singerName.IndexOf("莠ｬ蟄", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("keko", StringComparison.OrdinalIgnoreCase) >= 0 || singerName.IndexOf("K3K0", StringComparison.OrdinalIgnoreCase) >= 0;
 
                 bool isAkizora2 = singerName.IndexOf("Akizora", StringComparison.OrdinalIgnoreCase) >= 0;
                 bool isTilke2 = singerName.IndexOf("Tilke", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isSimon2 = singerName.IndexOf("Simon", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isMitsuo2 = singerName.IndexOf("Mitsuo", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isShiroi2 = singerName.IndexOf("shiroi", StringComparison.OrdinalIgnoreCase) >= 0;
                 IPen? penPos;
                 if (isAsoqwer2) {
                     penPos = ThemeManager.AsoqwerAccentPen2;
@@ -216,6 +237,21 @@ namespace OpenUtau.App.Controls {
                     penPos = ThemeManager.TilkeAccentPen2;
                     if (phoneme.rawPosition != phoneme.position) {
                         penPos = ThemeManager.TilkeAccentPen2Thickness3;
+                    }
+                } else if (isSimon2) {
+                    penPos = ThemeManager.SimonAccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.SimonAccentPen2Thickness3;
+                    }
+                } else if (isMitsuo2) {
+                    penPos = ThemeManager.MitsuoAccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.MitsuoAccentPen2Thickness3;
+                    }
+                } else if (isShiroi2) {
+                    penPos = ThemeManager.ShiroiAccentPen2;
+                    if (phoneme.rawPosition != phoneme.position) {
+                        penPos = ThemeManager.ShiroiAccentPen2Thickness3;
                     }
                 } else {
                     penPos = ThemeManager.AccentPen2;

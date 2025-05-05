@@ -56,6 +56,8 @@ namespace OpenUtau.App {
         public static IPen AkizoraPitch = new Pen(new SolidColorBrush(Color.Parse("#8b87a8")), 1);
         public static IPen AsoqwerPitchBend = new Pen(new SolidColorBrush(Color.Parse("#ff5d6a")), 1);
         public static IBrush AsoqwerPitchBendBrush = new SolidColorBrush(Color.Parse("#ff5d6a"));
+        public static IPen ShiroiPitchBend = new Pen(new SolidColorBrush(Color.Parse("#ffffff")), 1);
+        public static IBrush ShiroiPitchBendBrush = new SolidColorBrush(Color.Parse("#ffffff"));
 
         public static IPen AsoqwerPhoneme = new Pen(new SolidColorBrush(Color.Parse("#efddc7")), 1);
         public static IPen AsoqwerPhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#ffd79f")), 1);
@@ -87,6 +89,31 @@ namespace OpenUtau.App {
             Opacity = 0.5
         };
 
+        public static IPen SimonPhoneme = new Pen(new SolidColorBrush(Color.Parse("#ffbb52")), 1);
+        public static IPen SimonPhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#ffbb52")), 1);
+        public static IPen SimonAccentPen2 = new Pen(new SolidColorBrush(Color.Parse("#ffbb52")), 1);
+        public static IPen SimonAccentPen2Thickness3 = new Pen(new SolidColorBrush(Color.Parse("#ffbb52")), 3);
+        public static IBrush SimonAccentColorSemi = new SolidColorBrush(Color.Parse("#ffbb52")) {
+            Opacity = 0.5
+        };
+
+        public static IPen MitsuoPhoneme = new Pen(new SolidColorBrush(Color.Parse("#7bd8ae")), 1);
+        public static IPen MitsuoPhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#ffa423")), 1);
+        public static IPen MitsuoAccentPen2 = new Pen(new SolidColorBrush(Color.Parse("#ffa423")), 1);
+        public static IPen MitsuoAccentPen2Thickness3 = new Pen(new SolidColorBrush(Color.Parse("#ffa423")), 3);
+        public static IBrush MitsuoAccentColorSemi = new SolidColorBrush(Color.Parse("#ffa423")) {
+            Opacity = 0.5
+        };
+
+
+        public static IPen ShiroiPhoneme = new Pen(new SolidColorBrush(Color.Parse("#781818")), 1);
+        public static IPen ShiroiPhoneme2 = new Pen(new SolidColorBrush(Color.Parse("#b35353")), 1);
+        public static IPen ShiroiAccentPen2 = new Pen(new SolidColorBrush(Color.Parse("#b35353")), 1);
+        public static IPen ShiroiAccentPen2Thickness3 = new Pen(new SolidColorBrush(Color.Parse("#b35353")), 3);
+        public static IBrush ShiroiAccentColorSemi = new SolidColorBrush(Color.Parse("#b35353")) {
+            Opacity = 0.5
+        };
+
         public static List<TrackColor> TrackColors = new List<TrackColor>(){
                 new TrackColor("Pink", "#F06292", "#EC407A", "#F48FB1", "#FAC7D8"),
                 new TrackColor("Red", "#EF5350", "#E53935", "#E57373", "#F2B9B9"),
@@ -106,10 +133,13 @@ namespace OpenUtau.App {
                 new TrackColor("Light Blue2", "#1976D2", "#0D47A1", "#2196F3", "#90CBF9"),
                 new TrackColor("Blue2", "#3949AB", "#283593", "#5C6BC0", "#AEB5E0"),
                 new TrackColor("Purple2", "#7B1FA2", "#4A148C", "#AB47BC", "#D5A3DE"),
-                new TrackColor("asoqwer", "#fecd8a", "#ffd79f", "#aec9d2", "#ff9100"),
-                new TrackColor("keko", "#2a52be", "#BA55D3", "#4597e5", "#2a52be"),
-                new TrackColor("tilke", "#484F85", "#BA55D3", "#979FB6", "#FDDB85"),
-                new TrackColor("akizora", "#82aba9", "#BA55D3", "#66a5a4", "#FDDB85"),
+                new TrackColor("asoqwer", "#fecd8a", "#212121", "#aec9d2", "#e32636"), 
+                new TrackColor("keko", "#2a52be", "#EEEEEE", "#4597e5", "#90caf9"), 
+                new TrackColor("tilke", "#484F85", "#EEEEEE", "#979FB6", "#979fb6"), 
+                new TrackColor("akizora", "#82aba9", "#212121", "#66a5a4", "#c8e6c9"), 
+                new TrackColor("simon", "#ffb63f", "#212121", "#84d8cd", "#ffcd41"),
+                new TrackColor("mitsuo", "#ffa423", "#212121", "#7bd8ae", "#212121"),
+                new TrackColor("shiroi", "#852929", "#212121", "#5d5959", "#212121"),
             };
 
         public static void LoadTheme() {
@@ -318,8 +348,18 @@ namespace OpenUtau.App {
             if (TrackColors.Any(c => c.Name == name)) {
                 return TrackColors.First(c => c.Name == name);
             }
-            return TrackColors.First(c => c.Name == "Green1");
+
+            if (TrackColors.Any(c => c.Name == "Green")) {
+                return TrackColors.First(c => c.Name == "Green");
+            }
+
+            if (TrackColors.Count > 0) {
+                return TrackColors[0];
+            }
+
+            return new TrackColor("Default", "#66BB6A", "#43A047", "#A5D6A7", "#D2EBD3");
         }
+
     }
 
     public class TrackColor {

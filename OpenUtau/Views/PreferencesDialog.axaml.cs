@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -15,7 +18,6 @@ namespace OpenUtau.App.Views {
         void ResetAddlSingersPath(object sender, RoutedEventArgs e) {
             ((PreferencesViewModel)DataContext!).SetAddlSingersPath(string.Empty);
         }
-
         async void SelectAddlSingersPath(object sender, RoutedEventArgs e) {
             var path = await FilePicker.OpenFolderAboutSinger(this, "prefs.paths.addlsinger");
             if (string.IsNullOrEmpty(path)) {
@@ -34,11 +36,9 @@ namespace OpenUtau.App.Views {
             DocManager.Inst.ExecuteCmd(new SingersRefreshedNotification());
             MessageBox.CloseLoading();
         }
-
         void ResetVLabelerPath(object sender, RoutedEventArgs e) {
             ((PreferencesViewModel)DataContext!).SetVLabelerPath(string.Empty);
         }
-
         async void SelectVLabelerPath(object sender, RoutedEventArgs e) {
             var type = OS.IsWindows() ? FilePicker.EXE : OS.IsMacOS() ? FilePicker.APP : FilePickerFileTypes.All;
             var path = await FilePicker.OpenFile(this, "prefs.advanced.vlabelerpath", type);

@@ -105,6 +105,9 @@ namespace OpenUtau.Core {
                 if (Directory.Exists(AdditionalSingersPath)) {
                     list.Add(AdditionalSingersPath);
                 }
+                //if (Directory.Exists(AdditionalVocaloidSingersPath)) {
+                //    list.Add(AdditionalVocaloidSingersPath);
+                //}
                 return list.Distinct().ToList();
             }
         }

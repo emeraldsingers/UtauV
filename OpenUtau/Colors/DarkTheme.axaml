@@ -16,9 +16,9 @@
     <Color x:Key="BorderColor">#3C3C3C</Color>
     <Color x:Key="BorderColorPointerOver">#606060</Color>
 
-    <Color x:Key="SystemAccentColor">#00CFCF</Color>
+    <Color x:Key="SystemAccentColor">#78ad35</Color>
     <!-- PointerOver -->
-    <Color x:Key="SystemAccentColorLight1">#5CE7E7</Color>
+    <Color x:Key="SystemAccentColorLight1">#b0e56d</Color>
     <!-- Pressed -->
     <Color x:Key="SystemAccentColorDark1">#009E9E</Color>
 
@@ -34,16 +34,16 @@
     <Color x:Key="TrackBackgroundAltColor">#2e2e2e</Color>
 
     <!--Keyboard Background-->
-    <Color x:Key="WhiteKeyColorLeft">#b4b4b4</Color>
-    <Color x:Key="WhiteKeyColorRight">#b4b4b4</Color>
-    <Color x:Key="WhiteKeyNameColor">#858585</Color>
+    <Color x:Key="WhiteKeyColorLeft">#555555</Color>
+    <Color x:Key="WhiteKeyColorRight">#555555</Color>
+    <Color x:Key="WhiteKeyNameColor">#ffffff</Color>
 
     <Color x:Key="CenterKeyColorLeft">#b4b4b4</Color>
     <Color x:Key="CenterKeyColorRight">#b4b4b4</Color>
-    <Color x:Key="CenterKeyNameColor">#858585</Color>
+    <Color x:Key="CenterKeyNameColor">#ffffff</Color>
 
-    <Color x:Key="BlackKeyColorLeft">#1d1d1d</Color>
-    <Color x:Key="BlackKeyColorRight">#1d1d1d</Color>
-    <Color x:Key="BlackKeyNameColor">#1d1d1d</Color>
+    <Color x:Key="BlackKeyColorLeft">#232323</Color>
+    <Color x:Key="BlackKeyColorRight">#232323</Color>
+    <Color x:Key="BlackKeyNameColor">#ffffff</Color>
     <Color x:Key="TranspSynthVTrack">Transparent</Color>
 </ResourceDictionary>

@@ -25,17 +25,18 @@ def export(trainer, model_path, onnx_path):
 
 if __name__ == '__main__':
     # An example to train the arpabet model.
+
     sys.path.append(os.path.abspath('.'))
-    from g2p.dataset import SphinxDataset
-    from g2p.trainer import G2pTrainer
-    from g2p.model import GreedyG2p
+    from dataset import SphinxDataset
+    from trainer import G2pTrainer
+    from model import GreedyG2p
 
     # The config specifying grapheme set and phoneme set.
-    cfg = OmegaConf.load('g2p/en_us/cfg.yaml')
+    cfg = OmegaConf.load('uk_ua/cfg.yaml')
 
     # Loads the dataset.
     # Note that SphinxDataset may not work for your dictionary format.
-    dataset = SphinxDataset('g2p/en_us/cmudict-0.7b', cfg,
+    dataset = SphinxDataset('uk_ua/ukrainian', cfg,
                             comment_prefix=';;;',
                             # "RECORDS(1)" -> "RECORDS"
                             remove_word_digits=True,

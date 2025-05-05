@@ -201,6 +201,7 @@ namespace OpenUtau.Core.Ustx {
             {"enunu", USingerType.Enunu},
             {"diffsinger", USingerType.DiffSinger},
             {"voicevox", USingerType.Voicevox},
+
         };
 
     }

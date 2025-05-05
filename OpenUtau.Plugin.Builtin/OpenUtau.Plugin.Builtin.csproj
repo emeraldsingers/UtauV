@@ -5,6 +5,7 @@
     <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
     <DebugType>embedded</DebugType>
     <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

@@ -133,7 +133,6 @@ namespace OpenUtau.App.Views {
                 new ResetVibratos(),
                 new ClearTimings(),
                 new ResetAliases(),
-                new PitchBatchEdit()
             }.Select(edit => new MenuItemViewModel() {
                 Header = ThemeManager.GetString(edit.Name),
                 Command = noteBatchEditCommand,
@@ -141,12 +140,14 @@ namespace OpenUtau.App.Views {
             }));
             DocManager.Inst.AddSubscriber(this);
             ViewModel.PitchBatchEdits.AddRange(new List<BatchEdit>() {
-                new PitchBatchEdit()
+                new AutoHarmonies(3,5),
+                new AutoPitchEdit(),
             }.Select(edit => new MenuItemViewModel() {
                 Header = ThemeManager.GetString(edit.Name),
                 Command = noteBatchEditCommand,
                 CommandParameter = edit,
             }));
+            DocManager.Inst.AddSubscriber(this);
 
 
             ViewModel.NoteBatchEdits.Add(new MenuItemViewModel() {
@@ -696,6 +697,17 @@ namespace OpenUtau.App.Views {
                             InputGesture = new KeyGesture(Key.V, KeyModifiers.Alt),
                         });
                         ViewModel.NotesContextMenuItems.Add(new MenuItemViewModel() {
+                            Header = "Generate Pitch",
+                            Command = ReactiveCommand.Create(() => {
+                                if (ViewModel.NotesViewModel.Part != null) { 
+                                    var autoPitchEdit = new AutoPitchEdit();
+                                    autoPitchEdit.Run(DocManager.Inst.Project, ViewModel.NotesViewModel.Part, ViewModel.NotesViewModel.Selection.ToList(), DocManager.Inst);
+
+                                }
+                            }),
+                            InputGesture = new KeyGesture(Key.T, KeyModifiers.Control)
+                        });
+                        ViewModel.NotesContextMenuItems.Add(new MenuItemViewModel() {
                             Header = ThemeManager.GetString("pianoroll.menu.notes"),
                             Items = ViewModel.NoteBatchEdits.ToArray(),
                         });
@@ -1081,7 +1093,20 @@ namespace OpenUtau.App.Views {
                     return;
                 }
             }
+            if (args.Key == Key.T && args.KeyModifiers == KeyModifiers.Control) {
+                var project = DocManager.Inst.Project;
+                var part = notesVm.Part;
+                var selectedNotes = notesVm.Selection.ToList();
 
+                if (ViewModel.NotesViewModel.Part != null) {
+                    var autoPitchEdit = new AutoPitchEdit();
+                    autoPitchEdit.Run(DocManager.Inst.Project, ViewModel.NotesViewModel.Part, ViewModel.NotesViewModel.Selection.ToList(), DocManager.Inst);
+
+                }
+
+                args.Handled = true;
+                return;
+            }
             // returns true if handled
             args.Handled = OnKeyExtendedHandler(args);
         }

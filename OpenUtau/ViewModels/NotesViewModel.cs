@@ -534,24 +534,21 @@ namespace OpenUtau.App.ViewModels {
         private void LoadTrackColor(UPart? part, UProject? project) {
             if (part == null || project == null) {
                 TrackAccentColor = ThemeManager.GetTrackColor("Green1").AccentColor;
-                ThemeManager.ChangePianorollColor("Green1");
+                ThemeManager.ChangePianorollColor("Green");
                 return;
             }
 
             var track = project.tracks[part.trackNo];
             var singerName = track.Singer?.Name ?? string.Empty;
-            Console.WriteLine(singerName);
+            Log.Information(singerName);
             TrackAccentColor = ThemeManager.GetTrackColor(project.tracks[part.trackNo].TrackColor).AccentColor;
-            if (singerName.IndexOf("Asoqwer", StringComparison.OrdinalIgnoreCase) >= 0) {
-                ThemeManager.ChangePianorollColor("asoqwer");
-                Console.WriteLine("asoqwa");
-            } else {
+
                 string name = Preferences.Default.UseTrackColor
                 ? project.tracks[part.trackNo].TrackColor
                 : "Green1";
                 ThemeManager.ChangePianorollColor(name);
                 
-            }
+            
         }
 
         private void UnloadPart() {
