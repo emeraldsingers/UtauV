@@ -122,7 +122,7 @@ namespace OpenUtau.App.Views {
                 Command = noteBatchEditCommand,
                 CommandParameter = edit,
             }));
-            
+
             ViewModel.ResetBatchEdits.AddRange(new List<BatchEdit>() {
                 new ResetAll(),
                 new ResetPitchBends(),
@@ -722,7 +722,7 @@ namespace OpenUtau.App.Views {
                         ViewModel.NotesContextMenuItems.Add(new MenuItemViewModel() {
                             Header = "Generate Pitch",
                             Command = ReactiveCommand.Create(() => {
-                                if (ViewModel.NotesViewModel.Part != null) { 
+                                if (ViewModel.NotesViewModel.Part != null) {
                                     var autoPitchEdit = new AutoPitchEdit();
                                     autoPitchEdit.Run(DocManager.Inst.Project, ViewModel.NotesViewModel.Part, ViewModel.NotesViewModel.Selection.ToList(), DocManager.Inst);
 
@@ -1725,13 +1725,13 @@ namespace OpenUtau.App.Views {
                         }
                     }
                     break;
-                    case Key.PageDown: {
+                case Key.PageDown: {
                         if (isNone) {
                             return MoveToNextPart(true);
                         }
                     }
                     break;
-                #endregion
+                    #endregion
             }
             return false;
         }
