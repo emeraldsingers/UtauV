@@ -5,7 +5,7 @@ using OpenUtau.Classic;
 using OpenUtau.Core.Ustx;
 
 namespace OpenUtau.Core.Format {
-    public enum ProjectFormats { Unknown, Vsq3, Vsq4, Ust, Ustx, Midi, Ufdata, Musicxml, Svp };
+    public enum ProjectFormats { Unknown, Vsq3, Vsq4, Ust, Ustx, Midi, Ufdata, Musicxml, Svp, Tssln, Ccs };
 
     public static class Formats {
         const string ustMatch = "[#SETTING]";
@@ -21,6 +21,13 @@ namespace OpenUtau.Core.Format {
         const string svp2 = "\"mouthOpening\":";
 
         public static ProjectFormats DetectProjectFormat(string file) {
+            var ext = Path.GetExtension(file).ToLowerInvariant();
+            if (ext == ".tssln") {
+                return ProjectFormats.Tssln;
+            }
+            if (ext == ".ccs") {
+                return ProjectFormats.Ccs;
+            }
             var lines = new List<string>();
             using (var reader = new StreamReader(file)) {
                 for (int i = 0; i < 10 && !reader.EndOfStream; ++i) {
@@ -94,6 +101,12 @@ namespace OpenUtau.Core.Format {
                     } else {
                         project = SVP.Load(files[0]);
                     }
+                    break;
+                case ProjectFormats.Tssln:
+                    project = Tssln.Load(files[0]);
+                    break;
+                case ProjectFormats.Ccs:
+                    project = Ccs.Load(files[0]);
                     break;
                 default:
                     throw new FileFormatException("Unknown file format");

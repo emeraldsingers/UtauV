@@ -251,7 +251,9 @@ namespace OpenUtau.App.Views {
                 FilePicker.MIDI,
                 FilePicker.UFDATA,
                 FilePicker.MUSICXML,
-                FilePicker.SVP);
+                FilePicker.SVP,
+                FilePicker.TSSLN,
+                FilePicker.CCS);
             if (files == null || files.Length == 0) {
                 return;
             }
@@ -348,7 +350,9 @@ namespace OpenUtau.App.Views {
                 FilePicker.MIDI,
                 FilePicker.UFDATA,
                 FilePicker.MUSICXML,
-                FilePicker.SVP);
+                FilePicker.SVP,
+                FilePicker.TSSLN,
+                FilePicker.CCS);
             if (files == null || files.Length == 0) {
                 return;
             }
@@ -908,7 +912,7 @@ namespace OpenUtau.App.Views {
         }
 
         async void OnDrop(object? sender, DragEventArgs args) {
-            string[] ProjectExts = { ".ustx", ".ust", ".vsqx", ".ufdata", ".musicxml", ".mid", ".midi", ".svp" };
+            string[] ProjectExts = { ".ustx", ".ust", ".vsqx", ".ufdata", ".musicxml", ".mid", ".midi", ".svp", ".tssln", ".ccs" };
             string[] ArchiveExts = { ".zip", ".rar", ".uar" };
             string[] AudioExts = { ".mp3", ".wav", ".ogg", ".flac" };
             string[] SupportedExts = ProjectExts
