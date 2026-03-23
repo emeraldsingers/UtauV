@@ -65,9 +65,7 @@ Minimal plugin project pattern:
 ```
 
 Example projects:
-
-- [../../OpenUtau.BatchEditPlugin/OpenUtau.BatchEditPlugin.csproj](../../OpenUtau.BatchEditPlugin/OpenUtau.BatchEditPlugin.csproj)
-- [../../OpenUtau.AIAutoTunePlugin/OpenUtau.AIAutoTunePlugin.csproj](../../OpenUtau.AIAutoTunePlugin/OpenUtau.AIAutoTunePlugin.csproj)
+- [OpenUtau.AIAutoTunePlugin.csproj](https://github.com/emeraldsingers/OpenUtau.AIAutoTunePlugin)
 
 ## Plugin Packaging
 
