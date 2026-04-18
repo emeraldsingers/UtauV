@@ -38,7 +38,8 @@ namespace OpenUtau.App.Views {
         }
 
         public void WindowClosing(object? sender, WindowClosingEventArgs e) {
-            if (!skipSaveSize && WindowState != WindowState.Maximized) {
+            // A minimized window may report a lost size and position.
+            if (!skipSaveSize && WindowState != WindowState.Minimized && WindowState != WindowState.Maximized) {
                 Preferences.Default.PianorollWindowSize.Set(Width, Height, Position.X, Position.Y, (int)WindowState);
             }
             Preferences.Save();
