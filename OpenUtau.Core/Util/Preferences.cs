@@ -171,6 +171,7 @@ namespace OpenUtau.Core.Util {
             public bool DiffSingerLangCodeHide = false;
             public bool DiffSingerAutoSP = false;
             public int DiffSingerAutoSPMs = 40;
+            public bool DiffSingerLocalRetaking = false;
             public bool SkipRenderingMutedTracks = false;
             public string Language = string.Empty;
             public string? SortingOrder = null;

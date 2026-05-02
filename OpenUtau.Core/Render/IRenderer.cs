@@ -40,6 +40,11 @@ namespace OpenUtau.Core.Render {
         /// Semitone values in MIDI scale.
         /// </summary>
         public float[] tones;
+
+        /// <summary>
+        /// Per-frame mask indicating retaken frames. Null means full retake.
+        /// </summary>
+        public bool[] retakeMask;
     }
 
     public class RenderRealCurveResult {
@@ -70,6 +75,7 @@ namespace OpenUtau.Core.Render {
         RenderResult Layout(RenderPhrase phrase);
         Task<RenderResult> Render(RenderPhrase phrase, Progress progress, int trackNo, CancellationTokenSource cancellation, bool isPreRender = false);
         RenderPitchResult LoadRenderedPitch(RenderPhrase phrase);
+        RenderPitchResult LoadRenderedPitch(RenderPhrase phrase, HashSet<int> selectedNotePositions) { return LoadRenderedPitch(phrase); }
         List<RenderRealCurveResult> LoadRenderedRealCurves(RenderPhrase phrase) { return new List<RenderRealCurveResult>(0);}
         UExpressionDescriptor[] GetSuggestedExpressions(USinger singer, URenderSettings renderSettings);
     }

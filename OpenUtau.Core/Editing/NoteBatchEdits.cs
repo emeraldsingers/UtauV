@@ -556,7 +556,7 @@ namespace OpenUtau.Core.Editing {
             var commands = new List<SetCurveCommand>();
             for (int ph_i = phrases.Count() - 1; ph_i >= 0; ph_i--) {
                 var phrase = phrases[ph_i];
-                var result = renderer.LoadRenderedPitch(phrase);
+                var result = renderer.LoadRenderedPitch(phrase, positions);
                 if (result == null) {
                     continue;
                 }
@@ -568,6 +568,9 @@ namespace OpenUtau.Core.Editing {
                 // Reverse traversal, so that when the score slices are too close, priority is given to covering the consonant pitch of the next segment, reducing the impact on vowels.
                 for (int i = 0; i < result.tones.Length; i++) {
                     if (result.tones[i] < 0) {
+                        continue;
+                    }
+                    if (result.retakeMask != null && !result.retakeMask[i]) {
                         continue;
                     }
                     int x = phrase.position - part.position + (int)result.ticks[i];

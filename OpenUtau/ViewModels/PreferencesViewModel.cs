@@ -131,6 +131,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool DiffSingerLangCodeHide { get; set; }
         [Reactive] public bool DiffSingerAutoSP { get; set; }
         [Reactive] public int DiffSingerAutoSPMs { get; set; }
+        [Reactive] public bool DiffSingerLocalRetaking { get; set; }
 
         // Advanced
         [Reactive] public bool RememberMid { get; set; }
@@ -214,6 +215,7 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerLangCodeHide = Preferences.Default.DiffSingerLangCodeHide;
             DiffSingerAutoSP = Preferences.Default.DiffSingerAutoSP;
             DiffSingerAutoSPMs = Math.Clamp(Preferences.Default.DiffSingerAutoSPMs, 10, 200);
+            DiffSingerLocalRetaking = Preferences.Default.DiffSingerLocalRetaking;
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
             ThemeName = Preferences.Default.ThemeName;
             ButtonCornerRadius = Preferences.Default.ButtonCornerRadius;
@@ -492,6 +494,12 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Default.DiffSingerAutoSPMs = Math.Clamp(ms, 10, 200);
                     Preferences.Save();
                     RePredictDiffSingerDurations();
+                });
+            this.WhenAnyValue(vm => vm.DiffSingerLocalRetaking)
+                .Skip(1)
+                .Subscribe(value => {
+                    Preferences.Default.DiffSingerLocalRetaking = value;
+                    Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.SkipRenderingMutedTracks)
                 .Subscribe(skipRenderingMutedTracks => {

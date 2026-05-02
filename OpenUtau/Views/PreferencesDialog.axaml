@@ -390,6 +390,10 @@
             <ToggleSwitch IsChecked="{Binding DiffSingerLangCodeHide}" />
           </Grid>
           <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.rendering.diffsingerpitchlocalretaking}" HorizontalAlignment="Left" />
+            <ToggleSwitch IsChecked="{Binding DiffSingerLocalRetaking}" />
+          </Grid>
+          <Grid Margin="0,5,0,0">
             <TextBlock Text="{DynamicResource prefs.rendering.diffsingerautosp}" HorizontalAlignment="Left" VerticalAlignment="Center" />
             <ToggleSwitch IsChecked="{Binding DiffSingerAutoSP}" />
           </Grid>
