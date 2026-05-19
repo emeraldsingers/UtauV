@@ -21,7 +21,7 @@ namespace OpenUtau.Core.Neutrino {
         public override string Voice => voicebank.Voice;
         public override string Location => Path.GetDirectoryName(voicebank.File);
         public override string Web => voicebank.Web;
-        public override string Version => voicebank.Version;
+        public override string Version => singerVersion;
         public override string OtherInfo => voicebank.OtherInfo;
         public override IList<string> Errors => errors;
         public override string Avatar => voicebank.Image == null ? null : Path.Combine(Location, voicebank.Image);
