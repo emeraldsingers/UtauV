@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using K4os.Hash.xxHash;
 using NAudio.Wave;
+using NWaves.Operations;
+using NWaves.Signals;
 using OpenUtau.Core.Format;
 using OpenUtau.Core.Hts;
 using OpenUtau.Core.Render;
@@ -90,8 +92,8 @@ namespace OpenUtau.Core.Neutrino {
             //Load Dictionary
             try {
                 phoneDict.Clear();
-                LoadDict(Path.Join(Path.Join(basePath, @".\settings\dic"), confPath), singer.TextFileEncoding);
-                LoadDict(Path.Join(Path.Join(basePath, @".\settings\dic"), tablePath), singer.TextFileEncoding);
+                LoadDict(Path.Join(Path.Join(basePath, @"./settings/dic"), confPath), singer.TextFileEncoding);
+                LoadDict(Path.Join(Path.Join(basePath, @"./settings/dic"), tablePath), singer.TextFileEncoding);
                 // Lyrics often handled in OpenUtau
                 phoneDict.Add("R", new string[] { "pau" });
                 phoneDict.Add("-", new string[] { "pau" });
@@ -104,17 +106,17 @@ namespace OpenUtau.Core.Neutrino {
             }
             LoadG2p();
             if (OS.IsWindows()) {
-                NeutrinoExe = Path.Join(basePath, @".\bin", "NEUTRINO.exe");
-                NeutrinoClientExe = Path.Join(basePath, @".\bin", "neutrino_client.exe");
-                NeutrinoServerExe = Path.Join(basePath, @".\bin", "neutrino_server.exe");
-                NsfExe = Path.Join(basePath, @".\bin", "NSF.exe");
-                WorldExe = Path.Join(basePath, @".\bin", "WORLD.exe");
-                VocoderClientExe = Path.Join(basePath, @".\bin", "vocoder_client.exe");
-                VocoderServerExe = Path.Join(basePath, @".\bin", "vocoder_server.exe");
+                NeutrinoExe = Path.Join(basePath, @"./bin", "NEUTRINO.exe");
+                NeutrinoClientExe = Path.Join(basePath, @"./bin", "neutrino_client.exe");
+                NeutrinoServerExe = Path.Join(basePath, @"./bin", "neutrino_server.exe");
+                NsfExe = Path.Join(basePath, @"./bin", "NSF.exe");
+                WorldExe = Path.Join(basePath, @"./bin", "WORLD.exe");
+                VocoderClientExe = Path.Join(basePath, @"./bin", "vocoder_client.exe");
+                VocoderServerExe = Path.Join(basePath, @"./bin", "vocoder_server.exe");
             } else if (OS.IsMacOS() || OS.IsLinux()) {
-                NeutrinoExe = Path.Join(basePath, @".\bin", "NEUTRINO");
-                NsfExe = Path.Join(basePath, @".\bin", "NSF");
-                WorldExe = Path.Join(basePath, @".\bin", "WORLD");
+                NeutrinoExe = Path.Join(basePath, @"./bin", "NEUTRINO");
+                NsfExe = Path.Join(basePath, @"./bin", "NSF");
+                WorldExe = Path.Join(basePath, @"./bin", "WORLD");
             } else {
                 throw new NotSupportedException("Platform not supported.");
             }
@@ -188,7 +190,7 @@ namespace OpenUtau.Core.Neutrino {
                     string bapPath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}.bap");
                     fullScorePath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}_full_score.lab");
                     monoTimingPath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}_mono_timing.lab");
-                    string modelDir = this.singer.Location + "\\";
+                    string modelDir = this.singer.Location + "/";
                     int toneShift = phrase.phones[0] != null ? phrase.phones[0].toneShift : 0;
                     int numThreads = Preferences.Default.NumRenderThreads;
                     if (!File.Exists(fullScorePath) && !File.Exists(monoTimingPath)) {
@@ -249,8 +251,8 @@ namespace OpenUtau.Core.Neutrino {
                                     result.samples = Wave.GetSamples(waveStream.ToSampleProvider());
                                 }
                                 Wave.CorrectSampleScale(result.samples);
-                                var signal = new NWaves.Signals.DiscreteSignal(sampleRate, result.samples);
-                                signal = NWaves.Operations.Operation.Resample(signal, 44100);
+                                var signal = new DiscreteSignal(sampleRate, result.samples);
+                                signal = Operation.Resample(signal, 44100);
                                 var source = new WaveSource(0, 0, 0, 1);
                                 source.SetSamples(result.samples);
                                 WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
@@ -281,8 +283,8 @@ namespace OpenUtau.Core.Neutrino {
                                         result.samples = Wave.GetSamples(waveStream.ToSampleProvider());
                                     }
                                     Wave.CorrectSampleScale(result.samples);
-                                    var signal = new NWaves.Signals.DiscreteSignal(sampleRate, result.samples);
-                                    signal = NWaves.Operations.Operation.Resample(signal, 44100);
+                                    var signal = new DiscreteSignal(sampleRate, result.samples);
+                                    signal = Operation.Resample(signal, 44100);
                                     var source = new WaveSource(0, 0, 0, 1);
                                     source.SetSamples(result.samples);
                                     WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
@@ -314,8 +316,8 @@ namespace OpenUtau.Core.Neutrino {
                                         gender, tension, breathiness, voicing);
                                     result.samples = samples.Select(d => (float)d).ToArray();
                                     Wave.CorrectSampleScale(result.samples);
-                                    var signal = new NWaves.Signals.DiscreteSignal(sampleRate, result.samples);
-                                    signal = NWaves.Operations.Operation.Resample(signal, 44100);
+                                    var signal = new DiscreteSignal(sampleRate, result.samples);
+                                    signal = Operation.Resample(signal, 44100);
                                     result.samples = signal.Samples;
                                     var source = new WaveSource(0, 0, 0, 1);
                                     source.SetSamples(result.samples);
@@ -376,8 +378,8 @@ namespace OpenUtau.Core.Neutrino {
                                 result.samples = Wave.GetSamples(waveStream.ToSampleProvider());
                             }
                             Wave.CorrectSampleScale(result.samples);
-                            var signal = new NWaves.Signals.DiscreteSignal(sampleRate, result.samples);
-                            signal = NWaves.Operations.Operation.Resample(signal, 44100);
+                            var signal = new DiscreteSignal(sampleRate, result.samples);
+                            signal = Operation.Resample(signal, 44100);
                             var source = new WaveSource(0, 0, 0, 1);
                             source.SetSamples(result.samples);
                             WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));

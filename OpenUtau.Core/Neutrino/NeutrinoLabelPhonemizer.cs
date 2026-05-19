@@ -40,8 +40,8 @@ namespace OpenUtau.Core.Neutrino {
             //Load Dictionary
             try {
                 phoneDict.Clear();
-                LoadDict(Path.Join(Path.Join(basePath, @"settings\dic"), confPath), singer.TextFileEncoding);
-                LoadDict(Path.Join(Path.Join(basePath, @"settings\dic"), tablePath), singer.TextFileEncoding);
+                LoadDict(Path.Join(Path.Join(basePath, @"settings/dic"), confPath), singer.TextFileEncoding);
+                LoadDict(Path.Join(Path.Join(basePath, @"settings/dic"), tablePath), singer.TextFileEncoding);
                 // Lyrics often handled in OpenUtau
                 phoneDict.Add("R",new string[] { "pau" });
                 phoneDict.Add("-", new string[] { "pau" });
@@ -148,7 +148,7 @@ namespace OpenUtau.Core.Neutrino {
                 string melspecPath = Path.Join(htstmpPath, $"{voicebankNameHash}_tmp.melspec");
                 string wavPath = Path.Join(htstmpPath, $"{voicebankNameHash}_tmp.wav");
                 //string PhraseList = Path.Join(htstmpPath, $"{voicebankNameHash}_phraselist.txt");
-                string modelDir = this.singer.Location+"\\";
+                string modelDir = this.singer.Location+"/";
                 var attr = phrase[0][0].phonemeAttributes?.FirstOrDefault(attr => attr.index == 0) ?? default;
                 int toneShift = attr.toneShift;
                 int numThreads = Preferences.Default.NumRenderThreads;
