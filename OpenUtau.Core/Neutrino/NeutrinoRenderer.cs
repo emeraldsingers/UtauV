@@ -505,8 +505,9 @@ namespace OpenUtau.Core.Neutrino {
                     f0 = f0S.GetSmoothenedF0List(f0.ToList()).ToArray();
                 }
 
+                int toneShift = phrase.phones[0] != null ? phrase.phones[0].toneShift : 0;
                 result = new RenderPitchResult() {
-                    tones = f0.Select(f => (float)MusicMath.FreqToTone(f)).ToArray(),
+                    tones = f0.Select(f => (float)MusicMath.FreqToTone(f * Math.Pow(2, ((toneShift * -1) / 12d)))).ToArray(),
                 };
                 result.ticks = new float[result.tones.Length];
                 var layout = Layout(phrase);
