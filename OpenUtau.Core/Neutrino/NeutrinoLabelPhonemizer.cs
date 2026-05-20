@@ -40,10 +40,10 @@ namespace OpenUtau.Core.Neutrino {
             //Load Dictionary
             try {
                 phoneDict.Clear();
-                LoadDict(Path.Join(Path.Join(basePath, @"settings/dic"), confPath), singer.TextFileEncoding);
-                LoadDict(Path.Join(Path.Join(basePath, @"settings/dic"), tablePath), singer.TextFileEncoding);
+                LoadDict(Path.Join(basePath, "settings", "dic", confPath), singer.TextFileEncoding);
+                LoadDict(Path.Join(basePath, "settings", "dic", tablePath), singer.TextFileEncoding);
                 // Lyrics often handled in OpenUtau
-                phoneDict.Add("R",new string[] { "pau" });
+                phoneDict.Add("R", new string[] { "pau" });
                 phoneDict.Add("-", new string[] { "pau" });
                 phoneDict.Add("SP", new string[] { "pau" });
                 phoneDict.Add("AP", new string[] { "br" });
@@ -81,7 +81,7 @@ namespace OpenUtau.Core.Neutrino {
                     }
                     if (!consonants.Contains(phoneme)) {
                         builder.AddSymbol(phoneme, true);
-                    }else {
+                    } else {
                         builder.AddSymbol(phoneme, false);
                     }
                 }
@@ -111,7 +111,7 @@ namespace OpenUtau.Core.Neutrino {
                 var lyric = phrese[i][0].lyric;
                 if (phoneDict["MACRON"].Contains(lyric) && (i > 0)) {
                     if (g2p.IsValidSymbol(lyric)) {
-                        var vowel = g2p.Query(phrese[i-1][0].lyric).FirstOrDefault(phoneme => vowels.Contains(phoneme));
+                        var vowel = g2p.Query(phrese[i - 1][0].lyric).FirstOrDefault(phoneme => vowels.Contains(phoneme));
                         phrese[i][0].lyric = vowel;
                     }
                 }
@@ -121,7 +121,7 @@ namespace OpenUtau.Core.Neutrino {
 
         protected override HTSNote CustomHTSNoteContext(HTSNote htsNote, Note note) {
             var fixs = GetPrefixAndSuffix(note);
-            if(!htsNote.isRest && !htsNote.isSlur) {
+            if (!htsNote.isRest && !htsNote.isSlur) {
                 htsNote.langDependent = "0"; // no macron
                 if (macronLyrics.Contains(note.lyric)) {
                     htsNote.langDependent = "1"; // macron
@@ -140,27 +140,17 @@ namespace OpenUtau.Core.Neutrino {
 
         protected override void SendScore(Note[][] phrase) {
             if (this.singer.singerVersion == null) {
-                               return;
+                return;
             }
             if (File.Exists(fullScorePath) && !File.Exists(monoTimingPath)) {
                 var voicebankNameHash = $"{this.singer.voicebankNameHash:x16}";
                 string f0Path = Path.Join(htstmpPath, $"{voicebankNameHash}_tmp.f0");
                 string melspecPath = Path.Join(htstmpPath, $"{voicebankNameHash}_tmp.melspec");
                 string wavPath = Path.Join(htstmpPath, $"{voicebankNameHash}_tmp.wav");
-                //string PhraseList = Path.Join(htstmpPath, $"{voicebankNameHash}_phraselist.txt");
-                string modelDir = this.singer.Location+"/";
+                string modelDir = this.singer.Location + "/";
                 var attr = phrase[0][0].phonemeAttributes?.FirstOrDefault(attr => attr.index == 0) ?? default;
                 int toneShift = attr.toneShift;
                 int numThreads = Preferences.Default.NumRenderThreads;
-                //int gpuMode = -1;
-                //switch (Preferences.Default.OnnxRunner) {
-                //    case "directml":
-                //        gpuMode = Preferences.Default.OnnxGpu;
-                //        break;
-                //    default:
-                //        gpuMode = -1;
-                //        break;
-                //}
                 string ArgParam = string.Empty;
                 if (this.singer.singerVersion.StartsWith("v2.7")) {
                     ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {modelDir} -a -k {toneShift} -d 3 -n 1 -p {numThreads} -m -t";

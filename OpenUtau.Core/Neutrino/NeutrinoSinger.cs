@@ -113,7 +113,7 @@ namespace OpenUtau.Core.Neutrino {
                         basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v3");
                     }
                 }
-                var tablePath = Path.Join(Path.Join(basePath, @"./settings/dic"), "japanese.utf_8.table");
+                var tablePath = Path.Join(basePath, "settings", "dic", "japanese.utf_8.table");
                 foreach (var line in File.ReadAllLines(tablePath)) {
                     if (line.Contains("#")) {
                         continue;
@@ -124,7 +124,7 @@ namespace OpenUtau.Core.Neutrino {
                         phonemes.Add(phoneme);
                     }
                 }
-                var confPath = Path.Join(Path.Join(basePath, @"./settings/dic"), "japanese.utf_8.conf");
+                var confPath = Path.Join(basePath, "settings", "dic", "japanese.utf_8.conf");
                 foreach (var line in File.ReadAllLines(confPath)) {
                     if (line.Contains('=')) {
                         var lineSplit = line.Split("=");

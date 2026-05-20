@@ -92,8 +92,8 @@ namespace OpenUtau.Core.Neutrino {
             //Load Dictionary
             try {
                 phoneDict.Clear();
-                LoadDict(Path.Join(Path.Join(basePath, @"./settings/dic"), confPath), singer.TextFileEncoding);
-                LoadDict(Path.Join(Path.Join(basePath, @"./settings/dic"), tablePath), singer.TextFileEncoding);
+                LoadDict(Path.Join(basePath, "settings", "dic", confPath), singer.TextFileEncoding);
+                LoadDict(Path.Join(basePath, "settings", "dic", tablePath), singer.TextFileEncoding);
                 // Lyrics often handled in OpenUtau
                 phoneDict.Add("R", new string[] { "pau" });
                 phoneDict.Add("-", new string[] { "pau" });
@@ -106,17 +106,17 @@ namespace OpenUtau.Core.Neutrino {
             }
             LoadG2p();
             if (OS.IsWindows()) {
-                NeutrinoExe = Path.Join(basePath, @"./bin", "NEUTRINO.exe");
-                NeutrinoClientExe = Path.Join(basePath, @"./bin", "neutrino_client.exe");
-                NeutrinoServerExe = Path.Join(basePath, @"./bin", "neutrino_server.exe");
-                NsfExe = Path.Join(basePath, @"./bin", "NSF.exe");
-                WorldExe = Path.Join(basePath, @"./bin", "WORLD.exe");
-                VocoderClientExe = Path.Join(basePath, @"./bin", "vocoder_client.exe");
-                VocoderServerExe = Path.Join(basePath, @"./bin", "vocoder_server.exe");
+                NeutrinoExe = Path.Join(basePath, "bin", "NEUTRINO.exe");
+                NeutrinoClientExe = Path.Join(basePath, "bin", "neutrino_client.exe");
+                NeutrinoServerExe = Path.Join(basePath, "bin", "neutrino_server.exe");
+                NsfExe = Path.Join(basePath, "bin", "NSF.exe");
+                WorldExe = Path.Join(basePath, "bin", "WORLD.exe");
+                VocoderClientExe = Path.Join(basePath, "bin", "vocoder_client.exe");
+                VocoderServerExe = Path.Join(basePath, "bin", "vocoder_server.exe");
             } else if (OS.IsMacOS() || OS.IsLinux()) {
-                NeutrinoExe = Path.Join(basePath, @"./bin", "NEUTRINO");
-                NsfExe = Path.Join(basePath, @"./bin", "NSF");
-                WorldExe = Path.Join(basePath, @"./bin", "WORLD");
+                NeutrinoExe = Path.Join(basePath, "bin", "NEUTRINO");
+                NsfExe = Path.Join(basePath, "bin", "NSF");
+                WorldExe = Path.Join(basePath, "bin", "WORLD");
             } else {
                 throw new NotSupportedException("Platform not supported.");
             }
