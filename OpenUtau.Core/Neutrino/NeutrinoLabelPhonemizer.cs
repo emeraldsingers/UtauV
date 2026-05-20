@@ -10,7 +10,7 @@ using Serilog;
 
 namespace OpenUtau.Core.Neutrino {
     [Phonemizer("Neutrino Label Phonemizer", "NEUTRINO")]
-    public class Neutrino : HTSLabelPhonemizer {
+    public class NeutrinoLabelPhonemizer : HTSLabelPhonemizer {
         string NeutrinoExe = string.Empty;
         string NeutrinoClientExe = string.Empty;
         string NeutrinoServerExe = string.Empty;
@@ -112,7 +112,9 @@ namespace OpenUtau.Core.Neutrino {
                 if (phoneDict["MACRON"].Contains(lyric) && (i > 0)) {
                     if (g2p.IsValidSymbol(lyric)) {
                         var vowel = g2p.Query(phrese[i - 1][0].lyric).FirstOrDefault(phoneme => vowels.Contains(phoneme));
-                        phrese[i][0].lyric = vowel;
+                        if (!string.IsNullOrEmpty(vowel)) {
+                            phrese[i][0].lyric = vowel;
+                        }
                     }
                 }
             }

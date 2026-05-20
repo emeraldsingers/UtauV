@@ -104,7 +104,6 @@ namespace OpenUtau.Core.Neutrino {
                 Log.Error(e, $"failed to load dictionary from {tablePath}");
                 return;
             }
-            LoadG2p();
             if (OS.IsWindows()) {
                 NeutrinoExe = Path.Join(basePath, "bin", "NEUTRINO.exe");
                 NeutrinoClientExe = Path.Join(basePath, "bin", "neutrino_client.exe");
