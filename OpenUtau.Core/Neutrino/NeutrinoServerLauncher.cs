@@ -25,7 +25,7 @@ namespace OpenUtau.Core.Neutrino {
             serverExe = Path.GetFullPath(serverExe);
             var serverName = Path.GetFileNameWithoutExtension(serverExe);
             if (Process.GetProcessesByName(serverName).Any() || IsServerReady(host, serverPort)) {
-                Log.Information("Background server already running: {ServerExe}", serverExe);
+                Log.Information($"Background server already running: {serverExe}");
                 return;
             }
 
@@ -54,7 +54,7 @@ namespace OpenUtau.Core.Neutrino {
                 };
                 serverProcesses[serverExe] = startedProcess;
                 WaitForServerReady(host, serverPort);
-                Log.Information("Started background server: {ServerExe}", serverExe);
+                Log.Information($"Started background server: {serverExe}");
             }
         }
 

@@ -9,14 +9,6 @@ namespace OpenUtau.Core.Util {
     public static class ProcessRunner {
         public static bool DebugSwitch { get; set; }
 
-        static string GetLanguageEnvironmentValue() {
-            var culture = CultureInfo.CurrentCulture;
-            if (culture == CultureInfo.InvariantCulture || string.IsNullOrWhiteSpace(culture.Name)) {
-                return "C.UTF-8";
-            }
-            return culture.Name.Replace('-', '_') + ".UTF-8";
-        }
-
         public static void Run(string file, string args, ILogger logger, string workDir = null, int timeoutMs = 60000) {
             if (!File.Exists(file)) {
                 throw new FileNotFoundException($"Executable {file} not found.");
@@ -73,9 +65,9 @@ namespace OpenUtau.Core.Util {
             var threadId = Thread.CurrentThread.ManagedThreadId;
             var proc = new Process();
             proc.StartInfo = new ProcessStartInfo(file, args) {
-                Environment = { { "LANG", GetLanguageEnvironmentValue() } },
+                Environment = { { "LANG", "ja_JP.utf8" } },
                 UseShellExecute = false,
-                RedirectStandardOutput = true,
+                RedirectStandardOutput = DebugSwitch,
                 RedirectStandardError = true,
                 CreateNoWindow = false,
                 WorkingDirectory = workDir,
