@@ -218,7 +218,7 @@ namespace OpenUtau.Core.Neutrino {
                                 }
                             }
                             if (!File.Exists(f0Path) || !File.Exists(melspecPath)) {
-                                ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {modelDir} -s -n 1 -o {numThreads} -k {toneShift} -m -t";
+                                ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{modelDir}\" -s -n 1 -o {numThreads} -k {toneShift} -m -t";
                                 if (existNeutrinoClient) {
                                     ProcessRunner.Run(NeutrinoClientExe, ArgParam, Log.Logger);
                                 } else {
@@ -230,7 +230,7 @@ namespace OpenUtau.Core.Neutrino {
                             }
                             if (!File.Exists(wavPath) && File.Exists(f0Path) && File.Exists(melspecPath)) {
                                 if (phrase.phones[0].direct) {
-                                    ArgParam = $"{f0Path} {melspecPath} {modelDir}{nsf}.bin {wavPath} -l {monoTimingPath} -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -f {toneShift} -m -t";
+                                    ArgParam = $"\"{f0Path}\" \"{melspecPath}\" \"{modelDir}{nsf}.bin\" \"{wavPath}\" -l \"{monoTimingPath}\" -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -f {toneShift} -m -t";
                                 } else {
                                     double[] f0 = LoadFile(f0Path);
                                     double[] melspec = LoadFile(melspecPath);
@@ -239,7 +239,7 @@ namespace OpenUtau.Core.Neutrino {
                                     int tailFrames = (int)Math.Round(tailMs / framePeriod);
                                     double[] editorF0 = SampleCurve(phrase, phrase.pitches, 0, framePeriod, totalFrames, headFrames, tailFrames, x => MusicMath.ToneToFreq(x * 0.01));
                                     SaveFile(editorf0Path, editorF0);
-                                    ArgParam = $"{editorf0Path} {melspecPath} {modelDir}{nsf}.bin {wavPath} -l {monoTimingPath} -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -f {toneShift} -m -t";
+                                    ArgParam = $"\"{editorf0Path}\" \"{melspecPath}\" \"{modelDir}{nsf}.bin\" \"{wavPath}\" -l \"{monoTimingPath}\" -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -f {toneShift} -m -t";
                                 }
                                 if (File.Exists(VocoderClientExe)) {
                                     ProcessRunner.Run(VocoderClientExe, ArgParam, Log.Logger);
@@ -258,7 +258,7 @@ namespace OpenUtau.Core.Neutrino {
                             }
                         } else {
                             if (!File.Exists(f0Path) || !File.Exists(mgcPath) || !File.Exists(bapPath)) {
-                                ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {modelDir} -w {mgcPath} {bapPath} -s -n 1 -o {numThreads} -k {toneShift} -m -t";
+                                ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{modelDir}\" -w \"{mgcPath}\" \"{bapPath}\" -s -n 1 -o {numThreads} -k {toneShift} -m -t";
                                 if (existNeutrinoClient) {
                                     ProcessRunner.Run(NeutrinoClientExe, ArgParam, Log.Logger);
                                 } else {
@@ -272,7 +272,7 @@ namespace OpenUtau.Core.Neutrino {
                                 if (phrase.phones[0].direct) {
                                     float gender = 1f + (phrase.phones[0].flags.FirstOrDefault(f => f.Item3.Equals(Format.Ustx.GEN)).Item2 / 100) ?? 1f;
                                     float breathiness = phrase.phones[0].flags.FirstOrDefault(f => f.Item3.Equals(Format.Ustx.BRE)).Item2 ?? 0f;
-                                    ArgParam = $"{f0Path} {mgcPath} {bapPath} {wavPath} -n 1 -m {gender} -b {breathiness} -t";
+                                    ArgParam = $"\"{f0Path}\" \"{mgcPath}\" \"{bapPath}\" \"{wavPath}\" -n 1 -m {gender} -b {breathiness} -t";
                                     if (File.Exists(VocoderClientExe)) {
                                         ProcessRunner.Run(VocoderClientExe, ArgParam, Log.Logger);
                                     } else {
@@ -327,7 +327,7 @@ namespace OpenUtau.Core.Neutrino {
                     } else if (this.singer.singerVersion.StartsWith("v3.")) {
                         // F0ファイル生成
                         if (!File.Exists(f0Path)) {
-                            ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {wavPath} {modelDir} --skip-timing --skip-melspec --skip-wav -f {toneShift} -m -t";
+                            ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-timing --skip-melspec --skip-wav -f {toneShift} -m -t";
                             if (existNeutrinoClient) {
                                 ProcessRunner.Run(NeutrinoClientExe, ArgParam, Log.Logger);
                             } else {
@@ -340,7 +340,7 @@ namespace OpenUtau.Core.Neutrino {
                         //メルスペクトグラムファイル生成
                         if (File.Exists(f0Path) && !File.Exists(melspecPath)) {
                             if (phrase.phones[0].direct) {
-                                ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {wavPath} {modelDir} --skip-timing --skip-f0 --skip-wav -f {toneShift} -m -t";
+                                ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-timing --skip-f0 --skip-wav -f {toneShift} -m -t";
                             } else {
                                 double[] f0 = LoadFile(f0Path);
                                 int totalFrames = f0.Length;
@@ -349,7 +349,7 @@ namespace OpenUtau.Core.Neutrino {
                                 var editorF0 = SampleCurve(phrase, phrase.pitches, 0, 9.984, totalFrames, headFrames, tailFrames, x => MusicMath.ToneToFreq(x * 0.01));
                                 SaveFile(editorf0Path, editorF0);
                                 // F0の編集とメルスペクトグラムの生成はセット
-                                ArgParam = $"{fullScorePath} {monoTimingPath} {editorf0Path} {melspecPath} {wavPath} {modelDir} --skip-timing --skip-f0 --skip-wav -f {toneShift} -m -t";
+                                ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{editorf0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-timing --skip-f0 --skip-wav -f {toneShift} -m -t";
                             }
                             if (existNeutrinoClient) {
                                 ProcessRunner.Run(NeutrinoClientExe, ArgParam, Log.Logger);
@@ -363,10 +363,10 @@ namespace OpenUtau.Core.Neutrino {
                         //音声ファイル生成
                         if (!File.Exists(wavPath) && File.Exists(f0Path) && File.Exists(melspecPath)) {
                             if (phrase.phones[0].direct) {
-                                ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {wavPath} {modelDir} --skip-timing --skip-f0 --skip-melspec -f {toneShift} -m -t";
+                                ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-timing --skip-f0 --skip-melspec -f {toneShift} -m -t";
                             } else {
                                 // TODO:メルスペクトグラムの編集
-                                ArgParam = $"{fullScorePath} {monoTimingPath} {editorf0Path} {melspecPath} {wavPath} {modelDir} --skip-timing --skip-f0 --skip-melspec -f {toneShift} -m -t";
+                                ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{editorf0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-timing --skip-f0 --skip-melspec -f {toneShift} -m -t";
                             }
                             if (existNeutrinoClient) {
                                 ProcessRunner.Run(NeutrinoClientExe, ArgParam, Log.Logger);

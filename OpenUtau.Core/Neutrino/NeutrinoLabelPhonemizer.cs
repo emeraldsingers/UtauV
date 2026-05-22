@@ -158,7 +158,7 @@ namespace OpenUtau.Core.Neutrino {
                     ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {modelDir} -a -k {toneShift} -d 3 -n 1 -p {numThreads} -m -t";
                 } else if (this.singer.singerVersion.StartsWith("v3.")) {
                     //TODO: -S support model
-                    ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {wavPath} {modelDir} --skip-f0 --skip-melspec --skip-wav -f {toneShift} -m -t";
+                    ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-f0 --skip-melspec --skip-wav -f {toneShift} -m -t";
                 } else {
                     Log.Error($"Unsupported NEUTRINO version: {this.singer.singerVersion}");
                     return;
