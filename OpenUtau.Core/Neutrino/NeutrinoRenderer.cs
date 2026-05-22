@@ -177,18 +177,18 @@ namespace OpenUtau.Core.Neutrino {
                     }
                     var result = Layout(phrase);
                     var hash = HashPhraseGroups(phrase);
-                    string tmpPath = Path.Join(PathManager.Inst.CachePath, $"ne-{hash:x16}_temp");
+                    string tmpPath = Path.Join(PathManager.Inst.CachePath, $"ne-{phrase.preEffectHash:x16}_temp");
                     if (!Directory.Exists(tmpPath)) {
                         Directory.CreateDirectory(tmpPath);
                     }
                     string wavPath = Path.Join(tmpPath, $"ne-{phrase.hash}.wav");
-                    string f0Path = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}.f0");
+                    string f0Path = Path.Join(tmpPath, $"ne-{phrase.hash}.f0");
                     string editorf0Path = Path.Join(tmpPath, $"ne-edit.f0");
-                    string melspecPath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}.melspec");
-                    string mgcPath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}.mgc");
-                    string bapPath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}.bap");
-                    fullScorePath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}_full_score.lab");
-                    monoTimingPath = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}_mono_timing.lab");
+                    string melspecPath = Path.Join(tmpPath, $"ne-{phrase.hash}.melspec");
+                    string mgcPath = Path.Join(tmpPath, $"ne-{phrase.hash}.mgc");
+                    string bapPath = Path.Join(tmpPath, $"ne-{phrase.hash}.bap");
+                    fullScorePath = Path.Join(tmpPath, $"ne-{hash}_full_score.lab");
+                    monoTimingPath = Path.Join(tmpPath, $"ne-{hash}_mono_timing.lab");
                     string modelDir = this.singer.Location + "/";
                     int toneShift = phrase.phones[0] != null ? phrase.phones[0].toneShift : 0;
                     int numThreads = Preferences.Default.NumRenderThreads;
@@ -477,9 +477,8 @@ namespace OpenUtau.Core.Neutrino {
         public override RenderPitchResult LoadRenderedPitch(RenderPhrase phrase) {
             var result = new RenderPitchResult();
             try {
-                var hash = HashPhraseGroups(phrase);
-                string tmpPath = Path.Join(PathManager.Inst.CachePath, $"ne-{hash:x16}_temp");
-                string f0Path = Path.Join(tmpPath, $"ne-{phrase.preEffectHash}.f0");
+                string tmpPath = Path.Join(PathManager.Inst.CachePath, $"ne-{phrase.preEffectHash:x16}_temp");
+                string f0Path = Path.Join(tmpPath, $"ne-{phrase.hash}.f0");
                 if (!File.Exists(f0Path)) {
                     return null;
                 }
