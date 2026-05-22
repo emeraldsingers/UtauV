@@ -277,13 +277,17 @@ namespace OpenUtau.Core.Hts {
 
         protected abstract HTSPhoneme[] CustomHTSPhonemeContext(HTSPhoneme[] htsPhonemes, RenderNote notes);
 
-        private struct monoLabel {
+        public struct monoLabel {
             public string symbol;
             public double startMs;
             public double endMs;
             public override string ToString() {
                 return $"{(long)Math.Round(startMs * 10000.0)} {(long)Math.Round(endMs * 10000.0)} {symbol}";
             }
+        }
+
+        protected virtual List<monoLabel> CustomMonoLabel(List<monoLabel> monoLabels) {
+            return monoLabels;
         }
 
         public void ProcessPart(RenderPhrase phrase) {
@@ -462,6 +466,8 @@ namespace OpenUtau.Core.Hts {
                 htsPhonemes[i].prev = htsPhonemes[i - 1];
                 htsPhonemes[i - 1].next = htsPhonemes[i];
             }
+
+            monoLabels_ = CustomMonoLabel(monoLabels_);
 
             try {
                 File.WriteAllLines(fullScorePath, htsPhonemes.Select(x => x.dump()));

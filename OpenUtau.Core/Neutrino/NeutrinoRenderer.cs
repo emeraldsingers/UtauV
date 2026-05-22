@@ -132,6 +132,18 @@ namespace OpenUtau.Core.Neutrino {
             return htsPhonemes;
         }
 
+        protected override List<monoLabel> CustomMonoLabel(List<monoLabel> monoLabels) {
+            if (this.singer.singerVersion.StartsWith("v2.7")) {
+                for (int i = 0; i < monoLabels.Count; i++) {
+                    var label = monoLabels[i];
+                    label.startMs = Math.Round(label.startMs / 10.0) * 10.0;
+                    label.endMs = Math.Round(label.endMs / 10.0) * 10.0;
+                    monoLabels[i] = label;
+                }
+            }
+            return monoLabels;
+        }
+
         public double[] LoadFile(string filePath) {
             if (File.Exists(filePath)) {
                 using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
