@@ -242,7 +242,7 @@ namespace OpenUtau.App.Controls {
             }
             // apply the transparent/greyed-out brush if an error was found
             var brush = selectedNotes.Contains(note)
-                ? (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush2)
+                ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
                 : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
                 
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), 2, 2);
@@ -266,7 +266,7 @@ namespace OpenUtau.App.Controls {
                 if (isTransition) {
                     // Badge Background utilizes the same hasError flag
                     var badgeBrush = selectedNotes.Contains(note)
-                        ? (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush2)
+                        ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
                         : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
 
                     if (isCurrentDefault) {
