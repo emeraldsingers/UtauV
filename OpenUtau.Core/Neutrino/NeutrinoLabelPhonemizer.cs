@@ -33,7 +33,7 @@ namespace OpenUtau.Core.Neutrino {
             if (!Directory.Exists(basePath)) {
                 if (this.singer.singerVersion.StartsWith("v2.7")) {
                     basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v27");
-                } else if (this.singer.singerVersion.StartsWith("v3.")) {
+                } else if (this.singer.singerVersion.StartsWith("v3") && !this.singer.singerVersion.StartsWith("v3.1")) {
                     basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v3");
                 }
             }
@@ -156,9 +156,9 @@ namespace OpenUtau.Core.Neutrino {
                 string ArgParam = string.Empty;
                 if (this.singer.singerVersion.StartsWith("v2.7")) {
                     ArgParam = $"{fullScorePath} {monoTimingPath} {f0Path} {melspecPath} {modelDir} -a -k {toneShift} -d 3 -n 1 -p {numThreads} -m -t";
-                } else if (this.singer.singerVersion.StartsWith("v3.")) {
+                } else if (this.singer.singerVersion.StartsWith("v3") && !this.singer.singerVersion.StartsWith("v3.1")) {
                     //TODO: -S support model
-                    ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-f0 --skip-melspec --skip-wav -f {toneShift} -m -t";
+                    ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-f0 --skip-melspec --skip-wav -k {toneShift} -m -t";
                 } else {
                     Log.Error($"Unsupported NEUTRINO version: {this.singer.singerVersion}");
                     return;
