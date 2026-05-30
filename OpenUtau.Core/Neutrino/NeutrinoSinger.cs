@@ -109,7 +109,7 @@ namespace OpenUtau.Core.Neutrino {
                 if (!Directory.Exists(basePath)) {
                     if (singerVersion.StartsWith("v2.7")) {
                         basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v27");
-                    } else if (singerVersion.StartsWith("v3.")) {
+                    } else if (singerVersion.StartsWith("v3") && !singerVersion.StartsWith("v3.1")) {
                         basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v3");
                     }
                 }
