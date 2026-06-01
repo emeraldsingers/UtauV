@@ -2,13 +2,14 @@
 using System.IO;
 using System.Text;
 using Avalonia;
+using Avalonia.Markup.Xaml.Templates;
 using Avalonia.Media;
 using Avalonia.Styling;
+using OpenUtau.Colors;
 using OpenUtau.Core;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using Serilog;
-using OpenUtau.Colors;
 
 namespace OpenUtau.App.ViewModels {
     public class ThemeEditorStateChangedEvent { }
@@ -62,6 +63,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public Color MainColorA { get; set; }
         [Reactive] public Color MainColorB { get; set; }
         [Reactive] public bool IsDarkModeEasy { get; set; }
+
+        [Reactive] public bool IsEasyMode { get; set; } = true;
 
         public ThemeEditorViewModel(string customThemePath) {
             this.customThemePath = customThemePath;

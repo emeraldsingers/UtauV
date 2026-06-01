@@ -120,10 +120,6 @@ namespace OpenUtau.App.Views {
             ((PreferencesViewModel)DataContext!).SetWinePath(winePath);
         }
 
-        void OpenEasyCustomThemeEditor(object sender, RoutedEventArgs e) {
-            EasyThemeEditorWindow.Show(CustomTheme.Themes[viewModel!.ThemeName]);
-        }
-
         void OpenCustomThemeEditor(object sender, RoutedEventArgs e) {
             ThemeEditorWindow.Show(CustomTheme.Themes[viewModel!.ThemeName]);
         }
