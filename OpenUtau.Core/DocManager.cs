@@ -10,6 +10,7 @@ using OpenUtau.Api;
 using OpenUtau.Classic;
 using OpenUtau.Core.Editing;
 using OpenUtau.Core.Lib;
+using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using Serilog;
@@ -226,9 +227,13 @@ namespace OpenUtau.Core {
                     rangeEndTick = 0;
                 } else if (cmd is SetPlayPosTickNotification setPlayPosTickNotif) {
                     playPosTick = setPlayPosTickNotif.playPosTick;
-                } else if (cmd is SetRangeSelectionNotification setRange) {
+} else if (cmd is SetRangeSelectionNotification setRange) {
                     rangeStartTick = setRange.startTick;
                     rangeEndTick = setRange.endTick;
+                } else if (cmd is RealCurvesUpdatedNotification realCurvesNotif) {
+                    if (realCurvesNotif.part is UVoicePart voicePart) {
+                        RealCurveUpdater.Apply(Project, voicePart, realCurvesNotif.updates);
+                    }
                 } else if (cmd is SingersChangedNotification) {
                     SingerManager.Inst.SearchAllSingers();
                 } else if (cmd is ValidateProjectNotification) {

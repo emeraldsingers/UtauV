@@ -256,6 +256,7 @@ namespace OpenUtau.Core.Render {
                 var phrase = tuple.Item1;
                 var source = tuple.Item2;
                 var request = tuple.Item3;
+                RenderResult result;
                 bool useXsy = phrase.xsy != null && phrase.xsy.Any(x => x > 0);
                 if (!useXsy) {
                     var task = phrase.renderer.Render(phrase, progress, request.trackNo, cancellation, true);
@@ -263,7 +264,8 @@ namespace OpenUtau.Core.Render {
                     if (cancellation.IsCancellationRequested) {
                         break;
                     }
-                    source.SetSamples(task.Result.samples);
+                    result = task.Result;
+                    source.SetSamples(result.samples);
                 } else {
                     string xsyKey = $"{phrase.hash:x16}|" +
                         string.Join(",", phrase.phones.Select(p => $"{p.oto2?.Set}:{p.oto2?.Alias}"));
@@ -273,7 +275,8 @@ namespace OpenUtau.Core.Render {
                         if (cancellation.IsCancellationRequested) {
                             break;
                         }
-                        float[] samplesA = taskA.Result.samples;
+                        result = taskA.Result;
+                        float[] samplesA = result.samples;
 
                         var otoField = typeof(RenderPhone).GetField("oto");
                         var hashField = typeof(RenderPhone).GetField("hash");
@@ -330,12 +333,28 @@ namespace OpenUtau.Core.Render {
                     }
                     source.SetSamples(blended);
                 }
+                DocManager.Inst.ExecuteCmd(new PhraseRenderedNotification(request.part, phrase, result, request.trackNo));
+                PublishRealCurveUpdates(request.part, phrase);
                 if (request.sources.All(s => s.HasSamples)) {
                     request.part.SetMix(request.mix);
                     DocManager.Inst.ExecuteCmd(new PartRenderedNotification(request.part));
                 }
             }
             progress.Clear();
+        }
+
+        private void PublishRealCurveUpdates(UVoicePart part, RenderPhrase phrase) {
+            if (!phrase.renderer.SupportsRealCurve) {
+                return;
+            }
+            try {
+                var updates = RealCurveUpdater.LoadPhraseUpdates(part, phrase);
+                if (updates.Length > 0) {
+                    DocManager.Inst.ExecuteCmd(new RealCurvesUpdatedNotification(part, updates));
+                }
+            } catch (Exception e) {
+                Log.Debug(e, "Failed to refresh rendered real curves.");
+            }
         }
 
         public static void ReleaseSourceTemp() {
