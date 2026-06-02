@@ -47,15 +47,24 @@ namespace OpenUtau.Core.Render {
         readonly int startTick;
         readonly int endTick;
         readonly int trackNo;
+        readonly PreRenderPriority[] priorityRanges;
 
         static readonly System.Collections.Concurrent.ConcurrentDictionary<string, float[]> XsyBlendCache =
             new System.Collections.Concurrent.ConcurrentDictionary<string, float[]>();
 
-        public RenderEngine(UProject project, int startTick = 0, int endTick = -1, int trackNo = -1) {
+        public RenderEngine(
+            UProject project,
+            int startTick = 0,
+            int endTick = -1,
+            int trackNo = -1,
+            IEnumerable<PreRenderPriority>? priorityRanges = null) {
             this.project = project;
             this.startTick = startTick;
             this.endTick = endTick;
             this.trackNo = trackNo;
+            this.priorityRanges = priorityRanges?
+                .Where(priority => priority.endTick > priority.startTick)
+                .ToArray() ?? Array.Empty<PreRenderPriority>();
         }
 
         // for playback or export
@@ -241,15 +250,15 @@ namespace OpenUtau.Core.Render {
             }
             var tuples = requests
                 .SelectMany(req => req.phrases
-                    .Zip(req.sources, (phrase, source) => Tuple.Create(phrase, source, req)))
+                    .Zip(req.sources, (phrase, source) => (phrase, source, request: req)))
                 .ToArray();
+            if (tuples.Length == 0) {
+                return;
+            }
             if (playing) {
-                var orderedTuples = tuples
-                    .Where(tuple => tuple.Item1.end > startTick)
-                    .OrderBy(tuple => tuple.Item1.end)
-                    .Concat(tuples.Where(tuple => tuple.Item1.end <= startTick))
-                    .ToArray();
-                tuples = orderedTuples;
+                tuples = OrderForPlayback(tuples);
+            } else if (priorityRanges.Length > 0) {
+                tuples = OrderForPreRender(tuples);
             }
             var progress = new Progress(tuples.Sum(t => t.Item1.phones.Length));
             // Only full-project passes (pre-render / export) maintain the real-curve coverage
@@ -415,6 +424,68 @@ namespace OpenUtau.Core.Render {
                     ranges.Add((update.startTick, update.endTick));
                 }
             }
+
+        private (RenderPhrase phrase, WaveSource source, RenderPartRequest request)[] OrderForPlayback(
+            (RenderPhrase phrase, WaveSource source, RenderPartRequest request)[] tuples) {
+            double playbackStartMs = project.timeAxis.TickPosToMsPos(startTick);
+            return tuples
+                .Select((tuple, index) => (tuple, index))
+                .OrderBy(item => RenderPriority.PlaybackBucket(
+                    item.tuple.source.offsetMs, item.tuple.source.EndMs, playbackStartMs))
+                .ThenBy(item => RenderPriority.PlaybackDistance(
+                    item.tuple.source.offsetMs, item.tuple.source.EndMs, playbackStartMs))
+                .ThenBy(item => item.index)
+                .Select(item => item.tuple)
+                .ToArray();
+        }
+
+        private (RenderPhrase phrase, WaveSource source, RenderPartRequest request)[] OrderForPreRender(
+            (RenderPhrase phrase, WaveSource source, RenderPartRequest request)[] tuples) {
+            return tuples
+                .Select((tuple, index) => (tuple, index))
+                .OrderBy(item => PreRenderPriorityBucket(item.tuple))
+                .ThenBy(item => PreRenderPriorityIndex(item.tuple))
+                .ThenBy(item => PreRenderPriorityDistance(item.tuple.phrase))
+                .ThenBy(item => item.index)
+                .Select(item => item.tuple)
+                .ToArray();
+        }
+
+        private int PreRenderPriorityBucket(
+            (RenderPhrase phrase, WaveSource source, RenderPartRequest request) tuple) {
+            bool isPriorityPart = priorityRanges.Any(priority => ReferenceEquals(tuple.request.part, priority.part));
+            bool overlapsPriority = priorityRanges.Any(priority =>
+                ReferenceEquals(tuple.request.part, priority.part) &&
+                RenderPriority.Overlaps(tuple.phrase.position, tuple.phrase.end, priority.startTick, priority.endTick));
+            int earliestPriorityStart = priorityRanges.Min(priority => priority.startTick);
+            return RenderPriority.PreRenderBucket(
+                isPriorityPart,
+                overlapsPriority,
+                tuple.phrase.end > earliestPriorityStart);
+        }
+
+        private int PreRenderPriorityIndex(
+            (RenderPhrase phrase, WaveSource source, RenderPartRequest request) tuple) {
+            for (int i = 0; i < priorityRanges.Length; ++i) {
+                var priority = priorityRanges[i];
+                if (ReferenceEquals(tuple.request.part, priority.part) &&
+                    RenderPriority.Overlaps(tuple.phrase.position, tuple.phrase.end, priority.startTick, priority.endTick)) {
+                    return i;
+                }
+            }
+            for (int i = 0; i < priorityRanges.Length; ++i) {
+                if (ReferenceEquals(tuple.request.part, priorityRanges[i].part)) {
+                    return i;
+                }
+            }
+            return int.MaxValue;
+        }
+
+        private int PreRenderPriorityDistance(RenderPhrase phrase) {
+            return priorityRanges
+                .Select(priority => RenderPriority.PreRenderDistance(phrase.position, phrase.end, priority.startTick))
+                .DefaultIfEmpty(0)
+                .Min();
         }
 
         public static void ReleaseSourceTemp() {

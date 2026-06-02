@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using OpenUtau.Core.Render;
+using System.Linq;
 using OpenUtau.Core.Ustx;
 
 namespace OpenUtau.Core {
@@ -238,8 +239,36 @@ namespace OpenUtau.Core {
         public override string ToString() => $"Focus note {note.lyric} at {note.position}.";
     }
 
+    public class PreRenderPriority {
+        public readonly UVoicePart part;
+        public readonly int startTick;
+        public readonly int endTick;
+
+        public PreRenderPriority(UVoicePart part, int startTick, int endTick) {
+            this.part = part;
+            this.startTick = startTick;
+            this.endTick = endTick;
+        }
+    }
+
     public class PreRenderNotification : UNotification {
-        public override string ToString() => $"Pre-render notification.";
+        public readonly PreRenderPriority[] priorities;
+        public bool HasPriorityRange => priorities.Length > 0;
+
+        public PreRenderNotification() {
+            priorities = Array.Empty<PreRenderPriority>();
+        }
+
+        public PreRenderNotification(IEnumerable<PreRenderPriority> priorities) {
+            this.priorities = priorities
+                .Where(priority => priority.endTick > priority.startTick)
+                .ToArray();
+            part = this.priorities.FirstOrDefault()?.part;
+        }
+
+        public override string ToString() => HasPriorityRange
+            ? $"Pre-render notification {priorities.Length} prioritized range(s)."
+            : $"Pre-render notification.";
     }
 
     public class PartRenderedNotification : UNotification {

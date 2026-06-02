@@ -10,6 +10,8 @@ namespace OpenUtau.Core {
         public abstract void Unexecute();
         public virtual bool CanMerge(IList<UCommand> commands) => false;
         public virtual UCommand Merge(IList<UCommand> commands) => throw new NotImplementedException();
+        public virtual IEnumerable<RenderInvalidation> GetRenderInvalidations() =>
+            Enumerable.Empty<RenderInvalidation>();
         public abstract override string ToString();
     }
 

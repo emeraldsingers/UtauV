@@ -18,6 +18,14 @@ namespace OpenUtau.Core {
         public ExpCommand(UVoicePart part) {
             Part = part;
         }
+        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() {
+            if (Note != null) {
+                return new[] {
+                    new RenderInvalidation(Part, Part.position + Note.position, Part.position + Note.End)
+                };
+            }
+            return new[] { new RenderInvalidation(Part, Part.position, Part.End) };
+        }
     }
 
     public class SetNoteExpressionCommand : ExpCommand {
@@ -82,6 +90,17 @@ namespace OpenUtau.Core {
             for (var i = 0; i < notes.Length; i++) {
                 notes[i].SetExpression(project, track, Key, oldValue[i]);
             }
+        }
+        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() {
+            if (notes.Length == 0) {
+                return Enumerable.Empty<RenderInvalidation>();
+            }
+            return new[] {
+                new RenderInvalidation(
+                    Part,
+                    Part.position + notes.Min(note => note.position),
+                    Part.position + notes.Max(note => note.End))
+            };
         }
     }
 
@@ -317,6 +336,8 @@ namespace OpenUtau.Core {
         readonly int lastY;
         int[] oldXs;
         int[] oldYs;
+        int StartTick => Math.Min(x, lastX);
+        int EndTick => Math.Max(x, lastX) + 1;
         public override ValidateOptions ValidateOptions
             => new ValidateOptions {
                 SkipTiming = true,
@@ -367,14 +388,19 @@ namespace OpenUtau.Core {
         public override UCommand Merge(IList<UCommand> commands) {
             var first = commands.First() as SetCurveCommand;
             var last = commands.Last() as SetCurveCommand;
+            var curveCommands = commands.Cast<SetCurveCommand>().ToArray();
             var curve = Part.curves.FirstOrDefault(c => c.abbr == abbr);
             curve.Simplify();
             int[] newXs = curve?.xs.ToArray();
             int[] newYs = curve?.ys.ToArray();
             return new MergedSetCurveCommand(
                 last.project, last.Part, last.abbr,
-                first.oldXs, first.oldYs, newXs, newYs);
+                first.oldXs, first.oldYs, newXs, newYs,
+                startTick: curveCommands.Min(command => command.StartTick),
+                endTick: curveCommands.Max(command => command.EndTick));
         }
+        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() =>
+            new[] { new RenderInvalidation(Part, Part.position + StartTick, Part.position + EndTick) };
     }
 
     public class MergedSetCurveCommand : ExpCommand {
@@ -385,8 +411,11 @@ namespace OpenUtau.Core {
         readonly int[] newXs;
         readonly int[] newYs;
         readonly bool setReal;
+        readonly int startTick;
+        readonly int endTick;
         public MergedSetCurveCommand(UProject project, UVoicePart part,
-            string abbr, int[] oldXs, int[] oldYs, int[] newXs, int[] newYs, bool setReal = false) : base(part) {
+            string abbr, int[] oldXs, int[] oldYs, int[] newXs, int[] newYs, bool setReal = false,
+            int startTick = -1, int endTick = -1) : base(part) {
             this.project = project;
             this.abbr = abbr;
             Key = setReal ? string.Empty : abbr;
@@ -395,6 +424,8 @@ namespace OpenUtau.Core {
             this.newXs = newXs;
             this.newYs = newYs;
             this.setReal = setReal;
+            this.startTick = startTick >= 0 ? startTick : MergedStartTick(oldXs, newXs);
+            this.endTick = endTick >= 0 ? endTick : MergedEndTick(oldXs, newXs);
         }
         public override string ToString() => "Edit Curve";
         public override void Execute() {
@@ -429,6 +460,20 @@ namespace OpenUtau.Core {
         private List<int>? GetCurveYs(UCurve? curve) {
             return setReal ? curve?.realYs : curve?.ys;
         }
+        static int MergedStartTick(int[]? oldXs, int[]? newXs) {
+            return (oldXs ?? Array.Empty<int>())
+                .Concat(newXs ?? Array.Empty<int>())
+                .DefaultIfEmpty(0)
+                .Min();
+        }
+        int MergedEndTick(int[]? oldXs, int[]? newXs) {
+            return (oldXs ?? Array.Empty<int>())
+                .Concat(newXs ?? Array.Empty<int>())
+                .DefaultIfEmpty(Part.Duration)
+                .Max() + 1;
+        }
+        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() =>
+            new[] { new RenderInvalidation(Part, Part.position + startTick, Part.position + endTick) };
     }
 
     public class PasteCurveCommand : ExpCommand {
@@ -495,6 +540,11 @@ namespace OpenUtau.Core {
                 curve.ys.AddRange(oldYs);
             }
         }
+        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() {
+            int startTick = xs.DefaultIfEmpty(0).Min();
+            int endTick = xs.DefaultIfEmpty(Part.Duration).Max() + 1;
+            return new[] { new RenderInvalidation(Part, Part.position + startTick, Part.position + endTick) };
+        }
     }
 
     public class ClearCurveCommand : ExpCommand {
@@ -527,5 +577,7 @@ namespace OpenUtau.Core {
                 curve.ys.AddRange(oldYs);
             }
         }
+        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() =>
+            new[] { new RenderInvalidation(Part, Part.position, Part.End) };
     }
 }

@@ -411,9 +411,13 @@ namespace OpenUtau.Core {
             }
         }
 
-        void SchedulePreRender() {
-            Log.Information("SchedulePreRender");
-            var engine = new RenderEngine(DocManager.Inst.Project);
+        void SchedulePreRender(PreRenderNotification? notification = null) {
+            Log.Information(notification?.HasPriorityRange == true
+                ? $"SchedulePreRender {notification.priorities.Length} prioritized range(s)"
+                : "SchedulePreRender");
+            var engine = notification?.HasPriorityRange == true
+                ? new RenderEngine(DocManager.Inst.Project, priorityRanges: notification.priorities)
+                : new RenderEngine(DocManager.Inst.Project);
             engine.PreRenderProject(ref renderCancellation);
         }
 
@@ -444,7 +448,7 @@ namespace OpenUtau.Core {
             }
             if (cmd is PreRenderNotification || cmd is LoadProjectNotification) {
                 if (Util.Preferences.Default.PreRender) {
-                    SchedulePreRender();
+                    SchedulePreRender(cmd as PreRenderNotification);
                 }
             }
         }
