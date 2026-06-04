@@ -319,32 +319,11 @@ namespace OpenUtau.Core {
             if (undoGroup.DeferValidate) {
                 Project.ValidateFull();
             }
-            var preRenderNotification = CreatePreRenderNotification(undoGroup.Commands);
             undoGroup.Merge();
             ScheduleRealCurveRefresh(undoGroup.Commands);
             undoGroup = null;
             Log.Information("undoGroup ended");
-            ExecuteCmd(preRenderNotification);
-        }
-
-        PreRenderNotification CreatePreRenderNotification(IEnumerable<UCommand> commands) {
-            var priorityRanges = new Dictionary<UVoicePart, (int startTick, int endTick)>();
-            foreach (var invalidation in commands.SelectMany(command => command.GetRenderInvalidations())) {
-                if (!invalidation.IsValid || !Project.parts.Contains(invalidation.part)) {
-                    continue;
-                }
-                if (priorityRanges.TryGetValue(invalidation.part, out var range)) {
-                    priorityRanges[invalidation.part] = (
-                        Math.Min(range.startTick, invalidation.startTick),
-                        Math.Max(range.endTick, invalidation.endTick));
-                } else {
-                    priorityRanges[invalidation.part] = (invalidation.startTick, invalidation.endTick);
-                }
-            }
-            return priorityRanges.Count > 0
-                ? new PreRenderNotification(priorityRanges.Select(range =>
-                    new PreRenderPriority(range.Key, range.Value.startTick, range.Value.endTick)))
-                : new PreRenderNotification();
+            ExecuteCmd(new PreRenderNotification());
         }
 
         public void RollBackUndoGroup() {
@@ -380,7 +359,7 @@ namespace OpenUtau.Core {
             }
             redoQueue.AddToBack(group);
             ScheduleRealCurveRefresh(group.Commands);
-            ExecuteCmd(CreatePreRenderNotification(group.Commands));
+            ExecuteCmd(new PreRenderNotification());
         }
 
         public void Redo() {
@@ -398,7 +377,7 @@ namespace OpenUtau.Core {
             }
             undoQueue.AddToBack(group);
             ScheduleRealCurveRefresh(group.Commands);
-            ExecuteCmd(CreatePreRenderNotification(group.Commands));
+            ExecuteCmd(new PreRenderNotification());
         }
 
         public bool GetUndoState(out string? key) {

@@ -19,17 +19,6 @@ namespace OpenUtau.Core {
             Part = part;
             Notes = notes.ToArray();
         }
-        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() {
-            if (Notes.Length == 0) {
-                return Enumerable.Empty<RenderInvalidation>();
-            }
-            return new[] {
-                new RenderInvalidation(
-                    Part,
-                    Part.position + Notes.Min(note => note.position),
-                    Part.position + Notes.Max(note => note.End))
-            };
-        }
     }
 
     public class AddNoteCommand : NoteCommand {

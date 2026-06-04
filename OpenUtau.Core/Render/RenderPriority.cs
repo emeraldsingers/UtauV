@@ -19,10 +19,6 @@ namespace OpenUtau.Core.Render {
             return playbackStartMs - sourceEndMs;
         }
 
-        internal static bool Overlaps(int startTick, int endTick, int priorityStartTick, int priorityEndTick) {
-            return endTick > priorityStartTick && startTick < priorityEndTick;
-        }
-
         internal static int PreRenderBucket(
             bool isPriorityPart,
             bool overlapsPriority,

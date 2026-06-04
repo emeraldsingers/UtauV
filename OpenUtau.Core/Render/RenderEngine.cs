@@ -47,7 +47,8 @@ namespace OpenUtau.Core.Render {
         readonly int startTick;
         readonly int endTick;
         readonly int trackNo;
-        readonly PreRenderPriority[] priorityRanges;
+        readonly UVoicePart focusPart;
+        readonly int focusTick;
 
         static readonly System.Collections.Concurrent.ConcurrentDictionary<string, float[]> XsyBlendCache =
             new System.Collections.Concurrent.ConcurrentDictionary<string, float[]>();
@@ -57,14 +58,14 @@ namespace OpenUtau.Core.Render {
             int startTick = 0,
             int endTick = -1,
             int trackNo = -1,
-            IEnumerable<PreRenderPriority>? priorityRanges = null) {
+            UVoicePart focusPart = null,
+            int focusTick = -1) {
             this.project = project;
             this.startTick = startTick;
             this.endTick = endTick;
             this.trackNo = trackNo;
-            this.priorityRanges = priorityRanges?
-                .Where(priority => priority.endTick > priority.startTick)
-                .ToArray() ?? Array.Empty<PreRenderPriority>();
+            this.focusPart = focusPart;
+            this.focusTick = focusTick;
         }
 
         // for playback or export
@@ -257,7 +258,7 @@ namespace OpenUtau.Core.Render {
             }
             if (playing) {
                 tuples = OrderForPlayback(tuples);
-            } else if (priorityRanges.Length > 0) {
+            } else if (focusPart != null || focusTick >= 0) {
                 tuples = OrderForPreRender(tuples);
             }
             var progress = new Progress(tuples.Sum(t => t.Item1.phones.Length));
@@ -443,49 +444,30 @@ namespace OpenUtau.Core.Render {
             (RenderPhrase phrase, WaveSource source, RenderPartRequest request)[] tuples) {
             return tuples
                 .Select((tuple, index) => (tuple, index))
-                .OrderBy(item => PreRenderPriorityBucket(item.tuple))
-                .ThenBy(item => PreRenderPriorityIndex(item.tuple))
-                .ThenBy(item => PreRenderPriorityDistance(item.tuple.phrase))
+                .OrderBy(item => PreRenderAttentionBucket(item.tuple))
+                .ThenBy(item => PreRenderAttentionDistance(item.tuple.phrase))
                 .ThenBy(item => item.index)
                 .Select(item => item.tuple)
                 .ToArray();
         }
 
-        private int PreRenderPriorityBucket(
+        private int PreRenderAttentionBucket(
             (RenderPhrase phrase, WaveSource source, RenderPartRequest request) tuple) {
-            bool isPriorityPart = priorityRanges.Any(priority => ReferenceEquals(tuple.request.part, priority.part));
-            bool overlapsPriority = priorityRanges.Any(priority =>
-                ReferenceEquals(tuple.request.part, priority.part) &&
-                RenderPriority.Overlaps(tuple.phrase.position, tuple.phrase.end, priority.startTick, priority.endTick));
-            int earliestPriorityStart = priorityRanges.Min(priority => priority.startTick);
+            bool isPriorityPart = focusPart != null && ReferenceEquals(tuple.request.part, focusPart);
+            bool overlapsPriority = focusTick >= 0 &&
+                tuple.phrase.position <= focusTick &&
+                tuple.phrase.end > focusTick;
+            bool isAfterPriorityStart = focusTick < 0 || tuple.phrase.end > focusTick;
             return RenderPriority.PreRenderBucket(
                 isPriorityPart,
                 overlapsPriority,
-                tuple.phrase.end > earliestPriorityStart);
+                isAfterPriorityStart);
         }
 
-        private int PreRenderPriorityIndex(
-            (RenderPhrase phrase, WaveSource source, RenderPartRequest request) tuple) {
-            for (int i = 0; i < priorityRanges.Length; ++i) {
-                var priority = priorityRanges[i];
-                if (ReferenceEquals(tuple.request.part, priority.part) &&
-                    RenderPriority.Overlaps(tuple.phrase.position, tuple.phrase.end, priority.startTick, priority.endTick)) {
-                    return i;
-                }
-            }
-            for (int i = 0; i < priorityRanges.Length; ++i) {
-                if (ReferenceEquals(tuple.request.part, priorityRanges[i].part)) {
-                    return i;
-                }
-            }
-            return int.MaxValue;
-        }
-
-        private int PreRenderPriorityDistance(RenderPhrase phrase) {
-            return priorityRanges
-                .Select(priority => RenderPriority.PreRenderDistance(phrase.position, phrase.end, priority.startTick))
-                .DefaultIfEmpty(0)
-                .Min();
+        private int PreRenderAttentionDistance(RenderPhrase phrase) {
+            return focusTick >= 0
+                ? RenderPriority.PreRenderDistance(phrase.position, phrase.end, focusTick)
+                : 0;
         }
 
         public static void ReleaseSourceTemp() {

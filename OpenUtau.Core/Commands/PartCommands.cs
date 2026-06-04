@@ -1,7 +1,5 @@
 ﻿using OpenUtau.Core.Ustx;
 using SharpCompress;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace OpenUtau.Core {
     public abstract class PartCommand : UCommand {
@@ -13,12 +11,6 @@ namespace OpenUtau.Core {
         public PartCommand(UProject project, UPart part) {
             this.project = project;
             this.part = part;
-        }
-        public override IEnumerable<RenderInvalidation> GetRenderInvalidations() {
-            if (part is UVoicePart voicePart) {
-                return new[] { new RenderInvalidation(voicePart, voicePart.position, voicePart.End) };
-            }
-            return Enumerable.Empty<RenderInvalidation>();
         }
     }
 
