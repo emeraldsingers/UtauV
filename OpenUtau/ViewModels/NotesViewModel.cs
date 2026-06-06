@@ -1137,6 +1137,8 @@ namespace OpenUtau.App.ViewModels {
                     MessageBus.Current.SendMessage(new WaveformRefreshEvent());
                 } else if (notif is RealCurvesUpdatedNotification && notif.part == Part) {
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                } else if (notif is RealCurveCoverageNotification && notif.part == Part) {
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 }
             } else if (cmd is PartCommand partCommand) {
                 if (cmd is ReplacePartCommand replacePart) {
