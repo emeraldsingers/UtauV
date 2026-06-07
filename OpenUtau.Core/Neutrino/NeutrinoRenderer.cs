@@ -541,7 +541,9 @@ namespace OpenUtau.Core.Neutrino {
                 using (var writer = new BinaryWriter(stream)) {
                     writer.Write(phrase.preEffectHash);
                     writer.Write(phrase.phones[0].toneShift);
-                    phrase.phones.ForEach(x => writer.Write(x.tone));
+                    foreach (var phone in phrase.phones) {
+                        writer.Write(phone.tone);
+                    }
                     return XXH64.DigestOf(stream.ToArray());
                 }
             }
