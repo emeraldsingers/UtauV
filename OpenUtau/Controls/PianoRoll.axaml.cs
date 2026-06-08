@@ -44,7 +44,7 @@ namespace OpenUtau.App.Controls {
         private ReactiveCommand<Unit, Unit>? noteDefaultsCommand;
         private ReactiveCommand<BatchEdit, Unit>? noteBatchEditCommand;
 
-        private Window RootWindow => (Window) TopLevel.GetTopLevel(this)!;
+        private Window RootWindow => (Window)TopLevel.GetTopLevel(this)!;
 
         public PianoRoll(PianoRollViewModel model) {
             InitializeComponent();
@@ -160,7 +160,7 @@ namespace OpenUtau.App.Controls {
             } catch (Exception e) {
                 Log.Error(e, "Failed to load external batch edits.");
             }
-            
+
             DocManager.Inst.AddSubscriber(this);
 
             ViewModel.NoteBatchEdits.Insert(6, new MenuItemViewModel() {
@@ -201,6 +201,23 @@ namespace OpenUtau.App.Controls {
             });
 
             AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+
+            this.WhenAnyValue(x => x.ViewModel!.PlaybackViewModel!.PlayPosTick)
+                .Subscribe(tick => {
+                    var notesVm = ViewModel?.NotesViewModel;
+
+                    if (notesVm?.Part == null) return;
+                    if (tick < notesVm.Part.position || tick >= notesVm.Part.End) {
+                        var targetPart = notesVm.Project.parts
+                            .OfType<UVoicePart>()
+                            .FirstOrDefault(p => p.trackNo == notesVm.Part.trackNo && p.position <= tick && p.End > tick);
+
+                        if (targetPart != null) {
+                            DocManager.Inst.ExecuteCmd(new LoadPartNotification(targetPart, notesVm.Project, tick));
+                            AttachExpressions();
+                        }
+                    }
+                });
 
             DocManager.Inst.AddSubscriber(this);
         }
@@ -470,8 +487,17 @@ namespace OpenUtau.App.Controls {
             dialog.ShowDialog(RootWindow);
         }
 
+        private void OnPianoRollFocus(object sender, GotFocusEventArgs e) {
+            var input = e.Source as InputElement;
+            if (input is TextBox or ComboBox or ComboBoxItem) {
+                input.Focus();
+            }
+        }
+
         private void LyricBoxLostFocus(object sender, RoutedEventArgs e) {
-            this.Focus();
+            if (sender is InputElement { IsKeyboardFocusWithin: false }) {
+                this.Focus();
+            }
         }
 
         public void OnExpButtonClick(object sender, RoutedEventArgs args) {
@@ -860,7 +886,7 @@ namespace OpenUtau.App.Controls {
             if (ViewModel?.NotesViewModel?.HitTest == null) {
                 return;
             }
-            if((ViewModel.NotesViewModel.DrawPitchTool || ViewModel.NotesViewModel.DrawLinePitchTool || ViewModel.NotesViewModel.OverwritePitchTool || ViewModel.NotesViewModel.OverwriteLinePitchTool || ViewModel.NotesViewModel.EraserTool) && args.KeyModifiers != cmdKey) {
+            if ((ViewModel.NotesViewModel.DrawPitchTool || ViewModel.NotesViewModel.DrawLinePitchTool || ViewModel.NotesViewModel.OverwritePitchTool || ViewModel.NotesViewModel.OverwriteLinePitchTool || ViewModel.NotesViewModel.EraserTool) && args.KeyModifiers != cmdKey) {
                 Cursor = null;
                 return;
             }
@@ -1900,14 +1926,14 @@ namespace OpenUtau.App.Controls {
                         }
                     }
                     break;
-                    case Key.PageDown: {
+                case Key.PageDown: {
                         if (isNone) {
                             MoveToNextPart(true);
                             return true;
                         }
                     }
                     break;
-                #endregion
+                    #endregion
             }
             return false;
         }
