@@ -651,7 +651,9 @@
                         TickOrigin="{Binding NotesViewModel.TickOrigin}"
                         TickOffset="{Binding NotesViewModel.TickOffset}"
                         SnapDiv="{Binding NotesViewModel.SnapDiv, Mode=OneWay}"/>
-      <c:ExpressionCanvas Grid.Row="5" Grid.Column="1" Opacity="{Binding NotesViewModel.ExpShadowOpacity}"
+      <c:ExpressionCanvas Grid.Row="5" Grid.Column="1"
+                          DisplayMode="Shadow"
+                          Opacity="0.2" 
                           IsVisible="{Binding NotesViewModel.ShowExpressions}"
                           Margin="0,24,0,0"
                           TickWidth="{Binding NotesViewModel.TickWidth}"
@@ -660,6 +662,7 @@
                           Key="{Binding NotesViewModel.SecondaryKey}"
                           ShowRealCurve="False"/>
       <c:ExpressionCanvas Grid.Row="5" Grid.Column="1"
+                          DisplayMode="Visible"
                           IsVisible="{Binding NotesViewModel.ShowExpressions}"
                           Margin="0,24,0,0"
                           Bounds="{Binding NotesViewModel.ExpBounds, Mode=OneWayToSource}"
