@@ -252,7 +252,7 @@ namespace OpenUtau.Core.Util {
 errors.txt
 ";
             public string RecoveryPath = string.Empty;
-            public bool DetachPianoRoll = false;
+            public bool DetachPianoRoll = true;
 
             // ----- Mix FX (post-processing) -----
             // Per-track FX state lives in UTrack.MixFx and the project ustx.
