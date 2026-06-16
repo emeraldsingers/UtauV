@@ -460,18 +460,17 @@
             <ToggleButton Classes="toolbar" Margin="0" Padding="1" Height="20" Width="20" IsChecked="{Binding ShowPhonemizerTags}"
                           ToolTip.Tip="{DynamicResource pianoroll.toggle.phonemizer}">
               <Grid Width="18" Height="18">
-                <Path Classes="filled" Data="M21.41 11.58l-9-9C12.04 2.21 11.54 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.41l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.41zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z">
+                <Path Classes="filled" Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z">
                   <Path.RenderTransform>
                     <TransformGroup>
-                      <ScaleTransform ScaleX=".65" ScaleY=".65" />
-                      <TranslateTransform X="-1" Y="-1"/>
+                      <ScaleTransform ScaleX=".6" ScaleY=".6" />
+                      <TranslateTransform X="-2" Y="-2"/>
                     </TransformGroup>
                   </Path.RenderTransform>
                 </Path>
               </Grid>
             </ToggleButton>
-            <Border Width="12"/>
-
+            
             <ToggleButton Classes="toolbar" Margin="0" Padding="1" Height="20" Width="20" IsChecked="{Binding NotesViewModel.PlayTone}"
                           ToolTip.Tip="{DynamicResource pianoroll.toggle.tone}">
               <Grid Width="18" Height="18">
