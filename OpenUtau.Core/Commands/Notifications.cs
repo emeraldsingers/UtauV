@@ -249,20 +249,6 @@ namespace OpenUtau.Core {
         public override string ToString() => "Part rendered.";
     }
 
-    public class PhraseRenderedNotification : UNotification {
-        public readonly RenderPhrase phrase;
-        public readonly RenderResult result;
-        public readonly int trackNo;
-        public override bool Silent => true;
-        public PhraseRenderedNotification(UVoicePart part, RenderPhrase phrase, RenderResult result, int trackNo) {
-            this.part = part;
-            this.phrase = phrase;
-            this.result = result;
-            this.trackNo = trackNo;
-        }
-        public override string ToString() => "Phrase rendered.";
-    }
-
     public class RealCurvesUpdatedNotification : UNotification {
         public readonly IReadOnlyList<RealCurveUpdate> updates;
         public override bool Silent => true;
@@ -271,6 +257,16 @@ namespace OpenUtau.Core {
             this.updates = updates;
         }
         public override string ToString() => "Real curves updated.";
+    }
+
+    public class RealCurveCoverageNotification : UNotification {
+        public readonly IReadOnlyList<(int start, int end)> ranges;
+        public override bool Silent => true;
+        public RealCurveCoverageNotification(UVoicePart part, IReadOnlyList<(int start, int end)> ranges) {
+            this.part = part;
+            this.ranges = ranges;
+        }
+        public override string ToString() => "Real curve coverage.";
     }
 
     public class GotoOtoNotification : UNotification {

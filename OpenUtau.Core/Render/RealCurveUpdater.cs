@@ -87,6 +87,75 @@ namespace OpenUtau.Core.Render {
             return Apply(project, part, updates, phraseHashes);
         }
 
+        // Removes realXs/realYs points outside the union of `ranges` (the tick spans the renderer
+        // actually produced this pass). Clears ghost real curves left behind when a phrase shrinks,
+        // moves, splits, or is deleted. realXs is kept sorted, so a single two-pointer walk decides
+        // each point; a new list is allocated only when a stale point is found (clean case is free).
+        public static bool TrimToCoverage(
+            UProject project, UVoicePart part, IReadOnlyList<(int start, int end)> ranges) {
+            if (!project.parts.Contains(part) || ranges.Count == 0) {
+                return false;
+            }
+            var merged = MergeRanges(ranges);
+            bool changed = false;
+            foreach (var curve in part.curves) {
+                if (TrimCurve(curve, merged)) {
+                    changed = true;
+                }
+            }
+            return changed;
+        }
+
+        static bool TrimCurve(UCurve curve, List<(int start, int end)> merged) {
+            var xs = curve.realXs;
+            var ys = curve.realYs;
+            if (xs.Count == 0) {
+                return false;
+            }
+            List<int>? newXs = null;
+            List<int>? newYs = null;
+            int ri = 0;
+            for (int i = 0; i < xs.Count; ++i) {
+                int x = xs[i];
+                while (ri < merged.Count && merged[ri].end < x) {
+                    ri++;
+                }
+                bool keep = ri < merged.Count && x >= merged[ri].start;
+                if (keep) {
+                    newXs?.Add(x);
+                    newYs?.Add(ys[i]);
+                } else if (newXs == null) {
+                    newXs = new List<int>(xs.Count);
+                    newYs = new List<int>(ys.Count);
+                    for (int j = 0; j < i; ++j) {
+                        newXs.Add(xs[j]);
+                        newYs.Add(ys[j]);
+                    }
+                }
+            }
+            if (newXs == null) {
+                return false;
+            }
+            curve.realXs = newXs;
+            curve.realYs = newYs;
+            return true;
+        }
+
+        internal static List<(int start, int end)> MergeRanges(IReadOnlyList<(int start, int end)> ranges) {
+            var sorted = ranges.ToList();
+            sorted.Sort((a, b) => a.start.CompareTo(b.start));
+            var merged = new List<(int start, int end)> { sorted[0] };
+            for (int i = 1; i < sorted.Count; ++i) {
+                var last = merged[merged.Count - 1];
+                if (sorted[i].start <= last.end) {
+                    merged[merged.Count - 1] = (last.start, Math.Max(last.end, sorted[i].end));
+                } else {
+                    merged.Add(sorted[i]);
+                }
+            }
+            return merged;
+        }
+
         internal static bool Apply(
             UProject project,
             UVoicePart part,

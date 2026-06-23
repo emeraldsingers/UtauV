@@ -95,6 +95,46 @@ namespace OpenUtau.Core {
             Assert.Equal(new[] { -1, 10, 20 }, curve.realYs);
         }
 
+        [Fact]
+        public void TrimToCoverageRemovesGhostPointsOutsideCoverage() {
+            var project = CreateProjectWithCurve(out var part, out var curve);
+            curve.realXs.AddRange(new[] { 0, 0, 25, 50, 60, 80, 100 });
+            curve.realYs.AddRange(new[] { -1, 10, 20, 30, 40, 50, 60 });
+
+            bool changed = RealCurveUpdater.TrimToCoverage(
+                project, part, new List<(int start, int end)> { (0, 50) });
+
+            Assert.True(changed);
+            Assert.Equal(new[] { 0, 0, 25, 50 }, curve.realXs);
+            Assert.Equal(new[] { -1, 10, 20, 30 }, curve.realYs);
+        }
+
+        [Fact]
+        public void TrimToCoverageKeepsPointsWhenAllInsideCoverage() {
+            var project = CreateProjectWithCurve(out var part, out var curve);
+            curve.realXs.AddRange(new[] { 0, 0, 25, 50 });
+            curve.realYs.AddRange(new[] { -1, 10, 20, 30 });
+
+            bool changed = RealCurveUpdater.TrimToCoverage(
+                project, part, new List<(int start, int end)> { (0, 50) });
+
+            Assert.False(changed);
+            Assert.Equal(new[] { 0, 0, 25, 50 }, curve.realXs);
+        }
+
+        [Fact]
+        public void TrimToCoverageSkipsWhenNoRanges() {
+            var project = CreateProjectWithCurve(out var part, out var curve);
+            curve.realXs.AddRange(new[] { 0, 50, 100 });
+            curve.realYs.AddRange(new[] { -1, 30, 60 });
+
+            bool changed = RealCurveUpdater.TrimToCoverage(
+                project, part, new List<(int start, int end)>());
+
+            Assert.False(changed);
+            Assert.Equal(3, curve.realXs.Count);
+        }
+
         static UProject CreateProjectWithCurve(out UVoicePart part, out UCurve curve) {
             var project = new UProject();
             var descriptor = new UExpressionDescriptor("energy", Ene, 0, 100, 0) {

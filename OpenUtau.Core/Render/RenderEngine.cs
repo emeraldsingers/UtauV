@@ -252,14 +252,20 @@ namespace OpenUtau.Core.Render {
                 tuples = orderedTuples;
             }
             var progress = new Progress(tuples.Sum(t => t.Item1.phones.Length));
+            // Only full-project passes (pre-render / export) maintain the real-curve coverage
+            // invariant. Partial playback passes must not trim curves outside their tick window.
+            bool maintainCoverage = startTick == 0 && endTick == -1;
+            var coverageRanges = maintainCoverage
+                ? new Dictionary<UVoicePart, List<(int start, int end)>>()
+                : null;
             foreach (var tuple in tuples) {
                 var phrase = tuple.Item1;
                 var source = tuple.Item2;
                 var request = tuple.Item3;
-                bool realCurvesPublished = false;
+                RealCurveUpdate[]? publishedUpdates = null;
                 var renderEvents = phrase.renderer.SupportsRealCurve
                     ? new RenderPhraseEvents(realCurves => {
-                        realCurvesPublished = PublishRealCurveUpdates(request.part, phrase, realCurves);
+                        publishedUpdates = PublishRealCurveUpdates(request.part, phrase, realCurves);
                     })
                     : null;
                 RenderResult result;
@@ -275,6 +281,7 @@ namespace OpenUtau.Core.Render {
                 } else {
                     string xsyKey = $"{phrase.hash:x16}|" +
                         string.Join(",", phrase.phones.Select(p => $"{p.oto2?.Set}:{p.oto2?.Alias}"));
+                    result = phrase.renderer.Layout(phrase);
                     if (!XsyBlendCache.TryGetValue(xsyKey, out var blended)) {
                         var taskA = phrase.renderer.Render(phrase, progress, request.trackNo, cancellation, true, renderEvents);
                         taskA.Wait();
@@ -340,50 +347,74 @@ namespace OpenUtau.Core.Render {
                     source.SetSamples(blended);
                 }
                 DocManager.Inst.ExecuteCmd(new PhraseRenderedNotification(request.part, phrase, result, request.trackNo));
-                if (!realCurvesPublished) {
-                    PublishRealCurveUpdates(request.part, phrase);
+                if (publishedUpdates == null) {
+                    publishedUpdates = PublishRealCurveUpdates(request.part, phrase);
+                }
+                if (coverageRanges != null && publishedUpdates != null) {
+                    AccumulateCoverage(coverageRanges, request.part, publishedUpdates);
                 }
                 if (request.sources.All(s => s.HasSamples)) {
                     request.part.SetMix(request.mix);
+                    if (coverageRanges != null &&
+                        phrase.renderer.SupportsRealCurve &&
+                        coverageRanges.TryGetValue(request.part, out var ranges) &&
+                        ranges.Count > 0) {
+                        DocManager.Inst.ExecuteCmd(new RealCurveCoverageNotification(request.part, ranges));
+                    }
                     DocManager.Inst.ExecuteCmd(new PartRenderedNotification(request.part));
                 }
             }
             progress.Clear();
         }
 
-        private bool PublishRealCurveUpdates(UVoicePart part, RenderPhrase phrase) {
+        private RealCurveUpdate[]? PublishRealCurveUpdates(UVoicePart part, RenderPhrase phrase) {
             if (!phrase.renderer.SupportsRealCurve) {
-                return false;
+                return null;
             }
             try {
                 var updates = RealCurveUpdater.LoadPhraseUpdates(part, phrase);
                 if (updates.Length > 0) {
                     DocManager.Inst.ExecuteCmd(new RealCurvesUpdatedNotification(part, updates));
-                    return true;
+                    return updates;
                 }
             } catch (Exception e) {
                 Log.Debug(e, "Failed to refresh rendered real curves.");
             }
-            return false;
+            return null;
         }
 
-        private bool PublishRealCurveUpdates(
+        private RealCurveUpdate[]? PublishRealCurveUpdates(
             UVoicePart part,
             RenderPhrase phrase,
             IReadOnlyList<RenderRealCurveResult> realCurves) {
             if (realCurves.Count == 0) {
-                return false;
+                return null;
             }
             try {
                 var updates = RealCurveUpdater.BuildUpdates(part, phrase, realCurves);
                 if (updates.Length > 0) {
                     DocManager.Inst.ExecuteCmd(new RealCurvesUpdatedNotification(part, updates));
-                    return true;
+                    return updates;
                 }
             } catch (Exception e) {
                 Log.Debug(e, "Failed to publish rendered real curves.");
             }
-            return false;
+            return null;
+        }
+
+        private static void AccumulateCoverage(
+            Dictionary<UVoicePart, List<(int start, int end)>> coverage,
+            UVoicePart part,
+            RealCurveUpdate[] updates) {
+            if (!coverage.TryGetValue(part, out var ranges)) {
+                ranges = new List<(int start, int end)>();
+                coverage[part] = ranges;
+            }
+            foreach (var update in updates) {
+                if (update.IsValid) {
+                    ranges.Add((update.startTick, update.endTick));
+                }
+            }
         }
 
         public static void ReleaseSourceTemp() {

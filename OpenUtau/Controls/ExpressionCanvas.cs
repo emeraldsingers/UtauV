@@ -78,6 +78,12 @@ namespace OpenUtau.App.Controls {
             circleGeometry = new EllipseGeometry(new Rect(-4.5, -4.5, 9, 9));
             MessageBus.Current.Listen<NotesRefreshEvent>()
                 .Subscribe(_ => InvalidateVisual());
+            MessageBus.Current.Listen<RealCurveRefreshEvent>()
+                .Subscribe(_ => {
+                    if (ShowRealCurve) {
+                        InvalidateVisual();
+                    }
+                });
             MessageBus.Current.Listen<NotesSelectionEvent>()
                 .Subscribe(e => {
                     selectedNotes.Clear();
