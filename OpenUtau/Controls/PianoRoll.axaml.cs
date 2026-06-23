@@ -137,6 +137,9 @@ namespace OpenUtau.App.Controls {
                 Command = noteBatchEditCommand,
                 CommandParameter = edit,
             }));
+            if (ViewModel.NoteBatchEdits.Count > 0) {
+                ViewModel.NoteBatchEdits[0].InputGesture = new KeyGesture(Key.R, KeyModifiers.Control);
+            }
             ViewModel.LyricBatchEdits.AddRange(new List<BatchEdit>() {
                 new RomajiToHiragana(),
                 new HiraganaToRomaji(),
