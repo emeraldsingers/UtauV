@@ -911,17 +911,17 @@ namespace OpenUtau.Core.Editing {
                 finished += 1;
                 setProgressCallback(finished, part.renderPhrases.Count);
             }
-            var commands = curveDict
-                .Select(kv => new MergedSetCurveCommand(
-                    project, part, kv.Key,
-                    kv.Value?.realXs.ToArray() ?? Array.Empty<int>(),
-                    kv.Value?.realYs.ToArray() ?? Array.Empty<int>(),
-                    newXsDict[kv.Key].ToArray(),
-                    newYsDict[kv.Key].ToArray(),
-                    true))
-                .ToList();
 
             DocManager.Inst.PostOnUIThread(() => {
+                var commands = curveDict
+                    .Select(kv => new MergedSetCurveCommand(
+                        project, part, kv.Key,
+                        kv.Value?.realXs.ToArray() ?? Array.Empty<int>(),
+                        kv.Value?.realYs.ToArray() ?? Array.Empty<int>(),
+                        newXsDict[kv.Key].ToArray(),
+                        newYsDict[kv.Key].ToArray(),
+                        true))
+                    .ToList();
                 docManager.StartUndoGroup("command.batch.note", true);
                 commands.ForEach(docManager.ExecuteCmd);
                 docManager.EndUndoGroup();
