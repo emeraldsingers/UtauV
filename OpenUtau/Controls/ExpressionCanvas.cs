@@ -324,8 +324,8 @@ namespace OpenUtau.App.Controls {
                     double rectWidth = Math.Max(0, Math.Max(x1, x2) - rectX);
                     var fillRect = new Rect(rectX, rectY, rectWidth, rectHeight);
                     
-                    // Use 45% opacity if edited, 15% opacity if default
-                    double fillOpacity = overriden ? 0.45 : 0.15;
+                    // Use 20% opacity if edited, 10% opacity if default
+                    double fillOpacity = overriden ? 0.20 : 0.10;
 
                     using (var state = context.PushOpacity(fillOpacity)) {
                         context.DrawRectangle(brush, null, fillRect);
