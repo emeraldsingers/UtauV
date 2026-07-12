@@ -284,6 +284,10 @@ namespace OpenUtau.App.Controls {
             MessageBus.Current.SendMessage(new PianorollRefreshEvent("Part"));
 
         }
+        void OnMenuPlaybackVerticalFollow(object sender, RoutedEventArgs args) {
+            ViewModel.NotesViewModel.ShowPlaybackVerticalFollow =
+                !ViewModel.NotesViewModel.ShowPlaybackVerticalFollow;
+        }
         void OnMenuUseTrackColor(object sender, RoutedEventArgs args) {
             Preferences.Default.UseTrackColor = !Preferences.Default.UseTrackColor;
             Preferences.Save();
