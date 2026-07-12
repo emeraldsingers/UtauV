@@ -18,6 +18,8 @@ namespace OpenUtau.Classic {
             Ustx.DYN,
             Ustx.PITD,
             Ustx.CLR,
+            Ustx.XSYC,
+            Ustx.XSY,
             Ustx.ENG,
             Ustx.VEL,
             Ustx.VOL,

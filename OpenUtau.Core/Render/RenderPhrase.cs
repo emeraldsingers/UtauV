@@ -66,6 +66,7 @@ namespace OpenUtau.Core.Render {
         public readonly double adjustedTempo;
         public readonly Tuple<string, int?, string>[] flags;// flag, value, abbr. Abbr is kept here for flag filtering.
         public readonly string suffix;
+        public readonly string suffix2;
         public readonly float volume;
         public readonly float velocity;
         public readonly float modulation;
@@ -76,6 +77,7 @@ namespace OpenUtau.Core.Render {
         public readonly int toneShift;
 
         public readonly UOto oto;
+        public readonly UOto oto2;
         public readonly ulong hash;
 
         internal RenderPhone(UProject project, UTrack track, UVoicePart part, UNote note, UPhoneme phoneme, int phrasePosition) {
@@ -120,6 +122,9 @@ namespace OpenUtau.Core.Render {
             string voiceColor = phoneme.GetVoiceColor(project, track);
             suffix = track.Singer.Subbanks.FirstOrDefault(
                 subbank => subbank.Color == voiceColor)?.Suffix ?? string.Empty;
+            string targetColor = phoneme.GetVoiceColor2(project, track) ?? string.Empty;
+            suffix2 = track.Singer.Subbanks.FirstOrDefault(
+                subbank => subbank.Color == targetColor)?.Suffix ?? string.Empty;
             volume = phoneme.GetExpression(project, track, Format.Ustx.VOL).Item1 * 0.01f;
             velocity = phoneme.GetExpression(project, track, Format.Ustx.VEL).Item1 * 0.01f;
             modulation = phoneme.GetExpression(project, track, Format.Ustx.MOD).Item1 * 0.01f;
@@ -129,6 +134,12 @@ namespace OpenUtau.Core.Render {
             toneShift = (int)phoneme.GetExpression(project, track, Format.Ustx.SHFT).Item1;
 
             oto = phoneme.oto;
+            if (oto != null && !string.IsNullOrEmpty(targetColor)) {
+                string basePhoneme = oto.Phonetic ?? phoneme.phoneme;
+                if (track.Singer.TryGetMappedOto(basePhoneme, note.tone, targetColor, out var secondaryOto)) {
+                    oto2 = secondaryOto;
+                }
+            }
             hash = Hash();
         }
         private ulong Hash() {
@@ -147,6 +158,7 @@ namespace OpenUtau.Core.Render {
                         }
                     }
                     writer.Write(suffix);
+                    writer.Write(suffix2 ?? string.Empty);
                     writer.Write(volume);
                     writer.Write(velocity);
                     writer.Write(modulation);
@@ -187,6 +199,7 @@ namespace OpenUtau.Core.Render {
         public readonly float[] toneShift;
         public readonly float[] tension;
         public readonly float[] voicing;
+        public readonly float[] xsy;
         public readonly Tuple<string, float[]>[] curves;//custom curves defined by renderer
         public readonly ulong preEffectHash;
         public readonly ulong hash;
@@ -442,6 +455,16 @@ namespace OpenUtau.Core.Render {
                     case Format.Ustx.TENC: tension = curveSampled; break;
                     case Format.Ustx.BREC: breathiness = curveSampled; break;
                     case Format.Ustx.VOIC: voicing = curveSampled; break;
+                    case Format.Ustx.XSY:
+                        xsy = curveSampled;
+                        foreach (var phone in phones) {
+                            int startIdx = Math.Max(0, (phone.position - phone.leading - pitchStart) / pitchInterval);
+                            int endIdx = Math.Min(xsy.Length, Math.Max(0, (phone.position - pitchStart) / pitchInterval));
+                            for (int k = startIdx; k < endIdx; k++) {
+                                xsy[k] = 0f;
+                            }
+                        }
+                        break;
                     default:
                         curves.Add(Tuple.Create(curve.abbr,curveSampled));
                         break;
@@ -498,7 +521,7 @@ namespace OpenUtau.Core.Render {
                         writer.Write(phone.hash);
                     }
                     if (postEffect) {
-                        foreach (var array in new float[][] { pitches, dynamics, gender, breathiness, toneShift, tension, voicing }) {
+                        foreach (var array in new float[][] { pitches, dynamics, gender, breathiness, toneShift, tension, voicing, xsy }) {
                             if (array == null) {
                                 writer.Write("null");
                             } else {
