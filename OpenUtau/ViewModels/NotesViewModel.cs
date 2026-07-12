@@ -52,6 +52,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public double PlayPosHighlightX { get; set; }
         [Reactive] public double PlayPosHighlightWidth { get; set; }
         [Reactive] public bool PlayPosWaitingRendering { get; set; }
+        [Reactive] public int PlayPosTick { get; set; }
         [Reactive] public bool ShowTips { get; set; }
         [Reactive] public bool PlayTone { get; set; }
         [Reactive] public bool ShowVibrato { get; set; }
@@ -62,6 +63,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowNoteParams { get; set; }
         [Reactive] public bool ShowExpressions { get; set; }
         [Reactive] public bool ShowPlaybackVerticalFollow { get; set; }
+        [Reactive] public bool ShowPlaybackNoteHighlight { get; set; }
         [Reactive] public bool IsSnapOn { get; set; }
         [Reactive] public string SnapDivText { get; set; }
         [Reactive] public string KeyText { get; set; }
@@ -109,7 +111,6 @@ namespace OpenUtau.App.ViewModels {
         private readonly object portraitLock = new object();
         private int userSnapDiv = -2;
         private int userKey => Project.key;
-        private int playPosTick;
         private DateTime playbackVerticalFollowLastFrame = DateTime.UtcNow;
         private double? playbackVerticalFollowTargetOffset;
         private static readonly int PlaybackVerticalFollowOutlierThreshold = 12;
@@ -278,6 +279,13 @@ namespace OpenUtau.App.ViewModels {
                 Preferences.Default.ShowPlaybackVerticalFollow = showPlaybackVerticalFollow;
                 Preferences.Save();
                 ResetPlaybackVerticalFollowAnimation();
+            });
+            ShowPlaybackNoteHighlight = Preferences.Default.ShowPlaybackNoteHighlight;
+            this.WhenAnyValue(x => x.ShowPlaybackNoteHighlight)
+            .Subscribe(showPlaybackNoteHighlight => {
+                Preferences.Default.ShowPlaybackNoteHighlight = showPlaybackNoteHighlight;
+                Preferences.Save();
+                MessageBus.Current.SendMessage(new NotesRefreshEvent());
             });
             this.WhenAnyValue(x => x.TrackOffset)
                 .Skip(1)
@@ -995,12 +1003,12 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private void SetPlayPos(int tick, bool waitingRendering) {
-            playPosTick = tick - (Part?.position ?? 0);
+            PlayPosTick = tick - (Part?.position ?? 0);
             PlayPosWaitingRendering = waitingRendering;
             if (waitingRendering) {
                 return;
             }
-            tick = playPosTick;
+            tick = PlayPosTick;
             PlayPosX = TickToneToPoint(tick, 0).X;
             UpdateHighlight();
         }
@@ -1194,7 +1202,7 @@ namespace OpenUtau.App.ViewModels {
             if (!ShowPlaybackVerticalFollow || Part == null || ViewportTracks <= 0) {
                 return;
             }
-            var targetNote = FindPlaybackVerticalFollowNote(playPosTick);
+            var targetNote = FindPlaybackVerticalFollowNote(PlayPosTick);
             if (targetNote == null) {
                 return;
             }
