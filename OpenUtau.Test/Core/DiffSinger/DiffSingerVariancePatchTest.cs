@@ -1,64 +1,105 @@
-using System.Linq;
 using OpenUtau.Core.DiffSinger;
 using Xunit;
 
 namespace OpenUtau.Core {
     public class DiffSingerVariancePatchTest {
         [Fact]
-        public void FindChangedRangesGroupsContiguousPitchChanges() {
-            var previous = new[] { 1f, 1f, 1f, 1f, 1f, 1f };
-            var current = new[] { 1f, 2f, 2f, 1f, 2f, 1f };
+        public void BuildChangedFrameMaskMarksOnlyChangedFrames() {
+            var mask = DiffSingerVariancePatch.BuildChangedFrameMask(
+                new[] { 1f, 1f, 1f, 2f },
+                new[] { 1f, 2f, 1f, 2f },
+                1e-4f);
 
-            var ranges = DiffSingerVariancePatch.FindChangedRanges(previous, current, 1e-4f);
-
-            Assert.Equal(2, ranges.Count);
-            Assert.Equal(1, ranges[0].start);
-            Assert.Equal(3, ranges[0].end);
-            Assert.Equal(4, ranges[1].start);
-            Assert.Equal(5, ranges[1].end);
+            Assert.Equal(new[] { false, true, false, false }, mask);
         }
 
         [Fact]
-        public void MergeKeepsPreviousResultWhenPitchDoesNotChange() {
-            var previousResult = Result(new[] { 1f, 2f, 3f });
-            var currentResult = Result(new[] { 10f, 20f, 30f });
-            var previous = new VariancePatchState(new[] { 60f, 61f, 62f }, previousResult);
+        public void BuildChangedFrameMaskGroupsSpeakerEmbeddingByFrame() {
+            var mask = DiffSingerVariancePatch.BuildChangedFrameMask(
+                new[] { 1f, 2f, 3f, 4f, 5f, 6f },
+                new[] { 1f, 2f, 3f, 40f, 5f, 6f },
+                3,
+                1e-4f);
 
-            var merged = DiffSingerVariancePatch.Merge(previous, new[] { 60f, 61f, 62f }, currentResult);
-
-            Assert.Equal(previousResult.energy!, merged.energy!);
+            Assert.Equal(new[] { false, true, false }, mask);
         }
 
         [Fact]
-        public void MergeBlendsOnlyChangedPitchRange() {
-            var previousResult = Result(Enumerable.Repeat(0f, 6).ToArray(), frameMs: 50);
-            var currentResult = Result(Enumerable.Repeat(10f, 6).ToArray(), frameMs: 50);
-            var previous = new VariancePatchState(
-                new[] { 60f, 60f, 60f, 60f, 60f, 60f },
-                previousResult);
+        public void BuildChangedFrameMaskMarksAllFramesForIncompatibleEmbeddingShape() {
+            var mask = DiffSingerVariancePatch.BuildChangedFrameMask(
+                new[] { 1f, 2f, 3f, 4f },
+                new[] { 1f, 2f, 3f },
+                2,
+                1e-4f);
 
-            var merged = DiffSingerVariancePatch.Merge(
-                previous,
-                new[] { 60f, 60f, 61f, 61f, 60f, 60f },
-                currentResult);
-
-            Assert.Equal(new[] { 0f, 5f, 10f, 10f, 5f, 0f }, merged.energy!);
+            Assert.Equal(new[] { true, true }, mask);
         }
 
         [Fact]
-        public void MergeFallsBackToCurrentResultWhenMetadataChanges() {
-            var previousResult = Result(new[] { 1f, 2f, 3f }, frameMs: 50);
-            var currentResult = Result(new[] { 10f, 20f, 30f }, frameMs: 60);
-            var previous = new VariancePatchState(new[] { 60f, 61f, 62f }, previousResult);
+        public void ExpandToChannelsUsesSharedFrameMask() {
+            var mask = DiffSingerVariancePatch.ExpandToChannels(
+                new[] { false, true, false }, 3);
 
-            var merged = DiffSingerVariancePatch.Merge(previous, new[] { 60f, 62f, 62f }, currentResult);
-
-            Assert.Equal(currentResult.energy!, merged.energy!);
+            Assert.Equal(
+                new[] { false, false, false, true, true, true, false, false, false },
+                mask);
         }
 
-        static VarianceResult Result(float[] energy, float frameMs = 50) {
+        [Fact]
+        public void HardComposePreservesUnmaskedFramesExactly() {
+            var previous = Result(
+                new[] { 1f, 2f, 3f, 4f },
+                new[] { 5f, 6f, 7f, 8f });
+            var predicted = Result(
+                new[] { 10f, 20f, 30f, 40f },
+                new[] { 50f, 60f, 70f, 80f });
+            var mask = DiffSingerVariancePatch.ExpandToChannels(
+                new[] { false, true, false, true }, 2);
+
+            var result = DiffSingerVariancePatch.HardCompose(previous, predicted, mask, 2);
+
+            Assert.Equal(new[] { 1f, 20f, 3f, 40f }, result.energy);
+            Assert.Equal(new[] { 5f, 60f, 7f, 80f }, result.breathiness);
+        }
+
+        [Fact]
+        public void HardComposeDoesNotLeakModelChangesOutsideMask() {
+            var previous = Result(new[] { 1f, 2f, 3f });
+            var predicted = Result(new[] { 100f, 200f, 300f });
+            var mask = DiffSingerVariancePatch.ExpandToChannels(
+                new[] { false, true, false }, 1);
+
+            var result = DiffSingerVariancePatch.HardCompose(previous, predicted, mask, 1);
+
+            Assert.Equal(new[] { 1f, 200f, 3f }, result.energy);
+        }
+
+        [Fact]
+        public void HardComposeFallsBackToPredictedForIncompatibleMetadata() {
+            var previous = Result(new[] { 1f, 2f, 3f }, frameMs: 50);
+            var predicted = Result(new[] { 10f, 20f, 30f }, frameMs: 60);
+            var mask = new[] { true, false, true };
+
+            var result = DiffSingerVariancePatch.HardCompose(previous, predicted, mask, 1);
+
+            Assert.Equal(predicted.energy, result.energy);
+        }
+
+        [Fact]
+        public void IsMetadataCompatibleRejectsFrameLayoutChanges() {
+            var previous = Result(new[] { 1f, 2f, 3f });
+            var changed = Result(new[] { 1f, 2f, 3f, 4f });
+
+            Assert.False(DiffSingerVariancePatch.IsMetadataCompatible(previous, changed));
+        }
+
+        static VarianceResult Result(
+            float[] energy,
+            float[]? breathiness = null,
+            float frameMs = 50) {
             return new VarianceResult {
                 energy = energy,
+                breathiness = breathiness,
                 frameMs = frameMs,
                 headFrames = 1,
                 tailFrames = 1,

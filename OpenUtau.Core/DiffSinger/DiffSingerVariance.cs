@@ -259,10 +259,13 @@ namespace OpenUtau.Core.DiffSinger{
                     new DenseTensor<long>(new long[] { speedup }, new int[] { 1 },false)));
             }
             //Speaker
+            float[]? speakerEmbed = null;
             if(dsConfig.speakers != null) {
                 var speakerEmbedManager = getSpeakerEmbedManager();
                 var spkEmbedTensor = speakerEmbedManager.PhraseSpeakerEmbedByFrame(phrase, ph_dur, frameMs, totalFrames, headFrames, tailFrames);
-                AddVarianceInput(NamedOnnxValue.CreateFromTensor("spk_embed", spkEmbedTensor));
+                speakerEmbed = spkEmbedTensor.ToArray();
+                // Speaker embedding is a retake-able frame-level condition.
+                AddVarianceInput(NamedOnnxValue.CreateFromTensor("spk_embed", spkEmbedTensor), includeInPatchKey: false);
             }
             ulong? variancePatchKey = null;
             if (Preferences.Default.DiffSingerTensorCache &&
@@ -270,16 +273,58 @@ namespace OpenUtau.Core.DiffSinger{
                 var baseHash = new DiffSingerCache(varianceHash, variancePatchInputs).Hash;
                 variancePatchKey = DiffSingerVariancePatch.BuildStateKey(baseHash, phrase.position, phrase.end);
             }
-            Onnx.VerifyInputNames(varianceModel, varianceInputs);
-            var varianceCache = Preferences.Default.DiffSingerTensorCache
+            var fullVarianceCache = Preferences.Default.DiffSingerTensorCache
                 ? new DiffSingerCache(varianceHash, varianceInputs)
                 : null;
-            var varianceOutputs = varianceCache?.Load();
-            if (varianceOutputs is null) {
-                varianceOutputs = varianceModel.Run(varianceInputs).Cast<NamedOnnxValue>().ToList();
-                varianceCache?.Save(varianceOutputs);
-                phrase.AddCacheFile(varianceCache?.Filename);
+            var fullVarianceOutputs = fullVarianceCache?.Load();
+            if (fullVarianceOutputs != null) {
+                var cachedResult = ParseVarianceResult(fullVarianceOutputs, frameMs, headFrames, tailFrames, totalFrames);
+                if (variancePatchKey.HasValue) {
+                    variancePatchStates[variancePatchKey.Value] =
+                        new VariancePatchState(pitch, speakerEmbed, cachedResult);
+                }
+                return cachedResult;
             }
+            VariancePatchState? previous = null;
+            bool[]? retakeMask = null;
+            if (variancePatchKey.HasValue && variancePatchStates.TryGetValue(variancePatchKey.Value, out var cachedState) &&
+                DiffSingerVariancePatch.IsMetadataCompatible(cachedState.result, new VarianceResult {
+                    frameMs = frameMs,
+                    headFrames = headFrames,
+                    tailFrames = tailFrames,
+                    totalFrames = totalFrames,
+                })) {
+                previous = cachedState;
+                var pitchMask = DiffSingerVariancePatch.BuildChangedFrameMask(cachedState.pitch, pitch, 1e-4f);
+                var speakerMask = DiffSingerVariancePatch.BuildChangedFrameMask(
+                    cachedState.speakerEmbed ?? Array.Empty<float>(),
+                    speakerEmbed ?? Array.Empty<float>(),
+                    totalFrames,
+                    1e-4f);
+                retakeMask = new bool[totalFrames];
+                for (int i = 0; i < retakeMask.Length; i++) {
+                    retakeMask[i] = (i < pitchMask.Length && pitchMask[i]) ||
+                        (i < speakerMask.Length && speakerMask[i]);
+                }
+                if (!retakeMask.Any(x => x)) {
+                    return DiffSingerVariancePatch.CloneResult(cachedState.result);
+                }
+                if (retakeMask.All(x => x)) {
+                    previous = null;
+                } else {
+                    ReplaceVarianceInputsWithPrevious(varianceInputs, cachedState.result);
+                }
+            }
+            if (retakeMask != null) {
+                var retakeTensorValues = DiffSingerVariancePatch.ExpandToChannels(retakeMask, numVariances);
+                var retakeInput = varianceInputs.First(x => x.Name == "retake");
+                varianceInputs[varianceInputs.IndexOf(retakeInput)] = NamedOnnxValue.CreateFromTensor(
+                    "retake",
+                    new DenseTensor<bool>(retakeTensorValues, new[] { retakeTensorValues.Length }, false)
+                        .Reshape(new[] { 1, totalFrames, numVariances }));
+            }
+            Onnx.VerifyInputNames(varianceModel, varianceInputs);
+            var varianceOutputs = varianceModel.Run(varianceInputs).Cast<NamedOnnxValue>().ToList();
             Tensor<float>? energy_pred = dsConfig.predict_energy
                 ? varianceOutputs
                     .Where(o => o.Name == "energy_pred")
@@ -314,22 +359,76 @@ namespace OpenUtau.Core.DiffSinger{
                 tailFrames = tailFrames,
                 totalFrames = totalFrames,
             };
+            if (previous != null && retakeMask != null) {
+                var channelMask = DiffSingerVariancePatch.ExpandToChannels(retakeMask, numVariances);
+                result = DiffSingerVariancePatch.HardCompose(previous.result, result, channelMask, numVariances);
+            }
+            if (fullVarianceCache != null) {
+                fullVarianceCache.Save(BuildVarianceOutputs(result));
+                phrase.AddCacheFile(fullVarianceCache.Filename);
+            }
             if (variancePatchKey.HasValue) {
-                result = ApplyVariancePatch(variancePatchKey.Value, pitch, result);
+                variancePatchStates[variancePatchKey.Value] =
+                    new VariancePatchState(pitch, speakerEmbed, result);
             }
             return result;
         }
 
-        VarianceResult ApplyVariancePatch(ulong patchKey, float[] pitch, VarianceResult result) {
-            try {
-                variancePatchStates.TryGetValue(patchKey, out var previous);
-                var merged = DiffSingerVariancePatch.Merge(previous, pitch, result);
-                variancePatchStates[patchKey] = new VariancePatchState(pitch, merged);
-                return merged;
-            } catch (Exception e) {
-                Log.Warning(e, "Failed to apply DiffSinger variance local pitch patch.");
-                variancePatchStates[patchKey] = new VariancePatchState(pitch, result);
-                return result;
+        VarianceResult ParseVarianceResult(
+            ICollection<NamedOnnxValue> outputs,
+            float frameMs,
+            int headFrames,
+            int tailFrames,
+            int totalFrames) {
+            return new VarianceResult {
+                energy = dsConfig.predict_energy ? outputs.First(o => o.Name == "energy_pred").AsTensor<float>().ToArray() : null,
+                breathiness = dsConfig.predict_breathiness ? outputs.First(o => o.Name == "breathiness_pred").AsTensor<float>().ToArray() : null,
+                voicing = dsConfig.predict_voicing ? outputs.First(o => o.Name == "voicing_pred").AsTensor<float>().ToArray() : null,
+                tension = dsConfig.predict_tension ? outputs.First(o => o.Name == "tension_pred").AsTensor<float>().ToArray() : null,
+                frameMs = frameMs,
+                headFrames = headFrames,
+                tailFrames = tailFrames,
+                totalFrames = totalFrames,
+            };
+        }
+
+        List<NamedOnnxValue> BuildVarianceOutputs(VarianceResult result) {
+            var outputs = new List<NamedOnnxValue>();
+            void Add(string name, float[]? values) {
+                if (values != null) {
+                    outputs.Add(NamedOnnxValue.CreateFromTensor(
+                        name,
+                        new DenseTensor<float>(values, new[] { values.Length }, false)
+                            .Reshape(new[] { 1, values.Length })));
+                }
+            }
+            Add("energy_pred", result.energy);
+            Add("breathiness_pred", result.breathiness);
+            Add("voicing_pred", result.voicing);
+            Add("tension_pred", result.tension);
+            return outputs;
+        }
+
+        static void ReplaceVarianceInputsWithPrevious(
+            List<NamedOnnxValue> inputs,
+            VarianceResult previous) {
+            var channels = new[] {
+                ("energy", previous.energy),
+                ("breathiness", previous.breathiness),
+                ("voicing", previous.voicing),
+                ("tension", previous.tension),
+            };
+            foreach (var (name, values) in channels) {
+                if (values == null) continue;
+                var input = inputs.FirstOrDefault(x => x.Name == name);
+                if (input == null) continue;
+                var current = input.AsTensor<float>().ToArray();
+                if (current.Length != values.Length) continue;
+                Array.Copy(values, current, values.Length);
+                inputs[inputs.IndexOf(input)] = NamedOnnxValue.CreateFromTensor(
+                    name,
+                    new DenseTensor<float>(current, new[] { current.Length }, false)
+                        .Reshape(new[] { 1, current.Length }));
             }
         }
 
