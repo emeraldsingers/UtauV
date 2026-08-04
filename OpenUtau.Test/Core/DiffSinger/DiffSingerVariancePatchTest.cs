@@ -147,6 +147,44 @@ namespace OpenUtau.Core {
         }
 
         [Fact]
+        public void IsChannelLayoutCompatibleAcceptsExpectedChannels() {
+            var result = Result(
+                new[] { 1f, 2f },
+                voicing: new[] { 3f, 4f });
+
+            Assert.True(DiffSingerVariancePatch.IsChannelLayoutCompatible(
+                result, 2, true, false, true, false));
+        }
+
+        [Fact]
+        public void IsChannelLayoutCompatibleRejectsMissingEnabledChannel() {
+            var result = Result(new[] { 1f, 2f });
+
+            Assert.False(DiffSingerVariancePatch.IsChannelLayoutCompatible(
+                result, 2, true, true, false, false));
+        }
+
+        [Fact]
+        public void IsChannelLayoutCompatibleRejectsWrongChannelLength() {
+            var result = Result(
+                new[] { 1f, 2f },
+                new[] { 3f });
+
+            Assert.False(DiffSingerVariancePatch.IsChannelLayoutCompatible(
+                result, 2, true, true, false, false));
+        }
+
+        [Fact]
+        public void IsChannelLayoutCompatibleRejectsUnexpectedDisabledChannel() {
+            var result = Result(
+                new[] { 1f, 2f },
+                tension: new[] { 3f, 4f });
+
+            Assert.False(DiffSingerVariancePatch.IsChannelLayoutCompatible(
+                result, 2, true, false, false, false));
+        }
+
+        [Fact]
         public void VariancePatchStateCacheEvictsLeastRecentlyUsedState() {
             var cache = new VariancePatchStateCache(2);
             cache.Set(1, State(1));

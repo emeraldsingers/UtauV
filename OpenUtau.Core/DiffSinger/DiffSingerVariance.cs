@@ -302,7 +302,14 @@ namespace OpenUtau.Core.DiffSinger{
                     headFrames = headFrames,
                     tailFrames = tailFrames,
                     totalFrames = totalFrames,
-                })) {
+                }) &&
+                DiffSingerVariancePatch.IsChannelLayoutCompatible(
+                    cachedState.result,
+                    totalFrames,
+                    dsConfig.predict_energy,
+                    dsConfig.predict_breathiness,
+                    dsConfig.predict_voicing,
+                    dsConfig.predict_tension)) {
                 previous = cachedState;
                 var pitchMask = DiffSingerVariancePatch.BuildChangedFrameMask(cachedState.pitch, pitch, 1e-4f);
                 var speakerMask = DiffSingerVariancePatch.BuildChangedFrameMask(

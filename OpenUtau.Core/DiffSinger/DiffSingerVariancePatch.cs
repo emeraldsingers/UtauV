@@ -191,16 +191,29 @@ namespace OpenUtau.Core.DiffSinger {
                 Math.Abs(previous.frameMs - current.frameMs) < 1e-4f;
         }
 
+        internal static bool IsChannelLayoutCompatible(
+            VarianceResult result,
+            int totalFrames,
+            bool predictEnergy,
+            bool predictBreathiness,
+            bool predictVoicing,
+            bool predictTension) {
+            return ChannelMatches(result.energy, predictEnergy, totalFrames) &&
+                ChannelMatches(result.breathiness, predictBreathiness, totalFrames) &&
+                ChannelMatches(result.voicing, predictVoicing, totalFrames) &&
+                ChannelMatches(result.tension, predictTension, totalFrames);
+        }
+
         internal static bool IsCompatible(VarianceResult previous, VarianceResult current) {
             return IsMetadataCompatible(previous, current) &&
-                previous.totalFrames == current.totalFrames &&
-                previous.headFrames == current.headFrames &&
-                previous.tailFrames == current.tailFrames &&
-                Math.Abs(previous.frameMs - current.frameMs) < 1e-4f &&
                 SameLength(previous.energy, current.energy) &&
                 SameLength(previous.breathiness, current.breathiness) &&
                 SameLength(previous.voicing, current.voicing) &&
                 SameLength(previous.tension, current.tension);
+        }
+
+        static bool ChannelMatches(float[]? values, bool enabled, int totalFrames) {
+            return enabled ? values?.Length == totalFrames : values == null;
         }
 
         static bool SameLength(float[]? a, float[]? b) {
