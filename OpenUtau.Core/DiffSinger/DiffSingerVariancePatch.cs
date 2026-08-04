@@ -15,6 +15,49 @@ namespace OpenUtau.Core.DiffSinger {
         }
     }
 
+    internal sealed class VariancePatchStateCache {
+        readonly int capacity;
+        readonly Dictionary<ulong, LinkedListNode<(ulong key, VariancePatchState state)>> entries = new();
+        readonly LinkedList<(ulong key, VariancePatchState state)> recency = new();
+
+        internal VariancePatchStateCache(int capacity) {
+            if (capacity <= 0) {
+                throw new ArgumentOutOfRangeException(nameof(capacity));
+            }
+            this.capacity = capacity;
+        }
+
+        internal int Count => entries.Count;
+
+        internal bool TryGetValue(ulong key, out VariancePatchState state) {
+            if (!entries.TryGetValue(key, out var node)) {
+                state = null!;
+                return false;
+            }
+            recency.Remove(node);
+            recency.AddFirst(node);
+            state = node.Value.state;
+            return true;
+        }
+
+        internal void Set(ulong key, VariancePatchState state) {
+            if (entries.TryGetValue(key, out var existing)) {
+                existing.Value = (key, state);
+                recency.Remove(existing);
+                recency.AddFirst(existing);
+                return;
+            }
+            var node = recency.AddFirst((key, state));
+            entries.Add(key, node);
+            if (entries.Count <= capacity) {
+                return;
+            }
+            var oldest = recency.Last!;
+            recency.RemoveLast();
+            entries.Remove(oldest.Value.key);
+        }
+    }
+
     internal static class DiffSingerVariancePatch {
         public static ulong BuildStateKey(ulong baseHash, int phrasePosition, int phraseEnd) {
             unchecked {
