@@ -58,6 +58,10 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public int PreferPortAudio { get; set; }
         [Reactive] public int LockStartTime { get; set; }
         [Reactive] public int PlaybackAutoScroll { get; set; }
+        [Reactive] public double PlaybackVerticalFollowMargin { get; set; }
+        [Reactive] public double PlaybackVerticalFollowDamping { get; set; }
+        [Reactive] public double PlaybackHighlightFadeInPerSecond { get; set; }
+        [Reactive] public double PlaybackHighlightFadeOutPerSecond { get; set; }
         [Reactive] public double PlayPosMarkerMargin { get; set; }
 
         // Paths
@@ -142,6 +146,10 @@ namespace OpenUtau.App.ViewModels {
             UseSystemDefaultDevice = Preferences.Default.UseSystemDefaultAudioDevice;
             PreferPortAudio = Preferences.Default.PreferPortAudio ? 1 : 0;
             PlaybackAutoScroll = Preferences.Default.PlaybackAutoScroll;
+            PlaybackVerticalFollowMargin = Preferences.Default.PlaybackVerticalFollowMargin;
+            PlaybackVerticalFollowDamping = Preferences.Default.PlaybackVerticalFollowDamping;
+            PlaybackHighlightFadeInPerSecond = Preferences.Default.PlaybackHighlightFadeInPerSecond;
+            PlaybackHighlightFadeOutPerSecond = Preferences.Default.PlaybackHighlightFadeOutPerSecond;
             PlayPosMarkerMargin = Preferences.Default.PlayPosMarkerMargin;
             LockStartTime = Preferences.Default.LockStartTime;
             InstallToAdditionalSingersPath = Preferences.Default.InstallToAdditionalSingersPath;
@@ -226,6 +234,26 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.PlaybackAutoScroll)
                 .Subscribe(autoScroll => {
                     Preferences.Default.PlaybackAutoScroll = autoScroll;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaybackVerticalFollowMargin)
+                .Subscribe(margin => {
+                    Preferences.Default.PlaybackVerticalFollowMargin = Math.Clamp(margin, 0.0, 10.0);
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaybackVerticalFollowDamping)
+                .Subscribe(damping => {
+                    Preferences.Default.PlaybackVerticalFollowDamping = Math.Clamp(damping, 1.0, 20.0);
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaybackHighlightFadeInPerSecond)
+                .Subscribe(value => {
+                    Preferences.Default.PlaybackHighlightFadeInPerSecond = Math.Clamp(value, 0.1, 30.0);
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaybackHighlightFadeOutPerSecond)
+                .Subscribe(value => {
+                    Preferences.Default.PlaybackHighlightFadeOutPerSecond = Math.Clamp(value, 0.1, 30.0);
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.PlayPosMarkerMargin)

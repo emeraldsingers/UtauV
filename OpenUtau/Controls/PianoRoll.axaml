@@ -169,6 +169,8 @@
                      ShowVibrato="{Binding NotesViewModel.ShowVibrato}"
                      ShowPitch="{Binding NotesViewModel.ShowPitch}"
                      ShowFinalPitch="{Binding NotesViewModel.ShowFinalPitch}"
+                     ShowPlaybackNoteHighlight="{Binding NotesViewModel.ShowPlaybackNoteHighlight}"
+                     PlayPosTick="{Binding NotesViewModel.PlayPosTick}"
                      ShowPhonemizerTags="{Binding ShowPhonemizerTags}"
                      Part="{Binding NotesViewModel.Part}"
                      PointerPressed="NotesCanvasPointerPressed"
@@ -294,6 +296,16 @@
               <MenuItem Header="{DynamicResource prefs.appearance.showghostnotes}" Click="OnMenuShowGhostNotes">
                 <MenuItem.Icon>
                   <CheckBox IsChecked="{Binding ShowGhostNotes}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="{DynamicResource pianoroll.menu.view.playbackverticalfollow}" Click="OnMenuPlaybackVerticalFollow">
+                <MenuItem.Icon>
+                  <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackVerticalFollow}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknotehighlight}" Click="OnMenuPlaybackNoteHighlight">
+                <MenuItem.Icon>
+                  <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteHighlight}" />
                 </MenuItem.Icon>
               </MenuItem>
               <MenuItem Header="{DynamicResource prefs.appearance.trackcolor}" Click="OnMenuUseTrackColor">
