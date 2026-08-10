@@ -90,7 +90,7 @@ namespace OpenUtau.App.ViewModels {
         public List<string> OnnxRunnerOptions { get; set; }
         [Reactive] public string OnnxRunner { get; set; }
         public List<GpuInfo> OnnxGpuOptions { get; set; }
-        [Reactive] public GpuInfo OnnxGpu { get; set; }
+        [Reactive] public GpuInfo? OnnxGpu { get; set; }
         [Reactive] public bool ShowOnnxGpu { get; set; }
 
         // Appearance
@@ -168,7 +168,9 @@ namespace OpenUtau.App.ViewModels {
             OnnxRunner = String.IsNullOrEmpty(Preferences.Default.OnnxRunner) ?
                OnnxRunnerOptions[0] : Preferences.Default.OnnxRunner;
             OnnxGpuOptions = Onnx.getGpuInfo();
-            OnnxGpu = OnnxGpuOptions.FirstOrDefault(x => x.deviceId == Preferences.Default.OnnxGpu, OnnxGpuOptions[0]);
+            OnnxGpu = OnnxGpuOptions.Count > 0
+                ? OnnxGpuOptions.FirstOrDefault(x => x.deviceId == Preferences.Default.OnnxGpu, OnnxGpuOptions[0])
+                : null;
             ShowOnnxGpu = (OnnxRunner == "DirectML" || OnnxRunner == "CUDA");
             DiffSingerDepth = Preferences.Default.DiffSingerDepth * 100;
             DiffSingerSteps = Preferences.Default.DiffSingerSteps;
@@ -340,6 +342,7 @@ namespace OpenUtau.App.ViewModels {
                     ToggleOnnxGpuDisplay(index == "DirectML" || index == "CUDA");
                 });
             this.WhenAnyValue(vm => vm.OnnxGpu)
+                .WhereNotNull()
                 .Subscribe(index => {
                     Preferences.Default.OnnxGpu = index.deviceId;
                     Preferences.Save();
