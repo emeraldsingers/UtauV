@@ -128,6 +128,7 @@ namespace OpenUtau.Core.Ustx {
             var shape = NotePresets.Default.DefaultPitchShape;
             note.pitch.AddPoint(new PitchPoint(start, 0, shape));
             note.pitch.AddPoint(new PitchPoint(start + length, 0, shape));
+            note.vibrato.variationSeed = Random.Shared.Next();
             return note;
         }
 

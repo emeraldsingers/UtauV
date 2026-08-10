@@ -137,6 +137,12 @@ foreach (var box in this.GetLogicalDescendants().OfType<TextBox>()) {
             }
         }
 
+        void OnNewVariationSeed(object sender, RoutedEventArgs e) {
+            int newSeed = Random.Shared.Next();
+            ViewModel.SetVibratoVariationSeed(newSeed);
+            ViewModel.VariationSeed = newSeed;
+        }
+
         void OnRemoveVibratoPreset(object sender, RoutedEventArgs e) {
             ViewModel.RemoveAppliedVibratoPreset();
         }
