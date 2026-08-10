@@ -312,6 +312,8 @@ namespace OpenUtau.Core.DiffSinger
             return token;
         }
         
+        protected virtual string[] PostProcessWordSymbols(Note[][] phrase, int wordIndex, string[] symbols) { return symbols; }
+
         protected override void ProcessPart(Note[][] phrase) {
             float padding = 500f;//Padding time for consonants at the beginning of a sentence, ms
             float frameMs = dsConfig.frameMs();
@@ -329,6 +331,7 @@ namespace OpenUtau.Core.DiffSinger
                 Note[] word = phrase[wordIndex];
                 var rawSymbols = GetSymbols(word[0], out string[] rejectedSymbols);
                 var symbols = rawSymbols.Where(s => phonemeTokens.ContainsKey(s)).ToArray();
+                symbols = PostProcessWordSymbols(phrase, wordIndex, symbols);
                 // Collect symbols that passed GetSymbols but failed phonemeTokens lookup
                 var tokensRejected = rawSymbols.Where(s => !phonemeTokens.ContainsKey(s));
                 rejectedSymbols = rejectedSymbols.Concat(tokensRejected).ToArray();
@@ -337,7 +340,7 @@ namespace OpenUtau.Core.DiffSinger
                 } else if (symbols.Length == 0) {
                     unrecognizedLyrics[word[0].position] = word[0].lyric ?? string.Empty;
                 }
-                if (symbols.Length == 0) {
+                if (symbols == null || symbols.Length == 0) {
                     symbols = new string[] { defaultPause };
                     wordFound[wordIndex] = false;
                 } else {
