@@ -9,7 +9,7 @@ namespace OpenUtau.Plugin.Builtin {
     [Phonemizer("French CVVC Phonemizer", "FR CVVC", "Mim", language: "FR")]
     // Contributed by Mim with the help of Heiden.BZR & nago's phonemizers
 
-    //This is a first implementation and I'm already working on optimization 
+    //This is a first implementation and I'm already working on optimization
     public class FrenchCVVCPhonemizer : SyllableBasedPhonemizer {
 
         private readonly string[] vowels = "ah,ae,eh,ee,oe,ih,oh,oo,ou,uh,en,in,on,oi,ui,a,ai,e,i,o,u,eu".Split(",");
@@ -164,7 +164,7 @@ namespace OpenUtau.Plugin.Builtin {
                             max--;
                         }
 
-                        //try _CV else add CV 
+                        //try _CV else add CV
                         if (HasOto($"_{cc.Last()}{v}", syllable.vowelTone) && max == cc.Length - min) {
                             basePhoneme = $"_{cc.Last()}{v}";
                         }
@@ -309,7 +309,7 @@ namespace OpenUtau.Plugin.Builtin {
                     max--;
                 }
 
-                //try _CV else add CV 
+                //try _CV else add CV
                 if (HasOto($"_{cc.Last()}{v}", syllable.vowelTone) && max == cc.Length - min) {
                     basePhoneme = $"_{cc.Last()}{v}";
                 }
@@ -593,18 +593,12 @@ namespace OpenUtau.Plugin.Builtin {
             return "no Coe Ending";
         }
 
-        protected override double GetTransitionBasicLengthMs(string alias = "") {
-            foreach (var c in shortConsonants) {
-                if (alias.EndsWith(c)) {
-                    return base.GetTransitionBasicLengthMs() * 0.75;
-                }
-            }
-            foreach (var c in longConsonants) {
-                if (alias.EndsWith(c)) {
-                    return base.GetTransitionBasicLengthMs() * 1.5;
-                }
-            }
-            return base.GetTransitionBasicLengthMs() * 1.25;
+        // Endings has 50 ticks gap
+        protected override bool NoGap => true;
+
+        protected override double GetTransitionBasicLengthMs(string alias, int tone, PhonemeAttributes attr) {
+            double otoLength = GetTransitionBasicLengthMsByOto(alias, tone, attr);
+            return otoLength;
         }
 
         private string CheckAliasFormatting(string alias, string type, int tone, string prevV) {

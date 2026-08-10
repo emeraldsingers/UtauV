@@ -74,7 +74,7 @@ namespace OpenUtau.Plugin.Builtin {
                 if (!HasOto($"{cn} dz", syllable.tone) && !HasOto($"{cn} dZ", syllable.tone) && !HasOto($"{cn} ts", syllable.tone) && !HasOto($"{cn} tS", syllable.tone)) {
                     isFallBack = true;
                 }
-            }           
+            }
 
             if (syllable.IsStartingV) {
                 basePhoneme = $"-{v}";
@@ -225,6 +225,15 @@ namespace OpenUtau.Plugin.Builtin {
                 }
             }
             return alias;
+        }
+
+        // Endings has 50 ticks gap
+        protected override bool NoGap => true;
+
+        protected override double GetTransitionBasicLengthMs(string alias, int tone, PhonemeAttributes attr) {
+            double otoLength = GetTransitionBasicLengthMsByOto(alias, tone, attr);
+
+            return otoLength;
         }
     }
 }

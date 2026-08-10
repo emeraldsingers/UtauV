@@ -36,7 +36,7 @@ namespace OpenUtau.Plugin.Builtin {
                 .Where(parts => parts[0] != parts[1])
                 .ToDictionary(parts => parts[0], parts => parts[1]);
         }
-        
+
         private bool isYamlFallbacks = false;
 
         private readonly Dictionary<string, string> vcExceptions =
@@ -101,7 +101,7 @@ namespace OpenUtau.Plugin.Builtin {
         private readonly string[] ccExceptions = { "th", "ch", "dh", "zh", "sh", "ng" };
         private readonly string[] cccExceptions = { "spr", "spl", "skr", "str", "skw", "sky", "spy", "skt" };
         private Dictionary<string, string> vcVowels = new Dictionary<string, string>();
-        
+
         private readonly Dictionary<string, string> vcccExceptions =
             new Dictionary<string, string>() {
                 {"spr","sp"},
@@ -122,30 +122,8 @@ namespace OpenUtau.Plugin.Builtin {
         protected override string[] GetVowels() => vowels;
         protected override string[] GetConsonants() => consonants;
         protected override string GetDictionaryName() => "";
-        protected override IG2p LoadBaseDictionary() {
-            var g2ps = new List<IG2p>();
-
-            // Load dictionary from plugin folder.
-            string path = Path.Combine(PluginDir, YamlFileName);
-            if (!File.Exists(path)) {
-                Directory.CreateDirectory(PluginDir);
-                File.WriteAllBytes(path, YamlTemplate);
-            }
-            g2ps.Add(G2pDictionary.NewBuilder().Load(File.ReadAllText(path)).Build());
-
-            // Load dictionary from singer folder.
-            if (singer != null && singer.Found && singer.Loaded) {
-                string file = Path.Combine(singer.Location, YamlFileName);
-                if (File.Exists(file)) {
-                    try {
-                        g2ps.Add(G2pDictionary.NewBuilder().Load(File.ReadAllText(file)).Build());
-                    } catch (Exception e) {
-                        Log.Error(e, $"Failed to load {file}");
-                    }
-                }
-            }
-            g2ps.Add(new ArpabetG2p());
-            return new G2pFallbacks(g2ps.ToArray());
+        protected override IG2p[] GetBaseG2ps() {
+            return new IG2p[] { new ArpabetG2p() };
         }
 
         protected override string[] GetSymbols(Note note) {
@@ -155,6 +133,11 @@ namespace OpenUtau.Plugin.Builtin {
             }
             if (original == null) {
                 return null;
+            }
+            for (int i = 0; i < original.Length; i++) {
+                if (dictionaryReplacements.TryGetValue(original[i], out string replaced)) {
+                    original[i] = replaced;
+                }
             }
             List<string> finalProcessedPhonemes = new List<string>();
             string[] tr_dr = new[] { "tr", "dr"};
@@ -175,7 +158,7 @@ namespace OpenUtau.Plugin.Builtin {
         public override void SetSinger(USinger singer) {
             base.SetSinger(singer);
 
-            if (this.singer == null) return;
+            if (this.singer == null || !this.singer.Loaded) return;
 
             string file = null;
             if (singer != null && singer.Found && singer.Loaded && !string.IsNullOrEmpty(singer.Location)) {
@@ -184,35 +167,40 @@ namespace OpenUtau.Plugin.Builtin {
                 file = Path.Combine(PluginDir, YamlFileName);
             }
 
-            if (string.IsNullOrEmpty(file) || !File.Exists(file)) return;
+            string yamlContent = null;
+            if (!string.IsNullOrEmpty(file) && File.Exists(file)) {
+                yamlContent = File.ReadAllText(file);
+            } else if (YamlTemplate != null) {
+                yamlContent = System.Text.Encoding.UTF8.GetString(YamlTemplate);
+            }
 
-            try {
-                var data = Core.Yaml.DefaultDeserializer.Deserialize<VcVowelYAMLData>(File.ReadAllText(file));
-                if (data?.vcvowels != null) {
-                    vcVowels.Clear();
-                    foreach (var kvp in data.vcvowels) {
-                        if (!string.IsNullOrEmpty(kvp.Key) && !string.IsNullOrEmpty(kvp.Value)) {
-                            vcVowels[kvp.Key] = kvp.Value;
+            if (!string.IsNullOrEmpty(yamlContent)) {
+                try {
+                    var data = Core.Yaml.DefaultDeserializer.Deserialize<VcVowelYAMLData>(yamlContent);
+                    if (data?.vcvowels != null) {
+                        vcVowels.Clear();
+                        foreach (var kvp in data.vcvowels) {
+                            if (!string.IsNullOrEmpty(kvp.Key) && !string.IsNullOrEmpty(kvp.Value)) {
+                                vcVowels[kvp.Key] = kvp.Value;
+                            }
                         }
                     }
+                } catch (Exception ex) {
+                    Log.Error($"Failed to load vcvowels from {YamlFileName}: {ex.Message}");
                 }
-            } catch (Exception ex) {
-                Log.Error($"Failed to load vcvowels from {YamlFileName}: {ex.Message}");
             }
         }
 
-        private class VcVowelYAMLData {
+        private class VcVowelYAMLData: YAMLData {
             public Dictionary<string, string> vcvowels { get; set; } = new Dictionary<string, string>();
         }
         // prioritize yaml replacements over dictionary replacements
         private string ReplacePhoneme(string phoneme, int tone) {
-            // If the original phoneme has an OTO, use it directly.
-            if (HasOto(phoneme, tone) || HasOto(ValidateAlias(phoneme), tone)) {
-                return phoneme;
-            }
-            // Otherwise, try to apply the dictionary replacement.
             if (dictionaryReplacements.TryGetValue(phoneme, out var replaced)) {
                 return replaced;
+            }
+            if (HasOto(phoneme, tone) || HasOto(ValidateAlias(phoneme), tone)) {
+                return phoneme;
             }
             return phoneme;
         }
@@ -654,7 +642,7 @@ namespace OpenUtau.Plugin.Builtin {
                             if (dontParse && i == cc.Length - 3) {
                                 parsingCC = $"{cc[i]} {cc[i + 1]}{cc[i + 2]}";
                                 if (vcVowels.ContainsKey(prevV)) {
-                                    parsingCC = $"{vcVowels[prevV]} {cc[i]}{cc[i + 1]}"; 
+                                    parsingCC = $"{vcVowels[prevV]} {cc[i]}{cc[i + 1]}";
                                 }
                             }
 
@@ -719,10 +707,10 @@ namespace OpenUtau.Plugin.Builtin {
 
                 }
             }
-                if (basePhoneme != null && !HasOto(basePhoneme, syllable.vowelTone)) { 
-                basePhoneme = cc.Length > 0 ? $"{cc.Last()}{v}" : v; 
+                if (basePhoneme != null && !HasOto(basePhoneme, syllable.vowelTone)) {
+                basePhoneme = cc.Length > 0 ? $"{cc.Last()}{v}" : v;
             }
-            
+
             if (basePhoneme != null) {
                 phonemes.Add(basePhoneme);
             }
@@ -755,14 +743,14 @@ namespace OpenUtau.Plugin.Builtin {
                             currentCc = $"nk-";
                     }
                     phonemes.Add(vc);
-                    
+
                     if (currentCc != "") {
                         phonemes.Add(currentCc);
                     }
                 } else {
                     vc = $"{v}{cc[0]}";
                     vc = CheckVCExceptions(vc) + "-";
-                    
+
                     // "1nks" exception
                     var startingC = 0;
                     var vcc = "";
@@ -840,7 +828,7 @@ namespace OpenUtau.Plugin.Builtin {
                                 phonemes.Add($"{vcVowels[v]}{cc[i]}");
                             }
                         }
-                        
+
 
                         if (!HasOto(currentCc, ending.tone)) {
                             currentCc = $"{cc[i]} {cc[i + 1]}";
@@ -869,7 +857,7 @@ namespace OpenUtau.Plugin.Builtin {
                         }
                     }
 
-                
+
                 }
             }
 
@@ -899,6 +887,14 @@ namespace OpenUtau.Plugin.Builtin {
             }
 
             return alias;
+        }
+
+        // Endings has 50 ticks gap
+        protected override bool NoGap => true;
+
+        protected override double GetTransitionBasicLengthMs(string alias, int tone, PhonemeAttributes attr) {
+            double otoLength = GetTransitionBasicLengthMsByOto(alias, tone, attr);
+            return otoLength;
         }
     }
 }

@@ -403,7 +403,7 @@ namespace OpenUtau.Plugin.Builtin {
 
                 prevV = WanaKana.ToRomaji(solo).Last<char>().ToString();
             }
-            
+
             if (ending.IsEndingV) {
                 TryAddPhoneme(phonemes, ending.tone, $"{prevV} R", $"{prevV} -", $"{prevV}-");
             }
@@ -429,7 +429,7 @@ namespace OpenUtau.Plugin.Builtin {
 
             var vc = $"{vowel} {cons}";
             var altVc = $"{vowel} {cons[0]}";
-            
+
             if (HasOto(vc, tone)) {
                 phonemes.Add(vc);
             } else if (HasOto(altVc, tone)) {
@@ -459,6 +459,40 @@ namespace OpenUtau.Plugin.Builtin {
             var hiragana = WanaKana.ToHiragana(romaji);
             hiragana = hiragana.Replace("ゔ", "ヴ");
             return hiragana;
+        }
+
+        // Endings has 50 ticks gap
+        protected override bool NoGap => true;
+
+        protected override double GetTransitionBasicLengthMs(string alias, int tone, PhonemeAttributes attr) {
+            double otoLength = GetTransitionBasicLengthMsByOto(alias, tone, attr);
+
+            var parts = alias.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            bool isVcv = false;
+
+            if (parts.Length == 2) {
+                var startingVowels = new[] { "a", "i", "u", "e", "o", "n", "N", "-" };
+                var endingVowels = vowels;
+
+                // First part must be a vowel (or a rest)
+                if (startingVowels.Contains(parts[0])) {
+                    string cv = parts[1];
+
+                    // Second part must end in a vowel (Romaji CV) OR be Japanese (Hiragana/Katakana)
+                    bool isRomajiVcv = endingVowels.Contains(cv.Last().ToString());
+                    bool isJapaneseVcv = cv.Any(c => c > 0xFF);
+
+                    if (isRomajiVcv || isJapaneseVcv) {
+                        isVcv = true;
+                    }
+                }
+            }
+
+            if (isVcv) {
+                return GetTransitionBasicLengthMsByConstant() * 1.0;
+            }
+
+            return otoLength;
         }
     }
 }
