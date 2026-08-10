@@ -95,7 +95,13 @@ namespace OpenUtau.App.Views {
             PartMergeCommand = ReactiveCommand.Create<UPart>(part => MergePart(part));
             PartSplitCommand = ReactiveCommand.Create<UPart>(async part =>  await SplitPart(part));
 
-            AddHandler(DragDrop.DropEvent, OnDrop);
+            Opened += (_, _) => {
+                // Register the already-created native X11 window as an XDND target.
+                DragDrop.SetAllowDrop(this, false);
+                DragDrop.SetAllowDrop(this, true);
+            };
+            AddHandler(DragDrop.DragOverEvent, OnDragOver, RoutingStrategies.Bubble, handledEventsToo: true);
+            AddHandler(DragDrop.DropEvent, OnDrop, RoutingStrategies.Bubble, handledEventsToo: true);
 
             if (Preferences.Default.MainWindowSize.TryGetPosition(out int x, out int y)) {
                 Position = new PixelPoint(x, y);
@@ -877,6 +883,11 @@ namespace OpenUtau.App.Views {
             if (!PianoRollContainer.IsPointerOver && !args.Handled && args.ClickCount == 1) {
                 this.Focus();
             }
+        }
+
+        void OnDragOver(object? sender, DragEventArgs args) {
+            // Linux backends may not expose the file list until the drop completes.
+            args.DragEffects = DragDropEffects.Copy;
         }
 
         async void OnDrop(object? sender, DragEventArgs args) {
