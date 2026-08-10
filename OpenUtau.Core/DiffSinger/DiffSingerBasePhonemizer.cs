@@ -27,6 +27,9 @@ namespace OpenUtau.Core.DiffSinger
         IG2p g2p;
         Dictionary<string, int> phonemeTokens;
         DiffSingerSpeakerEmbedManager speakerEmbedManager;
+        readonly Dictionary<string, string[]> splitReplacements = new Dictionary<string, string[]>();
+        readonly List<KeyValuePair<string[], string[]>> manyToManyReplacements =
+            new List<KeyValuePair<string[], string[]>>();
 
         string defaultPause = "SP";
         protected virtual string GetDictionaryName()=>"dsdict.yaml";
@@ -116,7 +119,10 @@ namespace OpenUtau.Core.DiffSinger
                 string dictionaryPath = Path.Combine(rootPath, dictionaryName);
                 if (File.Exists(dictionaryPath)) {
                     try {
-                        g2pBuilder.Load(File.ReadAllText(dictionaryPath)).Build();
+                        var dictionaryData = Yaml.DefaultDeserializer
+                            .Deserialize<DiffSingerRefG2pDictionaryData>(File.ReadAllText(dictionaryPath));
+                        g2pBuilder.Load(dictionaryData);
+                        LoadReplacementRules(dictionaryData);
                     } catch (Exception e) {
                         Log.Error(e, $"Failed to load {dictionaryPath}");
                         throw;
@@ -135,6 +141,51 @@ namespace OpenUtau.Core.DiffSinger
             g2pBuilder.AddSymbol("AP", true);
             g2ps.Add(g2pBuilder.Build());
             return new G2pFallbacks(g2ps.ToArray());
+        }
+
+        private void LoadReplacementRules(DiffSingerRefG2pDictionaryData dictionaryData) {
+            splitReplacements.Clear();
+            manyToManyReplacements.Clear();
+            if (dictionaryData.replacements == null) {
+                return;
+            }
+            foreach (var replacement in dictionaryData.replacements) {
+                var from = replacement.FromList.ToArray();
+                var to = replacement.ToList.ToArray();
+                if (from.Length == 1 && to.Length > 1) {
+                    splitReplacements[from[0]] = to;
+                } else if (from.Length > 1 && to.Length > 1) {
+                    manyToManyReplacements.Add(new KeyValuePair<string[], string[]>(from, to));
+                }
+            }
+        }
+
+        private string[] ApplyReplacementRules(string[] symbols) {
+            var result = new List<string>(symbols);
+            for (int i = 0; i < result.Count; i++) {
+                foreach (var replacement in manyToManyReplacements) {
+                    if (i + replacement.Key.Length > result.Count ||
+                        !replacement.Key.Select((symbol, offset) =>
+                            SymbolMatches(result[i + offset], symbol)).All(matches => matches)) {
+                        continue;
+                    }
+                    result.RemoveRange(i, replacement.Key.Length);
+                    result.InsertRange(i, replacement.Value);
+                    i += replacement.Value.Length - 1;
+                    break;
+                }
+            }
+            for (int i = result.Count - 1; i >= 0; i--) {
+                if (splitReplacements.TryGetValue(result[i], out var replacement)) {
+                    result.RemoveAt(i);
+                    result.InsertRange(i, replacement);
+                }
+            }
+            return result.ToArray();
+        }
+
+        private static bool SymbolMatches(string symbol, string expected) {
+            return symbol == expected || symbol.EndsWith($"/{expected}", StringComparison.Ordinal);
         }
 
         //Check if the phoneme is supported. If unsupported, return an empty string.
@@ -174,6 +225,9 @@ namespace OpenUtau.Core.DiffSinger
             //3. treat lyric as phonetic hint, including single phoneme
             //4. empty
             if (!string.IsNullOrEmpty(note.phoneticHint)) {
+                if (splitReplacements.ContainsKey(note.phoneticHint)) {
+                    return new[] { note.phoneticHint };
+                }
                 rejectedSymbols = GetRejectedSymbols(note.phoneticHint);
                 return ParsePhoneticHint(note.phoneticHint);
             }
@@ -182,6 +236,9 @@ namespace OpenUtau.Core.DiffSinger
                 ?? g2p.Query(note.lyric.ToLowerInvariant());
             if(g2presult != null) {
                 return g2presult;
+            }
+            if (splitReplacements.ContainsKey(note.lyric)) {
+                return new[] { note.lyric };
             }
             //not found in g2p dictionary, treat lyric as phonetic hint
             rejectedSymbols = GetRejectedSymbols(note.lyric);
@@ -329,7 +386,8 @@ namespace OpenUtau.Core.DiffSinger
             var wordFound = new bool[phrase.Length];
             foreach (int wordIndex in Enumerable.Range(0, phrase.Length)) {
                 Note[] word = phrase[wordIndex];
-                var rawSymbols = GetSymbols(word[0], out string[] rejectedSymbols);
+                var rawSymbols = ApplyReplacementRules(
+                    GetSymbols(word[0], out string[] rejectedSymbols));
                 var symbols = rawSymbols.Where(s => phonemeTokens.ContainsKey(s)).ToArray();
                 symbols = PostProcessWordSymbols(phrase, wordIndex, symbols);
                 // Collect symbols that passed GetSymbols but failed phonemeTokens lookup
