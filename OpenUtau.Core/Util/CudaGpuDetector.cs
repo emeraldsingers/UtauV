@@ -22,7 +22,10 @@ namespace OpenUtau.Core.Util {
         private static extern int cuDeviceGetName(byte[] name, int len, int dev);
 
         // cuDNN
-        [DllImport("libcudnn.so", EntryPoint = "cudnnGetVersion", SetLastError = true)]
+        // ONNX Runtime 1.23.x links against the cuDNN 9 runtime SONAME.
+        // The unversioned libcudnn.so symlink is commonly only included in
+        // development packages, so probe the runtime library directly.
+        [DllImport("libcudnn.so.9", EntryPoint = "cudnnGetVersion", SetLastError = true)]
         private static extern long cudnnGetVersion();
 
         public static bool IsCudaAvailable() {
@@ -58,7 +61,7 @@ namespace OpenUtau.Core.Util {
 
                 return major >= 9;
             } catch (DllNotFoundException ex) {
-                Log.Error($"[CUDA DETECTOR] libcudnn.so not found: {ex.Message}");
+                Log.Error($"[CUDA DETECTOR] libcudnn.so.9 not found: {ex.Message}");
                 return false;
             } catch (Exception ex) {
                 Log.Error($"[CUDA DETECTOR] Exception in IsCuDnnAvailable: {ex}");
