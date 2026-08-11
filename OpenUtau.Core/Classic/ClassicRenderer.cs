@@ -88,7 +88,7 @@ namespace OpenUtau.Classic {
                 result.samples = wavtool.Concatenate(resamplerItems, string.Empty, cancellation);
                 if (result.samples != null) {
                     Renderers.ApplyDynamics(phrase, result);
-                    PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, phrase.positionMs - phrase.leadingMs, result.samples, DateTime.Now);
+                    PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
                     DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
                 }
                 return result;
@@ -129,7 +129,7 @@ namespace OpenUtau.Classic {
                 progress.Complete(phrase.phones.Length, progressInfo);
                 if (result.samples != null) {
                     Renderers.ApplyDynamics(phrase, result);
-                    PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, phrase.positionMs - phrase.leadingMs, result.samples, DateTime.Now);
+                    PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
                     DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
                 }
                 return result;
