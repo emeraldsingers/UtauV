@@ -38,6 +38,15 @@ namespace OpenUtau.Core {
         }
 
         [Fact]
+        public void ConvertInvalidMsReturnsZero() {
+            var timeAxis = new TimeAxis();
+
+            Assert.Equal(0, timeAxis.MsPosToTickPos(double.NaN));
+            Assert.Equal(0, timeAxis.MsPosToTickPos(0));
+            Assert.Equal(0, timeAxis.MsPosToNonExactTickPos(double.PositiveInfinity));
+        }
+
+        [Fact]
         public void ConvertBarBeatTest() {
             var timeAxis = new TimeAxis();
             var project = new UProject();
