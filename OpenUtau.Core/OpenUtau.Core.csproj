@@ -13,6 +13,9 @@
   <PropertyGroup Condition="'$(OnnxRuntimeProvider)' == 'CUDA'">
     <DefineConstants>$(DefineConstants);ONNXRUNTIME_CUDA</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND '$(RuntimeIdentifier)' != 'linux-arm64'">
+    <DefineConstants>$(DefineConstants);ONNXRUNTIME_CUDA</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BunLabs.NAudio.Flac" Version="2.0.1" />
     <PackageReference Include="Concentus.OggFile" Version="1.0.6" />
@@ -45,8 +48,11 @@
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.1" Condition="'$(OnnxRuntimeProvider)' == 'DirectML'" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.24.1" Condition="'$(OnnxRuntimeProvider)' == 'CUDA'" />
   </ItemGroup>
-  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND '$(RuntimeIdentifier)' != 'linux-arm64'">
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.23.2" />
+  </ItemGroup>
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND '$(RuntimeIdentifier)' == 'linux-arm64'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />
   </ItemGroup>
   <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />

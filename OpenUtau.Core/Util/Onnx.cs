@@ -30,8 +30,7 @@ namespace OpenUtau.Core {
         private static readonly bool cudaAvailable = (OS.IsLinux() || OS.IsWindows()) &&
             CudaGpuDetector.IsCudaAvailable() && CudaGpuDetector.IsCuDnnAvailable();
 #else
-        private static readonly bool cudaAvailable = OS.IsLinux() &&
-            CudaGpuDetector.IsCudaAvailable() && CudaGpuDetector.IsCuDnnAvailable();
+        private static readonly bool cudaAvailable = false;
 #endif
 
         private static readonly Dictionary<int, OrtEpDevice> devices = initializeDevices();

@@ -34,10 +34,10 @@ jobs:
           - { name: win-x64-cuda, rid: win-x64, arch: x64, os: win, runs-on: windows-latest, onnx_provider: CUDA }
           - { name: win-x86, rid: win-x86, arch: x86, os: win, runs-on: windows-latest, onnx_provider: DirectML }
           - { name: win-arm64, rid: win-arm64, arch: arm64, os: win, runs-on: windows-latest, onnx_provider: DirectML }
-          - { name: osx-x64, rid: osx-x64, arch: x64, os: osx, runs-on: macos-15-intel, onnx_provider: DirectML }
-          - { name: osx-arm64, rid: osx-arm64, arch: arm64, os: osx, runs-on: macos-15-intel, onnx_provider: DirectML }
-          - { name: linux-x64, rid: linux-x64, arch: x64, os: linux, runs-on: ubuntu-latest, linuxarch: x86_64, onnx_provider: DirectML }
-          - { name: linux-arm64, rid: linux-arm64, arch: arm64, os: linux, runs-on: ubuntu-latest, linuxarch: aarch64, onnx_provider: DirectML }
+          - { name: osx-x64, rid: osx-x64, arch: x64, os: osx, runs-on: macos-15-intel, onnx_provider: Default }
+          - { name: osx-arm64, rid: osx-arm64, arch: arm64, os: osx, runs-on: macos-15-intel, onnx_provider: Default }
+          - { name: linux-x64, rid: linux-x64, arch: x64, os: linux, runs-on: ubuntu-latest, linuxarch: x86_64, onnx_provider: Default }
+          - { name: linux-arm64, rid: linux-arm64, arch: arm64, os: linux, runs-on: ubuntu-latest, linuxarch: aarch64, onnx_provider: Default }
 
     steps:
       # Setup
