@@ -42,19 +42,21 @@ namespace OpenUtau.Core.DiffSinger
             try {
                 _singerLoaded = _executeSetSinger(singer);
             } catch {
+                ResetSingerResources();
                 _singerLoaded = false;
                 throw;
             }
         }
 
         private bool _executeSetSinger(USinger singer) {
-            this.singer = singer;
             if (singer == null) {
                 throw new Exception("Singer is null.");
             }
             if(singer.Location == null){
                 throw new Exception("Singer location is null.");
             }
+            ResetSingerResources();
+            this.singer = singer;
             rootPath = Path.Combine(singer.Location, "dsdur");
             //Load Config
             var configPath = Path.Join(rootPath, "dsconfig.yaml");
@@ -104,6 +106,15 @@ namespace OpenUtau.Core.DiffSinger
                 throw new Exception($"Failed to load {durationModelPath}", e);
             }
             return true;
+        }
+
+        private void ResetSingerResources() {
+            speakerEmbedManager = null;
+            languageIds = new Dictionary<string, int>();
+            linguisticModel?.Dispose();
+            linguisticModel = null;
+            durationModel?.Dispose();
+            durationModel = null;
         }
 
         protected virtual IG2p LoadG2p(string rootPath, bool useLangId = false) {

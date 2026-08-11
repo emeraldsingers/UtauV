@@ -225,6 +225,7 @@ namespace OpenUtau.Core.DiffSinger {
             try {
                 _singerLoaded = _executeSetSinger(singer);
             } catch {
+                ResetSingerResources();
                 _singerLoaded = false;
                 throw;
             }
@@ -234,7 +235,6 @@ namespace OpenUtau.Core.DiffSinger {
         /// Internal implementation of singer setup
         /// </summary>
         private bool _executeSetSinger(USinger singer) {
-            this.singer = singer;
             if (singer == null) {
                 return false;
             }
@@ -242,6 +242,9 @@ namespace OpenUtau.Core.DiffSinger {
                 Log.Error("Singer location is null");
                 return false;
             }
+
+            ResetSingerResources();
+            this.singer = singer;
 
             // Determine root path (dsdur folder or singer root)
             rootPath = File.Exists(Path.Join(singer.Location, "dsdur", "dsconfig.yaml"))
@@ -264,6 +267,15 @@ namespace OpenUtau.Core.DiffSinger {
             if (!LoadModels()) return false;
 
             return true;
+        }
+
+        private void ResetSingerResources() {
+            speakerEmbedManager = null;
+            languageIds = new Dictionary<string, int>();
+            linguisticModel?.Dispose();
+            linguisticModel = null;
+            durationModel?.Dispose();
+            durationModel = null;
         }
 
         /// <summary>
