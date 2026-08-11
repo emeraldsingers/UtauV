@@ -115,6 +115,8 @@ namespace OpenUtau.App.Controls {
             });
             ViewModel.NoteBatchEdits.AddRange(new List<BatchEdit>() {
                 new LoadRenderedPitch(),
+                new AutoPitchEdit(),
+                new AutoPitchEditLegacy(),
                 new RefreshRealCurves(),
                 new AddTailNote("-", "pianoroll.menu.notes.addtaildash"),
                 new AddTailNote("R", "pianoroll.menu.notes.addtailrest"),
@@ -159,6 +161,7 @@ namespace OpenUtau.App.Controls {
                 new ResetVibratos(),
                 new ClearTimings(),
                 new ResetAliases(),
+                new AutoPitchUnload(),
             }.Select(edit => new MenuItemViewModel() {
                 Header = ThemeManager.GetString(edit.Name),
                 Command = noteBatchEditCommand,
@@ -252,6 +255,12 @@ namespace OpenUtau.App.Controls {
 
         void OnMenuPointerLeave(object sender, PointerEventArgs args) {
             Focus(); // Force unfocus menu for key down events.
+        }
+
+        void OnAutoPitch(object sender, RoutedEventArgs args) {
+            if (ViewModel?.NotesViewModel?.Part != null) {
+                noteBatchEditCommand?.Execute(new AutoPitchEdit()).Subscribe();
+            }
         }
 
         // Edit menu
@@ -1518,6 +1527,16 @@ namespace OpenUtau.App.Controls {
                     noteBatchEditCommand?.Execute(new LoadRenderedPitch()).Subscribe();
                 }
 
+                args.Handled = true;
+                return;
+            }
+            if (args.Key == Key.E && args.KeyModifiers == cmdKey) {
+                noteBatchEditCommand?.Execute(new AutoPitchEdit()).Subscribe();
+                args.Handled = true;
+                return;
+            }
+            if (args.Key == Key.T && args.KeyModifiers == cmdKey) {
+                noteBatchEditCommand?.Execute(new AutoPitchEditLegacy()).Subscribe();
                 args.Handled = true;
                 return;
             }
