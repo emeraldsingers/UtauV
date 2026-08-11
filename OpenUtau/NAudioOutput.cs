@@ -31,7 +31,7 @@ namespace OpenUtau.App {
         public NAudioOutput() {
             if (Preferences.Default.UseSystemDefaultAudioDevice) {
                 mmEnumerator = new MMDeviceEnumerator();
-                notificationClient = new DefaultDeviceNotificationClient(() => Task.Run(() => PlaybackManager.Inst.StopPlayback()));
+                notificationClient = new DefaultDeviceNotificationClient(OnDefaultRenderDeviceChanged);
                 mmEnumerator.RegisterEndpointNotificationCallback(notificationClient);
                 return;
             }
@@ -48,6 +48,11 @@ namespace OpenUtau.App {
                 Log.Warning(e.Exception, "WasapiOut stopped unexpectedly.");
                 Task.Run(() => PlaybackManager.Inst.StopPlayback());
             }
+        }
+
+        private void OnDefaultRenderDeviceChanged() {
+            DevicesChanged?.Invoke(this, EventArgs.Empty);
+            Task.Run(() => PlaybackManager.Inst.StopPlayback());
         }
 
         public PlaybackState PlaybackState {
@@ -77,7 +82,7 @@ namespace OpenUtau.App {
                 if (Preferences.Default.UseSystemDefaultAudioDevice) {
                     // Re-register notification client if Stop() previously unregistered it.
                     if (notificationClient == null && mmEnumerator != null) {
-                        notificationClient = new DefaultDeviceNotificationClient(() => Task.Run(() => PlaybackManager.Inst.StopPlayback()));
+                        notificationClient = new DefaultDeviceNotificationClient(OnDefaultRenderDeviceChanged);
                         mmEnumerator.RegisterEndpointNotificationCallback(notificationClient);
                     }
                     if (wasapiOut != null) {

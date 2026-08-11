@@ -30,13 +30,14 @@ jobs:
       fail-fast: false
       matrix:
         arch:
-          - { name: win-x64, rid: win-x64, arch: x64, os: win, runs-on: windows-latest }
-          - { name: win-x86, rid: win-x86, arch: x86, os: win, runs-on: windows-latest }
-          - { name: win-arm64, rid: win-arm64, arch: arm64, os: win, runs-on: windows-latest }
-          - { name: osx-x64, rid: osx-x64, arch: x64, os: osx, runs-on: macos-15-intel }
-          - { name: osx-arm64, rid: osx-arm64, arch: arm64, os: osx, runs-on: macos-15-intel }
-          - { name: linux-x64, rid: linux-x64, arch: x64, os: linux, runs-on: ubuntu-latest, linuxarch: x86_64}
-          - { name: linux-arm64, rid: linux-arm64, arch: arm64, os: linux, runs-on: ubuntu-latest, linuxarch: aarch64}
+          - { name: win-x64, rid: win-x64, arch: x64, os: win, runs-on: windows-latest, onnx_provider: DirectML }
+          - { name: win-x64-cuda, rid: win-x64, arch: x64, os: win, runs-on: windows-latest, onnx_provider: CUDA }
+          - { name: win-x86, rid: win-x86, arch: x86, os: win, runs-on: windows-latest, onnx_provider: DirectML }
+          - { name: win-arm64, rid: win-arm64, arch: arm64, os: win, runs-on: windows-latest, onnx_provider: DirectML }
+          - { name: osx-x64, rid: osx-x64, arch: x64, os: osx, runs-on: macos-15-intel, onnx_provider: DirectML }
+          - { name: osx-arm64, rid: osx-arm64, arch: arm64, os: osx, runs-on: macos-15-intel, onnx_provider: DirectML }
+          - { name: linux-x64, rid: linux-x64, arch: x64, os: linux, runs-on: ubuntu-latest, linuxarch: x86_64, onnx_provider: DirectML }
+          - { name: linux-arm64, rid: linux-arm64, arch: arm64, os: linux, runs-on: ubuntu-latest, linuxarch: aarch64, onnx_provider: DirectML }
 
     steps:
       # Setup
@@ -63,10 +64,10 @@ jobs:
 
       # Build
       - name: Restore
-        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }}
+        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:OnnxRuntimeProvider=${{ matrix.arch.onnx_provider }}
 
       - name: Build (Windows and Linux)
-        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }}/
+        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -p:OnnxRuntimeProvider=${{ matrix.arch.onnx_provider }} -o bin/${{ matrix.arch.name }}/
         if: ${{ matrix.arch.os != 'osx' }}
 
       - name: Build (MacOS)
@@ -85,7 +86,7 @@ jobs:
           mkdir Microsoft.AI.DirectML
           tar -xf Microsoft.AI.DirectML.nupkg -C Microsoft.AI.DirectML
           copy /y Microsoft.AI.DirectML\bin\${{ matrix.arch.arch }}-${{ matrix.arch.os }}\DirectML.dll bin\${{ matrix.arch.name }}\
-        if: ${{ matrix.arch.os == 'win' }}
+        if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       - name: Set executable permission
         run: chmod +x bin/${{ matrix.arch.name }}/OpenUtau
@@ -107,14 +108,14 @@ jobs:
       - name: Get VC Redist
         run: |
           curl https://aka.ms/vs/17/release/vc_redist.${{ matrix.arch.arch }}.exe -o vc_redist.${{ matrix.arch.arch }}.exe
-        if: ${{ matrix.arch.os == 'win' }}
+        if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       - name: Create Installer
         uses: joncloud/makensis-action@v4.1
         with:
           script-file: OpenUtau.nsi
           arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }}"
-        if: ${{ matrix.arch.os == 'win' }}
+        if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       # Create Dmg
       - name: Create Dmg
@@ -164,7 +165,7 @@ jobs:
         with:
           name: OpenUtau-${{ matrix.arch.name }}.exe
           path: OpenUtau-${{ matrix.arch.name }}.exe
-        if: ${{ !inputs.release && matrix.arch.os == 'win' }}
+        if: ${{ !inputs.release && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
       
       - uses: actions/upload-artifact@v4
         with:
@@ -183,8 +184,12 @@ jobs:
         shell: cmd
         run: |
           python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.zip
-          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=OpenUtau-${{ matrix.arch.name }}.exe
         if: ${{ inputs.release && matrix.arch.os == 'win' }}
+
+      - name: Appcast Windows installer
+        shell: cmd
+        run: python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=OpenUtau-${{ matrix.arch.name }}.exe
+        if: ${{ inputs.release && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       - name: Appcast MacOS
         run: |

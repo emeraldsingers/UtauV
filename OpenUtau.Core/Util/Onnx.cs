@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.ML.OnnxRuntime;
@@ -25,7 +26,13 @@ namespace OpenUtau.Core {
 
     public class Onnx {
 
-        private static bool cudaAvailable = OS.IsLinux() && CudaGpuDetector.IsCudaAvailable() && CudaGpuDetector.IsCuDnnAvailable();
+#if ONNXRUNTIME_CUDA
+        private static readonly bool cudaAvailable = (OS.IsLinux() || OS.IsWindows()) &&
+            CudaGpuDetector.IsCudaAvailable() && CudaGpuDetector.IsCuDnnAvailable();
+#else
+        private static readonly bool cudaAvailable = OS.IsLinux() &&
+            CudaGpuDetector.IsCudaAvailable() && CudaGpuDetector.IsCuDnnAvailable();
+#endif
 
         private static readonly Dictionary<int, OrtEpDevice> devices = initializeDevices();
 
@@ -41,10 +48,15 @@ namespace OpenUtau.Core {
 
         public static List<string> getRunnerOptions() {
             if (OS.IsWindows()) {
-                return new List<string> {
-                "CPU",
-                "DirectML"
-                };
+#if ONNXRUNTIME_CUDA
+                return cudaAvailable
+                    ? new List<string> { "CPU", "CUDA" }
+                    : new List<string> { "CPU" };
+#else
+                return devices.Count > 0
+                    ? new List<string> { "CPU", "DirectML" }
+                    : new List<string> { "CPU" };
+#endif
             } else if (OS.IsMacOS()) {
                 return new List<string> {
                 "CPU",
@@ -142,11 +154,38 @@ namespace OpenUtau.Core {
             return options;
         }
 
+        private static string getCudaModelPath(byte[] model) {
+            Directory.CreateDirectory(PathManager.Inst.CachePath);
+            string hash = Convert.ToHexString(SHA256.HashData(model));
+            string modelPath = Path.Combine(PathManager.Inst.CachePath, $"onnx-{hash}.onnx");
+            if (File.Exists(modelPath)) {
+                return modelPath;
+            }
+
+            string tempPath = $"{modelPath}.{Guid.NewGuid():N}.tmp";
+            try {
+                File.WriteAllBytes(tempPath, model);
+                try {
+                    File.Move(tempPath, modelPath, false);
+                } catch (IOException) when (File.Exists(modelPath)) {
+                    // Another renderer created the same content-addressed file first.
+                }
+            } finally {
+                if (File.Exists(tempPath)) {
+                    File.Delete(tempPath);
+                }
+            }
+            return modelPath;
+        }
+
         public static InferenceSession getInferenceSession(byte[] model, OnnxRunnerChoice runnerChoice = OnnxRunnerChoice.Default) {
             if (runnerChoice == OnnxRunnerChoice.CPU ||
                 (runnerChoice == OnnxRunnerChoice.CPUForCoreML && Preferences.Default.OnnxRunner == "CoreML")) {
                 return new InferenceSession(model);
             } else {
+                if (Preferences.Default.OnnxRunner == "CUDA") {
+                    return new InferenceSession(getCudaModelPath(model), getOnnxSessionOptions());
+                }
                 // Try with CoreML subgraphs enabled first, fallback to default if it fails
                 if (OS.IsMacOS() && Preferences.Default.OnnxRunner == "CoreML") {
                     try {

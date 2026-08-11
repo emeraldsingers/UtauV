@@ -7,6 +7,12 @@
     <DebugType>embedded</DebugType>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <PropertyGroup>
+    <OnnxRuntimeProvider Condition="'$(OnnxRuntimeProvider)' == ''">DirectML</OnnxRuntimeProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(OnnxRuntimeProvider)' == 'CUDA'">
+    <DefineConstants>$(DefineConstants);ONNXRUNTIME_CUDA</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BunLabs.NAudio.Flac" Version="2.0.1" />
     <PackageReference Include="Concentus.OggFile" Version="1.0.6" />
@@ -36,7 +42,8 @@
   </ItemGroup>
   <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">
     <PackageReference Include="NAudio" Version="2.2.1" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.23.2" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.1" Condition="'$(OnnxRuntimeProvider)' == 'DirectML'" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.24.1" Condition="'$(OnnxRuntimeProvider)' == 'CUDA'" />
   </ItemGroup>
   <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.23.2" />
@@ -85,6 +92,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">
-    <DefineConstants>WINDOWS</DefineConstants>
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
 </Project>
