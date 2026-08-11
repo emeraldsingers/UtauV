@@ -95,6 +95,9 @@ namespace OpenUtau.App.ViewModels {
 
         // Appearance
         [Reactive] public string ThemeName { get; set; }
+        [Reactive] public double ButtonCornerRadius { get; set; }
+        [Reactive] public double NoteCornerRadius { get; set; }
+        [Reactive] public double UiCornerRadius { get; set; }
         [Reactive] public int DegreeStyle { get; set; }
         [Reactive] public bool UseTrackColor { get; set; }
         [Reactive] public bool ShowPortrait { get; set; }
@@ -201,6 +204,9 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerLangCodeHide = Preferences.Default.DiffSingerLangCodeHide;
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
             ThemeName = Preferences.Default.ThemeName;
+            ButtonCornerRadius = Preferences.Default.ButtonCornerRadius;
+            NoteCornerRadius = Preferences.Default.NoteCornerRadius;
+            UiCornerRadius = Preferences.Default.UiCornerRadius;
             DegreeStyle = Preferences.Default.DegreeStyle;
             UseTrackColor = Preferences.Default.UseTrackColor;
             ShowPortrait = Preferences.Default.ShowPortrait;
@@ -292,6 +298,24 @@ namespace OpenUtau.App.ViewModels {
                         Preferences.Save();
                         App.SetTheme();
                     }
+                });
+            this.WhenAnyValue(vm => vm.ButtonCornerRadius)
+                .Subscribe(radius => {
+                    Preferences.Default.ButtonCornerRadius = Math.Clamp(radius, 0, 10);
+                    Preferences.Save();
+                    App.SetUiCornerRadii();
+                });
+            this.WhenAnyValue(vm => vm.NoteCornerRadius)
+                .Subscribe(radius => {
+                    Preferences.Default.NoteCornerRadius = Math.Clamp(radius, 0, 10);
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                });
+            this.WhenAnyValue(vm => vm.UiCornerRadius)
+                .Subscribe(radius => {
+                    Preferences.Default.UiCornerRadius = Math.Clamp(radius, 0, 10);
+                    Preferences.Save();
+                    App.SetUiCornerRadii();
                 });
             this.WhenAnyValue(vm => vm.DegreeStyle)
                 .Subscribe(degreeStyle => {

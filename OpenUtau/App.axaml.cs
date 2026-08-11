@@ -17,6 +17,7 @@ namespace OpenUtau.App {
         public override void Initialize() {
             Log.Information("Initializing application.");
             AvaloniaXamlLoader.Load(this);
+            SetUiCornerRadii();
             InitializeCulture();
             InitializeTheme();
             Log.Information("Initialized application.");
@@ -122,6 +123,19 @@ namespace OpenUtau.App {
                     break;
             }
             ThemeManager.LoadTheme();
+        }
+
+        public static void SetUiCornerRadii() {
+            if (Current == null) {
+                return;
+            }
+            Current.Resources["ButtonCornerRadius"] = new CornerRadius(
+                Math.Clamp(Core.Util.Preferences.Default.ButtonCornerRadius, 0, 10));
+            var uiRadius = new CornerRadius(
+                Math.Clamp(Core.Util.Preferences.Default.UiCornerRadius, 0, 10));
+            Current.Resources["UiCornerRadius"] = uiRadius;
+            Current.Resources["ControlCornerRadius"] = uiRadius;
+            Current.Resources["OverlayCornerRadius"] = uiRadius;
         }
 
         private static void ApplyTheme(IResourceDictionary resDict) { 

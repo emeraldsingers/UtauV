@@ -222,7 +222,8 @@ namespace OpenUtau.App.Controls {
             var brush = selectedNotes.Contains(note)
                 ? (note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2)
                 : (note.Error ? ThemeManager.AccentBrush1Semi : ThemeManager.AccentBrush1);
-            context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), 2, 2);
+            double radius = GetNoteCornerRadius(size);
+            context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
             if (TrackHeight < 10 || note.lyric.Length == 0) {
                 return;
             }
@@ -332,7 +333,13 @@ namespace OpenUtau.App.Controls {
 
             Point rightBottom = new Point(leftTop.X + size.Width, leftTop.Y + size.Height);
 
-            context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), 2, 2);
+            double radius = GetNoteCornerRadius(size);
+            context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
+        }
+
+        private static double GetNoteCornerRadius(Size size) {
+            double maxRadius = Math.Max(0, Math.Min(size.Width, size.Height) / 2);
+            return Math.Clamp(Preferences.Default.NoteCornerRadius, 0, Math.Min(10, maxRadius));
         }
 
         private void RenderPitchBend(UNote note, NotesViewModel viewModel, DrawingContext context) {

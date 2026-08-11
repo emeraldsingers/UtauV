@@ -7,7 +7,9 @@
   <Design.DataContext>
     <vm:ExpSelectorViewModel/>
   </Design.DataContext>
-  <Grid Height="22" Width="60" Background="{Binding Background}" PointerPressed="TextBlockPointerPressed">
+  <Border Height="22" Width="60" Background="{Binding Background}"
+          CornerRadius="{DynamicResource ButtonCornerRadius}" PointerPressed="TextBlockPointerPressed">
+    <Grid>
     <ComboBox VerticalAlignment="Center" HorizontalAlignment="Left" Height="22"
               Focusable="False" Foreground="{Binding TagBrush}" Background="Transparent" Width="20"
               SelectedItem="{Binding Descriptor}" ItemsSource="{Binding Descriptors}" SelectedIndex="{Binding SelectedIndex}">
@@ -115,5 +117,6 @@
                  Foreground="{Binding TagBrush}"
                  TextAlignment="Right" Text="{Binding Header}"/>
     </Viewbox>
-  </Grid>
+    </Grid>
+  </Border>
 </UserControl>

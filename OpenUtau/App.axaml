@@ -7,6 +7,10 @@
   </Application.DataTemplates>
   <Application.Resources>
     <ResourceDictionary>
+      <CornerRadius x:Key="ButtonCornerRadius">0</CornerRadius>
+      <CornerRadius x:Key="UiCornerRadius">0</CornerRadius>
+      <CornerRadius x:Key="ControlCornerRadius">0</CornerRadius>
+      <CornerRadius x:Key="OverlayCornerRadius">0</CornerRadius>
       <ResourceInclude x:Key="strings-en-US" Source="/Strings/Strings.axaml"/>
       <ResourceInclude x:Key="strings-de-DE" Source="/Strings/Strings.de-DE.axaml"/>
       <ResourceInclude x:Key="strings-es-ES" Source="/Strings/Strings.es-ES.axaml"/>

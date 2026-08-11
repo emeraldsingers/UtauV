@@ -243,6 +243,42 @@
               </Grid>
             </Button>
           </Grid>
+          <Grid ColumnDefinitions="Auto,8,28,8,*" Margin="0,10,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.appearance.buttonradius}"/>
+            <TextBlock Grid.Column="2">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="{}{0:#0.0}">
+                  <Binding Path="ButtonCornerRadius"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding ButtonCornerRadius}" Minimum="0" Maximum="10"
+                    TickPlacement="BottomRight" TickFrequency="1" IsSnapToTickEnabled="false"/>
+          </Grid>
+          <Grid ColumnDefinitions="Auto,8,28,8,*" Margin="0,5,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.appearance.noteradius}"/>
+            <TextBlock Grid.Column="2">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="{}{0:#0.0}">
+                  <Binding Path="NoteCornerRadius"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding NoteCornerRadius}" Minimum="0" Maximum="10"
+                    TickPlacement="BottomRight" TickFrequency="1" IsSnapToTickEnabled="false"/>
+          </Grid>
+          <Grid ColumnDefinitions="Auto,8,28,8,*" Margin="0,5,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.appearance.uiradius}"/>
+            <TextBlock Grid.Column="2">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="{}{0:#0.0}">
+                  <Binding Path="UiCornerRadius"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding UiCornerRadius}" Minimum="0" Maximum="10"
+                    TickPlacement="BottomRight" TickFrequency="1" IsSnapToTickEnabled="false"/>
+          </Grid>
           <TextBlock Text="{DynamicResource prefs.appearance.degree}" Margin="0,10,0,0"/>
           <ComboBox SelectedIndex="{Binding DegreeStyle}">
             <ComboBoxItem Content="{DynamicResource prefs.appearance.degree.off}"/>

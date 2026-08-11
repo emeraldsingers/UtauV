@@ -588,6 +588,9 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.appearance.showportrait">Show portrait on piano roll</system:String>
   <system:String x:Key="prefs.appearance.sortorder">Singer name display language</system:String>
   <system:String x:Key="prefs.appearance.theme">Theme</system:String>
+  <system:String x:Key="prefs.appearance.buttonradius">Button corner radius</system:String>
+  <system:String x:Key="prefs.appearance.noteradius">Note corner radius</system:String>
+  <system:String x:Key="prefs.appearance.uiradius">Interface corner radius</system:String>
   <system:String x:Key="prefs.appearance.theme.dark">Dark</system:String>
   <system:String x:Key="prefs.appearance.theme.light">Light</system:String>
   <system:String x:Key="prefs.appearance.customtheme.edit.title">Edit Custom Theme</system:String>
