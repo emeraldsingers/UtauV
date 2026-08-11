@@ -125,6 +125,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool DiffSingerTensorCache { get; set; }
         [Reactive] public bool DiffSingerVarianceLocalPitchPatch { get; set; }
         [Reactive] public bool DiffSingerLangCodeHide { get; set; }
+        [Reactive] public bool DiffSingerAutoSP { get; set; }
+        [Reactive] public int DiffSingerAutoSPMs { get; set; }
 
         // Advanced
         [Reactive] public bool RememberMid { get; set; }
@@ -202,6 +204,8 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerTensorCache = Preferences.Default.DiffSingerTensorCache;
             DiffSingerVarianceLocalPitchPatch = Preferences.Default.DiffSingerVarianceLocalPitchPatch;
             DiffSingerLangCodeHide = Preferences.Default.DiffSingerLangCodeHide;
+            DiffSingerAutoSP = Preferences.Default.DiffSingerAutoSP;
+            DiffSingerAutoSPMs = Math.Clamp(Preferences.Default.DiffSingerAutoSPMs, 10, 200);
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
             ThemeName = Preferences.Default.ThemeName;
             ButtonCornerRadius = Preferences.Default.ButtonCornerRadius;
@@ -446,6 +450,21 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Default.DiffSingerLangCodeHide = useCache;
                     Preferences.Save();
                 });
+            this.WhenAnyValue(vm => vm.DiffSingerAutoSP)
+                .Skip(1)
+                .Subscribe(enabled => {
+                    Preferences.Default.DiffSingerAutoSP = enabled;
+                    Preferences.Save();
+                    RePredictDiffSingerDurations();
+                });
+            this.WhenAnyValue(vm => vm.DiffSingerAutoSPMs)
+                .Skip(1)
+                .Throttle(TimeSpan.FromMilliseconds(400))
+                .Subscribe(ms => {
+                    Preferences.Default.DiffSingerAutoSPMs = Math.Clamp(ms, 10, 200);
+                    Preferences.Save();
+                    RePredictDiffSingerDurations();
+                });
             this.WhenAnyValue(vm => vm.SkipRenderingMutedTracks)
                 .Subscribe(skipRenderingMutedTracks => {
                     Preferences.Default.SkipRenderingMutedTracks = skipRenderingMutedTracks;
@@ -495,6 +514,14 @@ namespace OpenUtau.App.ViewModels {
             Preferences.Save();
             ToolsManager.Inst.Initialize();
             this.RaisePropertyChanged(nameof(WinePath));
+        }
+
+        private void RePredictDiffSingerDurations() {
+            if (DocManager.Inst.Project == null) {
+                return;
+            }
+            DocManager.Inst.ExecuteCmd(new ValidateProjectNotification());
+            DocManager.Inst.ExecuteCmd(new PreRenderNotification());
         }
 
         public void RefreshThemes() {

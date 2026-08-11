@@ -365,6 +365,22 @@
             <TextBlock Text="{DynamicResource prefs.appearance.diffsingerlangcodehide}" HorizontalAlignment="Left" />
             <ToggleSwitch IsChecked="{Binding DiffSingerLangCodeHide}" />
           </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.rendering.diffsingerautosp}" HorizontalAlignment="Left" VerticalAlignment="Center" />
+            <ToggleSwitch IsChecked="{Binding DiffSingerAutoSP}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto,8,40,8,*" Margin="0,5,0,0" IsEnabled="{Binding DiffSingerAutoSP}">
+              <TextBlock Grid.Column="0" Text="{DynamicResource prefs.rendering.diffsingerautospms}" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="2" VerticalAlignment="Center">
+                  <TextBlock.Text>
+                      <MultiBinding StringFormat="{}{0:#0}">
+                          <Binding Path="DiffSingerAutoSPMs"/>
+                      </MultiBinding>
+                  </TextBlock.Text>
+              </TextBlock>
+              <Slider Grid.Column="4" Classes="fader" Value="{Binding DiffSingerAutoSPMs}" Minimum="10" Maximum="200"
+                      TickPlacement="BottomRight" TickFrequency="5" IsSnapToTickEnabled="true"/>
+          </Grid>
         </StackPanel>
 
         <!-- Advanced -->

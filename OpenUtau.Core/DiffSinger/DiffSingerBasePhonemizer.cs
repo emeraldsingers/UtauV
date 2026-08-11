@@ -383,7 +383,12 @@ namespace OpenUtau.Core.DiffSinger
         protected virtual string[] PostProcessWordSymbols(Note[][] phrase, int wordIndex, string[] symbols) { return symbols; }
 
         protected override void ProcessPart(Note[][] phrase) {
-            float padding = 500f;//Padding time for consonants at the beginning of a sentence, ms
+            //Small invisible SP at the start of every phrase. When enabled, the leading
+            //SP/pause is shortened so leading consonants aren't stretched over a long
+            //silence; otherwise the original 500ms padding is used.
+            float padding = Preferences.Default.DiffSingerAutoSP
+                ? Math.Clamp(Preferences.Default.DiffSingerAutoSPMs, 10, 200)
+                : 500f;//Padding time for consonants at the beginning of a sentence, ms
             float frameMs = dsConfig.frameMs();
             var startMs = timeAxis.TickPosToMsPos(phrase[0][0].position) - padding;
             var lastNote = phrase[^1][^1];
@@ -420,7 +425,7 @@ namespace OpenUtau.Core.DiffSinger
                 phrasePhonemes.AddRange(wordPhonemes.Skip(1));
                 notePhIndex.Add(notePhIndex[^1]+wordPhonemes.SelectMany(n=>n.Phonemes).Count());
             }
-            
+
             phrasePhonemes.Add(new phonemesPerNote(endTick,lastNote.tone));
             phrasePhonemes[0].Position = timeAxis.MsPosToTickPos(
                 timeAxis.TickPosToMsPos(phrasePhonemes[1].Position)-padding
