@@ -113,11 +113,6 @@ namespace OpenUtau.App.ViewModels {
         private int userKey => Project.key;
         private int playPosTick;
         private UNote[] playbackNotes = Array.Empty<UNote>();
-        private const double StationaryScrollDamping = 18;
-        private const double StationaryScrollSnapThreshold = 0.01;
-        private double? stationaryScrollTargetOffset;
-        private DateTime stationaryScrollLastFrame = DateTime.UtcNow;
-        private bool isApplyingStationaryScroll;
         private DateTime playbackVerticalFollowLastFrame = DateTime.UtcNow;
         private double? playbackVerticalFollowTargetOffset;
         private const int PlaybackVerticalFollowOutlierThreshold = 12;
@@ -163,9 +158,6 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(x => x.TickOffset)
                 .Subscribe(tickOffset => {
                     SetPlayPos(DocManager.Inst.playPosTick, false);
-                    if (!isApplyingStationaryScroll) {
-                        stationaryScrollTargetOffset = tickOffset;
-                    }
                 });
             this.WhenAnyValue(x => x.ExpBounds, x => x.PrimaryKey)
                 .Subscribe(t => {
@@ -475,7 +467,6 @@ namespace OpenUtau.App.ViewModels {
             UnloadPart();
             Part = part as UVoicePart;
             RebuildPlaybackNoteIndex();
-            ResetStationaryScroll();
             ResetPlaybackVerticalFollow();
             OnPartModified();
             LoadPortrait(part, project);
@@ -592,7 +583,6 @@ namespace OpenUtau.App.ViewModels {
             DeselectNotes();
             Part = null;
             playbackNotes = Array.Empty<UNote>();
-            ResetStationaryScroll();
             ResetPlaybackVerticalFollow();
             LoadPortrait(null, null);
             LoadWindowTitle(null, null);
@@ -1217,54 +1207,7 @@ namespace OpenUtau.App.ViewModels {
 
         private void AutoScroll(double positionX) {
             double scrollDelta = GetScrollValueDelta(positionX);
-            if (Preferences.Default.PlaybackAutoScroll == 1) {
-                if (Math.Abs(scrollDelta) >= StationaryScrollSnapThreshold) {
-                    stationaryScrollTargetOffset = Math.Clamp(
-                        TickOffset + scrollDelta, 0, HScrollBarMax);
-                }
-                return;
-            }
-            stationaryScrollTargetOffset = null;
             TickOffset = Math.Clamp(TickOffset + scrollDelta, 0, HScrollBarMax);
-        }
-
-        public void UpdateStationaryScroll() {
-            var now = DateTime.UtcNow;
-            double dt = Math.Clamp((now - stationaryScrollLastFrame).TotalSeconds, 0, 0.05);
-            stationaryScrollLastFrame = now;
-
-            if (Part == null || Preferences.Default.PlaybackAutoScroll != 1 ||
-                !stationaryScrollTargetOffset.HasValue) {
-                return;
-            }
-
-            double target = Math.Clamp(stationaryScrollTargetOffset.Value, 0, HScrollBarMax);
-            double delta = target - TickOffset;
-            if (Math.Abs(delta) < StationaryScrollSnapThreshold) {
-                stationaryScrollTargetOffset = null;
-                if (Math.Abs(delta) > double.Epsilon) {
-                    SetStationaryScrollOffset(target);
-                }
-                return;
-            }
-
-            double alpha = 1 - Math.Exp(-StationaryScrollDamping * dt);
-            SetStationaryScrollOffset(Math.Clamp(
-                TickOffset + delta * alpha, 0, HScrollBarMax));
-        }
-
-        private void SetStationaryScrollOffset(double offset) {
-            isApplyingStationaryScroll = true;
-            try {
-                TickOffset = offset;
-            } finally {
-                isApplyingStationaryScroll = false;
-            }
-        }
-
-        private void ResetStationaryScroll() {
-            stationaryScrollTargetOffset = null;
-            stationaryScrollLastFrame = DateTime.UtcNow;
         }
 
         private void MaybeAutoScrollVertical() {

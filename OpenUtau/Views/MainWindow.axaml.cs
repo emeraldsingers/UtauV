@@ -76,7 +76,6 @@ namespace OpenUtau.App.Views {
                 DispatcherPriority.Normal,
                 (sender, args) => {
                     PlaybackManager.Inst.UpdatePlayPos();
-                    pianoRoll?.ViewModel?.NotesViewModel?.UpdateStationaryScroll();
                     var pvm = viewModel.PlaybackViewModel;
                     pvm.RaisePropertyChanged(nameof(pvm.IsPlaying));
                     pvm.RaisePropertyChanged(nameof(pvm.ShowPlayPosHighlight));
