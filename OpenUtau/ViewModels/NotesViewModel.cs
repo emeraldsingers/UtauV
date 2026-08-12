@@ -62,6 +62,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPhoneme { get; set; }
         [Reactive] public bool ShowNoteParams { get; set; }
         [Reactive] public bool ShowExpressions { get; set; }
+        [Reactive] public bool ShowPlaybackVerticalFollow { get; set; }
         [Reactive] public bool ShowPlaybackNoteHighlight { get; set; }
         [Reactive] public bool IsSnapOn { get; set; }
         [Reactive] public string SnapDivText { get; set; }
@@ -110,6 +111,11 @@ namespace OpenUtau.App.ViewModels {
         private readonly object portraitLock = new object();
         private int userSnapDiv = -2;
         private int userKey => Project.key;
+        private int playPosTick;
+        private UNote[] playbackNotes = Array.Empty<UNote>();
+        private DateTime playbackVerticalFollowLastFrame = DateTime.UtcNow;
+        private double? playbackVerticalFollowTargetOffset;
+        private const int PlaybackVerticalFollowOutlierThreshold = 12;
 
         public NotesViewModel() {
             SnapDivs = new List<MenuItemViewModel>();
@@ -276,6 +282,14 @@ namespace OpenUtau.App.ViewModels {
                 Preferences.Default.ShowNoteParams = showNoteParams;
                 Preferences.Save();
             });
+            ShowPlaybackVerticalFollow = Preferences.Default.ShowPlaybackVerticalFollow;
+            this.WhenAnyValue(x => x.ShowPlaybackVerticalFollow)
+                .Skip(1)
+                .Subscribe(showPlaybackVerticalFollow => {
+                    Preferences.Default.ShowPlaybackVerticalFollow = showPlaybackVerticalFollow;
+                    Preferences.Save();
+                    ResetPlaybackVerticalFollow();
+                });
 
             TickWidth = ViewConstants.PianoRollTickWidthDefault;
             TrackHeight = ViewConstants.NoteHeightDefault;
@@ -452,6 +466,8 @@ namespace OpenUtau.App.ViewModels {
             }
             UnloadPart();
             Part = part as UVoicePart;
+            RebuildPlaybackNoteIndex();
+            ResetPlaybackVerticalFollow();
             OnPartModified();
             LoadPortrait(part, project);
             LoadWindowTitle(part, project);
@@ -566,6 +582,8 @@ namespace OpenUtau.App.ViewModels {
         private void UnloadPart() {
             DeselectNotes();
             Part = null;
+            playbackNotes = Array.Empty<UNote>();
+            ResetPlaybackVerticalFollow();
             LoadPortrait(null, null);
             LoadWindowTitle(null, null);
         }
@@ -993,11 +1011,12 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private void SetPlayPos(int tick, bool waitingRendering) {
+            playPosTick = tick - (Part?.position ?? 0);
             PlayPosWaitingRendering = waitingRendering;
             if (waitingRendering) {
                 return;
             }
-            tick -= Part?.position ?? 0;
+            tick = playPosTick;
             PlayPosTick = tick;
             PlayPosX = TickToneToPoint(tick, 0).X;
             UpdateHighlight();
@@ -1091,6 +1110,9 @@ namespace OpenUtau.App.ViewModels {
                     if (!setPlayPosTick.pause || Preferences.Default.LockStartTime == 1) {
                         MaybeAutoScroll(PlayPosX);
                     }
+                    if (!setPlayPosTick.pause && !setPlayPosTick.waitingRendering) {
+                        MaybeAutoScrollVertical();
+                    }
                 } else if (cmd is SetRangeSelectionNotification) {
                     UpdateHighlight();
                 } else if (cmd is FocusNoteNotification focusNote) {
@@ -1105,9 +1127,11 @@ namespace OpenUtau.App.ViewModels {
                         LoadPortrait(Part, Project);
                     }
                     OnPartModified();
+                    RebuildPlaybackNoteIndex();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 } else if (cmd is PhonemizedNotification) {
                     OnPartModified();
+                    RebuildPlaybackNoteIndex();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 } else if (notif is PartRenderedNotification && notif.part == Part) {
                     MessageBus.Current.SendMessage(new WaveformRefreshEvent());
@@ -1141,6 +1165,7 @@ namespace OpenUtau.App.ViewModels {
             } else if (cmd is NoteCommand noteCommand) {
                 CleanupSelectedNotes();
                 if (noteCommand.Part == Part) {
+                    RebuildPlaybackNoteIndex();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
 
                     if (noteCommand is RemoveNoteCommand && isUndo) {
@@ -1183,6 +1208,100 @@ namespace OpenUtau.App.ViewModels {
         private void AutoScroll(double positionX) {
             double scrollDelta = GetScrollValueDelta(positionX);
             TickOffset = Math.Clamp(TickOffset + scrollDelta, 0, HScrollBarMax);
+        }
+
+        private void MaybeAutoScrollVertical() {
+            if (!ShowPlaybackVerticalFollow || Part == null || ViewportTracks <= 0) {
+                return;
+            }
+            var note = FindPlaybackVerticalFollowNote(playPosTick);
+            if (note == null) {
+                return;
+            }
+            double noteTrackPos = ViewConstants.MaxTone - 1 - (note.AdjustedTone - 0.5);
+            double center = TrackOffset + ViewportTracks * 0.5;
+            if (Math.Abs(noteTrackPos - center) > Preferences.Default.PlaybackVerticalFollowMargin) {
+                playbackVerticalFollowTargetOffset = Math.Clamp(
+                    noteTrackPos - ViewportTracks * 0.5, 0, VScrollBarMax);
+            }
+            if (!playbackVerticalFollowTargetOffset.HasValue) {
+                return;
+            }
+            double nowOffset = TrackOffset;
+            double delta = GetVerticalFollowDelta(playbackVerticalFollowTargetOffset.Value);
+            if (Math.Abs(delta) < 0.002) {
+                return;
+            }
+            double nextOffset = Math.Clamp(nowOffset + delta, 0, VScrollBarMax);
+            if (Math.Abs(nextOffset - nowOffset) >= 0.002) {
+                TrackOffset = nextOffset;
+            }
+            if (Math.Abs(playbackVerticalFollowTargetOffset.Value - nextOffset) < 0.05) {
+                playbackVerticalFollowTargetOffset = null;
+            }
+        }
+
+        private UNote? FindPlaybackVerticalFollowNote(int tick) {
+            int low = 0;
+            int high = playbackNotes.Length - 1;
+            UNote? next = null;
+            while (low <= high) {
+                int mid = low + (high - low) / 2;
+                var note = playbackNotes[mid];
+                if (tick < note.LeftBound) {
+                    next = note;
+                    high = mid - 1;
+                } else if (tick >= note.RightBound) {
+                    low = mid + 1;
+                } else {
+                    return IsVerticalFollowOutlier(note) ? null : note;
+                }
+            }
+            if (next == null || tick < GetVerticalFollowPreparationTick(next) || IsVerticalFollowOutlier(next)) {
+                return null;
+            }
+            return next;
+        }
+
+        private bool IsVerticalFollowOutlier(UNote note) {
+            var surrounding = new List<int>(6);
+            for (var previous = note.Prev; previous != null && surrounding.Count < 3; previous = previous.Prev) {
+                surrounding.Add(previous.tone);
+            }
+            for (var next = note.Next; next != null && surrounding.Count < 6; next = next.Next) {
+                surrounding.Add(next.tone);
+            }
+            if (surrounding.Count == 0) {
+                return false;
+            }
+            surrounding.Sort();
+            return Math.Abs(note.tone - surrounding[surrounding.Count / 2]) > PlaybackVerticalFollowOutlierThreshold;
+        }
+
+        private int GetVerticalFollowPreparationTick(UNote note) {
+            int minLead = Math.Max(1, Project.resolution / 4);
+            int maxLead = Math.Max(minLead, Project.resolution * 2);
+            int prepTick = note.position - Math.Clamp(note.duration, minLead, maxLead);
+            return note.Prev == null ? prepTick : Math.Max(prepTick, note.Prev.RightBound);
+        }
+
+        private double GetVerticalFollowDelta(double targetOffset) {
+            var now = DateTime.UtcNow;
+            double dt = Math.Clamp((now - playbackVerticalFollowLastFrame).TotalSeconds, 0, 0.05);
+            playbackVerticalFollowLastFrame = now;
+            double alpha = 1 - Math.Exp(-Preferences.Default.PlaybackVerticalFollowDamping * dt);
+            return Math.Clamp((targetOffset - TrackOffset) * alpha,
+                -Preferences.Default.PlaybackVerticalFollowMaxStep,
+                Preferences.Default.PlaybackVerticalFollowMaxStep);
+        }
+
+        private void RebuildPlaybackNoteIndex() {
+            playbackNotes = Part?.notes.ToArray() ?? Array.Empty<UNote>();
+        }
+
+        private void ResetPlaybackVerticalFollow() {
+            playbackVerticalFollowLastFrame = DateTime.UtcNow;
+            playbackVerticalFollowTargetOffset = null;
         }
 
         private double GetScrollValueDelta(double positionX) {

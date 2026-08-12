@@ -190,10 +190,14 @@ namespace OpenUtau.Core.Util {
             public double PlayPosMarkerMargin = 0.9;
             public int LockStartTime = 0;
             public int PlaybackAutoScroll = 2;
+            public double PlaybackVerticalFollowMargin = 1.5;
+            public double PlaybackVerticalFollowDamping = 3;
+            public double PlaybackVerticalFollowMaxStep = 1.5;
             public bool ReverseLogOrder = true;
             public bool ShowPortrait = true;
             public bool ShowIcon = true;
             public bool ShowGhostNotes = true;
+            public bool ShowPlaybackVerticalFollow = false;
             public bool ShowPlaybackNoteHighlight = false;
             public double PlaybackHighlightFadeInPerSecond = 8.0;
             public double PlaybackHighlightFadeOutPerSecond = 6.2;
