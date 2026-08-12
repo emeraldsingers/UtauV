@@ -425,6 +425,7 @@ namespace OpenUtau.Core.Render {
                     ranges.Add((update.startTick, update.endTick));
                 }
             }
+        }
 
         private (RenderPhrase phrase, WaveSource source, RenderPartRequest request)[] OrderForPlayback(
             (RenderPhrase phrase, WaveSource source, RenderPartRequest request)[] tuples) {
