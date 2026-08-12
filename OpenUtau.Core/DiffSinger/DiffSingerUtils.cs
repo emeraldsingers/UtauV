@@ -342,5 +342,15 @@ namespace OpenUtau.Core.DiffSinger {
             }
             return "";
         }
+
+        public static int RetakeHash(RenderPhrase phrase) {
+            unchecked {
+                int hash = 17;
+                foreach (var note in phrase.notes) {
+                    hash = hash * 31 + note.diffSingerRetake;
+                }
+                return hash;
+            }
+        }
     }
 }

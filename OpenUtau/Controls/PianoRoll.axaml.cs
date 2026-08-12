@@ -14,6 +14,7 @@ using Avalonia.Interactivity;
 using OpenUtau.App.ViewModels;
 using OpenUtau.App.Views;
 using OpenUtau.Core;
+using OpenUtau.Core.DiffSinger;
 using OpenUtau.Core.Editing;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
@@ -1006,6 +1007,15 @@ namespace OpenUtau.App.Controls {
                             Command = ReactiveCommand.Create(() => ViewModel.NotesViewModel.PasteSelectedParams(RootWindow)),
                             InputGesture = new KeyGesture(Key.V, KeyModifiers.Alt),
                         });
+                        if (ViewModel.NotesViewModel.Part is { } part &&
+                            ViewModel.NotesViewModel.Project.tracks[part.trackNo].RendererSettings.Renderer is DiffSingerRenderer) {
+                            ViewModel.NotesContextMenuItems.Add(new MenuItemViewModel() {
+                                Header = ThemeManager.GetString("pianoroll.menu.notes.regeneratediffsinger"),
+                                Command = noteBatchEditCommand,
+                                CommandParameter = new RegenerateDiffSingerPhrase(),
+                                InputGesture = new KeyGesture(Key.R, KeyModifiers.Control | KeyModifiers.Shift),
+                            });
+                        }
                         ViewModel.NotesContextMenuItems.Add(new MenuItemViewModel() {
                             Header = ThemeManager.GetString("pianoroll.menu.notes"),
                             Items = ViewModel.NoteBatchEdits.ToArray(),
@@ -1533,6 +1543,14 @@ namespace OpenUtau.App.Controls {
                 return;
             }
 
+            if (args.Key == Key.R && args.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift)) {
+                var part = notesVm.Part;
+                if (part != null && notesVm.Selection.Count > 0) {
+                    noteBatchEditCommand?.Execute(new RegenerateDiffSingerPhrase()).Subscribe();
+                }
+                args.Handled = true;
+                return;
+            }
             if (args.Key == Key.R && args.KeyModifiers == KeyModifiers.Control) {
                 var project = DocManager.Inst.Project;
                 var part = notesVm.Part;

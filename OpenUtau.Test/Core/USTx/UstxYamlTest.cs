@@ -26,6 +26,7 @@ namespace OpenUtau.Core.Ustx {
             note.vibrato.pitchVariation = 0.4F;
             note.vibrato.variationFreq = 1;
             note.vibrato.variationSeed = 12;
+            note.diffSingerRetake = 1;
         }
 
         [Fact]
@@ -44,6 +45,7 @@ pitch:
   snap_first: true
 vibrato: {length: 0, period: 175, depth: 25, in: 10, out: 10, shift: 0, drift: 0, vol_link: 0, variation: 0.9, pitch_variation: 0.4, variation_freq: 1, variation_seed: 12}
 tuning: 0
+diff_singer_retake: 1
 phoneme_expressions:
 - {index: 0, abbr: vel, value: 123}
 phoneme_overrides: []
@@ -70,6 +72,7 @@ phoneme_overrides: []
             Assert.Equal(0.4F, actual.vibrato.pitchVariation);
             Assert.Equal(1.0F, actual.vibrato.variationFreq);
             Assert.Equal(12, actual.vibrato.variationSeed);
+            Assert.Equal(1, actual.diffSingerRetake);
         }
 
         [Fact]

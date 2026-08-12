@@ -248,6 +248,38 @@ namespace OpenUtau.Core {
         }
     }
 
+    public class DiffSingerRetakeCommand : NoteCommand {
+        readonly int[] newRetakes;
+        readonly int[] oldRetakes;
+
+        public DiffSingerRetakeCommand(UVoicePart part, IEnumerable<UNote> notes, IEnumerable<int> retakes)
+            : base(part, notes) {
+            newRetakes = retakes.Select(retake => Math.Max(0, retake)).ToArray();
+            if (Notes.Length != newRetakes.Length) {
+                throw new ArgumentException("Notes count and DiffSinger retake count do not match.");
+            }
+            oldRetakes = Notes.Select(note => note.diffSingerRetake).ToArray();
+        }
+
+        public override string ToString() => "Regenerate DiffSinger phrase";
+
+        public override void Execute() {
+            lock (Part) {
+                for (int i = 0; i < Notes.Length; i++) {
+                    Notes[i].diffSingerRetake = newRetakes[i];
+                }
+            }
+        }
+
+        public override void Unexecute() {
+            lock (Part) {
+                for (int i = 0; i < Notes.Length; i++) {
+                    Notes[i].diffSingerRetake = oldRetakes[i];
+                }
+            }
+        }
+    }
+
     public abstract class VibratoCommand : NoteCommand {
         public VibratoCommand(UVoicePart part, UNote note) : base(part, note) { }
         public override ValidateOptions ValidateOptions => new ValidateOptions {

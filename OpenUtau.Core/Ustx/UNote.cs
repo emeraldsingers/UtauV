@@ -22,6 +22,9 @@ namespace OpenUtau.Core.Ustx {
         public UPitch pitch;
         public UVibrato vibrato;
         public int tuning;
+        // Bumps when the DiffSinger phrase is explicitly regenerated.
+        // It is serialized so reopening a project does not restore an old render cache.
+        public int diffSingerRetake;
         [YamlMember(Alias = "phonemizer", ApplyNamingConventions = false)]
         public string? PhonemizerOverride { get; set; } = null;
 
@@ -260,6 +263,7 @@ namespace OpenUtau.Core.Ustx {
                 pitch = pitch.Clone(),
                 vibrato = vibrato.Clone(),
                 tuning = tuning,
+                diffSingerRetake = diffSingerRetake,
                 PhonemizerOverride = PhonemizerOverride,
                 phonemeExpressions = phonemeExpressions.Select(exp => exp.Clone()).ToList(),
                 phonemeOverrides = phonemeOverrides.Select(o => o.Clone()).ToList(),

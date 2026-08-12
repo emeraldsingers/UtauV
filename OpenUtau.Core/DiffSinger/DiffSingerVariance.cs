@@ -269,6 +269,12 @@ namespace OpenUtau.Core.DiffSinger{
                 // Speaker embedding is a retake-able frame-level condition.
                 AddVarianceInput(NamedOnnxValue.CreateFromTensor("spk_embed", spkEmbedTensor), includeInPatchKey: false);
             }
+            // This value is only part of cache keys. The model has no seed input, but a
+            // new retake must not reuse tensors produced before the regeneration.
+            var retakeVersion = DiffSingerUtils.RetakeHash(phrase);
+            variancePatchInputs.Add(NamedOnnxValue.CreateFromTensor(
+                "diffsinger_retake",
+                new DenseTensor<int>(new[] { retakeVersion }, new[] { 1 }, false)));
             ulong? variancePatchKey = null;
             if (Preferences.Default.DiffSingerTensorCache &&
                 Preferences.Default.DiffSingerVarianceLocalPitchPatch) {
@@ -286,6 +292,9 @@ namespace OpenUtau.Core.DiffSinger{
                 NamedOnnxValue.CreateFromTensor(
                     "result_cache_version",
                     new DenseTensor<long>(new long[] { 2 }, new int[] { 1 }, false)),
+                NamedOnnxValue.CreateFromTensor(
+                    "diffsinger_retake",
+                    new DenseTensor<int>(new[] { retakeVersion }, new[] { 1 }, false)),
             };
             var resultCache = Preferences.Default.DiffSingerTensorCache
                 ? new DiffSingerCache(varianceHash, resultCacheInputs)

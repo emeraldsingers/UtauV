@@ -13,6 +13,7 @@ namespace OpenUtau.Core.Render {
         public readonly string lyric;
         public readonly int tone;
         public readonly int tuning;
+        public readonly int diffSingerRetake;
         public readonly float adjustedTone;
 
         public readonly int position;
@@ -27,6 +28,7 @@ namespace OpenUtau.Core.Render {
             lyric = note.lyric;
             tone = note.tone;
             tuning = note.tuning;
+            diffSingerRetake = note.diffSingerRetake;
             adjustedTone = note.AdjustedTone;
 
             position = part.position + note.position - phrasePosition;
@@ -190,6 +192,7 @@ namespace OpenUtau.Core.Render {
 
         public readonly RenderNote[] notes;
         public readonly RenderPhone[] phones;
+        internal readonly UNote[] sourceNotes;
 
         public readonly float[] pitches;
         public readonly float[] pitchesBeforeDeviation;
@@ -210,6 +213,12 @@ namespace OpenUtau.Core.Render {
         private List<string> cacheFiles = new List<string>();
 
         internal RenderPhrase(UProject project, UTrack track, UVoicePart part, IEnumerable<UPhoneme> phonemes) {
+            var phrasePhonemes = phonemes.ToArray();
+            if (phrasePhonemes.Length == 0) {
+                throw new ArgumentException("A render phrase must contain at least one phoneme.", nameof(phonemes));
+            }
+            phonemes = phrasePhonemes;
+            sourceNotes = phrasePhonemes.Select(phoneme => phoneme.Parent).Distinct().ToArray();
             var uNotes = new List<UNote> { phonemes.First().Parent };
             var endNote = phonemes.Last().Parent;
             while (endNote.Next != null && endNote.Next.Extends != null) {
@@ -519,6 +528,9 @@ namespace OpenUtau.Core.Render {
                     writer.Write(timeAxis.Timestamp);
                     foreach (var phone in phones) {
                         writer.Write(phone.hash);
+                    }
+                    foreach (var note in notes) {
+                        writer.Write(note.diffSingerRetake);
                     }
                     if (postEffect) {
                         foreach (var array in new float[][] { pitches, dynamics, gender, breathiness, toneShift, tension, voicing, xsy }) {
