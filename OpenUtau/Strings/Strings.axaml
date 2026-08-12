@@ -27,6 +27,7 @@
   <system:String x:Key="command.note.add">Add note</system:String>
   <system:String x:Key="command.note.delete">Delete note(s)</system:String>
   <system:String x:Key="command.note.edit">Edit note(s)</system:String>
+  <system:String x:Key="command.note.duplicate">Duplicate note(s)</system:String>
   <system:String x:Key="command.part.fadein">Edit part fade in</system:String>
   <system:String x:Key="command.part.fadeout">Edit part fade out</system:String>
   <system:String x:Key="command.note.lyric">Edit lyric(s)</system:String>
