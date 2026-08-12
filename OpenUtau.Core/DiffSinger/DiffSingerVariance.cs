@@ -275,11 +275,17 @@ namespace OpenUtau.Core.DiffSinger{
                 var baseHash = new DiffSingerCache(varianceHash, variancePatchInputs).Hash;
                 variancePatchKey = DiffSingerVariancePatch.BuildStateKey(baseHash, phrase.position, phrase.end);
             }
+            var patchStateCache = variancePatchKey.HasValue
+                ? new DiffSingerCache(
+                    variancePatchKey.Value,
+                    DiffSingerVariancePatch.BuildStateCacheKeyInputs())
+                : null;
+            phrase.AddCacheFile(patchStateCache?.Filename);
             // Cache the final pipeline result in a separate namespace from raw predictor outputs.
             var resultCacheInputs = new List<NamedOnnxValue>(varianceInputs) {
                 NamedOnnxValue.CreateFromTensor(
                     "result_cache_version",
-                    new DenseTensor<long>(new long[] { 1 }, new int[] { 1 }, false)),
+                    new DenseTensor<long>(new long[] { 2 }, new int[] { 1 }, false)),
             };
             var resultCache = Preferences.Default.DiffSingerTensorCache
                 ? new DiffSingerCache(varianceHash, resultCacheInputs)
@@ -288,15 +294,26 @@ namespace OpenUtau.Core.DiffSinger{
             if (cachedOutputs != null) {
                 var cachedResult = ParseVarianceResult(cachedOutputs, frameMs, headFrames, tailFrames, totalFrames);
                 if (variancePatchKey.HasValue) {
-                    variancePatchStates.Set(
-                        variancePatchKey.Value,
-                        new VariancePatchState(pitch, speakerEmbed, cachedResult));
+                    var resultState = new VariancePatchState(pitch, speakerEmbed, cachedResult);
+                    variancePatchStates.Set(variancePatchKey.Value, resultState);
+                    SavePatchState(patchStateCache, resultState);
                 }
                 return cachedResult;
             }
             VariancePatchState? previous = null;
             bool[]? retakeMask = null;
-            if (variancePatchKey.HasValue && variancePatchStates.TryGetValue(variancePatchKey.Value, out var cachedState) &&
+            VariancePatchState? cachedState = null;
+            if (variancePatchKey.HasValue &&
+                !variancePatchStates.TryGetValue(variancePatchKey.Value, out cachedState)) {
+                TryLoadPatchState(
+                    patchStateCache,
+                    frameMs,
+                    headFrames,
+                    tailFrames,
+                    totalFrames,
+                    out cachedState);
+            }
+            if (cachedState != null &&
                 DiffSingerVariancePatch.IsMetadataCompatible(cachedState.result, new VarianceResult {
                     frameMs = frameMs,
                     headFrames = headFrames,
@@ -384,11 +401,34 @@ namespace OpenUtau.Core.DiffSinger{
                 phrase.AddCacheFile(resultCache.Filename);
             }
             if (variancePatchKey.HasValue) {
-                variancePatchStates.Set(
-                    variancePatchKey.Value,
-                    new VariancePatchState(pitch, speakerEmbed, result));
+                var nextState = new VariancePatchState(pitch, speakerEmbed, result);
+                variancePatchStates.Set(variancePatchKey.Value, nextState);
+                SavePatchState(patchStateCache, nextState);
             }
             return result;
+        }
+
+        static void SavePatchState(DiffSingerCache? cache, VariancePatchState state) {
+            if (cache == null) {
+                return;
+            }
+            cache.Save(DiffSingerVariancePatch.BuildStateCacheOutputs(state));
+        }
+
+        static bool TryLoadPatchState(
+            DiffSingerCache? cache,
+            float frameMs,
+            int headFrames,
+            int tailFrames,
+            int totalFrames,
+            out VariancePatchState state) {
+            state = null!;
+            if (cache?.Load() is not { } outputs ||
+                !DiffSingerVariancePatch.TryParseStateCacheOutputs(
+                    outputs, frameMs, headFrames, tailFrames, totalFrames, out state)) {
+                return false;
+            }
+            return true;
         }
 
         VarianceResult ParseVarianceResult(

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace OpenUtau.Core.DiffSinger {
     internal sealed class VariancePatchState {
@@ -59,12 +61,80 @@ namespace OpenUtau.Core.DiffSinger {
     }
 
     internal static class DiffSingerVariancePatch {
+        const string StateCacheVersionName = "variance_patch_state_version";
+        const string StatePitchName = "variance_patch_pitch";
+        const string StateSpeakerEmbedName = "variance_patch_speaker_embed";
+        const string StateEnergyName = "variance_patch_energy";
+        const string StateBreathinessName = "variance_patch_breathiness";
+        const string StateVoicingName = "variance_patch_voicing";
+        const string StateTensionName = "variance_patch_tension";
+        const long StateCacheVersion = 1;
+
         public static ulong BuildStateKey(ulong baseHash, int phrasePosition, int phraseEnd) {
             unchecked {
                 ulong hash = baseHash;
                 hash = (hash ^ (uint)phrasePosition) * 1099511628211UL;
                 hash = (hash ^ (uint)phraseEnd) * 1099511628211UL;
                 return hash;
+            }
+        }
+
+        internal static List<NamedOnnxValue> BuildStateCacheKeyInputs() {
+            return new List<NamedOnnxValue> {
+                NamedOnnxValue.CreateFromTensor(
+                    StateCacheVersionName,
+                    new DenseTensor<long>(new[] { StateCacheVersion }, new[] { 1 }, false)),
+            };
+        }
+
+        internal static List<NamedOnnxValue> BuildStateCacheOutputs(VariancePatchState state) {
+            var outputs = new List<NamedOnnxValue> {
+                NamedOnnxValue.CreateFromTensor(
+                    StateCacheVersionName,
+                    new DenseTensor<long>(new[] { StateCacheVersion }, new[] { 1 }, false)),
+                FloatTensor(StatePitchName, state.pitch),
+            };
+            AddFloatTensor(outputs, StateSpeakerEmbedName, state.speakerEmbed);
+            AddFloatTensor(outputs, StateEnergyName, state.result.energy);
+            AddFloatTensor(outputs, StateBreathinessName, state.result.breathiness);
+            AddFloatTensor(outputs, StateVoicingName, state.result.voicing);
+            AddFloatTensor(outputs, StateTensionName, state.result.tension);
+            return outputs;
+        }
+
+        internal static bool TryParseStateCacheOutputs(
+            ICollection<NamedOnnxValue> outputs,
+            float frameMs,
+            int headFrames,
+            int tailFrames,
+            int totalFrames,
+            out VariancePatchState state) {
+            state = null!;
+            try {
+                var version = outputs.FirstOrDefault(value => value.Name == StateCacheVersionName)
+                    ?.AsTensor<long>()
+                    .ToArray();
+                var pitch = GetFloatTensor(outputs, StatePitchName);
+                if (version is not { Length: 1 } || version[0] != StateCacheVersion || pitch == null) {
+                    return false;
+                }
+                var result = new VarianceResult {
+                    energy = GetFloatTensor(outputs, StateEnergyName),
+                    breathiness = GetFloatTensor(outputs, StateBreathinessName),
+                    voicing = GetFloatTensor(outputs, StateVoicingName),
+                    tension = GetFloatTensor(outputs, StateTensionName),
+                    frameMs = frameMs,
+                    headFrames = headFrames,
+                    tailFrames = tailFrames,
+                    totalFrames = totalFrames,
+                };
+                state = new VariancePatchState(
+                    pitch,
+                    GetFloatTensor(outputs, StateSpeakerEmbedName),
+                    result);
+                return true;
+            } catch (Exception) {
+                return false;
             }
         }
 
@@ -231,6 +301,25 @@ namespace OpenUtau.Core.DiffSinger {
                 tailFrames = result.tailFrames,
                 totalFrames = result.totalFrames,
             };
+        }
+
+        static void AddFloatTensor(List<NamedOnnxValue> outputs, string name, float[]? values) {
+            if (values != null) {
+                outputs.Add(FloatTensor(name, values));
+            }
+        }
+
+        static NamedOnnxValue FloatTensor(string name, float[] values) {
+            return NamedOnnxValue.CreateFromTensor(
+                name,
+                new DenseTensor<float>(values, new[] { values.Length }, false)
+                    .Reshape(new[] { 1, values.Length }));
+        }
+
+        static float[]? GetFloatTensor(ICollection<NamedOnnxValue> values, string name) {
+            return values.FirstOrDefault(value => value.Name == name)
+                ?.AsTensor<float>()
+                .ToArray();
         }
     }
 }
