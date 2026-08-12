@@ -12,6 +12,9 @@ namespace OpenUtau.App {
     class ThemeChangedEvent { }
 
     class ThemeManager {
+        static readonly string[] builtInThemes = [
+            "Light", "Dark", "SynthV", "Light Breeze", "Neapolitan", "Dark Teal",
+        ];
         public static bool IsDarkMode = false;
         public static IBrush ForegroundBrush = Brushes.Black;
         public static IBrush BackgroundBrush = Brushes.White;
@@ -77,8 +80,13 @@ namespace OpenUtau.App {
 
         public static List<string> GetAvailableThemes() {
             Colors.CustomTheme.ListThemes();
-            return ["Light", "Dark", ..Colors.CustomTheme.Themes.Select(v => v.Key)];
+            return [
+                ..builtInThemes,
+                ..Colors.CustomTheme.Themes.Keys.Where(name => !builtInThemes.Contains(name)),
+            ];
         }
+
+        public static bool IsBuiltInTheme(string themeName) => builtInThemes.Contains(themeName);
 
         public static void LoadTheme() {
             if (Application.Current == null) {

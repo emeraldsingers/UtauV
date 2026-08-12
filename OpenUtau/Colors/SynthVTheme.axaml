@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <system:Boolean x:Key="IsDarkMode">true</system:Boolean>
+
+    <Color x:Key="BackgroundColor">#262626</Color>
+    <Color x:Key="BackgroundColorPointerOver">#262626</Color>
+    <Color x:Key="BackgroundColorPressed">#3E3E3E</Color>
+    <Color x:Key="BackgroundColorDisabled">#2B2B2B</Color>
+
+    <Color x:Key="ForegroundColor">#B4B4B4</Color>
+    <Color x:Key="ForegroundColorPointerOver">#DADADA</Color>
+    <Color x:Key="ForegroundColorPressed">#535353</Color>
+    <Color x:Key="ForegroundColorDisabled">#7F7F7F</Color>
+
+    <Color x:Key="BorderColor">#3C3C3C</Color>
+    <Color x:Key="BorderColorPointerOver">#606060</Color>
+
+    <Color x:Key="SystemAccentColor">#78ad35</Color>
+    <Color x:Key="SystemAccentColorLight1">#b0e56d</Color>
+    <Color x:Key="SystemAccentColorLight2">#c7ef95</Color>
+    <Color x:Key="SystemAccentColorLight3">#def6be</Color>
+    <Color x:Key="SystemAccentColorDark1">#567D26</Color>
+    <Color x:Key="SystemAccentColorDark2">#40601c</Color>
+    <Color x:Key="SystemAccentColorDark3">#2a4312</Color>
+
+    <Color x:Key="NeutralAccentColor">#909090</Color>
+    <Color x:Key="NeutralAccentColorPointerOver">#B0B0B0</Color>
+    <Color x:Key="AccentColor1">#78ad35</Color>
+    <Color x:Key="AccentColor2">#b0e56d</Color>
+    <Color x:Key="AccentColor3">#CCcfcfcf</Color>
+
+    <Color x:Key="TickLineColor">#1d1d1d</Color>
+    <Color x:Key="BarNumberColor">#C8C8C8</Color>
+    <Color x:Key="FinalPitchColor">#646464</Color>
+    <Color x:Key="TrackBackgroundAltColor">#2e2e2e</Color>
+
+    <Color x:Key="WhiteKeyColorLeft">#555555</Color>
+    <Color x:Key="WhiteKeyColorRight">#555555</Color>
+    <Color x:Key="WhiteKeyNameColor">#ffffff</Color>
+    <Color x:Key="CenterKeyColorLeft">#b4b4b4</Color>
+    <Color x:Key="CenterKeyColorRight">#b4b4b4</Color>
+    <Color x:Key="CenterKeyNameColor">#ffffff</Color>
+    <Color x:Key="BlackKeyColorLeft">#232323</Color>
+    <Color x:Key="BlackKeyColorRight">#232323</Color>
+    <Color x:Key="BlackKeyNameColor">#ffffff</Color>
+</ResourceDictionary>

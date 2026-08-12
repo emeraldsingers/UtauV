@@ -102,6 +102,10 @@ namespace OpenUtau.App {
             }
             var light = (IResourceDictionary) Current.Resources["themes-light"]!;
             var dark = (IResourceDictionary) Current.Resources["themes-dark"]!;
+            var synthV = (IResourceDictionary) Current.Resources["themes-synthv"]!;
+            var neapolitan = (IResourceDictionary) Current.Resources["themes-neapolitan"]!;
+            var teal = (IResourceDictionary) Current.Resources["themes-teal"]!;
+            var lightBreeze = (IResourceDictionary) Current.Resources["themes-light-breeze"]!;
             var custom = (IResourceDictionary) Current.Resources["themes-custom"]!;
             switch (Core.Util.Preferences.Default.ThemeName) { 
                 case "Light":
@@ -111,6 +115,22 @@ namespace OpenUtau.App {
                 case "Dark":
                     ApplyTheme(dark);
                     Current.RequestedThemeVariant = ThemeVariant.Dark;
+                    break;
+                case "SynthV":
+                    ApplyTheme(synthV);
+                    Current.RequestedThemeVariant = ThemeVariant.Dark;
+                    break;
+                case "Neapolitan":
+                    ApplyTheme(neapolitan);
+                    Current.RequestedThemeVariant = ThemeVariant.Light;
+                    break;
+                case "Dark Teal":
+                    ApplyTheme(teal);
+                    Current.RequestedThemeVariant = ThemeVariant.Dark;
+                    break;
+                case "Light Breeze":
+                    ApplyTheme(lightBreeze);
+                    Current.RequestedThemeVariant = ThemeVariant.Light;
                     break;
                 default:
                     ApplyTheme(custom);
