@@ -18,6 +18,7 @@ namespace OpenUtau.App {
     public class NAudioOutput : IAudioOutput {
         public event EventHandler? DevicesChanged;
         const int Channels = 2;
+        const int PlaybackLatencyMs = 50;
 
         private readonly object lockObj = new object();
         private WaveOutEvent? waveOutEvent;
@@ -90,7 +91,7 @@ namespace OpenUtau.App {
                         wasapiOut.Stop();
                         wasapiOut.Dispose();
                     }
-                    wasapiOut = new WasapiOut(AudioClientShareMode.Shared, 200);
+                    wasapiOut = new WasapiOut(AudioClientShareMode.Shared, PlaybackLatencyMs);
                     wasapiOut.PlaybackStopped += OnWasapiPlaybackStopped;
                     wasapiOut.Init(sampleProvider);
                 } else {
@@ -100,6 +101,8 @@ namespace OpenUtau.App {
                     }
                     waveOutEvent = new WaveOutEvent() {
                         DeviceNumber = deviceNumber,
+                        DesiredLatency = PlaybackLatencyMs,
+                        NumberOfBuffers = 2,
                     };
                     waveOutEvent.Init(sampleProvider);
                 }
