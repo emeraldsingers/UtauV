@@ -301,6 +301,10 @@ namespace OpenUtau.App.Controls {
             MessageBus.Current.SendMessage(new PianorollRefreshEvent("Part"));
 
         }
+        void OnMenuPlaybackNoteHighlight(object sender, RoutedEventArgs args) {
+            ViewModel.NotesViewModel.ShowPlaybackNoteHighlight =
+                !ViewModel.NotesViewModel.ShowPlaybackNoteHighlight;
+        }
         void OnMenuUseTrackColor(object sender, RoutedEventArgs args) {
             Preferences.Default.UseTrackColor = !Preferences.Default.UseTrackColor;
             Preferences.Save();

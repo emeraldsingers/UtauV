@@ -129,6 +129,18 @@
             <Slider Grid.Column="4" Classes="fader" Value="{Binding PlayPosMarkerMargin}" Minimum="0" Maximum="1"
                     TickPlacement="BottomRight" TickFrequency="0.1" IsSnapToTickEnabled="true"/>
           </Grid>
+          <Grid ColumnDefinitions="Auto,8,40,8,*" Margin="0,10,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.playback.notehighlight.fadein}"/>
+            <TextBlock Grid.Column="2" Text="{Binding PlaybackHighlightFadeInPerSecond, StringFormat={}{0:#0.0}}"/>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding PlaybackHighlightFadeInPerSecond}" Minimum="0.1" Maximum="20"
+                    TickPlacement="BottomRight" TickFrequency="0.1" IsSnapToTickEnabled="true"/>
+          </Grid>
+          <Grid ColumnDefinitions="Auto,8,40,8,*" Margin="0,10,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.playback.notehighlight.fadeout}"/>
+            <TextBlock Grid.Column="2" Text="{Binding PlaybackHighlightFadeOutPerSecond, StringFormat={}{0:#0.0}}"/>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding PlaybackHighlightFadeOutPerSecond}" Minimum="0.1" Maximum="20"
+                    TickPlacement="BottomRight" TickFrequency="0.1" IsSnapToTickEnabled="true"/>
+          </Grid>
         </StackPanel>
 
         <!-- Paths -->

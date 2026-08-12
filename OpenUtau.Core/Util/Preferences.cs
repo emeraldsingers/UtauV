@@ -194,6 +194,9 @@ namespace OpenUtau.Core.Util {
             public bool ShowPortrait = true;
             public bool ShowIcon = true;
             public bool ShowGhostNotes = true;
+            public bool ShowPlaybackNoteHighlight = false;
+            public double PlaybackHighlightFadeInPerSecond = 8.0;
+            public double PlaybackHighlightFadeOutPerSecond = 6.2;
             public EditTool EditTool = new EditTool();
             public bool PlayTone = true;
             public bool ShowVibrato = true;

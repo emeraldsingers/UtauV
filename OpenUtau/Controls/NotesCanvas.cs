@@ -4,6 +4,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
@@ -52,6 +53,12 @@ namespace OpenUtau.App.Controls {
                 nameof(ShowVibrato),
                 o => o.ShowVibrato,
                 (o, v) => o.ShowVibrato = v);
+        public static readonly DirectProperty<NotesCanvas, bool> ShowPlaybackNoteHighlightProperty =
+            AvaloniaProperty.RegisterDirect<NotesCanvas, bool>(nameof(ShowPlaybackNoteHighlight),
+                o => o.ShowPlaybackNoteHighlight, (o, v) => o.ShowPlaybackNoteHighlight = v);
+        public static readonly DirectProperty<NotesCanvas, int> PlayPosTickProperty =
+            AvaloniaProperty.RegisterDirect<NotesCanvas, int>(nameof(PlayPosTick),
+                o => o.PlayPosTick, (o, v) => o.PlayPosTick = v);
         public static readonly DirectProperty<NotesCanvas, bool> ShowPhonemizerTagsProperty =
             AvaloniaProperty.RegisterDirect<NotesCanvas, bool>(
                 nameof(ShowPhonemizerTags),
@@ -90,6 +97,14 @@ namespace OpenUtau.App.Controls {
             get => showVibrato;
             private set => SetAndRaise(ShowVibratoProperty, ref showVibrato, value);
         }
+        public bool ShowPlaybackNoteHighlight {
+            get => showPlaybackNoteHighlight;
+            private set => SetAndRaise(ShowPlaybackNoteHighlightProperty, ref showPlaybackNoteHighlight, value);
+        }
+        public int PlayPosTick {
+            get => playPosTick;
+            private set => SetAndRaise(PlayPosTickProperty, ref playPosTick, value);
+        }
         public bool ShowPhonemizerTags {
             get => showPhonemizerTags;
             private set => SetAndRaise(ShowPhonemizerTagsProperty, ref showPhonemizerTags, value);
@@ -103,6 +118,15 @@ namespace OpenUtau.App.Controls {
         private bool showPitch = true;
         private bool showFinalPitch = true;
         private bool showVibrato = true;
+        private bool showPlaybackNoteHighlight;
+        private int playPosTick = int.MinValue;
+        private UNote? activePlaybackNote;
+        private UNote? fadingPlaybackNote;
+        private float activeHighlight;
+        private float fadingHighlight;
+        private DateTime highlightLastFrame = DateTime.UtcNow;
+        private readonly DispatcherTimer highlightTimer;
+        private readonly Dictionary<(Color from, Color to, byte amount), IBrush> highlightBrushes = new();
         private bool showPhonemizerTags = true;
         private PolylineGeometry polylineGeometry = new PolylineGeometry();
         private Points points = new Points();
@@ -116,6 +140,8 @@ namespace OpenUtau.App.Controls {
         public NotesCanvas() {
             ClipToBounds = true;
             pointGeometry = new EllipseGeometry(new Rect(-2.5, -2.5, 5, 5));
+            highlightTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 30.0) };
+            highlightTimer.Tick += (_, _) => InvalidateVisual();
 
             MessageBus.Current.Listen<NotesRefreshEvent>()
                 .Subscribe(_ => InvalidateVisual());
@@ -146,6 +172,9 @@ namespace OpenUtau.App.Controls {
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
             base.OnPropertyChanged(change);
+            if (change.Property == PlayPosTickProperty && !ShowPlaybackNoteHighlight) {
+                return;
+            }
             InvalidateVisual();
         }
 
@@ -162,6 +191,7 @@ namespace OpenUtau.App.Controls {
             double leftTick = TickOffset - 480;
             double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
             bool hidePitch = viewModel.TickWidth <= ViewConstants.PianoRollTickWidthShowDetails * 0.5;
+            UpdatePlaybackHighlight();
 
             if (showGhostNotes) {
                 foreach (UPart otherPart in otherPartsInView) {
@@ -222,6 +252,11 @@ namespace OpenUtau.App.Controls {
             var brush = selectedNotes.Contains(note)
                 ? (note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2)
                 : (note.Error ? ThemeManager.AccentBrush1Semi : ThemeManager.AccentBrush1);
+            if (!selectedNotes.Contains(note)) {
+                float highlight = note == activePlaybackNote ? activeHighlight
+                    : note == fadingPlaybackNote ? fadingHighlight : 0;
+                brush = BlendBrush(brush, note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2, highlight);
+            }
             double radius = GetNoteCornerRadius(size);
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
             if (TrackHeight < 10 || note.lyric.Length == 0) {
@@ -341,6 +376,65 @@ namespace OpenUtau.App.Controls {
             double maxRadius = Math.Max(0, Math.Min(size.Width, size.Height) / 2);
             return Math.Clamp(Preferences.Default.NoteCornerRadius, 0, Math.Min(10, maxRadius));
         }
+
+        private void UpdatePlaybackHighlight() {
+            var now = DateTime.UtcNow;
+            float dt = (float)Math.Clamp((now - highlightLastFrame).TotalSeconds, 0, 0.1);
+            highlightLastFrame = now;
+            var target = ShowPlaybackNoteHighlight && PlaybackManager.Inst.PlayingMaster ? FindPlaybackNote() : null;
+            if (target != activePlaybackNote) {
+                if (activePlaybackNote != null && activeHighlight > 0.001f) {
+                    fadingPlaybackNote = activePlaybackNote;
+                    fadingHighlight = activeHighlight;
+                }
+                activePlaybackNote = target;
+                activeHighlight = 0;
+            }
+            activeHighlight = MoveTowards(activeHighlight, activePlaybackNote == null ? 0 : 1,
+                (float)Math.Clamp(Preferences.Default.PlaybackHighlightFadeInPerSecond, 0.1, 30.0) * dt);
+            fadingHighlight = MoveTowards(fadingHighlight, 0,
+                (float)Math.Clamp(Preferences.Default.PlaybackHighlightFadeOutPerSecond, 0.1, 30.0) * dt);
+            if (fadingHighlight <= 0.001f) {
+                fadingPlaybackNote = null;
+                fadingHighlight = 0;
+            }
+            if (activeHighlight > 0.001f || fadingHighlight > 0.001f) {
+                highlightTimer.Start();
+            } else {
+                highlightTimer.Stop();
+            }
+        }
+
+        private UNote? FindPlaybackNote() {
+            if (Part == null) return null;
+            foreach (var note in Part.notes) {
+                if (note.LeftBound <= PlayPosTick && PlayPosTick < note.RightBound) return note;
+                if (note.LeftBound > PlayPosTick) break;
+            }
+            return null;
+        }
+
+        private IBrush BlendBrush(IBrush from, IBrush to, float amount) {
+            if (amount <= 0.001f || from is not ISolidColorBrush fromSolid || to is not ISolidColorBrush toSolid) return from;
+            byte quantizedAmount = (byte)Math.Clamp((int)Math.Round(amount * 255), 0, 255);
+            var key = (fromSolid.Color, toSolid.Color, quantizedAmount);
+            if (!highlightBrushes.TryGetValue(key, out var brush)) {
+                float t = quantizedAmount / 255f;
+                var a = fromSolid.Color;
+                var b = toSolid.Color;
+                brush = new SolidColorBrush(Color.FromArgb(
+                    (byte)(a.A + (b.A - a.A) * t),
+                    (byte)(a.R + (b.R - a.R) * t),
+                    (byte)(a.G + (b.G - a.G) * t),
+                    (byte)(a.B + (b.B - a.B) * t)));
+                highlightBrushes[key] = brush;
+            }
+            return brush;
+        }
+
+        private static float MoveTowards(float value, float target, float delta) =>
+            Math.Abs(target - value) <= delta ? target : value + Math.Sign(target - value) * delta;
+
 
         private void RenderPitchBend(UNote note, NotesViewModel viewModel, DrawingContext context) {
             var pitchExp = note.pitch;

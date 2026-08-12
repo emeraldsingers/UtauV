@@ -52,6 +52,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public double PlayPosHighlightX { get; set; }
         [Reactive] public double PlayPosHighlightWidth { get; set; }
         [Reactive] public bool PlayPosWaitingRendering { get; set; }
+        [Reactive] public int PlayPosTick { get; set; }
         [Reactive] public bool ShowTips { get; set; }
         [Reactive] public bool PlayTone { get; set; }
         [Reactive] public bool ShowVibrato { get; set; }
@@ -61,6 +62,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPhoneme { get; set; }
         [Reactive] public bool ShowNoteParams { get; set; }
         [Reactive] public bool ShowExpressions { get; set; }
+        [Reactive] public bool ShowPlaybackNoteHighlight { get; set; }
         [Reactive] public bool IsSnapOn { get; set; }
         [Reactive] public string SnapDivText { get; set; }
         [Reactive] public string KeyText { get; set; }
@@ -251,6 +253,13 @@ namespace OpenUtau.App.ViewModels {
                 Preferences.Default.ShowPhoneme = showPhoneme;
                 Preferences.Save();
             });
+            ShowPlaybackNoteHighlight = Preferences.Default.ShowPlaybackNoteHighlight;
+            this.WhenAnyValue(x => x.ShowPlaybackNoteHighlight)
+                .Skip(1)
+                .Subscribe(showPlaybackNoteHighlight => {
+                    Preferences.Default.ShowPlaybackNoteHighlight = showPlaybackNoteHighlight;
+                    Preferences.Save();
+                });
             ShowExpressions = Preferences.Default.ShowExpressions;
             this.WhenAnyValue(x => x.ShowExpressions)
             .Subscribe(showExpressions => {
@@ -989,6 +998,7 @@ namespace OpenUtau.App.ViewModels {
                 return;
             }
             tick -= Part?.position ?? 0;
+            PlayPosTick = tick;
             PlayPosX = TickToneToPoint(tick, 0).X;
             UpdateHighlight();
         }
