@@ -118,7 +118,7 @@ namespace OpenUtau.App.Controls {
             MessageBus.Current.Listen<ThemeChangedEvent>()
                 .Subscribe(_ => {
                     foreach (var (_, header) in trackHeaders) {
-                        header.ViewModel?.RefreshSelectionStyle();
+                        header.ViewModel?.RefreshTrackColor();
                     }
                 });
         }

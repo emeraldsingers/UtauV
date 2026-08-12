@@ -10,7 +10,9 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using NWaves.Signals;
+using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 using ReactiveUI;
 using Serilog;
 
@@ -181,7 +183,7 @@ namespace OpenUtau.App.Controls {
         }
 
         public override void Render(DrawingContext context) {
-            var backgroundBrush = Selected ? ThemeManager.AccentBrush2 : ThemeManager.AccentBrush1;
+            var backgroundBrush = GetBackgroundBrush();
             // Background
             context.DrawRectangle(backgroundBrush, null, new Rect(1, 0, Width - 1, Height - 1), 4, 4);
 
@@ -238,6 +240,15 @@ namespace OpenUtau.App.Controls {
                     context.DrawLine(fadePen, new Point(Width - 1, Height - 2), new Point(FadeOut, 2));
                 }
             }
+        }
+
+        private IBrush GetBackgroundBrush() {
+            if (Preferences.Default.UseTrackColor &&
+                0 <= part.trackNo && part.trackNo < DocManager.Inst.Project.tracks.Count) {
+                var color = ThemeManager.GetTrackColor(DocManager.Inst.Project.tracks[part.trackNo].TrackColor);
+                return Selected ? color.AccentColorLight : color.AccentColor;
+            }
+            return Selected ? ThemeManager.AccentBrush2 : ThemeManager.AccentBrush1;
         }
 
         private WriteableBitmap GetBitmap(double width) {

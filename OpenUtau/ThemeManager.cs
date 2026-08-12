@@ -36,6 +36,9 @@ namespace OpenUtau.App {
         public static IPen AccentPen3 = new Pen(Brushes.White);
         public static IPen AccentPen3Thick = new Pen(Brushes.White);
         public static IBrush AccentBrush3Semi = Brushes.Gray;
+        public static IBrush ThemeAccentBrush = Brushes.White;
+        public static IBrush ThemeAccentLightBrush = Brushes.White;
+        public static IBrush ThemeAccentDarkBrush = Brushes.White;
         public static IBrush TickLineBrushLow = Brushes.Black;
         public static IBrush BarNumberBrush = Brushes.Black;
         public static IPen BarNumberPen = new Pen(Brushes.White);
@@ -141,6 +144,15 @@ namespace OpenUtau.App {
             if (resDict.TryGetResource("AccentBrush3Semi", themeVariant, out outVar)) {
                 AccentBrush3Semi = (IBrush)outVar!;
             }
+            if (resDict.TryGetResource("ThemeAccentBrush", themeVariant, out outVar)) {
+                ThemeAccentBrush = (IBrush)outVar!;
+            }
+            if (resDict.TryGetResource("ThemeAccentLightBrush", themeVariant, out outVar)) {
+                ThemeAccentLightBrush = (IBrush)outVar!;
+            }
+            if (resDict.TryGetResource("ThemeAccentDarkBrush", themeVariant, out outVar)) {
+                ThemeAccentDarkBrush = (IBrush)outVar!;
+            }
             if (resDict.TryGetResource("TickLineBrushLow", themeVariant, out outVar)) {
                 TickLineBrushLow = (IBrush)outVar!;
             }
@@ -159,6 +171,7 @@ namespace OpenUtau.App {
                 RealCurveStrokeBrush = (IBrush)outVar!;
                 RealCurvePen = new Pen(RealCurveStrokeBrush, 2, DashStyle.Dash);
             }
+            SetPianorollAccent();
             SetKeyboardBrush();
             TextLayoutCache.Clear();
             MessageBus.Current.SendMessage(new ThemeChangedEvent());
@@ -178,9 +191,34 @@ namespace OpenUtau.App {
                 resDict["SelectedTrackAccentDarkBrush"] = tcolor.AccentColorDark;
                 resDict["SelectedTrackCenterKeyBrush"] = tcolor.AccentColorCenterKey;
 
+                SetPianorollAccent();
                 SetKeyboardBrush();
             } catch { }
             MessageBus.Current.SendMessage(new ThemeChangedEvent());
+        }
+        private static void SetPianorollAccent() {
+            if (Application.Current == null) {
+                return;
+            }
+            IResourceDictionary resDict = Application.Current.Resources;
+            var themeVariant = ThemeVariant.Default;
+            if (Preferences.Default.UseTrackColor &&
+                resDict.TryGetResource("SelectedTrackAccentBrush", themeVariant, out var accent) &&
+                resDict.TryGetResource("SelectedTrackAccentLightBrush", themeVariant, out var accentLight) &&
+                resDict.TryGetResource("SelectedTrackAccentLightBrushSemi", themeVariant, out var accentLightSemi) &&
+                resDict.TryGetResource("SelectedTrackAccentDarkBrush", themeVariant, out var accentDark)) {
+                resDict["PianorollAccentBrush"] = accent;
+                resDict["PianorollAccentLightBrush"] = accentLight;
+                resDict["PianorollAccentLightBrushSemi"] = accentLightSemi;
+                resDict["PianorollAccentDarkBrush"] = accentDark;
+            } else {
+                resDict["PianorollAccentBrush"] = ThemeAccentBrush;
+                resDict["PianorollAccentLightBrush"] = ThemeAccentLightBrush;
+                if (resDict.TryGetResource("ThemeAccentLightBrushSemi", themeVariant, out var themeAccentLightSemi)) {
+                    resDict["PianorollAccentLightBrushSemi"] = themeAccentLightSemi;
+                }
+                resDict["PianorollAccentDarkBrush"] = ThemeAccentDarkBrush;
+            }
         }
         private static void SetKeyboardBrush() {
             if (Application.Current == null) {

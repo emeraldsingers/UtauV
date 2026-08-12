@@ -32,7 +32,9 @@ namespace OpenUtau.App.ViewModels {
         public IReadOnlyList<MenuItemViewModel>? RenderersMenuItems { get; set; }
         public ReactiveCommand<string, Unit> SelectRendererCommand { get; }
         [Reactive] public string TrackName { get; set; } = string.Empty;
-        [Reactive] public SolidColorBrush TrackAccentColor { get; set; } = ThemeManager.GetTrackColor("Blue").AccentColor;
+        [Reactive] public IBrush TrackAccentColor { get; set; } = ThemeManager.ThemeAccentBrush;
+        [Reactive] public IBrush TrackAccentLightBrush { get; set; } = ThemeManager.ThemeAccentLightBrush;
+        [Reactive] public IBrush TrackAccentDarkBrush { get; set; } = ThemeManager.ThemeAccentDarkBrush;
         [Reactive] public TrackColor TrackColor { get; set; } = ThemeManager.GetTrackColor("Blue");
         [Reactive] public double Volume { get; set; }
         [Reactive] public double Pan { get; set; }
@@ -115,10 +117,7 @@ namespace OpenUtau.App.ViewModels {
             Activator = new ViewModelActivator();
 
             TrackName = track.TrackName;
-            TrackAccentColor = ThemeManager.GetTrackColor(track.TrackColor).AccentColor;
-            TrackColor = Preferences.Default.UseTrackColor
-                ? ThemeManager.GetTrackColor(track.TrackColor)
-                : ThemeManager.GetTrackColor("Blue");
+            RefreshTrackColor();
             Volume = track.Volume;
             Pan = track.Pan;
             Mute = track.Mute;
@@ -167,6 +166,22 @@ namespace OpenUtau.App.ViewModels {
             HeaderBorderBrush = IsSelected
                 ? TrackAccentColor
                 : ThemeManager.NeutralAccentBrushSemi;
+        }
+
+        public void RefreshTrackColor() {
+            var color = ThemeManager.GetTrackColor(track.TrackColor);
+            if (Preferences.Default.UseTrackColor) {
+                TrackAccentColor = color.AccentColor;
+                TrackAccentLightBrush = color.AccentColorLight;
+                TrackAccentDarkBrush = color.AccentColorDark;
+                TrackColor = color;
+            } else {
+                TrackAccentColor = ThemeManager.ThemeAccentBrush;
+                TrackAccentLightBrush = ThemeManager.ThemeAccentLightBrush;
+                TrackAccentDarkBrush = ThemeManager.ThemeAccentDarkBrush;
+                TrackColor = ThemeManager.GetTrackColor("Blue");
+            }
+            RefreshSelectionStyle();
         }
 
         public void ToggleSolo() {
@@ -481,15 +496,13 @@ namespace OpenUtau.App.ViewModels {
 
         public void ManuallyRaise() {
             TrackName = track.TrackName;
-            TrackAccentColor = ThemeManager.GetTrackColor(track.TrackColor).AccentColor;
-            TrackColor = Preferences.Default.UseTrackColor
-                ? ThemeManager.GetTrackColor(track.TrackColor)
-                : ThemeManager.GetTrackColor("Blue");
-            RefreshSelectionStyle();
+            RefreshTrackColor();
             this.RaisePropertyChanged(nameof(Singer));
             this.RaisePropertyChanged(nameof(TrackNo));
             this.RaisePropertyChanged(nameof(TrackName));
             this.RaisePropertyChanged(nameof(TrackAccentColor));
+            this.RaisePropertyChanged(nameof(TrackAccentLightBrush));
+            this.RaisePropertyChanged(nameof(TrackAccentDarkBrush));
             this.RaisePropertyChanged(nameof(TrackColor));
             this.RaisePropertyChanged(nameof(Phonemizer));
             this.RaisePropertyChanged(nameof(PhonemizerTag));
@@ -551,11 +564,7 @@ namespace OpenUtau.App.ViewModels {
 
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null) {
                 await dialog.ShowDialog(desktop.MainWindow);
-                TrackAccentColor = ThemeManager.GetTrackColor(track.TrackColor).AccentColor;
-                TrackColor = Preferences.Default.UseTrackColor
-                ? ThemeManager.GetTrackColor(track.TrackColor)
-                : ThemeManager.GetTrackColor("Blue");
-                RefreshSelectionStyle();
+                RefreshTrackColor();
             }
         }
 

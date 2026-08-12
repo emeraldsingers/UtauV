@@ -72,6 +72,7 @@ namespace OpenUtau.App.Controls {
                 .Subscribe(_ => {
                     foreach (var (part, control) in partControls) {
                         control.SetPosition();
+                        control.InvalidateVisual();
                     }
                 });
             MessageBus.Current.Listen<PartsSelectionEvent>()
@@ -102,7 +103,11 @@ namespace OpenUtau.App.Controls {
                     }
                 });
             MessageBus.Current.Listen<ThemeChangedEvent>()
-                .Subscribe(_ => InvalidateVisual());
+                .Subscribe(_ => {
+                    foreach (var control in partControls.Values) {
+                        control.InvalidateVisual();
+                    }
+                });
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {

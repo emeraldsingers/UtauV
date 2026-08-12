@@ -362,6 +362,7 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Default.UseTrackColor = trackColor;
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new PianorollRefreshEvent("TrackColor"));
+                    MessageBus.Current.SendMessage(new TracksRefreshEvent());
                 });
             this.WhenAnyValue(vm => vm.ShowPortrait)
                 .Subscribe(showPortrait => {

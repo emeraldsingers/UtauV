@@ -318,6 +318,7 @@ namespace OpenUtau.App.Controls {
             Preferences.Save();
             ViewModel.RaisePropertyChanged(nameof(ViewModel.UseTrackColor));
             MessageBus.Current.SendMessage(new PianorollRefreshEvent("TrackColor"));
+            MessageBus.Current.SendMessage(new TracksRefreshEvent());
         }
         void OnMenuFullScreen(object sender, RoutedEventArgs args) {
             RootWindow.WindowState = RootWindow.WindowState == WindowState.FullScreen

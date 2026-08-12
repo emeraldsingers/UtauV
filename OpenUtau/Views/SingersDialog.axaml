@@ -82,7 +82,7 @@
                   <Setter Property="Background" Value="Transparent"/>
                 </Style>
                 <Style Selector="^:checked /template/ Path#CheckGlyph">
-                  <Setter Property="Fill" Value="{DynamicResource SelectedTrackAccentBrush}" />
+                  <Setter Property="Fill" Value="{DynamicResource ThemeAccentBrush}" />
                   <Setter Property="Width" Value="12" />
                 </Style>
                 <Style Selector="^:checked /template/ Border#NormalRectangle">

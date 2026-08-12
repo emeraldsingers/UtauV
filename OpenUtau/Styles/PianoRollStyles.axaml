@@ -6,22 +6,22 @@
   </Style>
 
   <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentBrush}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+    <Setter Property="Background" Value="{DynamicResource PianorollAccentBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource PianorollAccentBrush}"/>
   </Style>
   <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentLightBrush}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentLightBrush}"/>
+    <Setter Property="Background" Value="{DynamicResource PianorollAccentLightBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource PianorollAccentLightBrush}"/>
   </Style>
   <Style Selector="CheckBox:checked:pressed /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentDarkBrush}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentDarkBrush}"/>
+    <Setter Property="Background" Value="{DynamicResource PianorollAccentDarkBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource PianorollAccentDarkBrush}"/>
   </Style>
 
   <Style Selector="Path.checkmenu">
     <Setter Property="IsHitTestVisible" Value="False"/>
     <Setter Property="Data" Value="M1,5 L4,8 L9,1"/>
-    <Setter Property="Stroke" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+    <Setter Property="Stroke" Value="{DynamicResource PianorollAccentBrush}"/>
     <Setter Property="StrokeThickness" Value="2"/>
     <Setter Property="Width" Value="12"/>
     <Setter Property="Height" Value="12"/>
@@ -29,7 +29,7 @@
   </Style>
 
   <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentLightBrushSemi}"/>
+    <Setter Property="Background" Value="{DynamicResource PianorollAccentLightBrushSemi}"/>
   </Style>
 
   <Style Selector="ListBox.toolbar">
@@ -38,7 +38,7 @@
   </Style>
 
   <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentLightBrushSemi}"/>
+    <Setter Property="Background" Value="{DynamicResource PianorollAccentLightBrushSemi}"/>
   </Style>
 
   <Style Selector="ListBoxItem.toolbar">
@@ -151,40 +151,40 @@
   </Style>
 
   <Style Selector="Slider.fader">
-    <Setter Property="Foreground" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PianorollAccentBrush}"/>
 
     <Style Selector="^:pointerover">
       <Style Selector="^ /template/ RepeatButton#PART_DecreaseButton">
-        <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentLightBrush}" />
+        <Setter Property="Background" Value="{DynamicResource PianorollAccentLightBrush}" />
       </Style>
       <Style Selector="^ /template/ Thumb">
-        <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentLightBrush}" />
+        <Setter Property="Background" Value="{DynamicResource PianorollAccentLightBrush}" />
       </Style>
     </Style>
 
     <Style Selector="^:pressed">
       <Style Selector="^ /template/ RepeatButton#PART_DecreaseButton">
-        <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentDarkBrush}" />
+        <Setter Property="Background" Value="{DynamicResource PianorollAccentDarkBrush}" />
       </Style>
       <Style Selector="^ /template/ Thumb">
-        <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentDarkBrush}" />
+        <Setter Property="Background" Value="{DynamicResource PianorollAccentDarkBrush}" />
       </Style>
     </Style>
   </Style>
 
   <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-    <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource PianorollAccentBrush}"/>
   </Style>
 
   <Style Selector="ToggleSwitch">
     <Style Selector="^:checked /template/ Border#SwitchKnobBounds">
-      <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentBrush}" />
+      <Setter Property="Background" Value="{DynamicResource PianorollAccentBrush}" />
     </Style>
     <Style Selector="^:checked:pointerover /template/ Border#SwitchKnobBounds">
-      <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentLightBrush}" />
+      <Setter Property="Background" Value="{DynamicResource PianorollAccentLightBrush}" />
     </Style>
     <Style Selector="^:checked:pressed /template/ Border#SwitchKnobBounds">
-      <Setter Property="Background" Value="{DynamicResource SelectedTrackAccentDarkBrush}" />
+      <Setter Property="Background" Value="{DynamicResource PianorollAccentDarkBrush}" />
     </Style>
   </Style>
 
@@ -215,9 +215,9 @@
                     Name="CheckOuterEllipse"
                     Width="14"
                     Height="14"
-                    Fill="{DynamicResource SelectedTrackAccentBrush}"
+                    Fill="{DynamicResource PianorollAccentBrush}"
                     Opacity="0"
-                    Stroke="{DynamicResource SelectedTrackAccentBrush}"
+                    Stroke="{DynamicResource PianorollAccentBrush}"
                     StrokeThickness="{DynamicResource RadioButtonBorderThemeThickness}"
                     UseLayoutRounding="False" />
 
@@ -251,8 +251,8 @@
       <Setter Property="Fill" Value="{DynamicResource RadioButtonOuterEllipseFillPointerOver}" />
     </Style>
     <Style Selector="^:pointerover /template/ Ellipse#CheckOuterEllipse">
-      <Setter Property="Stroke" Value="{DynamicResource SelectedTrackAccentLightBrush}" />
-      <Setter Property="Fill" Value="{DynamicResource SelectedTrackAccentLightBrush}" />
+      <Setter Property="Stroke" Value="{DynamicResource PianorollAccentLightBrush}" />
+      <Setter Property="Fill" Value="{DynamicResource PianorollAccentLightBrush}" />
     </Style>
     <Style Selector="^:pointerover /template/ Ellipse#CheckGlyph">
       <Setter Property="Stroke" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />

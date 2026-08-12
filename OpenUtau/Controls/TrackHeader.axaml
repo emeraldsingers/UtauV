@@ -37,22 +37,22 @@
       </Style>
     </Style>
     <Style Selector="Slider.fader">
-      <Setter Property="Foreground" Value="{Binding TrackColor.AccentColor}"/>
+      <Setter Property="Foreground" Value="{Binding TrackAccentColor}"/>
       
       <Style Selector="^:pointerover">
-        <!--<Style Selector="^ /template/ Thumb">
-          <Setter Property="Background" Value="{Binding TrackColor.AccentColorLight}" />
-        </Style>-->
         <Style Selector="^ /template/ RepeatButton#PART_DecreaseButton">
-          <Setter Property="Background" Value="{Binding TrackColor.AccentColorLight}" />
+          <Setter Property="Background" Value="{Binding TrackAccentLightBrush}" />
+        </Style>
+        <Style Selector="^ /template/ Thumb">
+          <Setter Property="Background" Value="{Binding TrackAccentLightBrush}" />
         </Style>
       </Style>
       <Style Selector="^:pressed">
-        <!--<Style Selector="^ /template/ Thumb">
-          <Setter Property="Background" Value="{Binding TrackColor.AccentColorDark}" />
-        </Style>-->
         <Style Selector="^ /template/ RepeatButton#PART_DecreaseButton">
-          <Setter Property="Background" Value="{Binding TrackColor.AccentColorDark}" />
+          <Setter Property="Background" Value="{Binding TrackAccentDarkBrush}" />
+        </Style>
+        <Style Selector="^ /template/ Thumb">
+          <Setter Property="Background" Value="{Binding TrackAccentDarkBrush}" />
         </Style>
       </Style>
     </Style>
@@ -142,6 +142,7 @@
             </Style>
           </Grid.Styles>
           <Slider Grid.Column="1" Name="VolumeSlider" HorizontalAlignment="Stretch" Classes="fader" Minimum="-24" Maximum="12" Value="{Binding Volume}"
+                  Foreground="{Binding TrackAccentColor}"
                   PointerPressed="VolumeFaderPointerPressed" ValueChanged="VolumeOrPanSliderValueChanged"
                   ContextRequested="VolumeFaderContextRequested" IsEnabled="{Binding !Muted}"/>
           <TextBlock Grid.Column="3" HorizontalAlignment="Left" Background="Transparent"
@@ -157,7 +158,7 @@
                   TextAlignment="Right" FontSize="9" FontFamily="monospace"
                   KeyDown="VolumeOrPanTextBoxKeyDown" LostFocus="VolumeOrPanTextBoxLostFocus"/>
           <Slider Grid.Column="5" Name="PanSlider" HorizontalAlignment="Stretch"
-                  Classes="fader" Minimum="-100" Maximum="100" Value="{Binding Pan}"
+                  Classes="fader" Minimum="-100" Maximum="100" Value="{Binding Pan}" Foreground="{Binding TrackAccentColor}"
                   PointerPressed="PanFaderPointerPressed" ValueChanged="VolumeOrPanSliderValueChanged"
                   ContextRequested="PanFaderContextRequested" IsEnabled="{Binding !Muted}"/>
           <TextBlock Grid.Column="7" HorizontalAlignment="Stretch" Background="Transparent"

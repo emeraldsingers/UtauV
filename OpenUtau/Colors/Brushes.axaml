@@ -112,6 +112,22 @@
                    Color="{DynamicResource AccentColor3}" />
   <SolidColorBrush x:Key="AccentBrush3Semi"
                    Color="{DynamicResource AccentColor3}" Opacity="0.5" />
+  <SolidColorBrush x:Key="ThemeAccentBrush"
+                   Color="{DynamicResource SystemAccentColor}" />
+  <SolidColorBrush x:Key="ThemeAccentLightBrush"
+                   Color="{DynamicResource SystemAccentColorLight1}" />
+  <SolidColorBrush x:Key="ThemeAccentLightBrushSemi"
+                   Color="{DynamicResource SystemAccentColorLight1}" Opacity="0.5" />
+  <SolidColorBrush x:Key="ThemeAccentDarkBrush"
+                   Color="{DynamicResource SystemAccentColorDark1}" />
+  <SolidColorBrush x:Key="PianorollAccentBrush"
+                   Color="{DynamicResource SystemAccentColor}" />
+  <SolidColorBrush x:Key="PianorollAccentLightBrush"
+                   Color="{DynamicResource SystemAccentColorLight1}" />
+  <SolidColorBrush x:Key="PianorollAccentLightBrushSemi"
+                   Color="{DynamicResource SystemAccentColorLight1}" Opacity="0.5" />
+  <SolidColorBrush x:Key="PianorollAccentDarkBrush"
+                   Color="{DynamicResource SystemAccentColorDark1}" />
   <SolidColorBrush x:Key="SelectedTrackAccentBrush"
                    Color="#4EA6EA" />
   <SolidColorBrush x:Key="SelectedTrackAccentLightBrush"
