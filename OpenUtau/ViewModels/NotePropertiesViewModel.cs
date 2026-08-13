@@ -833,9 +833,8 @@ namespace OpenUtau.App.ViewModels {
 
                 var track = DocManager.Inst.Project.tracks[Part.trackNo];
                 DocManager.Inst.StartUndoGroup("command.property.edit");
-                track.GetSupportedExps(DocManager.Inst.Project)
-                    .Where(d => d.isFlag && d.type == UExpressionType.Numerical)
-                    .ForEach(descriptor => {
+                foreach (var descriptor in track.GetSupportedExps(DocManager.Inst.Project)
+                    .Where(d => d.isFlag && d.type == UExpressionType.Numerical)) {
                         if (dict.TryGetValue(descriptor.flag, out float value)) {
                             dict.Remove(descriptor.flag);
                             if (value != descriptor.CustomDefaultValue) {
@@ -847,10 +846,9 @@ namespace OpenUtau.App.ViewModels {
                         } else {
                             DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
                         }
-                });
-                track.GetSupportedExps(DocManager.Inst.Project)
-                    .Where(d => d.isFlag && d.type == UExpressionType.Options)
-                    .ForEach(descriptor => {
+                }
+                foreach (var descriptor in track.GetSupportedExps(DocManager.Inst.Project)
+                    .Where(d => d.isFlag && d.type == UExpressionType.Options)) {
                         bool find = false;
                         for (int i = 0; i < descriptor.options.Length; i++) {
                             string option = descriptor.options[i];
@@ -869,7 +867,7 @@ namespace OpenUtau.App.ViewModels {
                         if (!find) {
                             DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
                         }
-                    });
+                }
                 if (dict.Count > 0) {
                     ThemeManager.TryGetString("errors.failed.parseflag", out string str);
                     warning = string.Format(str, string.Join(", ", dict.Keys));
