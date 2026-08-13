@@ -62,6 +62,7 @@ namespace OpenUtau.Core.Format {
                 var track = new UTrack(project) {
                     TrackNo = project.tracks.Count,
                     TrackName = trackName,
+                    Singer = USinger.CreateMissing(string.Empty),
                     Mute = group?.IsMuted ?? false,
                     Solo = group?.IsSolo ?? false,
                 };
@@ -70,9 +71,10 @@ namespace OpenUtau.Core.Format {
                     continue;
                 }
                 part.trackNo = track.TrackNo;
-                part.AfterLoad(project, track);
                 project.tracks.Add(track);
                 project.parts.Add(part);
+                track.AfterLoad(project);
+                part.AfterLoad(project, track);
                 allTempos.AddRange(tempos);
                 allTimeSignatures.AddRange(timeSignatures);
             }

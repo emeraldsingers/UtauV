@@ -49,6 +49,8 @@ namespace OpenUtau.Core.Format {
                     var (track, part, tempos, timeSignatures) = parseResult.Value;
                     project.tracks.Add(track);
                     project.parts.Add(part);
+                    track.AfterLoad(project);
+                    part.AfterLoad(project, track);
                     allTempos.AddRange(tempos);
                     allTimeSignatures.AddRange(timeSignatures);
                 }
@@ -90,6 +92,7 @@ namespace OpenUtau.Core.Format {
             var track = new UTrack(project) {
                 TrackNo = project.tracks.Count,
                 TrackName = trackName,
+                Singer = USinger.CreateMissing(string.Empty),
             };
             var part = new UVoicePart {
                 name = trackName,
@@ -172,8 +175,6 @@ namespace OpenUtau.Core.Format {
             }
             part.Duration = partEnd;
             part.trackNo = track.TrackNo;
-            part.AfterLoad(project, track);
-            track.AfterLoad(project);
             return (track, part, tempos, timeSignatures);
         }
 

@@ -167,7 +167,7 @@ namespace OpenUtau.App.Controls {
                     }
                     break;
                 case NotifyCollectionChangedAction.Reset:
-                    foreach (var (track, _) in trackHeaders) {
+                    foreach (var (track, _) in trackHeaders.ToArray()) {
                         Remove(track);
                     }
                     break;
