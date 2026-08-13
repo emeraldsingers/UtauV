@@ -257,6 +257,7 @@ namespace OpenUtau.App.Controls {
                     : note == fadingPlaybackNote ? fadingHighlight : 0;
                 brush = BlendBrush(brush, note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2, highlight);
             }
+            brush = ApplyNoteOpacity(brush);
             double radius = GetNoteCornerRadius(size);
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
             if (TrackHeight < 10 || note.lyric.Length == 0) {
@@ -375,6 +376,12 @@ namespace OpenUtau.App.Controls {
         private static double GetNoteCornerRadius(Size size) {
             double maxRadius = Math.Max(0, Math.Min(size.Width, size.Height) / 2);
             return Math.Clamp(Preferences.Default.NoteCornerRadius, 0, Math.Min(10, maxRadius));
+        }
+
+        private static IBrush ApplyNoteOpacity(IBrush brush) {
+            return brush is ISolidColorBrush solidBrush
+                ? new SolidColorBrush(solidBrush.Color, solidBrush.Opacity * Preferences.Default.NoteOpacity)
+                : brush;
         }
 
         private void UpdatePlaybackHighlight() {

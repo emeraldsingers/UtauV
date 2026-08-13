@@ -291,6 +291,18 @@
             <Slider Grid.Column="4" Classes="fader" Value="{Binding NoteCornerRadius}" Minimum="0" Maximum="10"
                     TickPlacement="BottomRight" TickFrequency="1" IsSnapToTickEnabled="false"/>
           </Grid>
+          <Grid ColumnDefinitions="Auto,8,40,8,*" Margin="0,5,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.appearance.noteopacity}"/>
+            <TextBlock Grid.Column="2">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="{}{0:#0}%">
+                  <Binding Path="NoteOpacity"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding NoteOpacity}" Minimum="0" Maximum="100"
+                    TickPlacement="BottomRight" TickFrequency="10" IsSnapToTickEnabled="false"/>
+          </Grid>
           <Grid ColumnDefinitions="Auto,8,28,8,*" Margin="0,5,0,0">
             <TextBlock Grid.Column="0" Text="{DynamicResource prefs.appearance.uiradius}"/>
             <TextBlock Grid.Column="2">

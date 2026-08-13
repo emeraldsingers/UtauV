@@ -152,6 +152,7 @@ namespace OpenUtau.Core.Util {
             public string ThemeName = "Dark Teal";
             public double ButtonCornerRadius = 0;
             public double NoteCornerRadius = 2;
+            public double NoteOpacity = 1;
             public double UiCornerRadius = 0;
             public int DegreeStyle;
             public bool UseTrackColor = false;

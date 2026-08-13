@@ -94,7 +94,7 @@
   </Style>
 
   <Style Selector="Button">
-    <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+    <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltMediumLowBrush}"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="CornerRadius" Value="{DynamicResource ButtonCornerRadius}"/>
     <Setter Property="FontSize" Value="12"/>
@@ -119,7 +119,7 @@
       </ControlTemplate>
     </Setter>
     <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrushPointerOver}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlPageBackgroundAltMediumBrush}"/>
     </Style>
     <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource BackgroundColorPressed}"/>
