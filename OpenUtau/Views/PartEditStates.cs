@@ -132,13 +132,12 @@ namespace OpenUtau.App.Views {
                 newPos = left;
             }
             int deltaTick = newPos - part.position;
-            int minDeltaTick;
-            if (tracksVm.SelectedParts.Count > 0) {
-                minDeltaTick = -tracksVm.SelectedParts.Select(p => p.position).Min();
-            } else {
-                minDeltaTick = -part.position;
+            if (part is UVoicePart || tracksVm.SelectedParts.Any(p => p is UVoicePart)) {
+                int minDeltaTick = tracksVm.SelectedParts.Count > 0
+                    ? -tracksVm.SelectedParts.Select(p => p.position).Min()
+                    : -part.position;
+                deltaTick = Math.Max(deltaTick, minDeltaTick);
             }
-            deltaTick = Math.Max(deltaTick, minDeltaTick);
 
             if (deltaTrack == 0 && deltaTick == 0) {
                 return;
