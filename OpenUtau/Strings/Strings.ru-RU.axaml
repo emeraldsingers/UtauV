@@ -303,6 +303,7 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="phoneticassistant.copy">Скопировть</system:String>
 
   <system:String x:Key="pianoroll.key">Тональность (для отображения ступеней)</system:String>
+  <system:String x:Key="pianoroll.menu.view.tiktokmode">Режим съёмки для TikTok</system:String>
   <system:String x:Key="pianoroll.menu.batch">Пакетное редактирование</system:String>
   <system:String x:Key="pianoroll.menu.batch.running">Групповое редактирование</system:String>
   <system:String x:Key="pianoroll.menu.lyrics">Текст</system:String>

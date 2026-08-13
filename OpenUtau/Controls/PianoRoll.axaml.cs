@@ -305,6 +305,17 @@ namespace OpenUtau.App.Controls {
             MessageBus.Current.SendMessage(new PianorollRefreshEvent("Part"));
 
         }
+        void OnMenuTikTokMode(object sender, RoutedEventArgs args) {
+            if (MainWindow == null) return;
+            bool entering = !ViewModel.IsTikTokMode;
+            ViewModel.IsTikTokMode = entering;
+            if (entering) {
+                MainWindow.EnterTikTokMode();
+            } else {
+                MainWindow.ExitTikTokMode();
+            }
+        }
+
         void OnMenuPlaybackVerticalFollow(object sender, RoutedEventArgs args) {
             ViewModel.NotesViewModel.ShowPlaybackVerticalFollow =
                 !ViewModel.NotesViewModel.ShowPlaybackVerticalFollow;

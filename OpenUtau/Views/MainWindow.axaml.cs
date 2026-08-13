@@ -36,6 +36,16 @@ namespace OpenUtau.App.Views {
         private PianoRollDetachedWindow? pianoRollWindow;
         private PianoRoll? pianoRoll;
 
+        private bool tikTokSavedDetach;
+        private double tikTokSavedWidth;
+        private double tikTokSavedHeight;
+        private int tikTokSavedX;
+        private int tikTokSavedY;
+        private int tikTokSavedWindowState;
+        private int tikTokSavedAutoScroll;
+        private double tikTokSavedMargin;
+        private bool tikTokStateWasSaved;
+
         private PartEditState? partEditState;
 
         // Time range selection state
@@ -1359,6 +1369,63 @@ namespace OpenUtau.App.Views {
             Preferences.Save();
         }
 
+        public void EnterTikTokMode() {
+            if (pianoRoll == null) return;
+            var prefs = Preferences.Default;
+            tikTokSavedDetach = prefs.DetachPianoRoll;
+            tikTokSavedWidth = prefs.PianorollWindowSize.Width;
+            tikTokSavedHeight = prefs.PianorollWindowSize.Height;
+            tikTokSavedX = prefs.PianorollWindowSize.PositionX ?? 0;
+            tikTokSavedY = prefs.PianorollWindowSize.PositionY ?? 0;
+            tikTokSavedWindowState = prefs.PianorollWindowSize.State;
+            tikTokSavedAutoScroll = prefs.PlaybackAutoScroll;
+            tikTokSavedMargin = prefs.PlayPosMarkerMargin;
+            tikTokStateWasSaved = true;
+
+            if (!tikTokSavedDetach) {
+                SetPianoRollAttachment();
+            }
+            if (pianoRollWindow != null) {
+                pianoRollWindow.SetTikTokMode(true);
+            }
+
+            prefs.PlaybackAutoScroll = 1;
+            prefs.PlayPosMarkerMargin = 0.5;
+            RefreshPlaybackAutoScrollMenu();
+        }
+
+        public void ExitTikTokMode() {
+            if (pianoRoll == null) return;
+            var prefs = Preferences.Default;
+            prefs.PlaybackAutoScroll = tikTokSavedAutoScroll;
+            prefs.PlayPosMarkerMargin = tikTokSavedMargin;
+            prefs.PianorollWindowSize.Set(tikTokSavedWidth, tikTokSavedHeight, tikTokSavedX, tikTokSavedY, tikTokSavedWindowState);
+            Preferences.Save();
+            RefreshPlaybackAutoScrollMenu();
+
+            if (pianoRollWindow != null) {
+                pianoRollWindow.SetTikTokMode(false);
+            }
+
+            if (!tikTokSavedDetach) {
+                SetPianoRollAttachment();
+            }
+        }
+
+        private void RestoreTikTokPreferencesOnClose() {
+            var prefs = Preferences.Default;
+            prefs.DetachPianoRoll = tikTokSavedDetach;
+            prefs.PlaybackAutoScroll = tikTokSavedAutoScroll;
+            prefs.PlayPosMarkerMargin = tikTokSavedMargin;
+            Preferences.Save();
+        }
+
+        private void RefreshPlaybackAutoScrollMenu() {
+            pianoRoll?.ViewModel.RaisePropertyChanged(nameof(PianoRollViewModel.PlaybackAutoScroll0));
+            pianoRoll?.ViewModel.RaisePropertyChanged(nameof(PianoRollViewModel.PlaybackAutoScroll1));
+            pianoRoll?.ViewModel.RaisePropertyChanged(nameof(PianoRollViewModel.PlaybackAutoScroll2));
+        }
+
         public void MainPagePointerWheelChanged(object sender, PointerWheelEventArgs args) {
             var delta = args.Delta;
             if (args.KeyModifiers == KeyModifiers.None || args.KeyModifiers == KeyModifiers.Shift) {
@@ -1902,6 +1969,10 @@ namespace OpenUtau.App.Views {
 
         public void WindowClosing(object? sender, WindowClosingEventArgs e) {
             if (forceClose || DocManager.Inst.ChangesSaved) {
+                if (pianoRoll?.ViewModel.IsTikTokMode == true && tikTokStateWasSaved) {
+                    RestoreTikTokPreferencesOnClose();
+                    pianoRoll.ViewModel.IsTikTokMode = false;
+                }
                 if (Preferences.Default.ClearCacheOnQuit) {
                     Log.Information("Clearing cache...");
                     PathManager.Inst.ClearCache();
