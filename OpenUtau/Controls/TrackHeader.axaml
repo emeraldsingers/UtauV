@@ -88,7 +88,7 @@
                  HorizontalOffset="-3" ItemsSource="{Binding SingerMenuItems}">
       <ContextMenu.Styles>
         <Style Selector="MenuItem">
-          <Setter Property="Header" Value="{Binding Header}"/>
+          <Setter Property="Header" Value="{Binding HeaderObj}"/>
           <Setter Property="Command" Value="{Binding Command}"/>
           <Setter Property="CommandParameter" Value="{Binding CommandParameter}"/>
           <Setter Property="ItemsSource" Value="{Binding Items}"/>
@@ -96,6 +96,8 @@
           <Setter Property="ToolTip.Tip" Value="{Binding Location}"/>
           <Setter Property="Height" Value="{Binding Height}"/>
           <Setter Property="IsEnabled" Value="{Binding IsEnabled}"/>
+          <Setter Property="IsVisible" Value="{Binding IsVisible}"/>
+          <Setter Property="StaysOpenOnClick" Value="{Binding StaysOpenOnClick}"/>
         </Style>
       </ContextMenu.Styles>
     </ContextMenu>

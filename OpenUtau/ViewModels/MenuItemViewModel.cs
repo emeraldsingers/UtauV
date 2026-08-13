@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Input;
 using Avalonia.Controls.Shapes;
 using Avalonia.Data;
@@ -7,8 +8,14 @@ using Avalonia.Threading;
 using OpenUtau.Core.Ustx;
 
 namespace OpenUtau.App.ViewModels {
-    public class MenuItemViewModel {
+    public class MenuItemViewModel : INotifyPropertyChanged {
+        bool isVisible = true;
         public string? Header { get; set; }
+        object? headerObj;
+        public object? HeaderObj {
+            get => headerObj ?? Header;
+            set => headerObj = value;
+        }
         public ICommand? Command { get; set; }
         public object? CommandParameter { get; set; }
         public IList<MenuItemViewModel>? Items { get; set; }
@@ -16,7 +23,19 @@ namespace OpenUtau.App.ViewModels {
         public bool IsChecked { get; set; } = false;
         public KeyGesture? InputGesture { get; set; }
         public bool IsEnabled { get; set; } = true;
+        public bool StaysOpenOnClick { get; set; }
         public object? Icon { get; set; }
+        public bool IsVisible {
+            get => isVisible;
+            set {
+                if (isVisible != value) {
+                    isVisible = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public MenuItemViewModel() { }
         public MenuItemViewModel(bool isChecked) {
