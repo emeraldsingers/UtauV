@@ -31,7 +31,10 @@ namespace OpenUtau.App.ViewModels {
             public string Name => Singer.LocalizedName;
             public string Id => Singer.Id;
             public string Location => Singer.Location;
+            [Reactive] public bool IsSelected { get; set; }
             readonly Action<string>? onFavouriteChanged;
+            Bitmap? avatar;
+            bool avatarLoaded;
             public bool IsFavourite {
                 get => Singer.IsFavourite;
                 set {
@@ -43,12 +46,27 @@ namespace OpenUtau.App.ViewModels {
                     onFavouriteChanged?.Invoke(Singer.Id);
                 }
             }
-            public Bitmap? Avatar { get; }
+            public Bitmap? Avatar {
+                get {
+                    if (!avatarLoaded) {
+                        avatar = LoadAvatar(Singer);
+                        avatarLoaded = true;
+                    }
+                    return avatar;
+                }
+            }
 
             public SingerOption(USinger singer, Action<string>? onFavouriteChanged = null) {
                 Singer = singer;
                 this.onFavouriteChanged = onFavouriteChanged;
-                Avatar = LoadAvatar(singer);
+            }
+
+            public bool Matches(string keyword) {
+                return Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                    || Singer.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                    || Id.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                    || (Singer.LocalizedNames?.Values.Any(name =>
+                        name.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ?? false);
             }
 
             static Bitmap? LoadAvatar(USinger singer) {
@@ -99,6 +117,9 @@ namespace OpenUtau.App.ViewModels {
                 });
             this.WhenAnyValue(x => x.SelectedSingerOption)
                 .Subscribe(option => {
+                    foreach (var singerOption in EngineGroups.SelectMany(group => group.Singers)) {
+                        singerOption.IsSelected = singerOption == option;
+                    }
                     this.RaisePropertyChanged(nameof(SelectedSinger));
                     UpdateSingerDetails(option?.Singer);
                 });
@@ -158,10 +179,7 @@ namespace OpenUtau.App.ViewModels {
             }
             var keyword = SearchText?.Trim();
             if (!string.IsNullOrEmpty(keyword)) {
-                var lower = keyword.ToLowerInvariant();
-                query = query.Where(item =>
-                        item.Name.ToLowerInvariant().Contains(lower) ||
-                        item.Id.ToLowerInvariant().Contains(lower));
+                query = query.Where(item => item.Matches(keyword));
             }
             var filtered = query.ToList();
             FilteredCurrentSingers = filtered;

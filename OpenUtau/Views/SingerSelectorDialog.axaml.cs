@@ -39,6 +39,13 @@ namespace OpenUtau.App.Views {
             Finish();
         }
 
+        void OnSingerPointerPressed(object? sender, PointerPressedEventArgs e) {
+            if (sender is Control { DataContext: SingerSelectorViewModel.SingerOption option }
+                && DataContext is SingerSelectorViewModel vm) {
+                vm.SelectedSingerOption = option;
+            }
+        }
+
         void OnRefresh(object? sender, RoutedEventArgs e) {
             if (DataContext is SingerSelectorViewModel vm) {
                 vm.RefreshSingers();

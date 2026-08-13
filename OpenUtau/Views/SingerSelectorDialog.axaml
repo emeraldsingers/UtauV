@@ -2,6 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:repeater="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ItemsRepeater"
+        xmlns:layout="clr-namespace:Avalonia.Layout;assembly=Avalonia.Controls.ItemsRepeater"
         mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="680"
         x:Class="OpenUtau.App.Views.SingerSelectorDialog"
         Icon="/Assets/open-utau.ico"
@@ -9,25 +11,6 @@
         MinWidth="940" MinHeight="560" WindowStartupLocation="CenterOwner"
         KeyDown="OnKeyDown">
   <Window.Styles>
-    <Style Selector="ListBox#SingerList ListBoxItem">
-      <Setter Property="Padding" Value="0"/>
-      <Setter Property="Margin" Value="8"/>
-      <Setter Property="MinHeight" Value="138"/>
-      <Setter Property="HorizontalContentAlignment" Value="Center"/>
-      <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-      <Setter Property="Template">
-        <ControlTemplate>
-          <ContentPresenter Background="Transparent"
-                            BorderBrush="#00000000"
-                            BorderThickness="0"
-                            Content="{TemplateBinding Content}"
-                            ContentTemplate="{TemplateBinding ContentTemplate}"
-                            Padding="{TemplateBinding Padding}"
-                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-        </ControlTemplate>
-      </Setter>
-    </Style>
     <Style Selector="Border.singer-card">
       <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
       <Setter Property="CornerRadius" Value="3"/>
@@ -38,11 +21,11 @@
       <Setter Property="Padding" Value="8"/>
       <Setter Property="HorizontalAlignment" Value="Center"/>
     </Style>
-    <Style Selector="ListBox#SingerList ListBoxItem:selected Border.singer-card">
+    <Style Selector="ItemsRepeater#SingerList Border.singer-card.selected">
       <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
       <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltMediumBrush}"/>
     </Style>
-    <Style Selector="ListBox#SingerList ListBoxItem:pointerover Border.singer-card">
+    <Style Selector="ItemsRepeater#SingerList Border.singer-card:pointerover">
       <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltMediumBrush}"/>
     </Style>
     <Style Selector="ToggleButton.favorite">
@@ -115,7 +98,7 @@
             </Path>
           </ToggleButton>
           <TextBox Grid.Column="1" Text="{Binding SearchText}"
-                   Watermark="Search singer name / id"/>
+                   Watermark="Search singer name, localized name, or ID"/>
         </Grid>
         <Grid Grid.Row="3">
           <TextBlock IsVisible="{Binding !HasFilteredSingers}" Text="{DynamicResource tracks.nosinger}"
@@ -123,17 +106,16 @@
           <ScrollViewer VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Disabled"
                         IsVisible="{Binding HasFilteredSingers}">
-            <ListBox Name="SingerList" BorderThickness="0" Background="Transparent"
-                     ItemsSource="{Binding FilteredCurrentSingers}" SelectedItem="{Binding SelectedSingerOption}"
-                     DoubleTapped="OnSingerDoubleTapped">
-              <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <WrapPanel Orientation="Horizontal" ItemWidth="132" ItemHeight="154"/>
-                </ItemsPanelTemplate>
-              </ListBox.ItemsPanel>
-              <ListBox.ItemTemplate>
+            <repeater:ItemsRepeater Name="SingerList" ItemsSource="{Binding FilteredCurrentSingers}">
+              <repeater:ItemsRepeater.Layout>
+                <layout:UniformGridLayout MinItemWidth="132" MinItemHeight="154"
+                                          MinColumnSpacing="0" MinRowSpacing="0" />
+              </repeater:ItemsRepeater.Layout>
+              <repeater:ItemsRepeater.ItemTemplate>
                 <DataTemplate>
-                  <Border Classes="singer-card" ToolTip.Tip="{Binding Location}">
+                  <Border Classes="singer-card" Classes.selected="{Binding IsSelected}"
+                          ToolTip.Tip="{Binding Location}" PointerPressed="OnSingerPointerPressed"
+                          DoubleTapped="OnSingerDoubleTapped">
                     <Grid Width="100" HorizontalAlignment="Center" RowDefinitions="88,8,34">
                       <Grid Grid.Row="0" Width="88" Height="88" HorizontalAlignment="Center">
                         <Border Width="88" Height="88" CornerRadius="3" ClipToBounds="True" Background="#22000000"
@@ -159,8 +141,8 @@
                     </Grid>
                   </Border>
                 </DataTemplate>
-              </ListBox.ItemTemplate>
-            </ListBox>
+              </repeater:ItemsRepeater.ItemTemplate>
+            </repeater:ItemsRepeater>
           </ScrollViewer>
         </Grid>
       </Grid>
@@ -199,9 +181,9 @@
 
     <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="12,0,12,12"
                 Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-      <Button MinWidth="86" Content="{DynamicResource dialogs.messagebox.cancel}" Click="OnCancel"/>
+      <Button MinWidth="86" Content="{DynamicResource button.cancel}" Click="OnCancel"/>
       <Button MinWidth="86" IsEnabled="{Binding HasSelectedSinger}"
-              Content="{DynamicResource dialogs.messagebox.ok}" Click="OnConfirm"/>
+              Content="{DynamicResource button.ok}" Click="OnConfirm"/>
     </StackPanel>
   </Grid>
 </Window>
