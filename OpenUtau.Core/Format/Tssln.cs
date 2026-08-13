@@ -161,9 +161,6 @@ namespace OpenUtau.Core.Format {
                         var lyric = GetString(noteNode, "Lyric", string.Empty);
                         note.lyric = lyric == ProlongedSoundMark ? "-" : lyric;
                         var phoneme = GetString(noteNode, "Phoneme", string.Empty);
-                        if (!string.IsNullOrWhiteSpace(phoneme)) {
-                            note.lyric = $"{note.lyric}[{phoneme.Replace(",", " ")}]";
-                        }
                         part.notes.Add(note);
                         partEnd = Math.Max(partEnd, start + duration);
                     }
