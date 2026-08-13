@@ -24,6 +24,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public string PortraitOpacity { get; set; } = string.Empty;
         [Reactive] public string PortraitHeight { get; set; } = string.Empty;
         [Reactive] public string Author { get; set; }
+        [Reactive] public string Team { get; set; }
         [Reactive] public string Voice { get; set; }
         [Reactive] public string Web { get; set; }
         [Reactive] public string Version { get; set; }
@@ -72,6 +73,7 @@ namespace OpenUtau.App.ViewModels {
             Name = singer.Name;
             Image = singer.Avatar != null ? Path.GetRelativePath(singer.Location, singer.Avatar) : string.Empty;
             Author = singer.Author ?? string.Empty;
+            Team = singer.Team ?? string.Empty;
             Voice = singer.Voice ?? string.Empty;
             Web = singer.Web ?? string.Empty;
             Version = singer.Version ?? string.Empty;
@@ -172,6 +174,7 @@ namespace OpenUtau.App.ViewModels {
                     config.PortraitHeight = i;
                 } else config.PortraitHeight = null;
                 config.Author = !string.IsNullOrWhiteSpace(Author) ? Author : null;
+                config.Team = !string.IsNullOrWhiteSpace(Team) ? Team : null;
                 config.Voice = !string.IsNullOrWhiteSpace(Voice) ? Voice : null;
                 config.Web = !string.IsNullOrWhiteSpace(Web) ? Web : null;
                 config.Version = !string.IsNullOrWhiteSpace(Version) ? Version : null;

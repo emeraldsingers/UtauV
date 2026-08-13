@@ -18,6 +18,7 @@ namespace OpenUtau.Core.DiffSinger {
         public override USingerType SingerType => voicebank.SingerType;
         public override string BasePath => voicebank.BasePath;
         public override string Author => voicebank.Author;
+        public override string Team => voicebank.Team;
         public override string Voice => voicebank.Voice;
         public override string Location => Path.GetDirectoryName(voicebank.File);
         public override string Web => voicebank.Web;
@@ -149,11 +150,15 @@ namespace OpenUtau.Core.DiffSinger {
         }
 
         public override bool TryGetOto(string phoneme, out UOto oto) {
-            // We always return true here just not to let OTO get in our way.
-            // Phonemizer and acoustic model work independently and both can report missing phonemes by their own,
-            // so do other submodules.
-            oto = UOto.OfDummy(phoneme);
-            return true;
+            // DiffSinger has no oto files, but its phoneme vocabulary is the
+            // equivalent source of truth for editor validation.
+            var parts = phoneme.Split();
+            if (parts.All(part => phonemes.Contains(part))) {
+                oto = UOto.OfDummy(phoneme);
+                return true;
+            }
+            oto = default;
+            return false;
         }
 
         public override IEnumerable<UOto> GetSuggestions(string text) {

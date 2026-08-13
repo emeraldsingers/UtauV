@@ -70,6 +70,11 @@
       </StackPanel>
 
       <StackPanel Classes="menu">
+        <TextBlock Text="{DynamicResource singerconfig.team}" Classes="label"/>
+        <TextBox Text="{Binding Team}" Classes="field"/>
+      </StackPanel>
+
+      <StackPanel Classes="menu">
         <TextBlock Text="{DynamicResource singerconfig.web}" Classes="label"/>
         <TextBox Text="{Binding Web}" MinWidth="375" Classes="field"/>
         <Button Content="{DynamicResource singerconfig.open}" Click="OpenWeb"/>

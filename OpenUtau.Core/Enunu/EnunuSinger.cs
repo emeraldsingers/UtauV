@@ -17,6 +17,7 @@ namespace OpenUtau.Core.Enunu {
         public override USingerType SingerType => voicebank.SingerType;
         public override string BasePath => voicebank.BasePath;
         public override string Author => voicebank.Author;
+        public override string Team => voicebank.Team;
         public override string Voice => voicebank.Voice;
         public override string Location => Path.GetDirectoryName(voicebank.File);
         public override string Web => voicebank.Web;

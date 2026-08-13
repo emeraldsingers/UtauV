@@ -221,6 +221,7 @@ namespace OpenUtau.Core.Ustx {
         public virtual USingerType SingerType { get; }
         public virtual string BasePath { get; }
         public virtual string Author { get; }
+        public virtual string Team { get; }
         public virtual string Voice { get; }
         public virtual string Location { get; }
         public virtual string Web { get; }

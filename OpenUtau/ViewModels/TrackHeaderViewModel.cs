@@ -56,8 +56,13 @@ namespace OpenUtau.App.ViewModels {
 
         private readonly UTrack track;
         readonly MenuItemViewModel singerSearchMenuItem;
-        readonly List<SingerMenuItemViewModel> singerItems = new();
-        readonly List<MenuItemViewModel> singerGroups = new();
+        MenuItemViewModel? singerSearchSeparator;
+        MenuItemViewModel? favoritesMenuItem;
+        MenuItemViewModel? recentSeparator;
+        readonly List<SingerMenuItemViewModel> recentSingerItems = new();
+        readonly List<SingerMenuItemViewModel> groupedSingerItems = new();
+        readonly List<MenuItemViewModel> teamMenuItems = new();
+        readonly Dictionary<USingerType, MenuItemViewModel> groupMenuItems = new();
 
         // Parameterless constructor for Avalonia preview only.
         public TrackHeaderViewModel() {
@@ -322,11 +327,29 @@ namespace OpenUtau.App.ViewModels {
                     singer => $"{singer.LocalizedName} {singer.Name} {singer.Id} {string.Join(" ", singer.LocalizedNames?.Values ?? Enumerable.Empty<string>())}",
                     SingerSearch).Select(singer => singer.Id).ToHashSet();
             }
-            foreach (var item in singerItems) {
+            foreach (var item in recentSingerItems.Concat(groupedSingerItems)) {
                 item.IsVisible = matchedIds == null || item.CommandParameter is USinger singer && matchedIds.Contains(singer.Id);
             }
-            foreach (var group in singerGroups) {
+            if (favoritesMenuItem?.Items != null) {
+                foreach (var item in favoritesMenuItem.Items.OfType<SingerMenuItemViewModel>()) {
+                    item.IsVisible = matchedIds == null || item.CommandParameter is USinger singer && matchedIds.Contains(singer.Id);
+                }
+                favoritesMenuItem.IsVisible = favoritesMenuItem.Items.Any(item => item.IsVisible);
+            }
+            foreach (var team in teamMenuItems) {
+                team.IsVisible = team.Items?.Any(item => item.IsVisible) ?? false;
+            }
+            foreach (var group in groupMenuItems.Values) {
                 group.IsVisible = group.Items?.Any(item => item.IsVisible) ?? false;
+            }
+            var anySingerVisible = recentSingerItems.Any(item => item.IsVisible)
+                || favoritesMenuItem?.IsVisible == true
+                || groupMenuItems.Values.Any(item => item.IsVisible);
+            if (singerSearchSeparator != null) {
+                singerSearchSeparator.IsVisible = anySingerVisible;
+            }
+            if (recentSeparator != null) {
+                recentSeparator.IsVisible = true;
             }
         }
 
@@ -346,18 +369,18 @@ namespace OpenUtau.App.ViewModels {
 
         public void RefreshSingers() {
             var items = new List<MenuItemViewModel>();
-            singerItems.Clear();
-            singerGroups.Clear();
             items.Add(singerSearchMenuItem);
-            items.Add(new MenuItemViewModel { Header = "-", HeaderObj = "-", Height = 1 });
+            singerSearchSeparator = new MenuItemViewModel { Header = "-", HeaderObj = "-", Height = 1 };
+            items.Add(singerSearchSeparator);
             if (SingerManager.Inst.Singers.Count > 0) {
                 var recent = Preferences.Default.RecentSingers
                 .Select(id => SingerManager.Inst.Singers.Values.FirstOrDefault(singer => singer.Id == id))
                 .OfType<USinger>()
                 .Select(CreateSingerMenuItem).ToArray();
-                singerItems.AddRange(recent);
+                recentSingerItems.Clear();
+                recentSingerItems.AddRange(recent);
                 items.AddRange(recent);
-                items.Add(new MenuItemViewModel() {
+                favoritesMenuItem = new MenuItemViewModel() {
                     Header = ThemeManager.GetString("tracks.favorite") + " ...",
                     HeaderObj = ThemeManager.GetString("tracks.favorite") + " ...",
                     Items = Preferences.Default.FavoriteSingers
@@ -365,20 +388,41 @@ namespace OpenUtau.App.ViewModels {
                         .OfType<USinger>()
                         .LocalizedOrderBy(singer => singer.LocalizedName)
                         .Select(CreateSingerMenuItem).ToArray(),
-                });
-                var favorites = items.Last();
-                singerItems.AddRange(favorites.Items!.OfType<SingerMenuItemViewModel>());
-                singerGroups.Add(favorites);
+                };
+                items.Add(favoritesMenuItem);
+                groupedSingerItems.Clear();
+                teamMenuItems.Clear();
+                groupMenuItems.Clear();
                 var keys = SingerManager.Inst.SingerGroups.Keys.OrderBy(k => k);
                 foreach (var key in keys) {
+                    var singers = SingerManager.Inst.SingerGroups[key];
+                    var directSingerItems = singers
+                        .Where(singer => string.IsNullOrWhiteSpace(singer.Team))
+                        .Select(CreateSingerMenuItem).ToArray();
+                    groupedSingerItems.AddRange(directSingerItems);
+                    var teamItems = singers
+                        .Where(singer => !string.IsNullOrWhiteSpace(singer.Team))
+                        .GroupBy(singer => singer.Team)
+                        .OrderBy(group => group.Key)
+                        .Select(group => {
+                            var teamSingers = group
+                                .LocalizedOrderBy(singer => singer.LocalizedName)
+                                .Select(CreateSingerMenuItem).ToArray();
+                            groupedSingerItems.AddRange(teamSingers);
+                            var teamMenu = new SingerMenuItemViewModel {
+                                Header = $"{group.Key} ...",
+                                HeaderObj = $"{group.Key} ...",
+                                Items = teamSingers,
+                            };
+                            teamMenuItems.Add(teamMenu);
+                            return teamMenu;
+                        }).ToArray();
                     var group = new MenuItemViewModel() {
                         Header = $"{key} ...",
                         HeaderObj = $"{key} ...",
-                        Items = SingerManager.Inst.SingerGroups[key]
-                            .Select(CreateSingerMenuItem).ToArray(),
+                        Items = teamItems.Cast<MenuItemViewModel>().Concat(directSingerItems).ToArray(),
                     };
-                    singerItems.AddRange(group.Items!.OfType<SingerMenuItemViewModel>());
-                    singerGroups.Add(group);
+                    groupMenuItems[key] = group;
                     items.Add(group);
                 }
             } else {
@@ -388,10 +432,12 @@ namespace OpenUtau.App.ViewModels {
                 });
             }
 
-            items.Add(new MenuItemViewModel() { // Separator
+            recentSeparator = new MenuItemViewModel() { // Separator
                 Header = "-",
+                HeaderObj = "-",
                 Height = 1
-            });
+            };
+            items.Add(recentSeparator);
             items.Add(new MenuItemViewModel() {
                 Header = ThemeManager.GetString("tracks.selectsinger") + " ...",
                 Command = ReactiveCommand.Create(async () => {

@@ -185,6 +185,9 @@ namespace OpenUtau.Classic {
             if (!string.IsNullOrWhiteSpace(bankConfig.Author)) {
                 bank.Author = bankConfig.Author;
             }
+            if (!string.IsNullOrWhiteSpace(bankConfig.Team)) {
+                bank.Team = bankConfig.Team;
+            }
             if (!string.IsNullOrWhiteSpace(bankConfig.Voice)) {
                 bank.Voice = bankConfig.Voice;
             }

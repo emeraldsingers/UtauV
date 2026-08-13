@@ -712,6 +712,7 @@ The voicebank may not work on another OS.</system:String>
   <system:String x:Key="singererror.yamlnotfound">character.yaml not found.</system:String>
 
   <system:String x:Key="singerconfig.author">Author</system:String>
+  <system:String x:Key="singerconfig.team">Team</system:String>
   <system:String x:Key="singerconfig.delete">Delete</system:String>
   <system:String x:Key="singerconfig.encoding">Text Encoding</system:String>
   <system:String x:Key="singerconfig.header.singer">Singer Extra Settings</system:String>
