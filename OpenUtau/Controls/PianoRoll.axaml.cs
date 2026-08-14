@@ -1693,8 +1693,9 @@ namespace OpenUtau.App.Controls {
                     if (isAlt) {
                         if (RootWindow is PianoRollDetachedWindow) {
                             RootWindow.Hide();
+                            return true;
                         }
-                        return true;
+                        return false;
                     }
                     break;
                 case Key.F11:

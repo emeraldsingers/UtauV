@@ -819,6 +819,12 @@ namespace OpenUtau.App.Views {
         }
 
         void OnKeyDown(object sender, KeyEventArgs args) {
+            if (args.Key == Key.F4 && args.KeyModifiers == KeyModifiers.Alt) {
+                args.Handled = true;
+                (Application.Current?.ApplicationLifetime as IControlledApplicationLifetime)?.Shutdown();
+                return;
+            }
+
             if (PianoRollContainer.IsKeyboardFocusWithin) {
                 args.Handled = false;
                 return;
@@ -848,9 +854,6 @@ namespace OpenUtau.App.Views {
             } else if (args.KeyModifiers == KeyModifiers.Alt) {
                 args.Handled = true;
                 switch (args.Key) {
-                    case Key.F4:
-                        (Application.Current?.ApplicationLifetime as IControlledApplicationLifetime)?.Shutdown();
-                        break;
                     default:
                         args.Handled = false;
                         break;
