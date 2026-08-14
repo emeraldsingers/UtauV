@@ -324,6 +324,10 @@ namespace OpenUtau.App.Controls {
             ViewModel.NotesViewModel.ShowPlaybackNoteHighlight =
                 !ViewModel.NotesViewModel.ShowPlaybackNoteHighlight;
         }
+        void OnMenuPlaybackNoteBounce(object sender, RoutedEventArgs args) {
+            ViewModel.NotesViewModel.ShowPlaybackNoteBounce =
+                !ViewModel.NotesViewModel.ShowPlaybackNoteBounce;
+        }
         void OnMenuUseTrackColor(object sender, RoutedEventArgs args) {
             Preferences.Default.UseTrackColor = !Preferences.Default.UseTrackColor;
             Preferences.Save();

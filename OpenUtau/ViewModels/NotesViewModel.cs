@@ -65,6 +65,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowExpressions { get; set; }
         [Reactive] public bool ShowPlaybackVerticalFollow { get; set; }
         [Reactive] public bool ShowPlaybackNoteHighlight { get; set; }
+        [Reactive] public bool ShowPlaybackNoteBounce { get; set; }
         [Reactive] public bool IsSnapOn { get; set; }
         [Reactive] public string SnapDivText { get; set; }
         [Reactive] public string KeyText { get; set; }
@@ -265,6 +266,13 @@ namespace OpenUtau.App.ViewModels {
                 .Skip(1)
                 .Subscribe(showPlaybackNoteHighlight => {
                     Preferences.Default.ShowPlaybackNoteHighlight = showPlaybackNoteHighlight;
+                    Preferences.Save();
+                });
+            ShowPlaybackNoteBounce = Preferences.Default.ShowPlaybackNoteBounce;
+            this.WhenAnyValue(x => x.ShowPlaybackNoteBounce)
+                .Skip(1)
+                .Subscribe(showPlaybackNoteBounce => {
+                    Preferences.Default.ShowPlaybackNoteBounce = showPlaybackNoteBounce;
                     Preferences.Save();
                 });
             ShowExpressions = Preferences.Default.ShowExpressions;

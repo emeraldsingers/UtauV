@@ -62,6 +62,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public double PlaybackVerticalFollowDamping { get; set; }
         [Reactive] public double PlaybackHighlightFadeInPerSecond { get; set; }
         [Reactive] public double PlaybackHighlightFadeOutPerSecond { get; set; }
+        [Reactive] public double PlaybackNoteBounceHeight { get; set; }
+        [Reactive] public double PlaybackNoteBounceDuration { get; set; }
         [Reactive] public double PlayPosMarkerMargin { get; set; }
 
         // Paths
@@ -174,6 +176,8 @@ namespace OpenUtau.App.ViewModels {
             PlaybackVerticalFollowDamping = Preferences.Default.PlaybackVerticalFollowDamping;
             PlaybackHighlightFadeInPerSecond = Preferences.Default.PlaybackHighlightFadeInPerSecond;
             PlaybackHighlightFadeOutPerSecond = Preferences.Default.PlaybackHighlightFadeOutPerSecond;
+            PlaybackNoteBounceHeight = Preferences.Default.PlaybackNoteBounceHeight;
+            PlaybackNoteBounceDuration = Preferences.Default.PlaybackNoteBounceDuration;
             PlayPosMarkerMargin = Preferences.Default.PlayPosMarkerMargin;
             LockStartTime = Preferences.Default.LockStartTime;
             InstallToAdditionalSingersPath = Preferences.Default.InstallToAdditionalSingersPath;
@@ -288,6 +292,16 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.PlaybackHighlightFadeOutPerSecond)
                 .Subscribe(value => {
                     Preferences.Default.PlaybackHighlightFadeOutPerSecond = Math.Clamp(value, 0.1, 30.0);
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaybackNoteBounceHeight)
+                .Subscribe(value => {
+                    Preferences.Default.PlaybackNoteBounceHeight = Math.Clamp(value, 1.0, 40.0);
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaybackNoteBounceDuration)
+                .Subscribe(value => {
+                    Preferences.Default.PlaybackNoteBounceDuration = Math.Clamp(value, 0.05, 2.0);
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.PlayPosMarkerMargin)
