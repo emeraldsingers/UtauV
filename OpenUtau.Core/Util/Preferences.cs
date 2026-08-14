@@ -206,6 +206,7 @@ namespace OpenUtau.Core.Util {
             public bool ShowPlaybackNoteBounce = false;
             public double PlaybackNoteBounceHeight = 12.0;
             public double PlaybackNoteBounceDuration = 0.25;
+            public bool ShowPlaybackNoteOrbit = false;
             public EditTool EditTool = new EditTool();
             public bool PlayTone = true;
             public bool ShowVibrato = true;
