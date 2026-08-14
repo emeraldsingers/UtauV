@@ -51,6 +51,7 @@ namespace OpenUtau.App.Views {
         public Point startPoint;
         public IValueTip valueTip;
         protected virtual bool ShowValueTip => true;
+        protected virtual bool DeferValidate => false;
         protected virtual string? commandNameKey => null;
         public bool ctrlShiftHeld = false;
         public bool altShiftHeld = false;
@@ -66,7 +67,7 @@ namespace OpenUtau.App.Views {
         public virtual void Begin(IPointer pointer, Point point) {
             pointer.Capture(control);
             startPoint = point;
-            DocManager.Inst.StartUndoGroup(commandNameKey);
+            DocManager.Inst.StartUndoGroup(commandNameKey, DeferValidate);
             if (ShowValueTip) {
                 valueTip.ShowValueTip();
             }
@@ -693,7 +694,8 @@ namespace OpenUtau.App.Views {
         private double startValue = 0;
         private bool shiftWasHeld = false;
         protected override string? commandNameKey => "command.exp.edit";
-
+        protected override bool DeferValidate => true;
+        
         public ExpSetValueState(
             Control control,
             PianoRollViewModel vm,
