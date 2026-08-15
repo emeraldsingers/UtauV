@@ -101,6 +101,10 @@ namespace OpenUtau.App.ViewModels {
 
         // Appearance
         [Reactive] public string ThemeName { get; set; }
+        [Reactive] public string UiFontPath { get; set; }
+        [Reactive] public string UiFontFamily { get; set; }
+        [Reactive] public bool UseUiFontForNotes { get; set; }
+        public List<string> UiFontFamilies { get; private set; } = new();
         [Reactive] public double ButtonCornerRadius { get; set; }
         [Reactive] public double NoteCornerRadius { get; set; }
         [Reactive] public double NoteOpacity { get; set; }
@@ -223,6 +227,10 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerLocalRetaking = Preferences.Default.DiffSingerLocalRetaking;
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
             ThemeName = Preferences.Default.ThemeName;
+            UiFontPath = Preferences.Default.UiFontPath;
+            UiFontFamily = Preferences.Default.UiFontFamily;
+            UseUiFontForNotes = Preferences.Default.UseUiFontForNotes;
+            RefreshUiFontFamilies();
             ButtonCornerRadius = Preferences.Default.ButtonCornerRadius;
             NoteCornerRadius = Preferences.Default.NoteCornerRadius;
             NoteOpacity = Preferences.Default.NoteOpacity * 100;
@@ -348,6 +356,26 @@ namespace OpenUtau.App.ViewModels {
                         Preferences.Save();
                         App.SetTheme();
                     }
+                });
+            this.WhenAnyValue(vm => vm.UiFontPath)
+                .Subscribe(path => {
+                    Preferences.Default.UiFontPath = UiFontManager.IsSupportedFontPath(path) ? path : string.Empty;
+                    Preferences.Save();
+                    UiFontManager.Apply();
+                    RefreshUiFontFamilies();
+                });
+            this.WhenAnyValue(vm => vm.UiFontFamily)
+                .Subscribe(family => {
+                    Preferences.Default.UiFontFamily = family?.Trim() ?? string.Empty;
+                    Preferences.Save();
+                    UiFontManager.Apply();
+                });
+            this.WhenAnyValue(vm => vm.UseUiFontForNotes)
+                .Subscribe(useUiFont => {
+                    Preferences.Default.UseUiFontForNotes = useUiFont;
+                    Preferences.Save();
+                    OpenUtau.App.Controls.TextLayoutCache.Clear();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 });
             this.WhenAnyValue(vm => vm.ButtonCornerRadius)
                 .Subscribe(radius => {
@@ -566,6 +594,25 @@ namespace OpenUtau.App.ViewModels {
             Preferences.Default.SetParamPath = path;
             Preferences.Save();
             this.RaisePropertyChanged(nameof(SetParamPath));
+        }
+
+        public void SetUiFontPath(string path) {
+            UiFontPath = path;
+            UiFontFamily = UiFontManager.GetSuggestedFamilyName(path);
+        }
+
+        public void ResetUiFont() {
+            UiFontPath = string.Empty;
+            UiFontFamily = string.Empty;
+        }
+
+        private void RefreshUiFontFamilies() {
+            UiFontFamilies = UiFontManager.GetAvailableFontFamilies();
+            if (!string.IsNullOrWhiteSpace(UiFontFamily)
+                && !UiFontFamilies.Contains(UiFontFamily, StringComparer.OrdinalIgnoreCase)) {
+                UiFontFamilies.Insert(0, UiFontFamily);
+            }
+            this.RaisePropertyChanged(nameof(UiFontFamilies));
         }
 
         public void SetWinePath(string path) {

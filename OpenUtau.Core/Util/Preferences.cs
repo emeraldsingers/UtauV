@@ -150,6 +150,9 @@ namespace OpenUtau.Core.Util {
             public bool ShowPrefs = true;
             public bool ShowTips = true;
             public string ThemeName = "Dark Teal";
+            public string UiFontPath = string.Empty;
+            public string UiFontFamily = string.Empty;
+            public bool UseUiFontForNotes = false;
             public double ButtonCornerRadius = 0;
             public double NoteCornerRadius = 2;
             public double NoteOpacity = 1;
