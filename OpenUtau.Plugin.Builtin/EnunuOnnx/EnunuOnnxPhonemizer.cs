@@ -211,6 +211,7 @@ namespace OpenUtau.Plugin.Builtin {
         }
 
         public override void SetUp(Note[][] groups, UProject project, UTrack track) {
+            base.SetUp(groups, project, track);
             if (groups.Length == 0) {
                 return;
             }

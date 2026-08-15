@@ -149,6 +149,19 @@ namespace OpenUtau.Core.DiffSinger {
 
             var vocoder = singer.getVocoder();
             //mel specification validity checks
+            //num_mel_bins must be a sane vocoder value. This is a hard-coded
+            //upper bound (see DsVocoderConfig.MaxMelBins): voicebank authors
+            //cannot override it. Not checking this lets a malformed vocoder
+            //smuggle in a non-vocoder onnx model that requires an unusually
+            //large mel tensor for inputs.
+            if (vocoder.num_mel_bins < 1 || vocoder.num_mel_bins > DsVocoderConfig.MaxMelBins) {
+                throw new Exception(
+                    $"Vocoder num_mel_bins must be between 1 and {DsVocoderConfig.MaxMelBins}, but got {vocoder.num_mel_bins}");
+            }
+            if (singer.dsConfig.num_mel_bins < 1 || singer.dsConfig.num_mel_bins > DsVocoderConfig.MaxMelBins) {
+                throw new Exception(
+                    $"Acoustic model num_mel_bins must be between 1 and {DsVocoderConfig.MaxMelBins}, but got {singer.dsConfig.num_mel_bins}");
+            }
             //mel base must be 10 or e
             if (vocoder.mel_base != "10" && vocoder.mel_base != "e") {
                 throw new Exception(
@@ -494,6 +507,11 @@ namespace OpenUtau.Core.DiffSinger {
                 throw new Exception($"The shape of vocoder output should be (1, length), but the actual shape is {DiffSingerUtils.ShapeString(samplesTensor)}");
             }
             var samples = samplesTensor.ToArray();
+            if (vocoder.sample_rate != 44100) {
+                var signal = new NWaves.Signals.DiscreteSignal(vocoder.sample_rate, samples);
+                signal = NWaves.Operations.Operation.Resample(signal, 44100);
+                samples = signal.Samples;
+            }
             return samples;
         }
 
