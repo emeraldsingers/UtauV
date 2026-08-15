@@ -151,7 +151,7 @@ namespace OpenUtau.Core.Neutrino {
                 string wavPath = Path.Join(htstmpPath, $"{voicebankNameHash}_tmp.wav");
                 string modelDir = this.singer.Location + "/";
                 var attr = phrase[0][0].phonemeAttributes?.FirstOrDefault(attr => attr.index == 0) ?? default;
-                int toneShift = attr.toneShift;
+                int toneShift = attr.toneShift ?? GetParentToneShift();
                 int numThreads = Preferences.Default.NumRenderThreads;
                 string ArgParam = string.Empty;
                 if (this.singer.singerVersion.StartsWith("v2.7")) {
