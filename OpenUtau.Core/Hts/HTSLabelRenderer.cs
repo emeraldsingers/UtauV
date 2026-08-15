@@ -214,7 +214,7 @@ namespace OpenUtau.Core.Hts {
         }
 
         protected virtual bool IsSyllableVowelExtensionNote(RenderNote note) {
-            return note.lyric.StartsWith("+~") || note.lyric.StartsWith("+*");
+            return note.lyric.StartsWith("+") || note.lyric.StartsWith("-") || note.lyric.StartsWith("*") || note.lyric.StartsWith("~");
         }
 
         private string GetPhonemeType(string phoneme) {
