@@ -457,7 +457,7 @@ namespace OpenUtau.Core.Hts {
                             writer.Write("[" + phone[0].phoneticHint + "]");
                         }
                         var attr = phone[0].phonemeAttributes?.FirstOrDefault(attr => attr.index == 0) ?? default;
-                        writer.Write(attr.toneShift);
+                        writer.Write(attr.toneShift ?? GetParentToneShift());
                         writer.Write(phone[0].position);
                         writer.Write(phone[0].duration);
                     }
