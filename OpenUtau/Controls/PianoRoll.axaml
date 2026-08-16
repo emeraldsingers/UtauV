@@ -31,7 +31,7 @@
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
       <Grid Grid.Column="0" Grid.Row="1" Grid.RowSpan="2">
-        <Rectangle HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="12" Fill="{DynamicResource PianorollAccentBrush}"/>
+        <Rectangle HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="12" Fill="{Binding NotesViewModel.TrackAccentColor}"/>
         <Border Margin="12,0,0,0" Width="48" Height="48" ClipToBounds="True">
           <Image HorizontalAlignment="Center" VerticalAlignment="Center"
                  Width="50" Height="50" Stretch="UniformToFill" Source="{Binding NotesViewModel.Avatar}"/>
