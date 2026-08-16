@@ -107,14 +107,25 @@ namespace OpenUtau.App.ViewModels {
             SelectPhonemizerCommand = ReactiveCommand.Create<PhonemizerFactory>(factory => {
                 if (track.Phonemizer.GetType() != factory.type) {
                     DocManager.Inst.StartUndoGroup("command.track.setting");
-                    var phonemizer = factory.Create();
-                    Log.Information($"Loading Phonemizer: {phonemizer.ToString()}");
-                    DocManager.Inst.ExecuteCmd(new TrackChangePhonemizerCommand(DocManager.Inst.Project, track, phonemizer));
-                    DocManager.Inst.EndUndoGroup();
-                    var name = phonemizer.GetType().FullName!;
-                    if (!string.IsNullOrEmpty(Singer?.Id) && phonemizer != null) {
-                        Preferences.Default.SingerPhonemizers[Singer.Id] = name;
+                    if (tracksViewModel != null && tracksViewModel.SelectedTracks.Count > 1) {
+                        foreach (var selectedTrack in tracksViewModel.SelectedTracks) {
+                            var phonemizer = factory.Create();
+                            Log.Information($"Loading Phonemizer: {phonemizer.ToString()}");
+                            DocManager.Inst.ExecuteCmd(new TrackChangePhonemizerCommand(DocManager.Inst.Project, selectedTrack, phonemizer));
+                            if (!string.IsNullOrEmpty(selectedTrack.Singer?.Id) && phonemizer != null) {
+                                Preferences.Default.SingerPhonemizers[selectedTrack.Singer.Id] = phonemizer.GetType().FullName!;
+                            }
+                        }
+                    } else {
+                        var phonemizer = factory.Create();
+                        Log.Information($"Loading Phonemizer: {phonemizer.ToString()}");
+                        DocManager.Inst.ExecuteCmd(new TrackChangePhonemizerCommand(DocManager.Inst.Project, track, phonemizer));
+                        if (!string.IsNullOrEmpty(Singer?.Id) && phonemizer != null) {
+                            Preferences.Default.SingerPhonemizers[Singer.Id] = phonemizer.GetType().FullName!;
+                        }
                     }
+                    DocManager.Inst.EndUndoGroup();
+                    var name = factory.type.FullName!;
                     Preferences.Default.RecentPhonemizers.Remove(name);
                     Preferences.Default.RecentPhonemizers.Insert(0, name);
                     while (Preferences.Default.RecentPhonemizers.Count > 8) {
@@ -577,6 +588,17 @@ namespace OpenUtau.App.ViewModels {
 
         public void RefreshPhonemizers() {
             var items = new List<MenuItemViewModel>();
+
+            if (SelectedTracksCount > 1) {
+                items.Add(new MenuItemViewModel() {
+                    Header = $"Apply to {SelectedTracksCount} selected tracks",
+                    HeaderObj = $"Apply to {SelectedTracksCount} selected tracks",
+                    IsEnabled = false,
+                    Height = 20
+                });
+                items.Add(new MenuItemViewModel { Header = "-", HeaderObj = "-", Height = 1 });
+            }
+
             //Singer default
             if (track != null && track.Singer != null && track.Singer.Found) {
                 var factory = FindPhonemizerByName(track.Singer.DefaultPhonemizer);
