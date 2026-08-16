@@ -324,6 +324,7 @@ Do you want to continue by splitting at the nearest position after current playh
   <system:String x:Key="menu.project">Project</system:String>
   <system:String x:Key="menu.project.expressions">Expressions...</system:String>
   <system:String x:Key="menu.project.remaptimeaxis">Adjust Tempo (Preserve Timing)</system:String>
+  <system:String x:Key="menu.project.transposetracks">Transpose Tracks...</system:String>
   <system:String x:Key="menu.tools">Tools</system:String>
   <system:String x:Key="menu.tools.clearcache">Clear Cache</system:String>
   <system:String x:Key="menu.tools.debugwindow">Debug Window</system:String>
