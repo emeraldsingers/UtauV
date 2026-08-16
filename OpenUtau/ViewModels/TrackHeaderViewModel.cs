@@ -51,10 +51,12 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool MixFxEnabled { get; set; }
         [Reactive] public string SingerSearch { get; set; } = string.Empty;
         [Reactive] public IBrush HeaderBorderBrush { get; set; } = ThemeManager.NeutralAccentBrushSemi;
+        [Reactive] public int SelectedTracksCount { get; set; }
 
         public ViewModelActivator Activator { get; }
 
         private readonly UTrack track;
+        private TracksViewModel? tracksViewModel;
         readonly MenuItemViewModel singerSearchMenuItem;
         MenuItemViewModel? singerSearchSeparator;
         MenuItemViewModel? favoritesMenuItem;
@@ -83,8 +85,15 @@ namespace OpenUtau.App.ViewModels {
             SelectSingerCommand = ReactiveCommand.Create<USinger>(singer => {
                 if (track.Singer != singer) {
                     DocManager.Inst.StartUndoGroup("command.track.singer");
-                    ApplySingerToTrack(track, singer);
-                    DocManager.Inst.ExecuteCmd(new VoiceColorRemappingNotification(track.TrackNo, true));
+                    if (tracksViewModel != null && tracksViewModel.SelectedTracks.Count > 1) {
+                        foreach (var selectedTrack in tracksViewModel.SelectedTracks) {
+                            ApplySingerToTrack(selectedTrack, singer);
+                            DocManager.Inst.ExecuteCmd(new VoiceColorRemappingNotification(selectedTrack.TrackNo, true));
+                        }
+                    } else {
+                        ApplySingerToTrack(track, singer);
+                        DocManager.Inst.ExecuteCmd(new VoiceColorRemappingNotification(track.TrackNo, true));
+                    }
                     DocManager.Inst.EndUndoGroup();
                     UpdateRecentSingers(singer);
                     Preferences.Save();
@@ -175,6 +184,17 @@ namespace OpenUtau.App.ViewModels {
 
             RefreshAvatar();
             RefreshSelectionStyle();
+        }
+
+        public void SetTracksViewModel(TracksViewModel tracksViewModel) {
+            this.tracksViewModel = tracksViewModel;
+            UpdateSelectedTracksCount();
+            MessageBus.Current.Listen<TrackSelectionEvent>()
+                .Subscribe(_ => UpdateSelectedTracksCount());
+        }
+
+        private void UpdateSelectedTracksCount() {
+            SelectedTracksCount = tracksViewModel?.SelectedTracks.Count ?? 0;
         }
 
         public void RefreshSelectionStyle() {
@@ -372,6 +392,17 @@ namespace OpenUtau.App.ViewModels {
             items.Add(singerSearchMenuItem);
             singerSearchSeparator = new MenuItemViewModel { Header = "-", HeaderObj = "-", Height = 1 };
             items.Add(singerSearchSeparator);
+
+            if (SelectedTracksCount > 1) {
+                items.Add(new MenuItemViewModel() {
+                    Header = $"Apply to {SelectedTracksCount} selected tracks",
+                    HeaderObj = $"Apply to {SelectedTracksCount} selected tracks",
+                    IsEnabled = false,
+                    Height = 20
+                });
+                items.Add(new MenuItemViewModel { Header = "-", HeaderObj = "-", Height = 1 });
+            }
+
             if (SingerManager.Inst.Singers.Count > 0) {
                 var recent = Preferences.Default.RecentSingers
                 .Select(id => SingerManager.Inst.Singers.Values.FirstOrDefault(singer => singer.Id == id))

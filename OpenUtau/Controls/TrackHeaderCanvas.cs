@@ -178,6 +178,7 @@ namespace OpenUtau.App.Controls {
             var vm = new TrackHeaderViewModel(track);
             if (DataContext is TracksViewModel tracksViewModel) {
                 vm.IsSelected = tracksViewModel.SelectedTracks.Contains(track);
+                vm.SetTracksViewModel(tracksViewModel);
             }
             var header = new TrackHeader() {
                 DataContext = vm,
