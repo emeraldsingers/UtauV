@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -176,6 +176,7 @@ namespace OpenUtau.Core.Util {
             public bool DiffSingerAutoSP = false;
             public int DiffSingerAutoSPMs = 40;
             public bool DiffSingerLocalRetaking = false;
+            public bool DiffSingerShowRenderPhraseBoundaries = false;
             public bool SkipRenderingMutedTracks = false;
             public string Language = string.Empty;
             public string? SortingOrder = null;

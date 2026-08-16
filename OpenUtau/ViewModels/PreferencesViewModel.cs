@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -139,6 +139,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool DiffSingerAutoSP { get; set; }
         [Reactive] public int DiffSingerAutoSPMs { get; set; }
         [Reactive] public bool DiffSingerLocalRetaking { get; set; }
+        [Reactive] public bool DiffSingerShowRenderPhraseBoundaries { get; set; }
 
         // Advanced
         [Reactive] public bool RememberMid { get; set; }
@@ -225,6 +226,7 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerAutoSP = Preferences.Default.DiffSingerAutoSP;
             DiffSingerAutoSPMs = Math.Clamp(Preferences.Default.DiffSingerAutoSPMs, 10, 200);
             DiffSingerLocalRetaking = Preferences.Default.DiffSingerLocalRetaking;
+            DiffSingerShowRenderPhraseBoundaries = Preferences.Default.DiffSingerShowRenderPhraseBoundaries;
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
             ThemeName = Preferences.Default.ThemeName;
             UiFontPath = Preferences.Default.UiFontPath;
@@ -551,6 +553,12 @@ namespace OpenUtau.App.ViewModels {
                 .Subscribe(value => {
                     Preferences.Default.DiffSingerLocalRetaking = value;
                     Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.DiffSingerShowRenderPhraseBoundaries)
+                .Subscribe(showBoundaries => {
+                    Preferences.Default.DiffSingerShowRenderPhraseBoundaries = showBoundaries;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 });
             this.WhenAnyValue(vm => vm.SkipRenderingMutedTracks)
                 .Subscribe(skipRenderingMutedTracks => {

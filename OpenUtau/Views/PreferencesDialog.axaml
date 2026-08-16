@@ -449,6 +449,10 @@
               <Slider Grid.Column="4" Classes="fader" Value="{Binding DiffSingerAutoSPMs}" Minimum="10" Maximum="200"
                       TickPlacement="BottomRight" TickFrequency="5" IsSnapToTickEnabled="true"/>
           </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.diffsinger.renderphraseboundaries}" HorizontalAlignment="Left" />
+            <ToggleSwitch IsChecked="{Binding DiffSingerShowRenderPhraseBoundaries}" />
+          </Grid>
         </StackPanel>
 
         <!-- Advanced -->
