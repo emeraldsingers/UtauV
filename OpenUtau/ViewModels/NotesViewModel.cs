@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,6 +14,7 @@ using DynamicData;
 using DynamicData.Binding;
 using OpenUtau.App.Views;
 using OpenUtau.Core;
+using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using OpenUtau.ViewModels;
@@ -60,6 +61,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPitch { get; set; }
         [Reactive] public bool ShowFinalPitch { get; set; }
         [Reactive] public bool ShowWaveform { get; set; }
+        [Reactive] public bool ShowRenderPhraseBoundaries { get; set; }
+        [Reactive] public bool ShowRenderPhraseBoundariesButton { get; set; }
         [Reactive] public bool ShowPhoneme { get; set; }
         [Reactive] public bool ShowNoteParams { get; set; }
         [Reactive] public bool ShowExpressions { get; set; }
@@ -255,6 +258,13 @@ namespace OpenUtau.App.ViewModels {
             .Subscribe(showWaveform => {
                 Preferences.Default.ShowWaveform = showWaveform;
                 Preferences.Save();
+            });
+            ShowRenderPhraseBoundaries = Preferences.Default.DiffSingerShowRenderPhraseBoundaries;
+            this.WhenAnyValue(x => x.ShowRenderPhraseBoundaries)
+            .Subscribe(show => {
+                Preferences.Default.DiffSingerShowRenderPhraseBoundaries = show;
+                Preferences.Save();
+                MessageBus.Current.SendMessage(new NotesRefreshEvent());
             });
             ShowPhoneme = Preferences.Default.ShowPhoneme;
             this.WhenAnyValue(x => x.ShowPhoneme)
@@ -610,7 +620,19 @@ namespace OpenUtau.App.ViewModels {
                 return;
             }
             TickOrigin = Part.position;
+            UpdateRenderPhraseBoundariesButton();
             Notify();
+        }
+
+        private void UpdateRenderPhraseBoundariesButton() {
+            if (Part == null || Project == null || Part.trackNo < 0 || Part.trackNo >= Project.tracks.Count) {
+                ShowRenderPhraseBoundariesButton = false;
+                return;
+            }
+            var settings = Project.tracks[Part.trackNo].RendererSettings;
+            var renderer = settings?.renderer ?? settings?.Renderer?.ToString();
+            ShowRenderPhraseBoundariesButton = string.Equals(renderer, Renderers.DIFFSINGER, StringComparison.OrdinalIgnoreCase) 
+                || string.Equals(renderer, Renderers.ENUNU, StringComparison.OrdinalIgnoreCase);
         }
 
         private void DeselectNote(UNote note) {

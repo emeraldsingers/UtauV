@@ -536,6 +536,7 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="pianoroll.menu.view.playbacknotebounce">Bounce Notes On Playback</system:String>
   <system:String x:Key="pianoroll.menu.view.playbacknoteorbit">Orbit Notes On Playback</system:String>
   <system:String x:Key="pianoroll.menu.view.playbackverticalfollow">Center Playback Note Vertically</system:String>
+  <system:String x:Key="pianoroll.toggle.renderphraseboundaries">Render Phrase Boundaries</system:String>
   <system:String x:Key="prefs.playback.verticalfollow.margin">Vertical follow margin</system:String>
   <system:String x:Key="prefs.playback.verticalfollow.damping">Vertical follow speed</system:String>
   <system:String x:Key="prefs.playback.notehighlight.fadein">Note highlight fade-in speed</system:String>
