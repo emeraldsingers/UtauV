@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -194,7 +194,7 @@ namespace OpenUtau.App.ViewModels {
                 TrackAccentColor = ThemeManager.ThemeAccentBrush;
                 TrackAccentLightBrush = ThemeManager.ThemeAccentLightBrush;
                 TrackAccentDarkBrush = ThemeManager.ThemeAccentDarkBrush;
-                TrackColor = ThemeManager.GetTrackColor("Blue");
+                TrackColor = color;
             }
             RefreshSelectionStyle();
         }
