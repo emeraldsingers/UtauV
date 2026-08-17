@@ -146,6 +146,8 @@ namespace OpenUtau.App.Views {
         public UNote note;
         private double xOffset;
         private bool duplicated = true;
+        private bool playTone;
+        private int activeTone;
         protected override bool ShowValueTip => false;
         protected override string? commandNameKey => commandNameKeyLocal;
         private string commandNameKeyLocal = "command.note.move";
@@ -157,6 +159,7 @@ namespace OpenUtau.App.Views {
             UNote note,
             bool duplicate = false) : base(control, vm, valueTip) {
             this.note = note;
+            this.playTone = vm.NotesViewModel.PlayTone;
             if (duplicate) {
                 this.duplicated = false;
                 commandNameKeyLocal = "command.note.duplicate";
@@ -170,6 +173,14 @@ namespace OpenUtau.App.Views {
             base.Begin(pointer, point);
             var notesVm = vm.NotesViewModel;
             xOffset = point.X - notesVm.TickToneToPoint(note.position, 0).X;
+            if (playTone) {
+                Serilog.Log.Information($"NoteMoveEditState: Begin with playTone={playTone}, tone={note.tone}");
+                if (PlaybackManager.Inst.PlayingMaster) {
+                    PlaybackManager.Inst.StopPlayback();
+                }
+                activeTone = note.tone;
+                PlaybackManager.Inst.PlayTone(MusicMath.ToneToFreq(note.tone));
+            }
         }
         public override void Update(IPointer pointer, Point point) {
             var delta = point - startPoint;
@@ -217,6 +228,17 @@ namespace OpenUtau.App.Views {
                 return;
             }
 
+            if (playTone && deltaTone != 0) {
+                int newTone = note.tone + deltaTone;
+                Serilog.Log.Information($"NoteMoveEditState: Update deltaTone={deltaTone}, newTone={newTone}, activeTone={activeTone}");
+                if (activeTone != newTone) {
+                    Serilog.Log.Information($"NoteMoveEditState: Changing tone from {activeTone} to {newTone}");
+                    PlaybackManager.Inst.EndTone(MusicMath.ToneToFreq(activeTone));
+                    PlaybackManager.Inst.PlayTone(MusicMath.ToneToFreq(newTone));
+                    activeTone = newTone;
+                }
+            }
+
             if (!duplicated) {
                 notes.Remove(note);
                 note = note.Clone();
@@ -226,11 +248,20 @@ namespace OpenUtau.App.Views {
                 notesVm.Selection.Select(notes);
                 MessageBus.Current.SendMessage(new NotesSelectionEvent(notesVm.Selection));
                 duplicated = true;
+                if (playTone) {
+                    activeTone = note.tone + deltaTone;
+                }
             }
             if (notes.Count == 0) {
                 DocManager.Inst.ExecuteCmd(new MoveNoteCommand(part, note, deltaTick, deltaTone));
             } else {
                 DocManager.Inst.ExecuteCmd(new MoveNoteCommand(part, notes, deltaTick, deltaTone));
+            }
+        }
+        public override void End(IPointer pointer, Point point) {
+            base.End(pointer, point);
+            if (playTone) {
+                PlaybackManager.Inst.EndTone(MusicMath.ToneToFreq(activeTone));
             }
         }
     }
