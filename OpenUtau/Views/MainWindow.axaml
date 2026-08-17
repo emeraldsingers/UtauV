@@ -217,8 +217,8 @@
             <RowDefinition Height="3*"
                            MinHeight="{Binding PianoRollMinHeight}"
                            MaxHeight="{Binding PianoRollMaxHeight}"/>
-            <RowDefinition Height="20"/>
-            <RowDefinition Height="4"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="0"/>
           </Grid.RowDefinitions>
           <Panel Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="24">
             <Border Classes="playback" Width="72" HorizontalAlignment="Left" Margin="4,0">
@@ -414,8 +414,35 @@
           <Canvas Grid.Row="4" Grid.ColumnSpan="3" IsVisible="{Binding ShowPianoRoll}">
             <ContentControl Name="PianoRollContainer" Width="{Binding $parent[Canvas].Bounds.Width}" Height="{Binding $parent[Canvas].Bounds.Height}"/>
           </Canvas>
-          <TextBlock Grid.Row="5" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" Height="20" Margin="4,4,4,0" Text="{Binding ProgressText}"/>
-          <ProgressBar Grid.Row="6" Grid.ColumnSpan="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Value="{Binding Progress}"/>
+          <Border Grid.Row="5" Grid.RowSpan="2" Grid.ColumnSpan="3"
+                  Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                  BorderBrush="{DynamicResource TickLineBrush}"
+                  BorderThickness="0,1,0,0"
+                  Padding="10,6,10,8">
+            <Grid RowDefinitions="Auto,8" ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Text="{Binding ProgressText}"
+                        TextTrimming="CharacterEllipsis"/>
+
+              <TextBlock Grid.Row="0" Grid.Column="1"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        Text="{Binding Progress, StringFormat={}{0:0}%}"/>
+
+              <Border Grid.Row="1" Grid.ColumnSpan="2"
+                      CornerRadius="4"
+                      Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                      ClipToBounds="True">
+                <ProgressBar Value="{Binding Progress}"
+                            MinHeight="8"
+                            VerticalAlignment="Stretch"
+                            HorizontalAlignment="Stretch"/>
+              </Border>
+            </Grid>
+          </Border>
         </Grid>
       </Carousel>
     </Grid>
