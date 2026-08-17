@@ -82,10 +82,10 @@ jobs:
 
       # Build
       - name: Restore dependencies
-        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:PublishTargetOs=${{ matrix.arch.os }}
+        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || (matrix.arch.variant == 'directml' && 'DirectML' || 'Default') }}
 
       - name: Publish
-        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }} -p:PublishTargetOs=${{ matrix.arch.os }}
+        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || (matrix.arch.variant == 'directml' && 'DirectML' || 'Default') }}
 
       # Write release channel info
       - name: Write release channel info
@@ -138,7 +138,7 @@ jobs:
         uses: joncloud/makensis-action@v5.0
         with:
           script-file: OpenUtau.nsi
-          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }}"
+          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=OpenUtau-${{ matrix.arch.name }}.exe"
 
       # macOS DMG
       - name: Create macOS DMG (manual .app bundle)
@@ -241,8 +241,7 @@ jobs:
         if: inputs.release && github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.UTAU_V_RELEASE_TOKEN }}
-          repository: emeraldsingers/UtauV
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ inputs.version }}
           name: ${{ env.RELEASE_NAME }}
           prerelease: ${{ inputs.beta }}
