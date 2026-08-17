@@ -1,0 +1,341 @@
+name: Release Build To UtauV REPO
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version"
+        required: true
+        default: "0.0.0.0"
+        type: string
+      release:
+        description: "Release"
+        type: boolean
+        default: true
+      beta:
+        description: "Beta"
+        type: boolean
+        default: false
+      draft:
+        description: "Draft"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_NAME: ${{ inputs.version }}${{ inputs.beta && ' Beta' || '' }}
+  REPO_URL: "https://github.com/emeraldsingers/UtauV"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.arch.runs-on }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - { name: win-x64-directml, rid: win-x64, arch: x64, os: win, runs-on: windows-latest, variant: directml }
+          - { name: win-x64-cuda, rid: win-x64, arch: x64, os: win, runs-on: windows-latest, variant: cuda }
+          - { name: win-x86, rid: win-x86, arch: x86, os: win, runs-on: windows-latest, variant: directml }
+          - { name: win-arm64, rid: win-arm64, arch: arm64, os: win, runs-on: windows-latest, variant: directml }
+          - { name: osx-x64, rid: osx-x64, arch: x64, os: osx, runs-on: macos-15-intel }
+          - { name: osx-arm64, rid: osx-arm64, arch: arm64, os: osx, runs-on: macos-15-intel }
+          - { name: linux-x64, rid: linux-x64, arch: x64, os: linux, runs-on: ubuntu-latest, linuxarch: x86_64 }
+          - { name: linux-arm64, rid: linux-arm64, arch: arm64, os: linux, runs-on: ubuntu-latest, linuxarch: aarch64 }
+
+    steps:
+      # Setup
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            8.0.x
+
+      - name: Setup Node.js (for DMG)
+        if: matrix.arch.os == 'osx'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install NSIS
+        if: ${{ matrix.arch.os == 'win' }}
+        shell: pwsh
+        run: |
+          choco install nsis --version=3.11 -y --no-progress
+          "C:\Program Files (x86)\NSIS\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+          "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Patch Version
+        uses: justalemon/VersionPatcher@v0.8
+        with:
+          version: ${{ inputs.version }}
+          csproj-files: "OpenUtau/*.csproj"
+
+      # Test
+      - name: Run Tests
+        run: dotnet test OpenUtau.Test
+
+      # Build
+      - name: Restore dependencies
+        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:PublishTargetOs=${{ matrix.arch.os }}
+
+      - name: Publish
+        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }} -p:PublishTargetOs=${{ matrix.arch.os }}
+
+      # Write release channel info
+      - name: Write release channel info
+        run: |
+          echo '{ "Beta": ${{ inputs.beta }} }' > "bin/${{ matrix.arch.name }}/prefs-default.json"
+
+      # Windows DirectML
+      - name: Download DirectML (Windows DirectML builds)
+        if: matrix.arch.os == 'win' && matrix.arch.variant == 'directml'
+        shell: cmd
+        run: |
+          curl -L https://www.nuget.org/api/v2/package/Microsoft.AI.DirectML/1.15.4 -o Microsoft.AI.DirectML.nupkg
+          mkdir Microsoft.AI.DirectML
+          tar -xf Microsoft.AI.DirectML.nupkg -C Microsoft.AI.DirectML
+          copy /y Microsoft.AI.DirectML\bin\${{ matrix.arch.arch }}-win\DirectML.dll bin\${{ matrix.arch.name }}
+
+      # Windows CUDA
+      - name: Download CUDA dependencies (Windows CUDA builds)
+        if: matrix.arch.os == 'win' && matrix.arch.variant == 'cuda'
+        shell: cmd
+        run: |
+          echo Downloading CUDA dependencies for win-x64-cuda build
+          REM Add CUDA DLL downloads here when ready
+
+      - name: Download VC Redist (Windows)
+        if: matrix.arch.os == 'win'
+        shell: cmd
+        run: |
+          curl -L https://aka.ms/vs/17/release/vc_redist.${{ matrix.arch.arch }}.exe -o vc_redist.${{ matrix.arch.arch }}.exe
+
+      # Linux specific
+      - name: Set Linux executable permissions
+        if: matrix.arch.os == 'linux'
+        run: chmod +x bin/${{ matrix.arch.name }}/OpenUtau
+
+      # Create packages (zip)
+      - name: Create portable package (zip)
+        run: |
+          cd bin/${{ matrix.arch.name }}
+          7z a ../../OpenUtau-${{ matrix.arch.name }}.zip *
+
+      - name: Create tar.gz for Linux
+        if: matrix.arch.os == 'linux'
+        run: |
+          tar -czf OpenUtau-${{ matrix.arch.name }}.tar.gz -C bin/${{ matrix.arch.name }} .
+
+      # Windows installer
+      - name: Create Windows Installer
+        if: matrix.arch.os == 'win'
+        uses: joncloud/makensis-action@v5.0
+        with:
+          script-file: OpenUtau.nsi
+          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }}"
+
+      # macOS DMG
+      - name: Create macOS DMG (manual .app bundle)
+        if: matrix.arch.os == 'osx'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUT="bin/${{ matrix.arch.name }}"
+          APP="$OUT/OpenUtau.app"
+          MACOS="$APP/Contents/MacOS"
+          RES="$APP/Contents/Resources"
+
+          echo "Building .app bundle from publish output in: $OUT"
+          ls -la "$OUT" || true
+
+          rm -rf "$APP"
+          mkdir -p "$MACOS" "$RES"
+
+          cp -R "$OUT/"* "$MACOS/"
+          chmod +x "$MACOS/OpenUtau" || true
+
+          if [ -f "OpenUtau/Assets/OpenUtau.icns" ]; then
+            cp "OpenUtau/Assets/OpenUtau.icns" "$RES/OpenUtau.icns"
+          fi
+
+          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>OpenUtau</string>
+            <key>CFBundleDisplayName</key><string>OpenUtau</string>
+            <key>CFBundleIdentifier</key><string>com.emeraldsingers.utauv</string>
+            <key>CFBundleExecutable</key><string>OpenUtau</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleVersion</key><string>${{ inputs.version }}</string>
+            <key>CFBundleShortVersionString</key><string>${{ inputs.version }}</string>
+            <key>LSMinimumSystemVersion</key><string>10.13</string>
+          </dict>
+          </plist>
+          PLIST
+
+          echo "App bundle created at: $APP"
+          find "$APP" -maxdepth 3 -print
+
+          hdiutil create -fs HFS+ -srcfolder "$APP" -volname "OpenUtau" "OpenUtau-${{ matrix.arch.name }}.dmg"
+          codesign -fvs - "OpenUtau-${{ matrix.arch.name }}.dmg" || true
+
+      # Create Appimage
+      - name: Install LinuxDeploy
+        uses: AnimMouse/setup-appimage@v1
+        with:
+          name: linuxdeploy
+          url: https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        if: ${{ matrix.arch.os == 'linux' }}
+
+      - name: Create appimage
+        if: ${{ matrix.arch.os == 'linux' }}
+        run: |
+          cp OpenUtau/Assets/OpenUtau.desktop bin/${{ matrix.arch.name }}
+          cp OpenUtau/Assets/OpenUtau.png bin/${{ matrix.arch.name }}
+          cp OpenUtau/Assets/OpenUtau.png bin/${{ matrix.arch.name }}/.DirIcon
+          cp OpenUtau/Assets/AppRun bin/${{ matrix.arch.name }}
+          chmod 755 bin/${{ matrix.arch.name }}/AppRun
+          ARCH=${{ matrix.arch.linuxarch }} linuxdeploy --appdir bin/${{ matrix.arch.name }} --output appimage
+
+      # Appcast generation
+      - name: Generate Appcast for Windows
+        if: inputs.release && matrix.arch.os == 'win'
+        shell: cmd
+        run: |
+          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.zip
+          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=OpenUtau-${{ matrix.arch.name }}.exe
+
+      - name: Generate Appcast for macOS
+        if: inputs.release && matrix.arch.os == 'osx'
+        run: |
+          python appcast.py -v=${{ inputs.version }} -o=macos -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.dmg
+
+      - name: Generate Appcast for Linux
+        if: inputs.release && matrix.arch.os == 'linux'
+        run: |
+          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.zip
+
+      # Upload all artifacts
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.arch.name }}
+          path: |
+            OpenUtau-${{ matrix.arch.name }}.exe
+            OpenUtau-${{ matrix.arch.name }}.zip
+            OpenUtau-${{ matrix.arch.name }}.dmg
+            OpenUtau-${{ matrix.arch.name }}.tar.gz
+            bin/${{ matrix.arch.name }}/*.AppImage
+            appcast.${{ matrix.arch.name }}*.xml
+
+      - name: Create GitHub Release
+        if: inputs.release && github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.UTAU_V_RELEASE_TOKEN }}
+          repository: emeraldsingers/UtauV
+          tag_name: ${{ inputs.version }}
+          name: ${{ env.RELEASE_NAME }}
+          prerelease: ${{ inputs.beta }}
+          draft: ${{ inputs.draft }}
+          files: |
+            OpenUtau-win-x64-directml.exe
+            OpenUtau-win-x64-directml.zip
+            OpenUtau-win-x64-cuda.exe
+            OpenUtau-win-x64-cuda.zip
+            OpenUtau-win-x86.exe
+            OpenUtau-win-x86.zip
+            OpenUtau-win-arm64.exe
+            OpenUtau-win-arm64.zip
+            OpenUtau-osx-x64.dmg
+            OpenUtau-osx-arm64.dmg
+            OpenUtau-linux-x64.zip
+            OpenUtau-linux-x64.tar.gz
+            OpenUtau-linux-arm64.zip
+            OpenUtau-linux-arm64.tar.gz
+            bin/linux-x64/*.AppImage
+            bin/linux-arm64/*.AppImage
+            appcast.*.xml
+          body: |
+            ## Downloads
+
+            ### Windows
+
+            **DirectML builds** (recommended for most users - works on all GPUs including AMD, Intel, and NVIDIA):
+            - [Installer (64-bit DirectML)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-directml.exe)
+            - [Portable ZIP (64-bit DirectML)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-directml.zip)
+            - [Installer (32-bit)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x86.exe)
+            - [Portable ZIP (32-bit)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x86.zip)
+            - [Installer (ARM64)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-arm64.exe)
+            - [Portable ZIP (ARM64)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-arm64.zip)
+
+            **CUDA builds** (NVIDIA GPUs only - requires CUDA 12.x + cuDNN 9.x):
+            - [Installer (64-bit CUDA)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-cuda.exe)
+            - [Portable ZIP (64-bit CUDA)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-cuda.zip)
+
+            > **⚠️ CUDA builds require additional setup!**
+            > Follow this tutorial: [CUDA + cuDNN Installation Guide](https://docs.google.com/document/d/17FBZxb5J1tMN-gR7cO_b-UJ8XUL5Xs_e7NYv3ewTmOI)
+
+            ### macOS
+            - [Intel Mac (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-osx-x64.dmg)
+            - [Apple Silicon (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-osx-arm64.dmg)
+
+            ### Linux
+            - [64-bit (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-x64.zip)
+            - [64-bit (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-x64.tar.gz)
+            - [ARM64 (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-arm64.zip)
+            - [ARM64 (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-arm64.tar.gz)
+
+            ---
+
+            ## Which build should I download?
+
+            **Windows users:**
+            - **Most users**: Download **DirectML** builds - they work on all GPUs (AMD, Intel, NVIDIA) without extra setup
+            - **NVIDIA GPU users who want maximum performance**: Download **CUDA** builds - requires CUDA 12.x + cuDNN 9.x installation
+            - **32-bit systems**: Download x86 builds (DirectML only)
+            - **ARM devices**: Download ARM64 builds (DirectML only)
+
+            **macOS users:**
+            - **Intel Macs**: Download osx-x64 (CPU-only)
+            - **Apple Silicon (M1/M2/M3)**: Download osx-arm64 (CPU-only)
+            - If you see "This app is damaged", run: `xattr -rc /Applications/OpenUtau.app`
+
+            **Linux users:**
+            - **Most systems**: Download linux-x64 (CPU-only by default, automatically uses CUDA if installed)
+            - **ARM devices**: Download linux-arm64 (CPU-only)
+            - **For CUDA acceleration on Linux**: Install CUDA 12.x + cuDNN 9.x, the build will automatically detect and use it
+
+            ---
+
+            ## CUDA Support Guide
+
+            **Windows CUDA builds** require manual installation of CUDA toolkit and cuDNN.
+            **Linux builds** will automatically use CUDA if it's installed on your system.
+            **macOS builds** do not support CUDA acceleration.
+
+            ### Installation Tutorial:
+            **[CUDA + cuDNN Installation Guide](https://docs.google.com/document/d/17FBZxb5J1tMN-gR7cO_b-UJ8XUL5Xs_e7NYv3ewTmOI)**
+
+            This guide covers:
+            - Windows: CUDA 12.x + cuDNN 9.x installation
+            - Linux: CUDA 12.x + cuDNN 9.x installation
+
+            ---
+
+            ## Getting Started
+            - [Getting Started Guide](https://github.com/openutau/OpenUtau/wiki/Getting-Started)
+            - [FAQ](https://github.com/openutau/OpenUtau/wiki/FAQ)
+
+            ## Support
+            - [UtauV Discord Server](https://discord.gg/n3tTNa6JVT)
+            - [Original OpenUtau Discord](https://discord.gg/UfpMnqMmEM)
