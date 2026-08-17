@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" Width="400" Height="180"
+        mc:Ignorable="d" Width="480" Height="300"
         x:Class="OpenUtau.App.Views.SplashWindow"
         Title="SplashWindow"
         Icon="/Assets/open-utau.ico"
@@ -10,19 +10,132 @@
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1"
         ExtendClientAreaToDecorationsHint="True"
-        SystemDecorations="BorderOnly"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
         WindowStartupLocation="CenterScreen">
-  <Grid>
-    <Image Margin="20" Width="96" Height="96"
-           VerticalAlignment="Top" HorizontalAlignment="Center"
-           Source="/Assets/open-utau.ico"/>
-    <Image x:Name="LogoTypeDark" Height="16" Margin="0,136,0,10"
-           VerticalAlignment="Top" HorizontalAlignment="Center"
-           Source="/Assets/logotype-w.png" IsVisible="{Binding IsDarkMode}"/>
-    <Image x:Name="LogoTypeLight" Height="16" Margin="0,136,0,10"
-           VerticalAlignment="Top" HorizontalAlignment="Center"
-           Source="/Assets/logotype.png" IsVisible="{Binding !IsDarkMode}"/>
-    <ProgressBar VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
-           IsIndeterminate="True"/>
+  <Grid ClipToBounds="True">
+    <Rectangle Fill="{DynamicResource SystemControlBackgroundAltHighBrush}" Opacity="0.98"/>
+
+    <Ellipse Width="400" Height="400"
+             HorizontalAlignment="Left" VerticalAlignment="Top"
+             Margin="-200,-240,0,0"
+             Opacity="0.25">
+      <Ellipse.Fill>
+        <RadialGradientBrush RadiusX="85%" RadiusY="85%">
+          <GradientStop Color="{DynamicResource SystemAccentColor}" Offset="0.0"/>
+          <GradientStop Color="{DynamicResource SystemAccentColorLight1}" Offset="0.5"/>
+          <GradientStop Color="#00000000" Offset="1.0"/>
+        </RadialGradientBrush>
+      </Ellipse.Fill>
+      <Ellipse.Effect>
+        <BlurEffect Radius="40"/>
+      </Ellipse.Effect>
+    </Ellipse>
+
+    <Ellipse Width="320" Height="320"
+             HorizontalAlignment="Right" VerticalAlignment="Bottom"
+             Margin="0,0,-140,-140"
+             Opacity="0.20">
+      <Ellipse.Fill>
+        <RadialGradientBrush RadiusX="88%" RadiusY="88%">
+          <GradientStop Color="{DynamicResource SystemAccentColorLight2}" Offset="0.0"/>
+          <GradientStop Color="{DynamicResource SystemAccentColor}" Offset="0.4"/>
+          <GradientStop Color="#00000000" Offset="1.0"/>
+        </RadialGradientBrush>
+      </Ellipse.Fill>
+      <Ellipse.Effect>
+        <BlurEffect Radius="35"/>
+      </Ellipse.Effect>
+    </Ellipse>
+
+    <Border Margin="20"
+            Padding="20"
+            CornerRadius="16"
+            BorderThickness="1"
+            BorderBrush="{DynamicResource TickLineBrush}"
+            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+            BoxShadow="0 16 48 0 #88000000, 0 0 1 0 #33FFFFFF inset"
+            Opacity="0.96">
+      <Border.Effect>
+        <DropShadowEffect Color="#000000" OffsetX="0" OffsetY="6" BlurRadius="20" Opacity="0.25"/>
+      </Border.Effect>
+
+      <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" ColumnDefinitions="*">
+        <Border Grid.Row="0"
+                Width="100" Height="100"
+                CornerRadius="20"
+                Background="{DynamicResource TrackBackgroundAltBrush}"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource TickLineBrush}"
+                HorizontalAlignment="Center"
+                BoxShadow="0 6 18 0 #44000000">
+          <Image Width="76" Height="76"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center"
+                 Source="/Assets/open-utau.ico"
+                 Stretch="Uniform"/>
+        </Border>
+
+        <Image x:Name="LogoTypeDark"
+               Grid.Row="1"
+               Height="22"
+               Margin="0,16,0,0"
+               VerticalAlignment="Top"
+               HorizontalAlignment="Center"
+               Source="/Assets/logotype-w.png"/>
+        <Image x:Name="LogoTypeLight"
+               Grid.Row="1"
+               Height="22"
+               Margin="0,16,0,0"
+               VerticalAlignment="Top"
+               HorizontalAlignment="Center"
+               Source="/Assets/logotype.png"/>
+
+        <TextBlock Grid.Row="2"
+                   Margin="0,12,0,0"
+                   HorizontalAlignment="Center"
+                   FontFamily="Bahnschrift, Segoe UI Variable Display, Segoe UI"
+                   FontSize="12"
+                   FontWeight="Medium"
+                   Opacity="0.85"
+                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                   Text="Initializing singers, renderers, and audio engine..."/>
+
+        <StackPanel Grid.Row="4"
+                    VerticalAlignment="Bottom"
+                    Spacing="12"
+                    Margin="0,0,0,2">
+          <Border CornerRadius="5"
+                  Background="{DynamicResource TrackBackgroundAltBrush}"
+                  BorderThickness="1"
+                  BorderBrush="{DynamicResource TickLineBrushLow}">
+            <ProgressBar Height="6"
+                         CornerRadius="4"
+                         IsIndeterminate="True"
+                         Foreground="{DynamicResource SystemAccentBrush}"
+                         Background="Transparent"
+                         BorderThickness="0">
+              <ProgressBar.Effect>
+                <DropShadowEffect Color="{DynamicResource SystemAccentColor}"
+                                  OffsetX="0"
+                                  OffsetY="0"
+                                  BlurRadius="10"
+                                  Opacity="0.5"/>
+              </ProgressBar.Effect>
+            </ProgressBar>
+          </Border>
+
+          <TextBlock HorizontalAlignment="Center"
+                     x:Name="StatusText"
+                     FontFamily="Bahnschrift, Segoe UI Variable Text, Segoe UI"
+                     FontSize="10.5"
+                     FontWeight="Normal"
+                     Opacity="0.65"
+                     Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                     Text="Starting up..."/>
+        </StackPanel>
+      </Grid>
+    </Border>
   </Grid>
 </Window>

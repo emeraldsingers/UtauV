@@ -2,12 +2,15 @@
 using System.Reactive.Disposables;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
+using Avalonia.Threading;
 using OpenUtau.App;
 using OpenUtau.Classic;
 using OpenUtau.Core;
+using OpenUtau.Core.Util;
 using ReactiveUI;
 using Serilog;
 
@@ -38,8 +41,19 @@ namespace OpenUtau.App.Views {
             if (Screens.Primary == null && Screens.ScreenCount == 0) {
                 return;
             }
-
+            CenterOnPrimaryScreen();
             Start();
+        }
+
+        private void CenterOnPrimaryScreen() {
+            var screen = Screens.Primary;
+            if (screen == null) {
+                return;
+            }
+            var area = screen.WorkingArea;
+            var x = area.X + (area.Width - (int)Width) / 2;
+            var y = area.Y + (area.Height - (int)Height) / 2;
+            Position = new PixelPoint(Math.Max(0, x), Math.Max(0, y));
         }
 
         private void Start() {
@@ -47,11 +61,15 @@ namespace OpenUtau.App.Views {
             var mainScheduler = TaskScheduler.FromCurrentSynchronizationContext();
             Task.Run(() => {
                 Log.Information("Initializing OpenUtau.");
+                SetStatus("Loading tools...");
                 ToolsManager.Inst.Initialize();
+                SetStatus("Loading singers...");
                 SingerManager.Inst.Initialize();
+                SetStatus("Initializing project manager...");
                 DocManager.Inst.Initialize(mainThread, mainScheduler);
                 DocManager.Inst.PostOnUIThread = action => Avalonia.Threading.Dispatcher.UIThread.Post(action);
                 Log.Information("Initialized OpenUtau.");
+                SetStatus("Initializing audio engine...");
                 InitAudio();
             }).ContinueWith(t => {
                 if (t.IsFaulted) {
@@ -60,6 +78,7 @@ namespace OpenUtau.App.Views {
                     return;
                 }
                 if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                    SetStatus("Opening main window...");
                     var mainWindow = new MainWindow();
                     mainWindow.Show();
                     desktop.MainWindow = mainWindow;
@@ -68,6 +87,12 @@ namespace OpenUtau.App.Views {
                     Close();
                 }
             }, CancellationToken.None, TaskContinuationOptions.None, mainScheduler);
+        }
+
+        private void SetStatus(string text) {
+            Dispatcher.UIThread.Post(() => {
+                StatusText.Text = text;
+            });
         }
 
         private static void InitAudio() {
