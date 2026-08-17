@@ -215,9 +215,9 @@ jobs:
             OpenUtau-linux-${{ matrix.arch.linuxarch }}.AppImage
             OpenUtau-${{ matrix.arch.name }}.*
           body: |
-            See [Getting Started](https://github.com/stakira/OpenUtau/wiki/Getting-Started) for how to use.
+            See [Getting Started](https://github.com/emeraldsingers/UtauV/wiki/Getting-Started) for how to use.
 
-            If you encountered issues, see [FAQ](https://github.com/stakira/OpenUtau/wiki/FAQ)
+            If you encountered issues, see [FAQ](https://github.com/emeraldsingers/UtauV/wiki/FAQ)
 
             ## macOS says "This app is damaged"
             Open a terminal and run `xattr -rc /Applications/OpenUtau.app`. Try opening OpenUtau again.

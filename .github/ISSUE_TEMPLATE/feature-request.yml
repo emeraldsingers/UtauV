@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Vague help requests are not efficiently handled here. Help requests are better handled in the Discord server or QQ group.
-        Before posting your idea, please read [Getting-Started](https://github.com/stakira/OpenUtau/wiki/Getting-Started) and [FAQ](https://github.com/stakira/OpenUtau/wiki/FAQ) and other wiki pages to see if it is already implemented, and search within GitHub issues to see if it has been posted.
+        Before posting your idea, please read [Getting-Started](https://github.com/emeraldsingers/UtauV/wiki/Getting-Started) and [FAQ](https://github.com/emeraldsingers/UtauV/wiki/FAQ) and other wiki pages to see if it is already implemented, and search within GitHub issues to see if it has been posted.
   - type: checkboxes
     attributes:
       label: Acknowledgement

@@ -3,23 +3,24 @@
 
 OpenUtau is a free, open-source editor made for the UTAU community.
 
-[![Build](https://img.shields.io/github/actions/workflow/status/stakira/OpenUtau/build.yml?style=for-the-badge)](https://github.com/stakira/OpenUtau/actions/workflows/build.yml)
+[![Build](https://img.shields.io/github/actions/workflow/status/emeraldsingers/UtauV/build.yml?style=for-the-badge)](https://github.com/emeraldsingers/UtauV/actions/workflows/build.yml)
 [![Discord](https://img.shields.io/discord/551606189386104834?style=for-the-badge&label=discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/UfpMnqMmEM)
 [![QQ Qroup](https://img.shields.io/badge/QQ-485658015-blue?style=for-the-badge)](https://qm.qq.com/cgi-bin/qm/qr?k=8EtEpehB1a-nfTNAnngTVqX3o9xoIxmT&jump_from=webapi)
 [![Trello](https://img.shields.io/badge/trello-go-blue?style=for-the-badge&logo=trello)](https://trello.com/b/93ANoCIV/openutau)
 
 ## Getting started
 
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=windows-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-win-x64.zip)</br>
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=windows-x86&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-win-x86.zip)</br>
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=macos-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-osx-x64.dmg)</br>
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=linux-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-linux-x64.zip)
+[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=windows-x64-directml&labelColor=FF347C&color=4ea6ea)](https://github.com/emeraldsingers/UtauV/releases/latest/download/OpenUtau-win-x64.zip)</br>
+[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=windows-x64-cuda&labelColor=FF347C&color=4ea6ea)](https://github.com/emeraldsingers/UtauV/releases/latest/download/OpenUtau-win-x64-cuda.zip)</br>
+[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=windows-x86&labelColor=FF347C&color=4ea6ea)](https://github.com/emeraldsingers/UtauV/releases/latest/download/OpenUtau-win-x86.zip)</br>
+[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=macos-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/emeraldsingers/UtauV/releases/latest/download/OpenUtau-osx-x64.dmg)</br>
+[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=linux-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/emeraldsingers/UtauV/releases/latest/download/OpenUtau-linux-x64.zip)
 
 It is **strongly recommended** that you read these Github wiki pages before using the software.
-- [Getting-Started](https://github.com/stakira/OpenUtau/wiki/Getting-Started)
-- [Resamplers](https://github.com/stakira/OpenUtau/wiki/Resamplers-and-Wavtools)
-- [Phonemizers](https://github.com/stakira/OpenUtau/wiki/Phonemizers)
-- [FAQ](https://github.com/stakira/OpenUtau/wiki/FAQ)
+- [Getting-Started](https://github.com/openutau/OpenUtau/wiki/Getting-Started)
+- [Resamplers](https://github.com/openutau/OpenUtau/wiki/Resamplers-and-Wavtools)
+- [Phonemizers](https://github.com/openutau/OpenUtau/wiki/Phonemizers)
+- [FAQ](https://github.com/openutau/OpenUtau/wiki/FAQ)
 
 - [中文使用说明](https://opensynth.miraheze.org/wiki/OpenUTAU/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
 
@@ -58,7 +59,7 @@ Pre-rendering and built-in resamplers let you quickly preview your work.
 
 ![Playback](Misc/GIFs/playback.gif)
 
-See the [Getting-Started Wiki page](https://github.com/stakira/OpenUtau/wiki/Getting-Started) for more!
+See the [Getting-Started Wiki page](https://github.com/openutau/OpenUtau/wiki/Getting-Started) for more!
 
 ## All features
 - Modern user experience.
@@ -75,7 +76,7 @@ See the [Getting-Started Wiki page](https://github.com/stakira/OpenUtau/wiki/Get
   - Unlike UTAU, there is no need to change your system locale to use OpenUtau.
 - Smooth preview/rendering experience.
   - Pre-rendering allows OpenUtau to render vocals before playback, saving time during editing and tuning.
-- Supports ENUNU AI singers. See the [ENUNU wiki page](https://github.com/stakira/OpenUtau/wiki/ENUNU-NNSVS-Support) for more info.
+- Supports ENUNU AI singers. See the [ENUNU wiki page](https://github.com/openutau/OpenUtau/wiki/ENUNU-NNSVS-Support) for more info.
 - Easy-to-use plugin system.
 - Versatile resampling engine interface.
   - Compatible with most UTAU resamplers.

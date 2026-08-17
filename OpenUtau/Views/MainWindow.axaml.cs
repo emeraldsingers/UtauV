@@ -790,7 +790,7 @@ namespace OpenUtau.App.Views {
 
         void OnMenuReportIssue(object sender, RoutedEventArgs args) {
             try {
-                OS.OpenWeb("https://github.com/stakira/OpenUtau/issues");
+                OS.OpenWeb("https://github.com/emeraldsingers/UtauV/issues");
             } catch (Exception e) {
                 DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(e));
             }
@@ -798,7 +798,7 @@ namespace OpenUtau.App.Views {
 
         void OnMenuWiki(object sender, RoutedEventArgs args) {
             try {
-                OS.OpenWeb("https://github.com/stakira/OpenUtau/wiki/Getting-Started");
+                OS.OpenWeb("https://github.com/emeraldsingers/UtauV/wiki/Getting-Started");
             } catch (Exception e) {
                 DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(e));
             }
