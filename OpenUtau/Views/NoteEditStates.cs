@@ -174,7 +174,6 @@ namespace OpenUtau.App.Views {
             var notesVm = vm.NotesViewModel;
             xOffset = point.X - notesVm.TickToneToPoint(note.position, 0).X;
             if (playTone) {
-                Serilog.Log.Information($"NoteMoveEditState: Begin with playTone={playTone}, tone={note.tone}");
                 if (PlaybackManager.Inst.PlayingMaster) {
                     PlaybackManager.Inst.StopPlayback();
                 }
@@ -230,9 +229,7 @@ namespace OpenUtau.App.Views {
 
             if (playTone && deltaTone != 0) {
                 int newTone = note.tone + deltaTone;
-                Serilog.Log.Information($"NoteMoveEditState: Update deltaTone={deltaTone}, newTone={newTone}, activeTone={activeTone}");
                 if (activeTone != newTone) {
-                    Serilog.Log.Information($"NoteMoveEditState: Changing tone from {activeTone} to {newTone}");
                     PlaybackManager.Inst.EndTone(MusicMath.ToneToFreq(activeTone));
                     PlaybackManager.Inst.PlayTone(MusicMath.ToneToFreq(newTone));
                     activeTone = newTone;
