@@ -302,7 +302,7 @@ namespace OpenUtau.App.Views {
                 return;
             }
             int tone = notesVm.PointToTone(point);
-            if (activeTone != tone) {
+            if (playTone && activeTone != tone) {
                 // Tone has changed
                 PlaybackManager.Inst.EndTone(MusicMath.ToneToFreq(activeTone));
                 PlaybackManager.Inst.PlayTone(MusicMath.ToneToFreq(tone));
@@ -341,7 +341,9 @@ namespace OpenUtau.App.Views {
         }
         public override void End(IPointer pointer, Point point) {
             base.End(pointer, point);
-            PlaybackManager.Inst.EndTone(MusicMath.ToneToFreq(activeTone));
+            if (playTone) {
+                PlaybackManager.Inst.EndTone(MusicMath.ToneToFreq(activeTone));
+            }
         }
     }
 
