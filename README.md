@@ -5,6 +5,7 @@ OpenUtau is a free, open-source editor made for the UTAU community.
 
 [![Build](https://img.shields.io/github/actions/workflow/status/emeraldsingers/UtauV/build.yml?style=for-the-badge)](https://github.com/emeraldsingers/UtauV/actions/workflows/build.yml)
 [![Discord](https://img.shields.io/discord/551606189386104834?style=for-the-badge&label=discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/UfpMnqMmEM)
+[![Discord UtauV](https://img.shields.io/discord/1538618329948749955?style=for-the-badge&label=UtauV&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/n3tTNa6JVT)
 [![QQ Qroup](https://img.shields.io/badge/QQ-485658015-blue?style=for-the-badge)](https://qm.qq.com/cgi-bin/qm/qr?k=8EtEpehB1a-nfTNAnngTVqX3o9xoIxmT&jump_from=webapi)
 [![Trello](https://img.shields.io/badge/trello-go-blue?style=for-the-badge&logo=trello)](https://trello.com/b/93ANoCIV/openutau)
 
