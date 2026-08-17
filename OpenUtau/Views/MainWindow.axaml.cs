@@ -214,31 +214,34 @@ namespace OpenUtau.App.Views {
             var dialog = new TypeInDialog {
                 Title = ThemeManager.GetString("menu.project.transposetracks")
             };
-            dialog.SetNumbersOnly(true);
-            dialog.SetText("0");
+            dialog.SetWatermark("0");
             dialog.onFinish = s => {
                 try {
-                    if (int.TryParse(s, out int semitones)) {
-                        var tracks = tracksViewModel.SelectedTracks.Count > 0
-                            ? tracksViewModel.SelectedTracks.ToArray()
-                            : project.tracks.ToArray();
+                    if (string.IsNullOrWhiteSpace(s)) {
+                        s = "0";
+                    }
+                    if (!int.TryParse(s, out int semitones)) {
+                        throw new Exception("Only numbers are allowed for input");
+                    }
+                    var tracks = tracksViewModel.SelectedTracks.Count > 0
+                        ? tracksViewModel.SelectedTracks.ToArray()
+                        : project.tracks.ToArray();
 
-                        if (tracks.Length == 0) {
-                            return;
-                        }
+                    if (tracks.Length == 0) {
+                        return;
+                    }
 
-                        DocManager.Inst.StartUndoGroup("command.batch.note");
-                        foreach (var track in tracks) {
-                            var parts = project.parts.Where(p => p.trackNo == track.TrackNo && p is UVoicePart).Cast<UVoicePart>().ToArray();
-                            foreach (var part in parts) {
-                                var notes = part.notes.ToList();
-                                if (notes.Count > 0) {
-                                    DocManager.Inst.ExecuteCmd(new MoveNoteCommand(part, notes, 0, semitones));
-                                }
+                    DocManager.Inst.StartUndoGroup("command.batch.note");
+                    foreach (var track in tracks) {
+                        var parts = project.parts.Where(p => p.trackNo == track.TrackNo && p is UVoicePart).Cast<UVoicePart>().ToArray();
+                        foreach (var part in parts) {
+                            var notes = part.notes.ToList();
+                            if (notes.Count > 0) {
+                                DocManager.Inst.ExecuteCmd(new MoveNoteCommand(part, notes, 0, semitones));
                             }
                         }
-                        DocManager.Inst.EndUndoGroup();
                     }
+                    DocManager.Inst.EndUndoGroup();
                 } catch (Exception ex) {
                     Log.Error(ex, "Failed to transpose tracks");
                     MessageBox.ShowError(this, new MessageCustomizableException("Failed to transpose tracks", "Failed to transpose tracks", ex));
