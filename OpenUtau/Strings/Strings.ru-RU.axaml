@@ -417,6 +417,7 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="prefs.appearance.buttonradius">Скругление кнопок</system:String>
   <system:String x:Key="prefs.appearance.noteradius">Скругление нот</system:String>
   <system:String x:Key="prefs.appearance.noteopacity">Прозрачность нот</system:String>
+  <system:String x:Key="prefs.appearance.notehighlight">Толщина подсветки нот</system:String>
   <system:String x:Key="prefs.appearance.uiradius">Скругление интерфейса</system:String>
   <system:String x:Key="prefs.appearance.theme.dark">Темная</system:String>
   <system:String x:Key="prefs.appearance.theme.light">Светлая</system:String>

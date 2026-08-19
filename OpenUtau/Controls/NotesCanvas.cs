@@ -287,6 +287,10 @@ namespace OpenUtau.App.Controls {
             brush = ApplyNoteOpacity(brush);
             double radius = GetNoteCornerRadius(size);
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
+            if (!selectedNotes.Contains(note)) {
+                var highlightPen = new Pen(ThemeManager.AccentBrush2, Preferences.Default.NoteHighlightThickness);
+                context.DrawRectangle(null, highlightPen, new Rect(leftTop, rightBottom), radius, radius);
+            }
             if (TrackHeight < 10 || note.lyric.Length == 0) {
                 return;
             }

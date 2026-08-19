@@ -341,6 +341,18 @@
                     TickPlacement="BottomRight" TickFrequency="10" IsSnapToTickEnabled="false"/>
           </Grid>
           <Grid ColumnDefinitions="Auto,8,28,8,*" Margin="0,5,0,0">
+            <TextBlock Grid.Column="0" Text="{DynamicResource prefs.appearance.notehighlight}"/>
+            <TextBlock Grid.Column="2">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="{}{0:#0.0}">
+                  <Binding Path="NoteHighlightThickness"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <Slider Grid.Column="4" Classes="fader" Value="{Binding NoteHighlightThickness}" Minimum="0.5" Maximum="6"
+                    TickPlacement="BottomRight" TickFrequency="0.5" IsSnapToTickEnabled="false"/>
+          </Grid>
+          <Grid ColumnDefinitions="Auto,8,28,8,*" Margin="0,5,0,0">
             <TextBlock Grid.Column="0" Text="{DynamicResource prefs.appearance.uiradius}"/>
             <TextBlock Grid.Column="2">
               <TextBlock.Text>

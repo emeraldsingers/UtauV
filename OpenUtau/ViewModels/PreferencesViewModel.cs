@@ -109,6 +109,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public double ButtonCornerRadius { get; set; }
         [Reactive] public double NoteCornerRadius { get; set; }
         [Reactive] public double NoteOpacity { get; set; }
+        [Reactive] public double NoteHighlightThickness { get; set; }
         [Reactive] public double UiCornerRadius { get; set; }
         [Reactive] public int DegreeStyle { get; set; }
         [Reactive] public bool UseTrackColor { get; set; }
@@ -237,6 +238,7 @@ namespace OpenUtau.App.ViewModels {
             ButtonCornerRadius = Preferences.Default.ButtonCornerRadius;
             NoteCornerRadius = Preferences.Default.NoteCornerRadius;
             NoteOpacity = Preferences.Default.NoteOpacity * 100;
+            NoteHighlightThickness = Math.Max(0.5, Preferences.Default.NoteHighlightThickness);
             UiCornerRadius = Preferences.Default.UiCornerRadius;
             DegreeStyle = Preferences.Default.DegreeStyle;
             UseTrackColor = Preferences.Default.UseTrackColor;
@@ -395,6 +397,12 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.NoteOpacity)
                 .Subscribe(opacity => {
                     Preferences.Default.NoteOpacity = Math.Clamp(opacity / 100, 0, 1);
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                });
+            this.WhenAnyValue(vm => vm.NoteHighlightThickness)
+                .Subscribe(thickness => {
+                    Preferences.Default.NoteHighlightThickness = Math.Clamp(thickness, 0.5, 6);
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 });
