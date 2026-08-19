@@ -77,23 +77,20 @@ namespace OpenUtau.Core.Neutrino {
         bool existNeutrinoClient = false;
         int sampleRate = 48000;
 
+        NeutrinoVersion Version => NeutrinoUtils.DetectVersion(this.singer.singerVersion);
+
         public override void SetUp() {
             lang = "JPN";//TODO: use singer.language
-            string confPath = "japanese.utf_8.conf";
-            tablePath = "japanese.utf_8.table";
-            string basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO");
-            if (!Directory.Exists(basePath)) {
-                if (this.singer.singerVersion.StartsWith("v2.7")) {
-                    basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v27");
-                } else if (this.singer.singerVersion.StartsWith("v3") && !this.singer.singerVersion.StartsWith("v3.1")) {
-                    basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v3");
-                }
+            tablePath = NeutrinoUtils.TableFile;
+            if (!NeutrinoUtils.TryResolveBasePath(this.singer.singerVersion, out string basePath, out string error)) {
+                Log.Error(error);
+                return;
             }
             //Load Dictionary
             try {
                 phoneDict.Clear();
-                LoadDict(Path.Join(basePath, "settings", "dic", confPath), this.singer.TextFileEncoding);
-                LoadDict(Path.Join(basePath, "settings", "dic", tablePath), this.singer.TextFileEncoding);
+                LoadDict(NeutrinoUtils.DicPath(basePath, NeutrinoUtils.ConfFile), this.singer.TextFileEncoding);
+                LoadDict(NeutrinoUtils.DicPath(basePath, NeutrinoUtils.TableFile), this.singer.TextFileEncoding);
                 // Lyrics often handled in OpenUtau
                 phoneDict.Add("R", new string[] { "pau" });
                 phoneDict.Add("-", new string[] { "pau" });
@@ -104,22 +101,19 @@ namespace OpenUtau.Core.Neutrino {
                 Log.Error(e, $"failed to load dictionary from {tablePath}");
                 return;
             }
-            if (OS.IsWindows()) {
-                NeutrinoExe = Path.Join(basePath, "bin", "NEUTRINO.exe");
-                NeutrinoClientExe = Path.Join(basePath, "bin", "neutrino_client.exe");
-                NeutrinoServerExe = Path.Join(basePath, "bin", "neutrino_server.exe");
-                NsfExe = Path.Join(basePath, "bin", "NSF.exe");
-                WorldExe = Path.Join(basePath, "bin", "WORLD.exe");
-                VocoderClientExe = Path.Join(basePath, "bin", "vocoder_client.exe");
-                VocoderServerExe = Path.Join(basePath, "bin", "vocoder_server.exe");
-            } else if (OS.IsMacOS() || OS.IsLinux()) {
-                NeutrinoExe = Path.Join(basePath, "bin", "NEUTRINO");
-                NsfExe = Path.Join(basePath, "bin", "NSF");
-                WorldExe = Path.Join(basePath, "bin", "WORLD");
-            } else {
-                throw new NotSupportedException("Platform not supported.");
-            }
-            existNeutrinoClient = File.Exists(NeutrinoClientExe);
+            Log.Debug("Loaded dictionary successfully.");
+            var paths = NeutrinoPaths.Create(basePath);
+            NeutrinoExe = paths.Neutrino;
+            NeutrinoClientExe = paths.NeutrinoClient;
+            NeutrinoServerExe = paths.NeutrinoServer;
+            NsfExe = paths.Nsf;
+            WorldExe = paths.World;
+            VocoderClientExe = paths.VocoderClient;
+            VocoderServerExe = paths.VocoderServer;
+            existNeutrinoClient = paths.HasClient;
+            Log.Debug($"NeutrinoExe: {NeutrinoExe}");
+            Log.Debug(existNeutrinoClient ? $"No NeutrinoClientExe" : $"NeutrinoClientExe: {NeutrinoClientExe}");
+            Log.Debug(String.IsNullOrEmpty(WorldExe) ? $"No WorldExe" : $"WorldExe: {WorldExe}");
             NeutrinoServerLauncher.EnsureStarted(NeutrinoServerExe);
             NeutrinoServerLauncher.EnsureStarted(VocoderServerExe, 23456);
         }
@@ -133,7 +127,7 @@ namespace OpenUtau.Core.Neutrino {
         }
 
         protected override List<monoLabel> CustomMonoLabel(List<monoLabel> monoLabels) {
-            if (this.singer.singerVersion.StartsWith("v2.7")) {
+            if (Version == NeutrinoVersion.V27) {
                 for (int i = 0; i < monoLabels.Count; i++) {
                     var label = monoLabels[i];
                     label.startMs = Math.Round(label.startMs / 10.0) * 10.0;
@@ -201,7 +195,7 @@ namespace OpenUtau.Core.Neutrino {
                     string bapPath = Path.Join(tmpPath, $"ne-{phrase.hash}.bap");
                     fullScorePath = Path.Join(tmpPath, $"ne-{hash}_full_score.lab");
                     monoTimingPath = Path.Join(tmpPath, $"ne-{hash}_mono_timing.lab");
-                    string modelDir = this.singer.Location + "/";
+                    string modelDir = NeutrinoUtils.ModelDir(this.singer);
                     int toneShift = phrase.phones[0] != null ? phrase.phones[0].toneShift : 0;
                     int numThreads = Preferences.Default.NumRenderThreads;
                     if (!File.Exists(fullScorePath) && !File.Exists(monoTimingPath)) {
@@ -213,7 +207,7 @@ namespace OpenUtau.Core.Neutrino {
                         eng = flag1.Item1;
                     }
                     string ArgParam = string.Empty;
-                    if (this.singer.singerVersion.StartsWith("v2.7")) {
+                    if (Version == NeutrinoVersion.V27) {
                         if (eng.Equals(NeutrinoRenderType.NSF.ToString())) {
                             var flag2 = phrase.phones[0].flags.FirstOrDefault(f => f.Item3.Equals(NMOD));
                             string nsf = "vs";
@@ -336,7 +330,7 @@ namespace OpenUtau.Core.Neutrino {
                                 }
                             }
                         }
-                    } else if (this.singer.singerVersion.StartsWith("v3") && !this.singer.singerVersion.StartsWith("v3.1")) {
+                    } else if (Version == NeutrinoVersion.V3) {
                         // F0ファイル生成
                         if (!File.Exists(f0Path)) {
                             ArgParam = $"\"{fullScorePath}\" \"{monoTimingPath}\" \"{f0Path}\" \"{melspecPath}\" \"{wavPath}\" \"{modelDir}\" --skip-timing --skip-melspec --skip-wav -k {toneShift} -m -t";
@@ -499,7 +493,7 @@ namespace OpenUtau.Core.Neutrino {
                 int totalFrames = f0.Length;
                 int headFrames = 0;
                 int tailFrames = 0;
-                if (this.singer.singerVersion.StartsWith("v3") && !this.singer.singerVersion.StartsWith("v3.1")) {
+                if (Version == NeutrinoVersion.V3) {
                     headFrames = (int)Math.Round(headMs / 1000.0 * 99.84);
                     tailFrames = (int)Math.Round(tailMs / 1000.0 * 99.84);
                 } else {
@@ -523,7 +517,7 @@ namespace OpenUtau.Core.Neutrino {
                 var layout = Layout(phrase);
                 var t = layout.positionMs - layout.leadingMs;
                 for (int i = 0; i < result.tones.Length; i++) {
-                    if (this.singer.singerVersion.StartsWith("v3") && !this.singer.singerVersion.StartsWith("v3.1")) {
+                    if (Version == NeutrinoVersion.V3) {
                         t += 10;
                     } else {
                         t += framePeriod;

@@ -63,11 +63,13 @@ namespace OpenUtau.Core.Neutrino {
             if (!Found) {
                 return;
             }
+            errors.Clear();
             try {
                 voicebank.Reload();
                 Load();
                 loaded = true;
             } catch (Exception e) {
+                errors.Add($"Failed to load {voicebank.File}: {e.Message}");
                 Log.Error(e, $"Failed to load {voicebank.File}");
             }
         }
@@ -77,10 +79,24 @@ namespace OpenUtau.Core.Neutrino {
             phonemes.Clear();
             table.Clear();
             otos.Clear();
+            otoMap.Clear();
             subbanks.Clear();
 
+            LoadInfo();
+            LoadSubbanks();
+            LoadPhonemes();
+            BuildOtos();
+            LoadAvatar();
+        }
+
+        void LoadInfo() {
+            singerVersion = string.Empty;
             string infoPath = Path.Join(Location, "info.toml");
-            if (File.Exists(infoPath)) {
+            if (!File.Exists(infoPath)) {
+                errors.Add($"info.toml not found at {infoPath}");
+                return;
+            }
+            try {
                 var info = TomlData.Load(infoPath);
                 info.TryGetValue("acoustic", "version", out object? version);
                 if (version != null) {
@@ -90,8 +106,13 @@ namespace OpenUtau.Core.Neutrino {
                 if (version_ != null) {
                     singerVersion = version_.ToString() ?? string.Empty;
                 }
+            } catch (Exception e) {
+                errors.Add($"Failed to load info.toml: {e.Message}");
+                Log.Error(e, $"Failed to load info.toml for {Name}");
             }
+        }
 
+        void LoadSubbanks() {
             if (voicebank.Subbanks == null || voicebank.Subbanks.Count == 0 ||
                 voicebank.Subbanks.Count == 1 && string.IsNullOrEmpty(voicebank.Subbanks[0].Color)) {
                 subbanks.Add(new USubbank(new Subbank() {
@@ -103,17 +124,16 @@ namespace OpenUtau.Core.Neutrino {
                 subbanks.AddRange(voicebank.Subbanks
                     .Select(subbank => new USubbank(subbank)));
             }
+        }
 
+        void LoadPhonemes() {
+            if (!NeutrinoUtils.TryResolveBasePath(singerVersion, out var basePath, out var error)) {
+                errors.Add(error);
+                Log.Error($"{error} for {Name}");
+                return;
+            }
+            var tablePath = NeutrinoUtils.DicPath(basePath, NeutrinoUtils.TableFile);
             try {
-                string basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO");
-                if (!Directory.Exists(basePath)) {
-                    if (singerVersion.StartsWith("v2.7")) {
-                        basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v27");
-                    } else if (singerVersion.StartsWith("v3") && !singerVersion.StartsWith("v3.1")) {
-                        basePath = Path.Join(PathManager.Inst.DependencyPath, "NEUTRINO_v3");
-                    }
-                }
-                var tablePath = Path.Join(basePath, "settings", "dic", "japanese.utf_8.table");
                 foreach (var line in File.ReadAllLines(tablePath)) {
                     if (line.Contains("#")) {
                         continue;
@@ -124,11 +144,15 @@ namespace OpenUtau.Core.Neutrino {
                         phonemes.Add(phoneme);
                     }
                 }
-                var confPath = Path.Join(basePath, "settings", "dic", "japanese.utf_8.conf");
+            } catch (Exception e) {
+                errors.Add($"Failed to load {NeutrinoUtils.TableFile}: {e.Message}");
+                Log.Error(e, $"Failed to load {tablePath} for {Name}");
+            }
+            var confPath = NeutrinoUtils.DicPath(basePath, NeutrinoUtils.ConfFile);
+            try {
                 foreach (var line in File.ReadAllLines(confPath)) {
                     if (line.Contains('=')) {
                         var lineSplit = line.Split("=");
-                        var key = lineSplit[0];
                         var value = lineSplit[1];
                         var phonemes_ = value.Trim(new char[] { '\"' }).Split(",");
                         foreach (var phoneme in phonemes_) {
@@ -136,25 +160,26 @@ namespace OpenUtau.Core.Neutrino {
                         }
                     }
                 }
-                phonemes.Add("pau");
-                phonemes.Add("br");
             } catch (Exception e) {
-                Log.Error(e, $"Failed to load table for {Name}");
+                errors.Add($"Failed to load {NeutrinoUtils.ConfFile}: {e.Message}");
+                Log.Error(e, $"Failed to load {confPath} for {Name}");
             }
+            phonemes.Add("pau");
+            phonemes.Add("br");
+        }
 
-            var dummyOtoSet = new UOtoSet(new OtoSet(), Location);
+        void BuildOtos() {
             foreach (var phone in phonemes) {
-                foreach (var subbank in subbanks) {
-                    var uOto = UOto.OfDummy(phone);
-                    if (!otoMap.ContainsKey(uOto.Alias)) {
-                        otos.Add(uOto);
-                        otoMap.Add(uOto.Alias, uOto);
-                    } else {
-                        //Errors.Add($"oto conflict {Otos[oto.Alias].Set}/{oto.Alias} and {otoSet.Name}/{oto.Alias}");
-                    }
+                var uOto = UOto.OfDummy(phone);
+                if (otoMap.ContainsKey(uOto.Alias)) {
+                    continue;
                 }
+                otos.Add(uOto);
+                otoMap.Add(uOto.Alias, uOto);
             }
+        }
 
+        void LoadAvatar() {
             if (Avatar != null && File.Exists(Avatar)) {
                 try {
                     using (var stream = new FileStream(Avatar, FileMode.Open, FileAccess.Read)) {
