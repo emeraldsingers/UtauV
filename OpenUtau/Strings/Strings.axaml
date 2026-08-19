@@ -913,4 +913,27 @@ General
   <system:String x:Key="mixfx.library.delete">Delete</system:String>
   <system:String x:Key="mixfx.library.default">Default</system:String>
   <system:String x:Key="tracks.mixfx">Track Polish...</system:String>
+  <system:String x:Key="welcome.caption">Import settings</system:String>
+  <system:String x:Key="welcome.title">Import settings</system:String>
+  <system:String x:Key="welcome.subtitle">Bring over preferences, singers, or resamplers from an existing OpenUtau installation.</system:String>
+  <system:String x:Key="welcome.theme">Theme</system:String>
+  <system:String x:Key="welcome.theme.description">Choose the look of this OpenUtau instance.</system:String>
+  <system:String x:Key="welcome.theme.done">Theme updated.</system:String>
+  <system:String x:Key="welcome.importprefs">Import prefs.json</system:String>
+  <system:String x:Key="welcome.importprefs.description">Use preferences from another OpenUtau installation.</system:String>
+  <system:String x:Key="welcome.importprefs.done">Preferences imported.</system:String>
+  <system:String x:Key="welcome.importprefs.failed">Failed to import preferences.</system:String>
+  <system:String x:Key="welcome.importsingers">Import singers</system:String>
+  <system:String x:Key="welcome.importsingers.description">Add an existing singers folder to Additional Singers Path.</system:String>
+  <system:String x:Key="welcome.importsingers.done">Additional singers path updated.</system:String>
+  <system:String x:Key="welcome.importsingers.failed">Failed to import singers path.</system:String>
+  <system:String x:Key="welcome.importresamplers">Import resamplers</system:String>
+  <system:String x:Key="welcome.importresamplers.description">Add an existing resamplers folder to Additional Resamplers Path.</system:String>
+  <system:String x:Key="welcome.importresamplers.done">Additional resamplers path updated.</system:String>
+  <system:String x:Key="welcome.importresamplers.failed">Failed to import resamplers path.</system:String>
+  <system:String x:Key="welcome.import">Import</system:String>
+  <system:String x:Key="welcome.choosefolder">Choose folder</system:String>
+  <system:String x:Key="welcome.skip">Skip</system:String>
+  <system:String x:Key="welcome.done">Done</system:String>
+  <system:String x:Key="welcome.ready">You can skip this and configure everything later in Preferences.</system:String>
 </ResourceDictionary>

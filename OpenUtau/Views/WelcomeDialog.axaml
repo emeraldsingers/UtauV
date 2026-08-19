@@ -1,0 +1,108 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="430"
+        x:Class="OpenUtau.App.Views.WelcomeDialog"
+        Icon="/Assets/open-utau.ico"
+        Title="{DynamicResource welcome.caption}"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Width="620" Height="430">
+  <Window.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.description">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Opacity" Value="0.82"/>
+      <Setter Property="LineHeight" Value="18"/>
+    </Style>
+    <Style Selector="TextBlock.path">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Opacity" Value="0.72"/>
+    </Style>
+    <Style Selector="TextBlock.heading">
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button">
+      <Setter Property="MinWidth" Value="94"/>
+      <Setter Property="Margin" Value="0"/>
+    </Style>
+    <Style Selector="Border.option">
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource TickLineBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="12"/>
+    </Style>
+  </Window.Styles>
+
+  <Grid Margin="{Binding $parent.WindowDecorationMargin}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="18">
+      <Grid ColumnDefinitions="Auto,14,*">
+        <Image Width="48" Height="48" Source="/Assets/open-utau.ico" Stretch="Uniform"/>
+        <StackPanel Grid.Column="2" Spacing="4">
+          <TextBlock FontSize="20" FontWeight="SemiBold" Text="{DynamicResource welcome.title}"/>
+          <TextBlock Classes="description" Text="{DynamicResource welcome.subtitle}"/>
+        </StackPanel>
+      </Grid>
+
+      <StackPanel Grid.Row="1" Margin="0,18,0,0" Spacing="10">
+        <Border Classes="option">
+          <Grid ColumnDefinitions="*,12,Auto" RowDefinitions="Auto,Auto">
+            <TextBlock Classes="heading" Text="{DynamicResource welcome.importprefs}"/>
+            <TextBlock Grid.Row="1" Margin="0,5,0,0" Classes="path" x:Name="PrefsPathText"
+                       Text="{DynamicResource welcome.importprefs.description}"/>
+            <Button Grid.Column="2" Grid.RowSpan="2" VerticalAlignment="Center"
+                    Content="{DynamicResource welcome.import}" Click="ImportPrefs"/>
+          </Grid>
+        </Border>
+
+        <Grid ColumnDefinitions="*,10,*">
+          <Border Classes="option">
+            <Grid RowDefinitions="Auto,Auto,Auto">
+              <TextBlock Classes="heading" Text="{DynamicResource welcome.importsingers}"/>
+              <TextBlock Grid.Row="1" Margin="0,5,0,8" Classes="path" x:Name="SingersPathText"
+                         Text="{DynamicResource welcome.importsingers.description}"/>
+              <Button Grid.Row="2" HorizontalAlignment="Stretch"
+                      Content="{DynamicResource welcome.choosefolder}" Click="ImportSingers"/>
+            </Grid>
+          </Border>
+
+          <Border Grid.Column="2" Classes="option">
+            <Grid RowDefinitions="Auto,Auto,Auto">
+              <TextBlock Classes="heading" Text="{DynamicResource welcome.importresamplers}"/>
+              <TextBlock Grid.Row="1" Margin="0,5,0,8" Classes="path" x:Name="ResamplersPathText"
+                         Text="{DynamicResource welcome.importresamplers.description}"/>
+              <Button Grid.Row="2" HorizontalAlignment="Stretch"
+                      Content="{DynamicResource welcome.choosefolder}" Click="ImportResamplers"/>
+            </Grid>
+          </Border>
+        </Grid>
+
+        <Border Classes="option">
+          <Grid ColumnDefinitions="*,12,180" RowDefinitions="Auto,Auto">
+            <TextBlock Classes="heading" Text="{DynamicResource welcome.theme}"/>
+            <TextBlock Grid.Row="1" Margin="0,5,0,0" Classes="path"
+                       Text="{DynamicResource welcome.theme.description}"/>
+            <ComboBox x:Name="ThemeComboBox" Grid.Column="2" Grid.RowSpan="2"
+                      VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                      SelectionChanged="ThemeSelectionChanged"/>
+          </Grid>
+        </Border>
+      </StackPanel>
+
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto,8,Auto,8,Auto" Margin="0,16,0,0">
+        <TextBlock x:Name="StatusText" Classes="path" Text="{DynamicResource welcome.ready}"/>
+        <Button Grid.Column="1" Content="{DynamicResource menu.help.usageguide}" Click="OpenUsageGuide"/>
+        <Button Grid.Column="3" Content="{DynamicResource welcome.skip}" Click="Skip"/>
+        <Button Grid.Column="5" Content="{DynamicResource welcome.done}" Click="Done"/>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

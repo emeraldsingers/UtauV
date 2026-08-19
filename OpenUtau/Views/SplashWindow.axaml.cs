@@ -85,6 +85,10 @@ namespace OpenUtau.App.Views {
                     mainWindow.InitProject();
                     LoadingWindow.InitializeLoadingWindow();
                     Close();
+                    if (Preferences.FirstRun) {
+                        var welcomeDialog = new WelcomeDialog();
+                        _ = welcomeDialog.ShowDialog(mainWindow);
+                    }
                 }
             }, CancellationToken.None, TaskContinuationOptions.None, mainScheduler);
         }

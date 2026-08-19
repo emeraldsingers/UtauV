@@ -12,6 +12,7 @@ namespace OpenUtau.Core.Util {
 
     public static class Preferences {
         public static SerializablePreferences Default;
+        public static bool FirstRun { get; private set; }
 
         static Preferences() {
             Load();
@@ -43,6 +44,17 @@ namespace OpenUtau.Core.Util {
             } catch(Exception e){
                 Log.Error(e, "failed to load prefs-default.json");
             }
+            Save();
+        }
+
+        public static void ImportFrom(string prefsFilePath) {
+            var imported = JsonConvert.DeserializeObject<SerializablePreferences>(
+                File.ReadAllText(prefsFilePath, Encoding.UTF8));
+            if (imported == null) {
+                throw new InvalidDataException("Invalid preferences file.");
+            }
+            Default = imported;
+            FirstRun = false;
             Save();
         }
 
@@ -121,6 +133,7 @@ namespace OpenUtau.Core.Util {
                         Default.Theme = null;
                     }
                 } else {
+                    FirstRun = true;
                     Reset();
                 }
             } catch (Exception e) {

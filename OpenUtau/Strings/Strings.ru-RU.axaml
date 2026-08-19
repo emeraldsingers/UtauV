@@ -632,4 +632,27 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="welcome.recent">Недавние</system:String>
   <system:String x:Key="welcome.start">Начать</system:String>
   <!--<system:String x:Key="welcome.template">Template</system:String>-->
+  <system:String x:Key="welcome.caption">Добро пожаловать в UtauV</system:String>
+  <system:String x:Key="welcome.title">Добро пожаловать в UtauV</system:String>
+  <system:String x:Key="welcome.subtitle">Настройте новый инстанс: импортируйте настройки, сингеров или ресамплеры.</system:String>
+  <system:String x:Key="welcome.theme">Тема</system:String>
+  <system:String x:Key="welcome.theme.description">Выберите внешний вид этого инстанса.</system:String>
+  <system:String x:Key="welcome.theme.done">Тема обновлена.</system:String>
+  <system:String x:Key="welcome.importprefs">Импорт prefs.json</system:String>
+  <system:String x:Key="welcome.importprefs.description">Использовать настройки из другой установки.</system:String>
+  <system:String x:Key="welcome.importprefs.done">Настройки импортированы.</system:String>
+  <system:String x:Key="welcome.importprefs.failed">Не удалось импортировать настройки.</system:String>
+  <system:String x:Key="welcome.importsingers">Импорт сингеров</system:String>
+  <system:String x:Key="welcome.importsingers.description">Добавить папку сингеров в Additional Singers Path.</system:String>
+  <system:String x:Key="welcome.importsingers.done">Путь к сингерам обновлен.</system:String>
+  <system:String x:Key="welcome.importsingers.failed">Не удалось импортировать путь к сингерам.</system:String>
+  <system:String x:Key="welcome.importresamplers">Импорт ресамплеров</system:String>
+  <system:String x:Key="welcome.importresamplers.description">Добавить папку ресамплеров в Additional Resamplers Path.</system:String>
+  <system:String x:Key="welcome.importresamplers.done">Путь к ресемплерам обновлен.</system:String>
+  <system:String x:Key="welcome.importresamplers.failed">Не удалось импортировать путь к ресемплерам.</system:String>
+  <system:String x:Key="welcome.import">Импорт</system:String>
+  <system:String x:Key="welcome.choosefolder">Выбрать папку</system:String>
+  <system:String x:Key="welcome.skip">Пропустить</system:String>
+  <system:String x:Key="welcome.done">Готово</system:String>
+  <system:String x:Key="welcome.ready">Можно пропустить и настроить все позже в параметрах.</system:String>
 </ResourceDictionary>
