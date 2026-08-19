@@ -282,7 +282,7 @@ jobs:
         if: ${{ matrix.arch.os == 'linux' }}
         run: |
           cp OpenUtau/Assets/OpenUtau.desktop bin/${{ matrix.arch.name }}
-          cp OpenUtau/Assets/OpenUtau.png bin/${{ matrix.arch.name }}
+          cp OpenUtau/Assets/OpenUtau.png bin/${{ matrix.arch.name }}/UtauV.png
           cp OpenUtau/Assets/OpenUtau.png bin/${{ matrix.arch.name }}/.DirIcon
           cp OpenUtau/Assets/AppRun bin/${{ matrix.arch.name }}
           chmod 755 bin/${{ matrix.arch.name }}/AppRun
