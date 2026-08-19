@@ -116,6 +116,8 @@ FunctionEnd
 
 Section Uninstall
   Delete "$INSTDIR\uninst.exe"
+  RMDir /r "$INSTDIR\Data"
+  RMDir /r "$INSTDIR\bin"
   Delete "$INSTDIR\*"
   RMDir "$INSTDIR"
 
