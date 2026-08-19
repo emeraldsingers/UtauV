@@ -35,6 +35,9 @@
       <ResourceInclude x:Key="themes-neapolitan" Source="/Colors/NeapolitanTheme.axaml"/>
       <ResourceInclude x:Key="themes-teal" Source="/Colors/TealTheme.axaml"/>
       <ResourceInclude x:Key="themes-light-breeze" Source="/Colors/LightBreezeTheme.axaml"/>
+      <ResourceInclude x:Key="themes-graphite" Source="/Colors/GraphiteTheme.axaml"/>
+      <ResourceInclude x:Key="themes-ice" Source="/Colors/IceTheme.axaml"/>
+      <ResourceInclude x:Key="themes-silver" Source="/Colors/SilverTheme.axaml"/>
       <ResourceInclude x:Key="themes-custom" Source="/Colors/CustomTheme.axaml"/>
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="/Colors/Brushes.axaml"/>

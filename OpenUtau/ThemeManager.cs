@@ -13,7 +13,7 @@ namespace OpenUtau.App {
 
     class ThemeManager {
         static readonly string[] builtInThemes = [
-            "Light", "Dark", "SynthV", "Light Breeze", "Neapolitan", "Dark Teal",
+            "Light", "Dark", "SynthV", "Light Breeze", "Neapolitan", "Dark Teal", "Graphite", "Ice", "Silver",
         ];
         public static bool IsDarkMode = false;
         public static IBrush ForegroundBrush = Brushes.Black;

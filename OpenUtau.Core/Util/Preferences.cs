@@ -162,7 +162,7 @@ namespace OpenUtau.Core.Util {
             public int? PlaybackDeviceIndex;
             public bool ShowPrefs = true;
             public bool ShowTips = true;
-            public string ThemeName = "Dark Teal";
+            public string ThemeName = "Graphite";
             public string UiFontPath = string.Empty;
             public string UiFontFamily = string.Empty;
             public bool UseUiFontForNotes = false;
