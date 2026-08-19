@@ -633,6 +633,7 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="welcome.start">Начать</system:String>
   <!--<system:String x:Key="welcome.template">Template</system:String>-->
   <system:String x:Key="welcome.caption">Добро пожаловать в UtauV</system:String>
+  <system:String x:Key="menu.help.usageguide">Руководство пользователя</system:String>
   <system:String x:Key="welcome.title">Добро пожаловать в UtauV</system:String>
   <system:String x:Key="welcome.subtitle">Настройте новый инстанс: импортируйте настройки, сингеров или ресамплеры.</system:String>
   <system:String x:Key="welcome.theme">Тема</system:String>

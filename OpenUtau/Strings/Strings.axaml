@@ -321,6 +321,7 @@ Do you want to continue by splitting at the nearest position after current playh
   <system:String x:Key="menu.help.logslocation">Open Logs Location</system:String>
   <system:String x:Key="menu.help.reportissue">Report Issue</system:String>
   <system:String x:Key="menu.help.wiki">OpenUtau Documentation</system:String>
+  <system:String x:Key="menu.help.usageguide">Usage Guide</system:String>
   <system:String x:Key="menu.project">Project</system:String>
   <system:String x:Key="menu.project.expressions">Expressions...</system:String>
   <system:String x:Key="menu.project.remaptimeaxis">Adjust Tempo (Preserve Timing)</system:String>

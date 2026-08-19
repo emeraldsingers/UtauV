@@ -333,6 +333,13 @@ namespace OpenUtau.App.ViewModels {
             }));
         }
 
+        public void RefreshWelcomeRecentFiles() {
+            RecentFiles.Clear();
+            RecentFiles.AddRange(Preferences.Default.RecentFiles
+                .Select(file => new RecentFileInfo(file))
+                .OrderByDescending(f => f.LastWriteTime));
+        }
+
         public void RefreshTemplates() {
             Directory.CreateDirectory(PathManager.Inst.TemplatesPath);
             var templates = Directory.GetFiles(PathManager.Inst.TemplatesPath, "*.ustx");

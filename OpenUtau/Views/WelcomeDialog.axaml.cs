@@ -77,7 +77,7 @@ namespace OpenUtau.App.Views {
 
         void OpenUsageGuide(object sender, RoutedEventArgs e) {
             try {
-                OS.OpenFolder(PathManager.Inst.DataPath);
+                OS.OpenWeb("https://docs.google.com/document/d/1htx5MMYubQ9g-iaNaIz6TkR9TGS6KpVq0V6fu3MioQc");
             } catch (Exception ex) {
                 DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(ex));
             }
@@ -124,6 +124,7 @@ namespace OpenUtau.App.Views {
 
         private void RefreshMainWindowFromPrefs() {
             if (Owner?.DataContext is MainWindowViewModel viewModel) {
+                viewModel.RefreshWelcomeRecentFiles();
                 viewModel.RefreshOpenRecent();
             }
         }
