@@ -18,14 +18,14 @@
     <StartupObject />
   </PropertyGroup>
   <PropertyGroup>
-    <CFBundleName>OpenUtau</CFBundleName>
-    <CFBundleDisplayName>OpenUtau</CFBundleDisplayName>
-    <CFBundleIdentifier>com.stakira.openutau</CFBundleIdentifier>
+    <CFBundleName>UtauV</CFBundleName>
+    <CFBundleDisplayName>UtauV</CFBundleDisplayName>
+    <CFBundleIdentifier>asoqwer.UtauV</CFBundleIdentifier>
     <CFBundleVersion>0.0.0</CFBundleVersion>
     <CFBundleShortVersionString>0.0.0</CFBundleShortVersionString>
     <CFBundlePackageType>APPL</CFBundlePackageType>
     <CFBundleSignature>????</CFBundleSignature>
-    <CFBundleExecutable>OpenUtau</CFBundleExecutable>
+    <CFBundleExecutable>UtauV</CFBundleExecutable>
     <CFBundleIconFile>OpenUtau.icns</CFBundleIconFile>
     <NSPrincipalClass>NSApplication</NSPrincipalClass>
     <NSHighResolutionCapable>true</NSHighResolutionCapable>
@@ -33,7 +33,7 @@
         <array>
             <dict>
                 <key>CFBundleTypeName</key>
-                <string>OpenUtau Sequence File</string>
+                    <string>UtauV Sequence File</string>
                 <key>CFBundleTypeExtensions</key>
                 <array>
                     <string>ustx</string>
@@ -44,7 +44,7 @@
                 <string>Editor</string>
                 <key>LSItemContentTypes</key>
                 <array>
-                    <string>com.stakira.openutau.ustx</string>
+                    <string>asoqwer.utauv.ustx</string>
                 </array>
             </dict>
         </array>          

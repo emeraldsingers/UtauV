@@ -201,18 +201,18 @@ jobs:
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch.arch }} && cl /nologo /O2 /DUNICODE /D_UNICODE /Fe:bin\${{ matrix.arch.name }}\UtauV.exe OpenUtau\Assets\UtauVLauncher.c"
+          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch.arch }} && rc /nologo /fo bin\${{ matrix.arch.name }}\UtauVLauncher.res OpenUtau\Assets\UtauVLauncher.rc && cl /nologo /O2 /DUNICODE /D_UNICODE /Fe:bin\${{ matrix.arch.name }}\UtauV.exe /Fo:bin\${{ matrix.arch.name }}\UtauVLauncher.obj OpenUtau\Assets\UtauVLauncher.c bin\${{ matrix.arch.name }}\UtauVLauncher.res && del /q bin\${{ matrix.arch.name }}\UtauVLauncher.res bin\${{ matrix.arch.name }}\UtauVLauncher.obj"
 
       # Create packages (zip)
       - name: Create portable package (zip)
         run: |
           cd bin/${{ matrix.arch.name }}
-          7z a ../../OpenUtau-${{ matrix.arch.name }}.zip *
+          7z a ../../UtauV-${{ matrix.arch.name }}.zip *
 
       - name: Create tar.gz for Linux
         if: matrix.arch.os == 'linux'
         run: |
-          tar -czf OpenUtau-${{ matrix.arch.name }}.tar.gz -C bin/${{ matrix.arch.name }} .
+          tar -czf UtauV-${{ matrix.arch.name }}.tar.gz -C bin/${{ matrix.arch.name }} .
 
       # Windows installer
       - name: Create Windows Installer
@@ -220,7 +220,7 @@ jobs:
         uses: joncloud/makensis-action@v5.0
         with:
           script-file: OpenUtau.nsi
-          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=OpenUtau-${{ matrix.arch.name }}.exe"
+          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=UtauV-${{ matrix.arch.name }}.exe"
 
       # macOS DMG
       - name: Create macOS DMG (manual .app bundle)
@@ -252,9 +252,9 @@ jobs:
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-            <key>CFBundleName</key><string>OpenUtau</string>
-            <key>CFBundleDisplayName</key><string>OpenUtau</string>
-            <key>CFBundleIdentifier</key><string>com.emeraldsingers.utauv</string>
+            <key>CFBundleName</key><string>UtauV</string>
+            <key>CFBundleDisplayName</key><string>UtauV</string>
+            <key>CFBundleIdentifier</key><string>asoqwer.UtauV</string>
             <key>CFBundleExecutable</key><string>UtauV</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>CFBundleVersion</key><string>${{ inputs.version }}</string>
@@ -267,8 +267,8 @@ jobs:
           echo "App bundle created at: $APP"
           find "$APP" -maxdepth 3 -print
 
-          hdiutil create -fs HFS+ -srcfolder "$APP" -volname "OpenUtau" "OpenUtau-${{ matrix.arch.name }}.dmg"
-          codesign -fvs - "OpenUtau-${{ matrix.arch.name }}.dmg" || true
+          hdiutil create -fs HFS+ -srcfolder "$APP" -volname "UtauV" "UtauV-${{ matrix.arch.name }}.dmg"
+          codesign -fvs - "UtauV-${{ matrix.arch.name }}.dmg" || true
 
       # Create Appimage
       - name: Install LinuxDeploy
@@ -293,18 +293,18 @@ jobs:
         if: inputs.release && matrix.arch.os == 'win'
         shell: cmd
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.zip
-          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=OpenUtau-${{ matrix.arch.name }}.exe
+          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
+          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
 
       - name: Generate Appcast for macOS
         if: inputs.release && matrix.arch.os == 'osx'
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=macos -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.dmg
+          python appcast.py -v=${{ inputs.version }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
 
       - name: Generate Appcast for Linux
         if: inputs.release && matrix.arch.os == 'linux'
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.zip
+          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
 
       # Upload all artifacts
       - name: Upload Artifacts
@@ -312,10 +312,10 @@ jobs:
         with:
           name: artifacts-${{ matrix.arch.name }}
           path: |
-            OpenUtau-${{ matrix.arch.name }}.exe
-            OpenUtau-${{ matrix.arch.name }}.zip
-            OpenUtau-${{ matrix.arch.name }}.dmg
-            OpenUtau-${{ matrix.arch.name }}.tar.gz
+            UtauV-${{ matrix.arch.name }}.exe
+            UtauV-${{ matrix.arch.name }}.zip
+            UtauV-${{ matrix.arch.name }}.dmg
+            UtauV-${{ matrix.arch.name }}.tar.gz
             bin/${{ matrix.arch.name }}/*.AppImage
             appcast.${{ matrix.arch.name }}*.xml
 
@@ -339,10 +339,10 @@ jobs:
             OpenUtau-win-arm64.zip
             OpenUtau-osx-x64.dmg
             OpenUtau-osx-arm64.dmg
-            OpenUtau-linux-x64.zip
-            OpenUtau-linux-x64.tar.gz
-            OpenUtau-linux-arm64.zip
-            OpenUtau-linux-arm64.tar.gz
+            UtauV-linux-x64.zip
+            UtauV-linux-x64.tar.gz
+            UtauV-linux-arm64.zip
+            UtauV-linux-arm64.tar.gz
             bin/linux-x64/*.AppImage
             bin/linux-arm64/*.AppImage
             appcast.*.xml
@@ -371,10 +371,10 @@ jobs:
             - [Apple Silicon (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-osx-arm64.dmg)
 
             ### Linux
-            - [64-bit (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-x64.zip)
-            - [64-bit (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-x64.tar.gz)
-            - [ARM64 (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-arm64.zip)
-            - [ARM64 (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-linux-arm64.tar.gz)
+            - [64-bit (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-x64.zip)
+            - [64-bit (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-x64.tar.gz)
+            - [ARM64 (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-arm64.zip)
+            - [ARM64 (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-arm64.tar.gz)
 
             ---
 

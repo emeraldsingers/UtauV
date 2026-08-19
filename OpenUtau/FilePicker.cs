@@ -83,7 +83,7 @@ namespace OpenUtau.App {
         public static FilePickerFileType DS { get; } = new("DS") {
             Patterns = new[] { "*.ds" },
         };
-        public static FilePickerFileType OUDEP { get; } = new("OpenUtau dependency") {
+        public static FilePickerFileType OUDEP { get; } = new("UtauV dependency") {
             Patterns = new[] { "*.oudep" },
         };
         public static FilePickerFileType UnixExecutable { get; } = new("Executable") {

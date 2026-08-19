@@ -167,18 +167,18 @@ jobs:
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch.arch }} && cl /nologo /O2 /DUNICODE /D_UNICODE /Fe:bin\${{ matrix.arch.name }}\UtauV.exe OpenUtau\Assets\UtauVLauncher.c"
+          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch.arch }} && rc /nologo /fo bin\${{ matrix.arch.name }}\UtauVLauncher.res OpenUtau\Assets\UtauVLauncher.rc && cl /nologo /O2 /DUNICODE /D_UNICODE /Fe:bin\${{ matrix.arch.name }}\UtauV.exe /Fo:bin\${{ matrix.arch.name }}\UtauVLauncher.obj OpenUtau\Assets\UtauVLauncher.c bin\${{ matrix.arch.name }}\UtauVLauncher.res && del /q bin\${{ matrix.arch.name }}\UtauVLauncher.res bin\${{ matrix.arch.name }}\UtauVLauncher.obj"
 
       - name: Zip
         run: |
           cd bin/${{ matrix.arch.name }}
-          7z a ../../OpenUtau-${{ matrix.arch.name }}.zip *
+          7z a ../../UtauV-${{ matrix.arch.name }}.zip *
         if: ${{ matrix.arch.os == 'win' }}
 
       - name: Tar.gz
         run: |
           cd bin/${{ matrix.arch.name }}
-          tar -czf ../../OpenUtau-${{ matrix.arch.name }}.tar.gz *
+          tar -czf ../../UtauV-${{ matrix.arch.name }}.tar.gz *
         if: ${{ matrix.arch.os == 'linux' }}
 
       # Create Installer
@@ -191,7 +191,7 @@ jobs:
         uses: joncloud/makensis-action@v4.1
         with:
           script-file: OpenUtau.nsi
-          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=OpenUtau-${{ matrix.arch.name }}.exe"
+          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=UtauV-${{ matrix.arch.name }}.exe"
         if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       # Create Dmg
@@ -200,8 +200,8 @@ jobs:
           npm install -g create-dmg
           cp OpenUtau/Assets/OpenUtau.icns bin/${{ matrix.arch.name }}/publish/OpenUtau.app/Contents/Resources/
           create-dmg bin/${{ matrix.arch.name }}/publish/OpenUtau.app || true
-          mv *.dmg OpenUtau-${{ matrix.arch.name }}.dmg
-          codesign -fvs - OpenUtau-${{ matrix.arch.name }}.dmg
+          mv *.dmg UtauV-${{ matrix.arch.name }}.dmg
+          codesign -fvs - UtauV-${{ matrix.arch.name }}.dmg
         if: ${{ matrix.arch.os == 'osx' }}
 
       # Create Appimage
@@ -215,7 +215,7 @@ jobs:
       - name: Create appimage
         env:
           ARCH: ${{ matrix.arch.linuxarch }}
-          LINUXDEPLOY_OUTPUT_APP_NAME: OpenUtau-linux
+          LINUXDEPLOY_OUTPUT_APP_NAME: UtauV-linux
         run: |
           cp OpenUtau/Assets/OpenUtau.desktop bin/${{ matrix.arch.name }}
           cp OpenUtau/Assets/OpenUtau.png bin/${{ matrix.arch.name }}
@@ -228,55 +228,55 @@ jobs:
       # Upload Artifacts
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenUtau-${{ matrix.arch.name }}.tar.gz
-          path: OpenUtau-${{ matrix.arch.name }}.tar.gz
+          name: UtauV-${{ matrix.arch.name }}.tar.gz
+          path: UtauV-${{ matrix.arch.name }}.tar.gz
         if: ${{ !inputs.release && matrix.arch.os == 'linux' }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenUtau-${{ matrix.arch.name }}.zip
-          path: OpenUtau-${{ matrix.arch.name }}.zip
+          name: UtauV-${{ matrix.arch.name }}.zip
+          path: UtauV-${{ matrix.arch.name }}.zip
         if: ${{ !inputs.release && matrix.arch.os == 'win' }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenUtau-${{ matrix.arch.name }}.exe
-          path: OpenUtau-${{ matrix.arch.name }}.exe
+          name: UtauV-${{ matrix.arch.name }}.exe
+          path: UtauV-${{ matrix.arch.name }}.exe
         if: ${{ !inputs.release && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
       
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenUtau-${{ matrix.arch.name }}.AppImage
-          path: OpenUtau-${{ matrix.arch.linuxarch }}.AppImage
+          name: UtauV-${{ matrix.arch.name }}.AppImage
+          path: UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
         if: ${{ !inputs.release && matrix.arch.os == 'linux' }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenUtau-${{ matrix.arch.name }}.dmg
-          path: OpenUtau-${{ matrix.arch.name }}.dmg
+          name: UtauV-${{ matrix.arch.name }}.dmg
+          path: UtauV-${{ matrix.arch.name }}.dmg
         if: ${{ !inputs.release && matrix.arch.os == 'osx' }}
 
       # Appcast
       - name: Appcast Windows
         shell: cmd
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.zip
+          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
         if: ${{ inputs.release && matrix.arch.os == 'win' }}
 
       - name: Appcast Windows installer
         shell: cmd
-        run: python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=OpenUtau-${{ matrix.arch.name }}.exe
+        run: python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
         if: ${{ inputs.release && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       - name: Appcast MacOS
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=macos -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.dmg
+          python appcast.py -v=${{ inputs.version }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
         if: ${{ inputs.release && matrix.arch.os == 'osx' }}
 
       - name: Appcast Linux
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }} -f=OpenUtau-${{ matrix.arch.name }}.tar.gz
-          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }}-appimage -f=OpenUtau-linux-${{ matrix.arch.linuxarch }}.AppImage
+          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.tar.gz
+          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }}-appimage -f=UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
         if: ${{ inputs.release && matrix.arch.os == 'linux' }}
 
       # Release
@@ -289,8 +289,8 @@ jobs:
           draft: ${{ inputs.draft }}
           files: |
             appcast.${{ matrix.arch.name }}*.xml
-            OpenUtau-linux-${{ matrix.arch.linuxarch }}.AppImage
-            OpenUtau-${{ matrix.arch.name }}.*
+            UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
+            UtauV-${{ matrix.arch.name }}.*
           body: |
             See [Getting Started](https://github.com/emeraldsingers/UtauV/wiki/Getting-Started) for how to use.
 

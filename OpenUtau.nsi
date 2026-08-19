@@ -3,9 +3,9 @@
 ManifestDPIAware true
 
 ; HM NIS Edit Wizard helper defines
-!define PRODUCT_NAME "OpenUtau"
-!define PRODUCT_PUBLISHER "stakira"
-!define PRODUCT_WEB_SITE "https://www.openutau.com"
+!define PRODUCT_NAME "UtauV"
+!define PRODUCT_PUBLISHER "asoqwer"
+!define PRODUCT_WEB_SITE "https://github.com/emeraldsingers/UtauV"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
@@ -15,7 +15,7 @@ ManifestDPIAware true
   !define BUILD_DIR "bin\win-${ARCH}"
 !endif
 !ifndef OUTPUT_NAME
-  !define OUTPUT_NAME "OpenUtau-win-${ARCH}.exe"
+  !define OUTPUT_NAME "UtauV-win-${ARCH}.exe"
 !endif
 
 ; MUI 1.8 compatible ------
@@ -57,7 +57,7 @@ ManifestDPIAware true
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 OutFile "${OUTPUT_NAME}"
-InstallDir "$PROGRAMFILES64\OpenUtau"
+InstallDir "$PROGRAMFILES64\UtauV"
 ShowInstDetails show
 ShowUnInstDetails show
 
@@ -72,8 +72,8 @@ Section "MainSection" SEC01
 SectionEnd
 
 Section -AdditionalIcons
-  CreateShortCut "$SMPROGRAMS\OpenUtau.lnk" "$INSTDIR\UtauV.exe"
-  CreateShortCut "$DESKTOP\OpenUtau.lnk" "$INSTDIR\UtauV.exe"
+  CreateShortCut "$SMPROGRAMS\UtauV.lnk" "$INSTDIR\UtauV.exe"
+  CreateShortCut "$DESKTOP\UtauV.lnk" "$INSTDIR\UtauV.exe"
 SectionEnd
 
 Section -Post
@@ -90,10 +90,10 @@ Section -Post
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 
-  WriteRegStr HKCR ".ustx" "" "OpenUtauFile"
-  WriteRegStr HKCR "OpenUtauFile" "" "OpenUtau Sequence File"
-  WriteRegStr HKCR "OpenUtauFile\DefaultIcon" "" "$INSTDIR\UtauV.exe"
-  WriteRegStr HKCR "OpenUtauFile\shell\open\command" "" '"$INSTDIR\UtauV.exe" "%1"'
+  WriteRegStr HKCR ".ustx" "" "UtauVFile"
+  WriteRegStr HKCR "UtauVFile" "" "UtauV Sequence File"
+  WriteRegStr HKCR "UtauVFile\DefaultIcon" "" "$INSTDIR\UtauV.exe"
+  WriteRegStr HKCR "UtauVFile\shell\open\command" "" '"$INSTDIR\UtauV.exe" "%1"'
 SectionEnd
 
 Section "VC Redist"
@@ -119,11 +119,11 @@ Section Uninstall
   Delete "$INSTDIR\*"
   RMDir "$INSTDIR"
 
-  Delete "$SMPROGRAMS\OpenUtau.lnk"
-  Delete "$DESKTOP\OpenUtau.lnk"
+  Delete "$SMPROGRAMS\UtauV.lnk"
+  Delete "$DESKTOP\UtauV.lnk"
 
   DeleteRegKey HKCR ".ustx"
-  DeleteRegKey HKCR "OpenUtauFile"
+  DeleteRegKey HKCR "UtauVFile"
 
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   SetAutoClose true

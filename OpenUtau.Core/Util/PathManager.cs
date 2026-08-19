@@ -20,8 +20,8 @@ namespace OpenUtau.Core {
                 : exePath;
             if (OS.IsMacOS()) {
                 string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                DataPath = Path.Combine(userHome, "Library", "OpenUtau");
-                CachePath = Path.Combine(userHome, "Library", "Caches", "OpenUtau");
+                DataPath = Path.Combine(userHome, "Library", "UtauV");
+                CachePath = Path.Combine(userHome, "Library", "Caches", "UtauV");
                 HomePathIsAscii = true;
                 try {
                     // Deletes old cache.
@@ -36,16 +36,16 @@ namespace OpenUtau.Core {
                 if (string.IsNullOrEmpty(dataHome)) {
                     dataHome = Path.Combine(userHome, ".local", "share");
                 }
-                DataPath = Path.Combine(dataHome, "OpenUtau");
+                DataPath = Path.Combine(dataHome, "UtauV");
                 string cacheHome = Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
                 if (string.IsNullOrEmpty(cacheHome)) {
                     cacheHome = Path.Combine(userHome, ".cache");
                 }
-                CachePath = Path.Combine(cacheHome, "OpenUtau");
+                CachePath = Path.Combine(cacheHome, "UtauV");
                 HomePathIsAscii = true;
                 AppImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
                 if (!string.IsNullOrEmpty(AppImagePath)) {
-                    IsAppImage = string.Equals(Environment.GetEnvironmentVariable("IS_OPENUTAU_APPIMAGE"), "true", StringComparison.OrdinalIgnoreCase);
+                    IsAppImage = string.Equals(Environment.GetEnvironmentVariable("IS_UTAUV_APPIMAGE"), "true", StringComparison.OrdinalIgnoreCase);
                 } else {
                     DataPath = Path.Combine(RootPath, "Data");
                     CachePath = Path.Combine(DataPath, "Cache");
@@ -56,7 +56,7 @@ namespace OpenUtau.Core {
                     DataPath = Path.Combine(RootPath, "Data");
                 } else {
                     string dataHome = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                    DataPath = Path.Combine(dataHome, "OpenUtau");
+                    DataPath = Path.Combine(dataHome, "UtauV");
                 }
                 CachePath = Path.Combine(DataPath, "Cache");
                 HomePathIsAscii = true;

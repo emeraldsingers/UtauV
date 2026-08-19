@@ -4,5 +4,5 @@ Type=Application
 Name=UtauV
 Comment=Singing voice synthesizer
 Exec=UtauV
-Icon=OpenUtau
+Icon=UtauV
 Categories=AudioVideo;Audio;Midi
