@@ -12,7 +12,7 @@ namespace OpenUtau.Classic {
 
         public WorldlineResampler() {
             string ext = OS.IsWindows() ? ".dll" : OS.IsMacOS() ? ".dylib" : ".so";
-            FilePath = Path.Join(PathManager.Inst.RootPath, name + ext);
+            FilePath = Path.Join(PathManager.Inst.BinaryPath, name + ext);
         }
 
         public float[] DoResampler(ResamplerItem item, ILogger logger) {

@@ -18,26 +18,80 @@ on:
         type: boolean
         default: true
         description: "Draft"
+      win_x64_directml:
+        type: boolean
+        default: true
+        description: "Windows x64 DirectML"
+      win_x64_cuda:
+        type: boolean
+        default: false
+        description: "Windows x64 CUDA"
+      win_x86:
+        type: boolean
+        default: false
+        description: "Windows x86 DirectML"
+      win_arm64:
+        type: boolean
+        default: false
+        description: "Windows ARM64 DirectML"
+      osx_x64:
+        type: boolean
+        default: false
+        description: "macOS x64"
+      osx_arm64:
+        type: boolean
+        default: false
+        description: "macOS ARM64"
+      linux_x64:
+        type: boolean
+        default: true
+        description: "Linux x64"
+      linux_arm64:
+        type: boolean
+        default: false
+        description: "Linux ARM64"
 
 env:
   release-name: ${{ inputs.version }}${{ inputs.beta && ' Beta' || '' }}
 
 jobs:
+  select-targets:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - id: targets
+        env:
+          WIN_X64_DIRECTML: ${{ inputs.win_x64_directml }}
+          WIN_X64_CUDA: ${{ inputs.win_x64_cuda }}
+          WIN_X86: ${{ inputs.win_x86 }}
+          WIN_ARM64: ${{ inputs.win_arm64 }}
+          OSX_X64: ${{ inputs.osx_x64 }}
+          OSX_ARM64: ${{ inputs.osx_arm64 }}
+          LINUX_X64: ${{ inputs.linux_x64 }}
+          LINUX_ARM64: ${{ inputs.linux_arm64 }}
+        run: |
+          targets=()
+          add() { targets+=("$1"); }
+          [[ "$WIN_X64_DIRECTML" == true ]] && add '{"name":"win-x64","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
+          [[ "$WIN_X64_CUDA" == true ]] && add '{"name":"win-x64-cuda","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"CUDA"}'
+          [[ "$WIN_X86" == true ]] && add '{"name":"win-x86","rid":"win-x86","arch":"x86","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
+          [[ "$WIN_ARM64" == true ]] && add '{"name":"win-arm64","rid":"win-arm64","arch":"arm64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
+          [[ "$OSX_X64" == true ]] && add '{"name":"osx-x64","rid":"osx-x64","arch":"x64","os":"osx","runs-on":"macos-15-intel","onnx_provider":"Default"}'
+          [[ "$OSX_ARM64" == true ]] && add '{"name":"osx-arm64","rid":"osx-arm64","arch":"arm64","os":"osx","runs-on":"macos-15-intel","onnx_provider":"Default"}'
+          [[ "$LINUX_X64" == true ]] && add '{"name":"linux-x64","rid":"linux-x64","arch":"x64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"x86_64","onnx_provider":"Default"}'
+          [[ "$LINUX_ARM64" == true ]] && add '{"name":"linux-arm64","rid":"linux-arm64","arch":"arm64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"aarch64","onnx_provider":"Default"}'
+          matrix=$(printf '%s\n' "${targets[@]}" | jq -sc '{arch:.}')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: select-targets
     runs-on: ${{ matrix.arch.runs-on }}
 
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - { name: win-x64, rid: win-x64, arch: x64, os: win, runs-on: windows-latest, onnx_provider: DirectML }
-          - { name: win-x64-cuda, rid: win-x64, arch: x64, os: win, runs-on: windows-latest, onnx_provider: CUDA }
-          - { name: win-x86, rid: win-x86, arch: x86, os: win, runs-on: windows-latest, onnx_provider: DirectML }
-          - { name: win-arm64, rid: win-arm64, arch: arm64, os: win, runs-on: windows-latest, onnx_provider: DirectML }
-          - { name: osx-x64, rid: osx-x64, arch: x64, os: osx, runs-on: macos-15-intel, onnx_provider: Default }
-          - { name: osx-arm64, rid: osx-arm64, arch: arm64, os: osx, runs-on: macos-15-intel, onnx_provider: Default }
-          - { name: linux-x64, rid: linux-x64, arch: x64, os: linux, runs-on: ubuntu-latest, linuxarch: x86_64, onnx_provider: Default }
-          - { name: linux-arm64, rid: linux-arm64, arch: arm64, os: linux, runs-on: ubuntu-latest, linuxarch: aarch64, onnx_provider: Default }
+        arch: ${{ fromJSON(needs.select-targets.outputs.matrix).arch }}
 
     steps:
       # Setup
@@ -89,8 +143,31 @@ jobs:
         if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       - name: Set executable permission
-        run: chmod +x bin/${{ matrix.arch.name }}/OpenUtau
-        if: ${{ matrix.arch.os == 'linux' }}
+        if: ${{ matrix.arch.os == 'win' || matrix.arch.os == 'linux' }}
+        shell: bash
+        run: |
+          SRC="bin/${{ matrix.arch.name }}"
+          PAYLOAD="$SRC/.bin"
+          mkdir -p "$PAYLOAD" "$SRC/Data"
+          find "$SRC" -mindepth 1 -maxdepth 1 ! -name 'UtauV' ! -name 'UtauV.exe' ! -name 'prefs-default.json' ! -name '.bin' ! -name 'Data' -exec mv {} "$PAYLOAD/" \;
+          if [ "${{ matrix.arch.os }}" = "win" ]; then
+            mv "$SRC/UtauV.exe" "$PAYLOAD/UtauV.exe"
+          else
+            mv "$SRC/UtauV" "$PAYLOAD/UtauV"
+          fi
+          mv "$PAYLOAD" "$SRC/bin"
+          if [ "${{ matrix.arch.os }}" = "linux" ]; then
+            printf '%s\n' '#!/bin/sh' 'exec "$(dirname "$0")/bin/UtauV" "$@"' > "$SRC/UtauV"
+            chmod +x "$SRC/UtauV"
+          fi
+
+      - name: Build portable launcher
+        if: ${{ matrix.arch.os == 'win' }}
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch.arch }} && cl /nologo /O2 /DUNICODE /D_UNICODE /Fe:bin\${{ matrix.arch.name }}\UtauV.exe OpenUtau\Assets\UtauVLauncher.c"
 
       - name: Zip
         run: |
@@ -114,7 +191,7 @@ jobs:
         uses: joncloud/makensis-action@v4.1
         with:
           script-file: OpenUtau.nsi
-          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }}"
+          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=OpenUtau-${{ matrix.arch.name }}.exe"
         if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       # Create Dmg

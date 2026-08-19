@@ -14,7 +14,10 @@ namespace OpenUtau.Core {
 
     public class PathManager : SingletonBase<PathManager> {
         public PathManager() {
-            RootPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string exePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            RootPath = string.Equals(Path.GetFileName(exePath), "bin", StringComparison.OrdinalIgnoreCase)
+                ? Directory.GetParent(exePath)!.FullName
+                : exePath;
             if (OS.IsMacOS()) {
                 string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 DataPath = Path.Combine(userHome, "Library", "OpenUtau");
@@ -42,13 +45,15 @@ namespace OpenUtau.Core {
                 HomePathIsAscii = true;
                 AppImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
                 if (!string.IsNullOrEmpty(AppImagePath)) {
-                    IsAppImage = Environment.GetEnvironmentVariable("IS_OPENUTAU_APPIMAGE").Equals("true");
+                    IsAppImage = string.Equals(Environment.GetEnvironmentVariable("IS_OPENUTAU_APPIMAGE"), "true", StringComparison.OrdinalIgnoreCase);
+                } else {
+                    DataPath = Path.Combine(RootPath, "Data");
+                    CachePath = Path.Combine(DataPath, "Cache");
                 }
             } else {
-                string exePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-                IsInstalled = File.Exists(Path.Combine(exePath, "installed.txt"));
+                IsInstalled = File.Exists(Path.Combine(RootPath, "installed.txt"));
                 if (!IsInstalled) {
-                    DataPath = exePath;
+                    DataPath = Path.Combine(RootPath, "Data");
                 } else {
                     string dataHome = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
                     DataPath = Path.Combine(dataHome, "OpenUtau");
@@ -67,6 +72,7 @@ namespace OpenUtau.Core {
         }
 
         public string RootPath { get; private set; }
+        public string BinaryPath => Directory.Exists(Path.Combine(RootPath, "bin")) ? Path.Combine(RootPath, "bin") : RootPath;
         public string DataPath { get; private set; }
         public string CachePath { get; private set; }
         public bool HomePathIsAscii { get; private set; }
@@ -89,9 +95,10 @@ namespace OpenUtau.Core {
         public string TemplatesPath => Path.Combine(DataPath, "Templates");
         public string LogsPath => Path.Combine(DataPath, "Logs");
         public string LogFilePath => Path.Combine(DataPath, "Logs", "log.txt");
-        public string PrefsFilePath => Path.Combine(DataPath, "prefs.json");
+        public string PrefsFilePath => IsInstalled ? Path.Combine(DataPath, "prefs.json") : Path.Combine(RootPath, "prefs.json");
         public string ThemesPath => Path.Combine(DataPath, "Themes");
-        public string NotePresetsFilePath => Path.Combine(DataPath, "notepresets.json");
+        public string NotePresetsFilePath => IsInstalled ? Path.Combine(DataPath, "note-defaults.json") : Path.Combine(RootPath, "note-defaults.json");
+        public string LegacyNotePresetsFilePath => Path.Combine(DataPath, "notepresets.json");
         public string BackupsPath => Path.Combine(DataPath, "Backups");
 
         public List<string> SingersPaths {

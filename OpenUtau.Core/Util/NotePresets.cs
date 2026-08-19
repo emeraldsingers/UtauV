@@ -26,9 +26,12 @@ namespace OpenUtau.Core.Util {
 
         private static void Load() {
             try {
-                if (File.Exists(PathManager.Inst.NotePresetsFilePath)) {
+                string path = File.Exists(PathManager.Inst.NotePresetsFilePath)
+                    ? PathManager.Inst.NotePresetsFilePath
+                    : PathManager.Inst.LegacyNotePresetsFilePath;
+                if (File.Exists(path)) {
                     Default = JsonConvert.DeserializeObject<SerializableNotePresets>(
-                        File.ReadAllText(PathManager.Inst.NotePresetsFilePath, Encoding.UTF8));
+                        File.ReadAllText(path, Encoding.UTF8));
                 } else {
                     Reset();
                 }

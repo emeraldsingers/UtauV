@@ -68,7 +68,7 @@ FunctionEnd
 Section "MainSection" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite ifnewer
-  File "${BUILD_DIR}\*"
+  File /r "${BUILD_DIR}\*"
 SectionEnd
 
 Section -AdditionalIcons
