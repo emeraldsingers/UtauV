@@ -12,6 +12,7 @@ using ReactiveUI;
 namespace OpenUtau.App.Controls {
     class PhonemeCanvas : Control {
         private static readonly IPen ErrorPen = new Pen(Brushes.Red, 1);
+        private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.FromArgb(48, 220, 70, 70));
 
         public static readonly DirectProperty<PhonemeCanvas, IBrush> BackgroundProperty =
             AvaloniaProperty.RegisterDirect<PhonemeCanvas, IBrush>(
@@ -68,11 +69,13 @@ namespace OpenUtau.App.Controls {
 
         private HashSet<UNote> selectedNotes = new HashSet<UNote>();
         private Geometry pointGeometry;
+        private Geometry pointHighlightGeometry;
         private UPhoneme? mouseoverPhoneme;
 
         public PhonemeCanvas() {
             ClipToBounds = true;
-            pointGeometry = new EllipseGeometry(new Rect(-2.5, -2.5, 5, 5));
+            pointGeometry = new EllipseGeometry(new Rect(-3.5, -3.5, 7, 7));
+            pointHighlightGeometry = new EllipseGeometry(new Rect(-1.75, -1.75, 3.5, 3.5));
             MessageBus.Current.Listen<NotesRefreshEvent>()
                 .Subscribe(_ => InvalidateVisual());
             MessageBus.Current.Listen<NotesSelectionEvent>()
@@ -114,6 +117,7 @@ namespace OpenUtau.App.Controls {
 
             const double y = 35.5;
             const double height = 24;
+            context.DrawLine(ThemeManager.NeutralAccentPenSemi, new Point(0, y + height), new Point(Bounds.Width, y + height));
             foreach (var phoneme in Part.phonemes) {
                 double leftBound = viewModel.Project.timeAxis.MsPosToTickPos(phoneme.PositionMs - phoneme.preutter) - Part.position;
                 double rightBound = phoneme.End;
@@ -146,23 +150,11 @@ namespace OpenUtau.App.Controls {
                     var polyline = new PolylineGeometry(new Point[] { point0, point1, point2, point3, point4 }, true);
                     context.DrawGeometry(brush, pen, polyline);
 
-                    brush = phoneme.preutterDelta.HasValue ? pen!.Brush : ThemeManager.BackgroundBrush;
-                    using (var state = context.PushTransform(Matrix.CreateTranslation(x0, y + y0 - 1))) {
-                        context.DrawGeometry(brush, pen, pointGeometry);
-                    }
-                    brush = phoneme.attackTimeDelta.HasValue ? pen!.Brush : ThemeManager.BackgroundBrush;
-                    using (var state = context.PushTransform(Matrix.CreateTranslation(point1))) {
-                        context.DrawGeometry(brush, pen, pointGeometry);
-                    }
-                    brush = phoneme.releaseTimeDelta.HasValue ? pen!.Brush : ThemeManager.BackgroundBrush;
-                    using (var state = context.PushTransform(Matrix.CreateTranslation(point3))) {
-                        context.DrawGeometry(brush, pen, pointGeometry);
-                    }
+                    DrawEnvelopePoint(context, new Point(x0, y + y0 - 1), phoneme.preutterDelta.HasValue, pen);
+                    DrawEnvelopePoint(context, point1, phoneme.attackTimeDelta.HasValue, pen);
+                    DrawEnvelopePoint(context, point3, phoneme.releaseTimeDelta.HasValue, pen);
                     if (phoneme.Next != null && phoneme.Next.adjacent) {
-                        brush = phoneme.Next.overlapDelta.HasValue ? pen!.Brush : ThemeManager.BackgroundBrush;
-                        using (var state = context.PushTransform(Matrix.CreateTranslation(x4, y + y4 - 1))) {
-                            context.DrawGeometry(brush, pen, pointGeometry);
-                        }
+                        DrawEnvelopePoint(context, new Point(x4, y + y4 - 1), phoneme.Next.overlapDelta.HasValue, pen);
                     }
                 }
 
@@ -179,14 +171,29 @@ namespace OpenUtau.App.Controls {
                         (double textX, double textY, Size size, TextLayout textLayout) 
                         = PhonemeUIRender.AliasPosition(viewModel, phoneme, langCode, ref lastTextEndX, ref raiseText);
                         using (var state = context.PushTransform(Matrix.CreateTranslation(textX + 2, textY))) {
-                            var pen = mouseoverPhoneme == phoneme ? ThemeManager.AccentPen1Thickness2
-                                : phoneme.Error ? ErrorPen
+                            bool isSelected = selectedNotes.Contains(phoneme.Parent);
+                            bool isHovered = mouseoverPhoneme == phoneme;
+                            var pen = phoneme.Error ? ErrorPen
+                                : isHovered ? ThemeManager.AccentPen1Thickness2
+                                : isSelected ? ThemeManager.AccentPen2
                                 : ThemeManager.NeutralAccentPenSemi;
-                            context.DrawRectangle(ThemeManager.BackgroundBrush, pen, new Rect(new Point(-2, 1.5), size), 4, 4);
+                            var brush = phoneme.Error ? ErrorBrush
+                                : isHovered ? ThemeManager.AccentBrush1Semi
+                                : isSelected ? ThemeManager.AccentBrush2Semi
+                                : ThemeManager.BackgroundBrush;
+                            context.DrawRectangle(brush, pen, new Rect(new Point(-2, 1.5), size), 4, 4);
                             textLayout.Draw(context, new Point());
                         }
                     }
                 }
+            }
+        }
+
+        private void DrawEnvelopePoint(DrawingContext context, Point point, bool isActive, IPen pen) {
+            using var state = context.PushTransform(Matrix.CreateTranslation(point));
+            context.DrawGeometry(ThemeManager.AccentBrush3Semi, pen, pointGeometry);
+            if (isActive) {
+                context.DrawGeometry(ThemeManager.AccentBrush3, null, pointHighlightGeometry);
             }
         }
     }
