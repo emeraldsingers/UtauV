@@ -82,10 +82,15 @@ jobs:
 
       # Build
       - name: Restore dependencies
-        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || (matrix.arch.variant == 'directml' && 'DirectML' || 'Default') }}
+        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || matrix.arch.variant == 'directml' && 'DirectML' || 'Default' }}
 
-      - name: Publish
-        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || (matrix.arch.variant == 'directml' && 'DirectML' || 'Default') }}
+      - name: Publish (Windows and Linux)
+        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || matrix.arch.variant == 'directml' && 'DirectML' || 'Default' }}
+        if: ${{ matrix.arch.os != 'osx' }}
+
+      - name: Publish (MacOS)
+        run: dotnet msbuild OpenUtau -t:BundleApp -p:Configuration=Release -p:RuntimeIdentifier=${{ matrix.arch.rid }} -p:UseAppHost=true -p:SelfContained=true -p:OutputPath=../bin/${{ matrix.arch.name }}/
+        if: ${{ matrix.arch.os == 'osx' }}
 
       # Write release channel info
       - name: Write release channel info
@@ -119,7 +124,7 @@ jobs:
       # Linux specific
       - name: Set Linux executable permissions
         if: matrix.arch.os == 'linux'
-        run: chmod +x bin/${{ matrix.arch.name }}/OpenUtau
+        run: chmod +x bin/${{ matrix.arch.name }}/UtauV
 
       # Create packages (zip)
       - name: Create portable package (zip)
@@ -159,7 +164,7 @@ jobs:
           mkdir -p "$MACOS" "$RES"
 
           cp -R "$OUT/"* "$MACOS/"
-          chmod +x "$MACOS/OpenUtau" || true
+          chmod +x "$MACOS/UtauV" || true
 
           if [ -f "OpenUtau/Assets/OpenUtau.icns" ]; then
             cp "OpenUtau/Assets/OpenUtau.icns" "$RES/OpenUtau.icns"
@@ -173,7 +178,7 @@ jobs:
             <key>CFBundleName</key><string>OpenUtau</string>
             <key>CFBundleDisplayName</key><string>OpenUtau</string>
             <key>CFBundleIdentifier</key><string>com.emeraldsingers.utauv</string>
-            <key>CFBundleExecutable</key><string>OpenUtau</string>
+            <key>CFBundleExecutable</key><string>UtauV</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>CFBundleVersion</key><string>${{ inputs.version }}</string>
             <key>CFBundleShortVersionString</key><string>${{ inputs.version }}</string>

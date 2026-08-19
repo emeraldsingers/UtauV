@@ -9,6 +9,15 @@ ManifestDPIAware true
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
+; Build-specific paths are supplied by the release workflow. Keep defaults so
+; the script remains usable locally and by older workflows.
+!ifndef BUILD_DIR
+  !define BUILD_DIR "bin\win-${ARCH}"
+!endif
+!ifndef OUTPUT_NAME
+  !define OUTPUT_NAME "OpenUtau-win-${ARCH}.exe"
+!endif
+
 ; MUI 1.8 compatible ------
 !include "MUI2.nsh"
 
@@ -29,7 +38,7 @@ ManifestDPIAware true
 ; Instfiles page
 !insertmacro MUI_PAGE_INSTFILES
 ; Finish page
-!define MUI_FINISHPAGE_RUN "$INSTDIR\OpenUtau.exe"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\UtauV.exe"
 !insertmacro MUI_PAGE_FINISH
 
 ; Uninstaller pages
@@ -47,7 +56,7 @@ ManifestDPIAware true
 ; MUI end ------
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-OutFile "OpenUtau-win-${ARCH}.exe"
+OutFile "${OUTPUT_NAME}"
 InstallDir "$PROGRAMFILES64\OpenUtau"
 ShowInstDetails show
 ShowUnInstDetails show
@@ -59,12 +68,12 @@ FunctionEnd
 Section "MainSection" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite ifnewer
-  File "bin\win-${ARCH}\*"
+  File "${BUILD_DIR}\*"
 SectionEnd
 
 Section -AdditionalIcons
-  CreateShortCut "$SMPROGRAMS\OpenUtau.lnk" "$INSTDIR\OpenUtau.exe"
-  CreateShortCut "$DESKTOP\OpenUtau.lnk" "$INSTDIR\OpenUtau.exe"
+  CreateShortCut "$SMPROGRAMS\OpenUtau.lnk" "$INSTDIR\UtauV.exe"
+  CreateShortCut "$DESKTOP\OpenUtau.lnk" "$INSTDIR\UtauV.exe"
 SectionEnd
 
 Section -Post
@@ -76,15 +85,15 @@ Section -Post
   WriteUninstaller "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
-  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\OpenUtau.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\UtauV.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 
   WriteRegStr HKCR ".ustx" "" "OpenUtauFile"
   WriteRegStr HKCR "OpenUtauFile" "" "OpenUtau Sequence File"
-  WriteRegStr HKCR "OpenUtauFile\DefaultIcon" "" "$INSTDIR\OpenUtau.exe"
-  WriteRegStr HKCR "OpenUtauFile\shell\open\command" "" '"$INSTDIR\OpenUtau.exe" "%1"'
+  WriteRegStr HKCR "OpenUtauFile\DefaultIcon" "" "$INSTDIR\UtauV.exe"
+  WriteRegStr HKCR "OpenUtauFile\shell\open\command" "" '"$INSTDIR\UtauV.exe" "%1"'
 SectionEnd
 
 Section "VC Redist"

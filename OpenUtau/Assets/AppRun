@@ -3,4 +3,4 @@
 export IS_OPENUTAU_APPIMAGE=true
 
 cd "$(dirname "$0")"
-exec ./OpenUtau
+exec ./UtauV
