@@ -72,21 +72,20 @@ namespace OpenUtau.Classic {
             resamplers.Clear();
             resamplersMap.Clear();
             resamplers.Add(new WorldlineResampler());
-            string basePath = PathManager.Inst.ResamplersPath;
-            try {
-                Directory.CreateDirectory(basePath);
-                
-                foreach (var file in Directory.EnumerateFiles(basePath, "*", new EnumerationOptions() {
-                    RecurseSubdirectories = Preferences.Default.LoadDeepFolderSinger
-                })) {
-                    var driver = LoadResampler(file, basePath);
-                    if (driver != null) {
-                        resamplers.Add(driver);
+            foreach (var basePath in PathManager.Inst.ResamplersPaths) {
+                try {
+                    Directory.CreateDirectory(basePath);
+                    foreach (var file in Directory.EnumerateFiles(basePath, "*", new EnumerationOptions() {
+                        RecurseSubdirectories = Preferences.Default.LoadDeepFolderSinger
+                    })) {
+                        var driver = LoadResampler(file, basePath);
+                        if (driver != null) {
+                            resamplers.Add(driver);
+                        }
                     }
+                } catch (Exception e) {
+                    Log.Error(e, $"Failed to search resamplers at {basePath}.");
                 }
-            } catch (Exception e) {
-                Log.Error(e, "Failed to search resamplers.");
-                resamplers.Clear();
             }
             foreach (var resampler in resamplers) {
                 resamplersMap[resampler.ToString()] = resampler;
