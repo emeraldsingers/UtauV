@@ -275,19 +275,42 @@ namespace OpenUtau.App.Controls {
             Size size = viewModel.TickToneToSize(note.duration, 1);
             size = size.WithWidth(size.Width - 1).WithHeight(Math.Floor(size.Height - 2));
             Point rightBottom = new Point(leftTop.X + size.Width, leftTop.Y + size.Height);
+
+            bool hasError = note.Error;
+
+            // Check for Phoneme Errors (mimicking PhonemeCanvas behavior)
+            if (!hasError && Part != null && Part.phonemes != null) {
+                int phonemeCount = 0;
+                foreach (var p in Part.phonemes) {
+                    if (p.Parent == note) {
+                        phonemeCount++;
+                        // If any attached phoneme has an error, the whole note is flagged
+                        if (p.Error) {
+                            hasError = true;
+                            break;
+                        }
+                    }
+                }
+                // Edge Case: If the note is not a continuation/rest but generated 0 phonemes,
+                // it means the phonemizer completely failed to process the lyric.
+                if (!hasError && phonemeCount == 0 && !note.lyric.StartsWith("+") && !note.lyric.StartsWith("-")) {
+                    hasError = true;
+                }
+            }
+
             using var rotation = context.PushTransform(GetPlaybackRotation(note, new Point(
                 leftTop.X + size.Width / 2, leftTop.Y + size.Height / 2)));
             var brush = selectedNotes.Contains(note)
-                ? (note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2)
-                : (note.Error ? ThemeManager.AccentBrush1Semi : ThemeManager.AccentBrush1);
-            if (RofloficEffects.RainbowEnabled && !note.Error) {
+                ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
+                : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
+            if (RofloficEffects.RainbowEnabled && !hasError) {
                 brush = RofloficEffects.Gradient(note.position * 0.002, 230);
             }
             if (!selectedNotes.Contains(note)) {
                 float highlight = ShowPlaybackNoteHighlight
                     ? (note == activePlaybackNote ? activeHighlight : note == fadingPlaybackNote ? fadingHighlight : 0)
                     : 0;
-                brush = BlendBrush(brush, note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2, highlight);
+                brush = BlendBrush(brush, hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2, highlight);
             }
             brush = ApplyNoteOpacity(brush);
             double radius = GetNoteCornerRadius(size);
@@ -299,6 +322,7 @@ namespace OpenUtau.App.Controls {
             if (TrackHeight < 10 || note.lyric.Length == 0) {
                 return;
             }
+            // grey out the Phonemizer Transition Badges
             if (ShowPhonemizerTags && TrackHeight >= 20) {
                 string currentOver = note.PhonemizerOverride ?? "";
                 bool isCurrentDefault = string.IsNullOrEmpty(currentOver) || currentOver.Equals("Default", StringComparison.OrdinalIgnoreCase);
@@ -313,13 +337,12 @@ namespace OpenUtau.App.Controls {
                 bool isTransition = !isContinuation && ((note.Prev == null && !isCurrentDefault) || (note.Prev != null && currentPh != prevPh));
                 
                 if (isTransition) {
+                    // Badge Background utilizes the same hasError flag
                     var badgeBrush = selectedNotes.Contains(note)
-                        ? (note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2)
-                        : (note.Error ? ThemeManager.AccentBrush1Semi : ThemeManager.AccentBrush1);
+                        ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
+                        : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
 
                     if (isCurrentDefault) {
-                        // Due to the limitation, we'll display a dot to inndicate
-                        // the transition to default phonemizer instead of showing language tag
                         double boxWidth = 16; 
                         double boxHeight = 16;
                         double dotRadius = 3;
