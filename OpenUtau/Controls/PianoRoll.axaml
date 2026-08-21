@@ -300,30 +300,32 @@
                   <CheckBox IsChecked="{Binding ShowGhostNotes}" />
                 </MenuItem.Icon>
               </MenuItem>
-              <MenuItem Header="{DynamicResource pianoroll.menu.view.playbackverticalfollow}" Click="OnMenuPlaybackVerticalFollow">
-                <MenuItem.Icon>
-                  <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackVerticalFollow}" />
-                </MenuItem.Icon>
-              </MenuItem>
-              <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknotehighlight}" Click="OnMenuPlaybackNoteHighlight">
-                <MenuItem.Icon>
-                  <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteHighlight}" />
-                </MenuItem.Icon>
-              </MenuItem>
-              <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknotebounce}" Click="OnMenuPlaybackNoteBounce">
-                <MenuItem.Icon>
-                  <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteBounce}" />
-                </MenuItem.Icon>
-              </MenuItem>
-              <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknoteorbit}" Click="OnMenuPlaybackNoteOrbit">
-                <MenuItem.Icon>
-                  <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteOrbit}" />
-                </MenuItem.Icon>
-              </MenuItem>
-              <MenuItem Header="{DynamicResource pianoroll.menu.view.rainboweffect}" Click="OnMenuRainbowEffect">
-                <MenuItem.Icon>
-                  <CheckBox IsChecked="{Binding NotesViewModel.ShowRainbowEffect}" />
-                </MenuItem.Icon>
+              <MenuItem Header="{DynamicResource pianoroll.menu.view.playbackeffects}">
+                <MenuItem Header="{DynamicResource pianoroll.menu.view.playbackverticalfollow}" Click="OnMenuPlaybackVerticalFollow">
+                  <MenuItem.Icon>
+                    <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackVerticalFollow}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknotehighlight}" Click="OnMenuPlaybackNoteHighlight">
+                  <MenuItem.Icon>
+                    <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteHighlight}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknotebounce}" Click="OnMenuPlaybackNoteBounce">
+                  <MenuItem.Icon>
+                    <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteBounce}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknoteorbit}" Click="OnMenuPlaybackNoteOrbit">
+                  <MenuItem.Icon>
+                    <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteOrbit}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{DynamicResource pianoroll.menu.view.rainboweffect}" Click="OnMenuRainbowEffect">
+                  <MenuItem.Icon>
+                    <CheckBox IsChecked="{Binding NotesViewModel.ShowRainbowEffect}" />
+                  </MenuItem.Icon>
+                </MenuItem>
               </MenuItem>
               <MenuItem Header="{DynamicResource prefs.appearance.trackcolor}" Click="OnMenuUseTrackColor">
                 <MenuItem.Icon>

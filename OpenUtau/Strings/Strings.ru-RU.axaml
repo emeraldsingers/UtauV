@@ -658,4 +658,5 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="welcome.done">Готово</system:String>
   <system:String x:Key="welcome.ready">Можно пропустить и настроить все позже в параметрах.</system:String>
   <system:String x:Key="pianoroll.menu.view.rainboweffect">Радужные ноты, фонемы и клавиатура</system:String>
+  <system:String x:Key="pianoroll.menu.view.playbackeffects">Эффекты воспроизведения</system:String>
 </ResourceDictionary>
