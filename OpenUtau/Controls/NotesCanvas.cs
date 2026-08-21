@@ -303,7 +303,7 @@ namespace OpenUtau.App.Controls {
             var brush = selectedNotes.Contains(note)
                 ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
                 : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
-            if (RofloficEffects.RainbowEnabled && !hasError) {
+            if (RofloficEffects.RainbowEnabled) {
                 brush = RofloficEffects.Gradient(note.position * 0.002, 230);
             }
             if (!selectedNotes.Contains(note)) {
