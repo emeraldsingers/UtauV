@@ -79,6 +79,43 @@ namespace OpenUtau.App.ViewModels {
                         DocManager.Inst.ExecuteCmd(new OtoChangedNotification());
                         this.RaisePropertyChanged(nameof(IsClassic));
                         this.RaisePropertyChanged(nameof(UseSearchAlias));
+                        var encodings = new Encoding[] {
+                            Encoding.GetEncoding("shift_jis"),
+                            Encoding.ASCII,
+                            Encoding.UTF8,
+                            Encoding.GetEncoding("gb2312"),
+                            Encoding.GetEncoding("big5"),
+                            Encoding.GetEncoding("ks_c_5601-1987"),
+                            Encoding.GetEncoding("Windows-1252"),
+                            Encoding.GetEncoding("macintosh"),
+                        };
+                        setEncodingMenuItems = encodings.Select(encoding =>
+                            new MenuItemViewModel(singer.TextFileEncoding == encoding) {
+                                Header = encoding.EncodingName,
+                                Command = setEncodingCommand,
+                                CommandParameter = encoding,
+                            }
+                        ).ToList();
+                        var singerTypes = new string[] {
+                            "utau", "enunu", "diffsinger", "voicevox", "neutrino"
+                        };
+                        setSingerTypeMenuItems = singerTypes.Select(singerType =>
+                            new MenuItemViewModel((SingerTypeUtils.SingerTypeNames.TryGetValue(singer.SingerType, out var name) ? name : "") == singerType) {
+                                Header = singerType,
+                                Command = setSingerTypeCommand,
+                                CommandParameter = singerType,
+                            }
+                        ).ToList();
+                        setDefaultPhonemizerMenuItems = PhonemizerFactory.GetAll().Select(factory =>
+                            new MenuItemViewModel(singer.DefaultPhonemizer == factory.type.FullName) {
+                                Header = factory.ToString(),
+                                Command = setDefaultPhonemizerCommand,
+                                CommandParameter = factory,
+                            }
+                        ).ToList();
+                        this.RaisePropertyChanged(nameof(SetEncodingMenuItems));
+                        this.RaisePropertyChanged(nameof(SetSingerTypeMenuItems));
+                        this.RaisePropertyChanged(nameof(SetDefaultPhonemizerMenuItems));
                     }
                 });
             this.WhenAnyValue(vm => vm.SearchAlias)
