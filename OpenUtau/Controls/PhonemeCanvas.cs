@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
 using OpenUtau.App.ViewModels;
+using OpenUtau.App.Roflofic;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
@@ -76,6 +77,7 @@ namespace OpenUtau.App.Controls {
             ClipToBounds = true;
             pointGeometry = new EllipseGeometry(new Rect(-3.5, -3.5, 7, 7));
             pointHighlightGeometry = new EllipseGeometry(new Rect(-1.75, -1.75, 3.5, 3.5));
+            RofloficEffects.Changed += InvalidateVisual;
             MessageBus.Current.Listen<NotesRefreshEvent>()
                 .Subscribe(_ => InvalidateVisual());
             MessageBus.Current.Listen<NotesSelectionEvent>()
@@ -139,8 +141,12 @@ namespace OpenUtau.App.Controls {
                     double x4 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[4].X) - Part.position, 0).X;
                     double y4 = (1 - phoneme.envelope.data[4].Y / 100) * height;
 
-                    var pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
-                    var brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                    var pen = RofloficEffects.RainbowEnabled
+                        ? new Pen(RofloficEffects.Brush(phoneme.position * 0.002), 1.5)
+                        : selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
+                    var brush = RofloficEffects.RainbowEnabled
+                        ? RofloficEffects.Brush(phoneme.position * 0.002, 110)
+                        : selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
 
                     var point0 = new Point(x0, y + y0);
                     var point1 = new Point(x1, y + y1);
@@ -173,11 +179,15 @@ namespace OpenUtau.App.Controls {
                         using (var state = context.PushTransform(Matrix.CreateTranslation(textX + 2, textY))) {
                             bool isSelected = selectedNotes.Contains(phoneme.Parent);
                             bool isHovered = mouseoverPhoneme == phoneme;
-                            var pen = phoneme.Error ? ErrorPen
+                            var pen = RofloficEffects.RainbowEnabled && !phoneme.Error
+                                ? new Pen(RofloficEffects.Brush(phoneme.position * 0.002), 1.5)
+                                : phoneme.Error ? ErrorPen
                                 : isHovered ? ThemeManager.AccentPen1Thickness2
                                 : isSelected ? ThemeManager.AccentPen2
                                 : ThemeManager.NeutralAccentPenSemi;
-                            var brush = phoneme.Error ? ErrorBrush
+                            var brush = RofloficEffects.RainbowEnabled && !phoneme.Error
+                                ? RofloficEffects.Brush(phoneme.position * 0.002, 100)
+                                : phoneme.Error ? ErrorBrush
                                 : isHovered ? ThemeManager.AccentBrush1Semi
                                 : isSelected ? ThemeManager.AccentBrush2Semi
                                 : ThemeManager.BackgroundBrush;

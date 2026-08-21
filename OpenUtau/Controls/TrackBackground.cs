@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using OpenUtau.Core;
+using OpenUtau.App.Roflofic;
 using OpenUtau.Core.Util;
 using ReactiveUI;
 
@@ -66,6 +67,7 @@ namespace OpenUtau.App.Controls {
         public TrackBackground() {
             MessageBus.Current.Listen<ThemeChangedEvent>()
                 .Subscribe(e => InvalidateVisual());
+            RofloficEffects.Changed += InvalidateVisual;
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
@@ -105,7 +107,10 @@ namespace OpenUtau.App.Controls {
                 bool isCenterKey = IsKeyboard && IsCenterKey(track);
                 var brush = isCenterKey ? ThemeManager.CenterKeyBrush
                     : IsKeyboard ? (isAltTrack ? ThemeManager.BlackKeyBrush : ThemeManager.WhiteKeyBrush)
-                    : isAltTrack ? Foreground : Background;
+                        : isAltTrack ? Foreground : Background;
+                if (RofloficEffects.RainbowEnabled && IsKeyboard) {
+                    brush = RofloficEffects.Brush((ViewConstants.MaxTone - 1 - track) * 0.035, 210);
+                }
                 context.DrawRectangle(
                     brush,
                     null,

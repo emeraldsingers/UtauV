@@ -332,6 +332,10 @@ namespace OpenUtau.App.Controls {
             ViewModel.NotesViewModel.ShowPlaybackNoteOrbit =
                 !ViewModel.NotesViewModel.ShowPlaybackNoteOrbit;
         }
+
+        void OnMenuRainbowEffect(object sender, RoutedEventArgs args) {
+            ViewModel.NotesViewModel.ShowRainbowEffect = !ViewModel.NotesViewModel.ShowRainbowEffect;
+        }
         void OnMenuUseTrackColor(object sender, RoutedEventArgs args) {
             Preferences.Default.UseTrackColor = !Preferences.Default.UseTrackColor;
             Preferences.Save();

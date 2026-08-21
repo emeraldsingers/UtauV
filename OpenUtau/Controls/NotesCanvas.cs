@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
+using OpenUtau.App.Roflofic;
 using OpenUtau.Core;
 using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
@@ -162,6 +163,7 @@ namespace OpenUtau.App.Controls {
             pointGeometry = new EllipseGeometry(new Rect(-2.5, -2.5, 5, 5));
             highlightTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 30.0) };
             highlightTimer.Tick += (_, _) => InvalidateVisual();
+            RofloficEffects.Changed += InvalidateVisual;
 
             MessageBus.Current.Listen<NotesRefreshEvent>()
                 .Subscribe(_ => InvalidateVisual());
@@ -278,6 +280,9 @@ namespace OpenUtau.App.Controls {
             var brush = selectedNotes.Contains(note)
                 ? (note.Error ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush2)
                 : (note.Error ? ThemeManager.AccentBrush1Semi : ThemeManager.AccentBrush1);
+            if (RofloficEffects.RainbowEnabled && !note.Error) {
+                brush = RofloficEffects.Gradient(note.position * 0.002, 230);
+            }
             if (!selectedNotes.Contains(note)) {
                 float highlight = ShowPlaybackNoteHighlight
                     ? (note == activePlaybackNote ? activeHighlight : note == fadingPlaybackNote ? fadingHighlight : 0)
@@ -473,10 +478,9 @@ namespace OpenUtau.App.Controls {
                 y -= Math.Sin(progress * Math.PI) * height;
             }
             if (ShowPlaybackNoteOrbit) {
-                double radius = Math.Min(22, TrackHeight * 0.45);
-                double angle = playbackOrbitElapsed * Math.PI * 8 + note.position * 0.021;
-                x += Math.Cos(angle) * radius;
-                y += Math.Sin(angle) * radius;
+                var orbit = RofloficEffects.OrbitOffset(note.position, playbackOrbitElapsed, TrackHeight, true);
+                x += orbit.X;
+                y += orbit.Y;
             }
             return new Vector(x, y);
         }
@@ -485,12 +489,7 @@ namespace OpenUtau.App.Controls {
             if (!ShowPlaybackNoteOrbit || !PlaybackManager.Inst.PlayingMaster) {
                 return Matrix.Identity;
             }
-            double angle = playbackOrbitElapsed * Math.PI * 12 + note.position * 0.031;
-            double cos = Math.Cos(angle);
-            double sin = Math.Sin(angle);
-            return new Matrix(cos, sin, -sin, cos,
-                center.X - center.X * cos + center.Y * sin,
-                center.Y - center.X * sin - center.Y * cos);
+            return RofloficEffects.OrbitRotation(note.position, playbackOrbitElapsed, center, true);
         }
 
         private UNote? FindPlaybackNote() {

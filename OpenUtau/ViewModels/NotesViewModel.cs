@@ -13,6 +13,7 @@ using Avalonia.Media.Imaging;
 using DynamicData;
 using DynamicData.Binding;
 using OpenUtau.App.Views;
+using OpenUtau.App.Roflofic;
 using OpenUtau.Core;
 using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
@@ -70,6 +71,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPlaybackNoteHighlight { get; set; }
         [Reactive] public bool ShowPlaybackNoteBounce { get; set; }
         [Reactive] public bool ShowPlaybackNoteOrbit { get; set; }
+        [Reactive] public bool ShowRainbowEffect { get; set; }
         [Reactive] public bool IsSnapOn { get; set; }
         [Reactive] public string SnapDivText { get; set; }
         [Reactive] public string KeyText { get; set; }
@@ -292,6 +294,15 @@ namespace OpenUtau.App.ViewModels {
                 .Subscribe(showPlaybackNoteOrbit => {
                     Preferences.Default.ShowPlaybackNoteOrbit = showPlaybackNoteOrbit;
                     Preferences.Save();
+                });
+            ShowRainbowEffect = Preferences.Default.ShowRainbowEffect;
+            RofloficEffects.SetRainbowEnabled(ShowRainbowEffect);
+            this.WhenAnyValue(x => x.ShowRainbowEffect)
+                .Skip(1)
+                .Subscribe(showRainbowEffect => {
+                    Preferences.Default.ShowRainbowEffect = showRainbowEffect;
+                    Preferences.Save();
+                    RofloficEffects.SetRainbowEnabled(showRainbowEffect);
                 });
             ShowExpressions = Preferences.Default.ShowExpressions;
             this.WhenAnyValue(x => x.ShowExpressions)
