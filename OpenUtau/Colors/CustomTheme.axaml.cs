@@ -47,7 +47,12 @@ public class CustomTheme {
         foreach (var key in LocalThemes) Themes.Remove(key);
         LocalThemes.Clear();
         Directory.CreateDirectory(PathManager.Inst.ThemesPath);
-        foreach (var item in Directory.EnumerateFiles(PathManager.Inst.ThemesPath, "*.yaml")) {
+        foreach (var item in Directory.EnumerateFiles(PathManager.Inst.ThemesPath, "*.yaml", SearchOption.AllDirectories)) {
+            var fileName = Path.GetFileName(item);
+            if (string.Equals(fileName, PackageManager.OuthemeMetadataFile, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(fileName, PackageManager.OusthemeMetadataFile, StringComparison.OrdinalIgnoreCase)) {
+                continue;
+            }
             try {
                 string baseName = Yaml.DefaultDeserializer.Deserialize<ThemeYaml>(File.ReadAllText(item, Encoding.UTF8)).Name;
                 string themeName = baseName;
