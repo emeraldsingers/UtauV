@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -105,6 +105,38 @@ namespace OpenUtau.App.ViewModels {
             HomepageUrl = !string.IsNullOrWhiteSpace(s.homepage_url) ? s.homepage_url : s.download_page_url ?? string.Empty;
             Palette = s.palette;
 
+            WireRowNotifications();
+        }
+
+        public ThemeRowViewModel(OuthemeMetadata m) {
+            Id = m.id ?? string.Empty;
+            Name = string.IsNullOrWhiteSpace(m.name) ? (m.id ?? string.Empty) : (m.name ?? string.Empty);
+            Author = m.author ?? string.Empty;
+            Description = m.description ?? string.Empty;
+            IsSingerTheme = false;
+            Singers = string.Empty;
+            LatestVersion = m.version ?? string.Empty;
+            HomepageUrl = string.Empty;
+            ImageUrl = string.Empty;
+
+            WireRowNotifications();
+        }
+
+        public ThemeRowViewModel(OusthemeMetadata m) {
+            Id = m.id ?? string.Empty;
+            Name = string.IsNullOrWhiteSpace(m.name) ? (m.id ?? string.Empty) : (m.name ?? string.Empty);
+            Author = m.author ?? string.Empty;
+            Description = m.description ?? string.Empty;
+            IsSingerTheme = true;
+            Singers = m.singers ?? string.Empty;
+            LatestVersion = m.version ?? string.Empty;
+            HomepageUrl = string.Empty;
+            ImageUrl = string.Empty;
+
+            WireRowNotifications();
+        }
+
+        void WireRowNotifications() {
             this.WhenAnyValue(x => x.IsInstalled, x => x.InstalledVersion)
                 .Subscribe(_ => {
                     this.RaisePropertyChanged(nameof(IsUpToDate));
@@ -1209,6 +1241,7 @@ namespace OpenUtau.App.ViewModels {
                 }
                 Status = $"Downloading plugin: {row.Id}";
                 await PackageManager.Inst.InstallPluginAsync(row.Software);
+                DocManager.Inst.SearchAllPlugins();
                 await RefreshAsync();
                 Status = $"Plugin {row.Id} installed.";
             } catch (Exception e) {
@@ -1222,6 +1255,7 @@ namespace OpenUtau.App.ViewModels {
                 if (!row.IsInstalled) return;
                 Status = $"Uninstalling plugin: {row.Id}";
                 await PackageManager.Inst.UninstallPluginAsync(row.Id);
+                DocManager.Inst.SearchAllPlugins();
                 await RefreshAsync();
                 Status = $"Plugin {row.Id} uninstalled.";
             } catch (Exception e) {
@@ -1270,6 +1304,21 @@ namespace OpenUtau.App.ViewModels {
                     }
                     rows.Add(row);
                     existingIds.Add(s.id);
+                }
+
+                foreach (var t in installedUi) {
+                    if (existingIds.Contains(t.id)) continue;
+                    var row = new ThemeRowViewModel(t);
+                    row.SetInstalled(t.version);
+                    rows.Add(row);
+                    existingIds.Add(t.id);
+                }
+                foreach (var t in installedSinger) {
+                    if (existingIds.Contains(t.id)) continue;
+                    var row = new ThemeRowViewModel(t);
+                    row.SetInstalled(t.version);
+                    rows.Add(row);
+                    existingIds.Add(t.id);
                 }
 
                 var ordered = rows
