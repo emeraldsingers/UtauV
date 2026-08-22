@@ -659,4 +659,17 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="welcome.ready">Можно пропустить и настроить все позже в параметрах.</system:String>
   <system:String x:Key="pianoroll.menu.view.rainboweffect">Радужные ноты, фонемы и клавиатура</system:String>
   <system:String x:Key="pianoroll.menu.view.playbackeffects">Эффекты воспроизведения</system:String>
+  <system:String x:Key="packages.themes.caption">Темы</system:String>
+  <system:String x:Key="packages.themes.filter.all">Все</system:String>
+  <system:String x:Key="packages.themes.filter.ui">UI-темы</system:String>
+  <system:String x:Key="packages.themes.filter.singer">Темы исполнителей</system:String>
+  <system:String x:Key="packages.themes.search.watermark">Поиск по темам, авторам, исполнителям...</system:String>
+  <system:String x:Key="packages.themes.singers.label">Исполнители:</system:String>
+  <system:String x:Key="packages.themes.preview.caption">Предпоказ темы</system:String>
+  <system:String x:Key="packages.themes.preview.placeholder">Выберите тему из списка для предпоказа</system:String>
+  <system:String x:Key="packages.themes.openinstalllocation">Открыть папку тем</system:String>
+  <system:String x:Key="packages.themes.status.fetching">Загрузка реестра тем...</system:String>
+  <system:String x:Key="packages.themes.status.installing">Установка темы {0}...</system:String>
+  <system:String x:Key="packages.themes.status.installfinished">Тема установлена</system:String>
+  <system:String x:Key="packages.themes.status.installfailed">Ошибка установки темы</system:String>
 </ResourceDictionary>
