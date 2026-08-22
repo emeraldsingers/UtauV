@@ -66,7 +66,7 @@ namespace OpenUtau {
 #if ONNXRUNTIME_CUDA
                 return "win-x64-cuda";
 #else
-                return "win-x64";
+                return "win-x64-directml";
 #endif
             } else if (IsMacOS()) {
                 if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64) {
