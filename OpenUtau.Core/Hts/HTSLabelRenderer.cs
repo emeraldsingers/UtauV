@@ -500,7 +500,7 @@ namespace OpenUtau.Core.Hts {
             };
         }
 
-        public abstract Task<RenderResult> Render(RenderPhrase phrase, Progress progress, int trackNo, CancellationTokenSource cancellation, bool isPreRender);
+        public abstract Task<RenderResult> Render(RenderPhrase phrase, Progress progress, int trackNo, CancellationTokenSource cancellation, bool isPreRender, RenderPhraseEvents? renderEvents = null);
 
         public abstract UExpressionDescriptor[] GetSuggestedExpressions(USinger singer, URenderSettings renderSettings);
 
