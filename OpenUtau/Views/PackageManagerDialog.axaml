@@ -2,49 +2,718 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="using:OpenUtau.App.Controls"
         xmlns:vm="using:OpenUtau.App.ViewModels"
+        xmlns:converters="using:OpenUtau.App.ViewModels"
         mc:Ignorable="d"
         x:Class="OpenUtau.App.Views.PackageManagerDialog"
         Icon="/Assets/open-utau.ico"
-        Title="{DynamicResource packages.caption}" Width="900" Height="600" WindowStartupLocation="CenterScreen">
+        Title="{DynamicResource packages.caption}" Width="1080" Height="720" MinWidth="860" MinHeight="560"
+        WindowStartupLocation="CenterScreen">
   <Design.DataContext>
     <vm:PackageManagerViewModel/>
   </Design.DataContext>
-  <Grid Margin="10">
+  <Window.Styles>
+    <Style Selector="Border.headerPanel">
+      <Setter Property="Padding" Value="14"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+    </Style>
+    <Style Selector="ToggleButton.sectionTab">
+      <Setter Property="MinWidth" Value="110"/>
+      <Setter Property="Height" Value="30"/>
+      <Setter Property="Padding" Value="12,4"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="ToggleButton.sectionTab:checked">
+      <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Border.packageCard">
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="Margin" Value="0,0,0,10"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+    </Style>
+    <Style Selector="Border.voiceCard">
+      <Setter Property="Width" Value="318"/>
+      <Setter Property="MinHeight" Value="396"/>
+      <Setter Property="Margin" Value="0,0,16,16"/>
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="ClipToBounds" Value="True"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+      <Setter Property="Padding" Value="10"/>
+    </Style>
+    <Style Selector="Border.voiceImageHost">
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="ClipToBounds" Value="True"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+    </Style>
+    <Style Selector="Border.voiceOverlay">
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+      <Setter Property="Padding" Value="10,8"/>
+      <Setter Property="Margin" Value="0,10,0,0"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+    </Style>
+    <Style Selector="Border.badge">
+      <Setter Property="Padding" Value="8,3"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+      <Setter Property="VerticalAlignment" Value="Top"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Opacity" Value="0.8"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="TextBlock.label">
+      <Setter Property="Opacity" Value="0.75"/>
+      <Setter Property="FontSize" Value="11"/>
+    </Style>
+    <Style Selector="Button.action">
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="MinHeight" Value="30"/>
+      <Setter Property="Height" Value="30"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="Padding" Value="12,4"/>
+      <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+    <Style Selector="Button.compactAction">
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="MinHeight" Value="30"/>
+      <Setter Property="Height" Value="30"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="Padding" Value="12,4"/>
+      <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+    <Style Selector="Button.voiceAction">
+      <Setter Property="MinHeight" Value="28"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="Padding" Value="10,4"/>
+      <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+  </Window.Styles>
+
+  <Window.Resources>
+    <converters:StringToSolidColorBrushConverter x:Key="StringToSolidColorBrush"/>
+  </Window.Resources>
+
+  <Grid Margin="12">
     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="10"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
-    <Grid Grid.Row="0">
-      <DataGrid ItemsSource="{Binding Available}" AutoGenerateColumns="False" CanUserSortColumns="False"
-                BorderThickness="1" BorderBrush="{DynamicResource SystemControlHighlightBaseMediumHighBrush}">
-        <DataGrid.Columns>
-          <DataGridTextColumn Header="{DynamicResource packages.col.id}" Binding="{Binding Id}"/>
-          <DataGridTextColumn Header="{DynamicResource packages.col.developer}" Binding="{Binding Developer}"/>
-          <DataGridTextColumn Header="{DynamicResource packages.col.version}" Binding="{Binding Version}"/>
-          <DataGridTextColumn Header="{DynamicResource packages.col.installed}" Binding="{Binding InstalledDisplay}"/>
-          <DataGridTemplateColumn Header="{DynamicResource packages.col.action}">
-            <DataGridTemplateColumn.CellTemplate>
-              <DataTemplate>
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                  <Button Content="{Binding PrimaryActionLabel}" Click="OnPrimaryActionClick" IsVisible="{Binding CanInstallOrUpdate}"/>
-                  <Button Content="{DynamicResource packages.uninstall}" Click="OnUninstallClick" IsVisible="{Binding CanUninstall}"/>
+
+    <Border Grid.Row="0" Classes="headerPanel">
+      <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+          <TextBlock Text="{Binding CurrentSectionTitle}" FontSize="18" FontWeight="SemiBold"/>
+          <TextBlock Classes="muted" Text="{Binding Status}"/>
+        </StackPanel>
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+          <ToggleButton Classes="sectionTab"
+                        Content="{DynamicResource packages.caption}"
+                        IsChecked="{Binding IsPackagesSection, Mode=OneWay}"
+                        Command="{Binding SelectPackagesCommand}"/>
+          <ToggleButton Classes="sectionTab"
+                        Content="Plugins"
+                        IsChecked="{Binding IsPluginsSection, Mode=OneWay}"
+                        Command="{Binding SelectPluginsCommand}"/>
+          <ToggleButton Classes="sectionTab"
+                        Content="{DynamicResource voicebanks.caption}"
+                        IsChecked="{Binding IsVoicebanksSection, Mode=OneWay}"
+                        Command="{Binding SelectVoicebanksCommand}"/>
+          <ToggleButton Classes="sectionTab"
+                        Content="{DynamicResource packages.themes.caption}"
+                        IsChecked="{Binding IsThemesSection, Mode=OneWay}"
+                        Command="{Binding SelectThemesCommand}"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsPluginsSection}">
+            <TextBox Width="200" Watermark="Search plugins..." Text="{Binding SearchQuery}"/>
+            <ComboBox Width="150" ItemsSource="{Binding PluginCategories}" SelectedItem="{Binding SelectedCategory}"/>
+          </StackPanel>
+          <WrapPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+          <Button Classes="compactAction"
+                  Content="{DynamicResource packages.installfromfile}"
+                  IsVisible="{Binding ShowInstallFromFileButton}"
+                  Click="OnInstallFromFile"/>
+          <Button Classes="compactAction"
+                  Content="{Binding OpenInstallLocationLabel}"
+                  Click="OpenLocation"/>
+          <Button Classes="compactAction"
+                  Content="{DynamicResource packages.refresh}"
+                  Command="{Binding RefreshCommand}"/>
+          </WrapPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Margin="0,10,0,0">
+          <Border Classes="badge">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <TextBlock Text="{DynamicResource packages.installed}" FontSize="11"/>
+              <TextBlock Text="{Binding SelectedInstalledCount}" FontWeight="SemiBold" FontSize="11"/>
+            </StackPanel>
+          </Border>
+          <Border Classes="badge">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <TextBlock Text="{DynamicResource packages.update}" FontSize="11"/>
+              <TextBlock Text="{Binding SelectedUpdateCount}" FontWeight="SemiBold" FontSize="11"/>
+            </StackPanel>
+          </Border>
+          <Border Classes="badge">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <TextBlock Text="{Binding CurrentSectionTitle}" FontSize="11"/>
+              <TextBlock Text="{Binding SelectedTotalCount}" FontWeight="SemiBold" FontSize="11"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  IsVisible="{Binding IsPackagesSection}">
+      <ItemsControl ItemsSource="{Binding Available}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="packageCard">
+              <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+                  <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"/>
+                  <TextBlock Classes="muted" Text="{Binding Id}"/>
+                  <TextBlock Classes="muted" Text="{Binding DescriptionDisplay}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                 </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+                  <Border Classes="badge" IsVisible="{Binding IsInstalled}">
+                    <TextBlock Text="{DynamicResource packages.installed}" FontSize="11"/>
+                  </Border>
+                  <Border Classes="badge" IsVisible="{Binding HasUpdate}">
+                    <TextBlock Text="{DynamicResource packages.update}" FontSize="11"/>
+                  </Border>
+                  <Border Classes="badge" IsVisible="{Binding !HasRegistry}">
+                    <TextBlock Text="{DynamicResource packages.col.installed}" FontSize="11"/>
+                  </Border>
+                </StackPanel>
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="2*,*,*" Margin="0,10,0,0">
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Classes="label" Text="{DynamicResource packages.col.developer}"/>
+                    <TextBlock Text="{Binding DeveloperDisplay}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1">
+                    <TextBlock Classes="label" Text="{DynamicResource packages.col.version}"/>
+                    <TextBlock Text="{Binding LatestDisplay}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Classes="label" Text="{DynamicResource packages.col.installed}"/>
+                    <TextBlock Text="{Binding InstalledDisplay}"/>
+                  </StackPanel>
+                </Grid>
+                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0"
+                            HorizontalAlignment="Right">
+                  <Button Classes="action" Content="{Binding PrimaryActionLabel}" Click="OnPrimaryActionClick"
+                          IsVisible="{Binding CanInstallOrUpdate}"/>
+                  <Button Classes="action" Content="{DynamicResource packages.archive}" Click="OnVersionArchiveClick"
+                          IsVisible="{Binding HasVersionArchive}"/>
+                  <Button Classes="action" Content="{DynamicResource packages.uninstall}" Click="OnUninstallClick"
+                          IsVisible="{Binding CanUninstall}"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  IsVisible="{Binding IsVoicebanksSection}">
+      <ItemsControl ItemsSource="{Binding VoicebankGroups}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <StackPanel Margin="0,0,0,20">
+              <TextBlock Text="{Binding Name}" FontSize="24" FontWeight="Bold" Margin="10,10,10,5" IsVisible="{Binding Name, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+              <Border Height="1" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" Margin="10,0,10,15"/>
+              <ItemsControl ItemsSource="{Binding Groups}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Classes="voiceCard">
+                      <Grid RowDefinitions="220,Auto,Auto">
+                        <Border Grid.Row="0" Classes="voiceImageHost">
+                          <Grid>
+                            <Image Source="{Binding CoverImage}" Stretch="Uniform" IsVisible="{Binding HasCover}"/>
+                            <Border IsVisible="{Binding HasNoCover}" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                              <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" Opacity="0.8"/>
+                            </Border>
+                          </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8,8,8,0" Spacing="6">
+                          <Border Classes="badge" IsVisible="{Binding IsInstalled}">
+                            <TextBlock Text="{Binding InstalledBadgeText}" FontSize="11"/>
+                          </Border>
+                          <Border Classes="badge" IsVisible="{Binding HasUpdate}">
+                            <TextBlock Text="{DynamicResource packages.update}" FontSize="11"/>
+                          </Border>
+                        </StackPanel>
+
+                        <Border Grid.Row="1" Classes="voiceOverlay">
+                          <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="20" TextWrapping="Wrap"/>
+                            <TextBlock Classes="muted" Text="{Binding VariantCount, StringFormat={}{0} variants}" TextWrapping="Wrap"/>
+                            <TextBlock Classes="muted" Text="{Binding MetaDisplay}" TextWrapping="Wrap" IsVisible="{Binding !IsDiffSingerGroup}"/>
+                            <TextBlock Classes="muted" Text="{Binding DescriptionDisplay}" MaxHeight="48" TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+                          </StackPanel>
+                        </Border>
+
+                        <WrapPanel Grid.Row="2" Margin="0,10,0,0" Orientation="Horizontal" HorizontalAlignment="Left">
+                          <Button Classes="voiceAction" Content="{DynamicResource voicebanks.open}" Click="OnOpenVoicebankCatalogClick"/>
+                          <Button Classes="voiceAction" Content="{DynamicResource voicebanks.website}" Click="OnVoicebankWebsiteClick"
+                                  IsVisible="{Binding HasWebsite}"/>
+                          <Button Classes="voiceAction" Content="{DynamicResource voicebanks.singerlink}" Click="OnVoicebankSingerLinkClick"
+                                  IsVisible="{Binding HasSingerLink}"/>
+                        </WrapPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  IsVisible="{Binding IsPluginsSection}">
+      <ItemsControl ItemsSource="{Binding FilteredPlugins}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="packageCard">
+              <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+                  <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"/>
+                  <TextBlock Classes="muted" Text="{Binding Category}"/>
+                  <controls:MarkdownView Markdown="{Binding LongDescription}" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+                  <Border Classes="badge" IsVisible="{Binding IsInstalled}">
+                    <TextBlock Text="{DynamicResource packages.installed}" FontSize="11"/>
+                  </Border>
+                  <Border Classes="badge" IsVisible="{Binding HasUpdate}">
+                    <TextBlock Text="{DynamicResource packages.update}" FontSize="11"/>
+                  </Border>
+                  <Border Classes="badge" IsVisible="{Binding !HasRegistry}">
+                    <TextBlock Text="{DynamicResource packages.col.installed}" FontSize="11"/>
+                  </Border>
+                </StackPanel>
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="2*,*,*" Margin="0,10,0,0">
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Classes="label" Text="{DynamicResource packages.col.developer}"/>
+                    <TextBlock Text="{Binding DeveloperDisplay}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1">
+                    <TextBlock Classes="label" Text="{DynamicResource packages.col.version}"/>
+                    <TextBlock Text="{Binding LatestDisplay}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Classes="label" Text="{DynamicResource packages.col.installed}"/>
+                    <TextBlock Text="{Binding InstalledDisplay}"/>
+                  </StackPanel>
+                </Grid>
+                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0"
+                            HorizontalAlignment="Right">
+                  <Button Classes="action" Content="{Binding PrimaryActionLabel}" Click="OnInstallPluginClick"
+                          IsVisible="{Binding CanInstallOrUpdate}"/>
+                  <Button Classes="action" Content="Repo/Website" Click="OnPluginWebsiteClick"
+                          IsVisible="{Binding HasRegistry}"/>
+                  <Button Classes="action" Content="{DynamicResource packages.uninstall}" Click="OnUninstallPluginClick"
+                          IsVisible="{Binding CanUninstall}"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         THEMES SECTION
+         ═══════════════════════════════════════════════════════════════════ -->
+    <Grid Grid.Row="2" ColumnDefinitions="*,16,380" IsVisible="{Binding IsThemesSection}">
+
+      <!-- Left: filter bar + list -->
+      <Grid Grid.Column="0" RowDefinitions="Auto,8,Auto,8,*">
+
+        <!-- Filter / search bar -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,8,*,8,Auto">
+          <!-- Type filter -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+            <RadioButton x:Name="ThemeFilterAll"
+                         Content="{DynamicResource packages.themes.filter.all}"
+                         IsChecked="True"
+                         GroupName="ThemeTypeFilter"
+                         Tag="All"
+                         Checked="OnThemeTypeFilterChanged"/>
+            <RadioButton x:Name="ThemeFilterUi"
+                         Content="{DynamicResource packages.themes.filter.ui}"
+                         GroupName="ThemeTypeFilter"
+                         Tag="UI Themes"
+                         Checked="OnThemeTypeFilterChanged"/>
+            <RadioButton x:Name="ThemeFilterSinger"
+                         Content="{DynamicResource packages.themes.filter.singer}"
+                         GroupName="ThemeTypeFilter"
+                         Tag="Singer Themes"
+                         Checked="OnThemeTypeFilterChanged"/>
+          </StackPanel>
+
+          <!-- Search box -->
+          <TextBox Grid.Column="2"
+                   Watermark="{DynamicResource packages.themes.search.watermark}"
+                   Text="{Binding ThemeSearchText}"/>
+
+          <!-- Refresh button -->
+          <Button Grid.Column="4" Classes="action"
+                  Content="{DynamicResource packages.refresh}"
+                  Command="{Binding RefreshThemesCommand}"/>
+        </Grid>
+
+        <!-- Loading indicator -->
+        <!-- Onboarding: how to contribute a theme -->
+        <Border Grid.Row="2"
+                CornerRadius="8" BorderThickness="1"
+                BorderBrush="{DynamicResource SystemControlHighlightBaseMediumBrush}"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="12,10">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Spacing="4">
+              <TextBlock FontWeight="SemiBold" FontSize="12" Text="How to publish a theme"/>
+              <TextBlock FontSize="11" Opacity="0.8" TextWrapping="Wrap">
+                <Run Text="1. Fork"/>
+                <Run Text="github.com/emeraldsingers/UtauV_Packages" FontWeight="SemiBold"/>
+                <Run Text="  2. Add your YAML at {your_github_username}/{theme_id}/{theme_name}.yaml using the flat colour format"/>
+                <Run Text="  3. Open a Pull Request"/>
+                <Run Text="  4. Add label"/>
+                <Run Text="UtauV_Theme" FontWeight="SemiBold"/>
+                <Run Text="(or"/>
+                <Run Text="UtauV_SingerTheme" FontWeight="SemiBold"/>
+                <Run Text=")"/>
+              </TextBlock>
+            </StackPanel>
+            <Button Grid.Column="1" Classes="action" VerticalAlignment="Center" Margin="12,0,0,0"
+                    Content="Create a theme PR"
+                    Click="OnCreateThemePrClick"/>
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="4" IsVisible="{Binding IsThemesLoading}"
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                CornerRadius="10" Padding="20">
+          <TextBlock Text="{DynamicResource packages.themes.status.fetching}"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     FontSize="14" Opacity="0.7"/>
+        </Border>
+
+        <!-- Theme list -->
+        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      IsVisible="{Binding !IsThemesLoading}">
+          <ItemsControl ItemsSource="{Binding FilteredThemes}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Classes="packageCard"
+                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                        PointerPressed="OnThemeCardPointerPressed">
+                  <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+
+                    <!-- Name + badges -->
+                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+                      <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"/>
+                      <TextBlock Classes="muted" Text="{Binding AuthorDisplay}"/>
+                      <TextBlock Classes="muted" Text="{Binding Description}"
+                                 TextWrapping="Wrap" MaxHeight="40"
+                                 TextTrimming="CharacterEllipsis" Margin="0,4,0,0"
+                                 IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                      <TextBlock Classes="muted" FontSize="11" Opacity="0.7"
+                                 IsVisible="{Binding Singers, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <Run Text="{DynamicResource packages.themes.singers.label}"/>
+                        <Run Text="{Binding Singers}"/>
+                      </TextBlock>
+                    </StackPanel>
+
+                    <!-- Right badges -->
+                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical" Spacing="4" VerticalAlignment="Top">
+                      <Border Classes="badge">
+                        <TextBlock Text="{Binding TypeBadge}" FontSize="11"/>
+                      </Border>
+                      <Border Classes="badge" IsVisible="{Binding IsInstalled}">
+                        <TextBlock Text="{DynamicResource packages.installed}" FontSize="11"/>
+                      </Border>
+                      <Border Classes="badge" IsVisible="{Binding HasUpdate}">
+                        <TextBlock Text="{DynamicResource packages.update}" FontSize="11"/>
+                      </Border>
+                    </StackPanel>
+
+                    <!-- Version info row -->
+                    <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="2*,*,*" Margin="0,8,0,0">
+                      <StackPanel Grid.Column="0">
+                        <TextBlock Classes="label" Text="{DynamicResource packages.col.developer}"/>
+                        <TextBlock Text="{Binding AuthorDisplay}"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Classes="label" Text="{DynamicResource packages.col.version}"/>
+                        <TextBlock Text="{Binding VersionDisplay}"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Classes="label" Text="{DynamicResource packages.col.installed}"/>
+                        <TextBlock Text="{Binding InstalledDisplay}"/>
+                      </StackPanel>
+                    </Grid>
+
+                    <!-- Action buttons -->
+                    <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal"
+                                Spacing="8" Margin="0,10,0,0" HorizontalAlignment="Right">
+                      <Button Classes="action"
+                              Content="{Binding PrimaryActionLabel}"
+                              IsVisible="{Binding CanInstallOrUpdate}"
+                              Click="OnInstallThemeClick"/>
+                      <Button Classes="action"
+                              Content="Homepage"
+                              IsVisible="{Binding HasHomepage}"
+                              Click="OnThemeHomepageClick"/>
+                      <Button Classes="action"
+                              Content="{DynamicResource packages.uninstall}"
+                              IsVisible="{Binding CanUninstall}"
+                              Click="OnUninstallThemeClick"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
               </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-          </DataGridTemplateColumn>
-        </DataGrid.Columns>
-      </DataGrid>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+
+      <!-- Right: isolated preview panel -->
+      <Border Grid.Column="2"
+              CornerRadius="12" BorderThickness="1"
+              BorderBrush="{DynamicResource SystemControlHighlightBaseMediumBrush}"
+              Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+              Padding="0" ClipToBounds="True">
+        <Grid RowDefinitions="Auto,*">
+
+          <!-- Preview header -->
+          <Border Grid.Row="0" Padding="12,10"
+                  Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                  BorderThickness="0,0,0,1"
+                  BorderBrush="{DynamicResource SystemControlHighlightBaseMediumBrush}">
+            <TextBlock Text="{DynamicResource packages.themes.preview.caption}"
+                       FontWeight="SemiBold" FontSize="13"/>
+          </Border>
+
+          <!-- Preview content: shown when a theme is selected -->
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+           <Grid>
+            <StackPanel IsVisible="{Binding SelectedTheme, Converter={x:Static ObjectConverters.IsNotNull}}">
+
+              <!-- Preview image (if available) -->
+              <Border CornerRadius="0" ClipToBounds="True" MaxHeight="200"
+                      IsVisible="{Binding SelectedTheme.HasPreviewImage}">
+                <Image Source="{Binding SelectedTheme.PreviewImage}" Stretch="UniformToFill"/>
+              </Border>
+
+              <!-- Fake piano-roll sandbox (isolated, no global theme change) -->
+              <!-- Colours are driven by the selected theme's palette; fallback to neutral defaults. -->
+              <Border IsVisible="{Binding SelectedTheme.HasNoPreviewImage}"
+                      Margin="8" CornerRadius="8" ClipToBounds="True"
+                      BorderThickness="1"
+                      BorderBrush="{DynamicResource SystemControlHighlightBaseMediumBrush}">
+                <Grid RowDefinitions="28,4,*"
+                      Background="{Binding SelectedTheme.PreviewBackground, Converter={StaticResource StringToSolidColorBrush}}">
+
+                  <!-- Fake toolbar -->
+                  <Border Grid.Row="0"
+                          Background="{Binding SelectedTheme.PreviewToolbar, Converter={StaticResource StringToSolidColorBrush}}"
+                          Padding="6,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <Border Width="10" Height="10" CornerRadius="5" Background="#FF5F57"/>
+                      <Border Width="10" Height="10" CornerRadius="5" Background="#FEBC2E"/>
+                      <Border Width="10" Height="10" CornerRadius="5" Background="#28C840"/>
+                      <Border Width="1"
+                              Background="{Binding SelectedTheme.PreviewGrid, Converter={StaticResource StringToSolidColorBrush}}"
+                              Margin="4,0"/>
+                      <TextBlock Text="Piano Roll" FontSize="10"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 VerticalAlignment="Center" Opacity="0.7"/>
+                    </StackPanel>
+                  </Border>
+
+                  <!-- Fake piano-roll canvas -->
+                  <Canvas Grid.Row="2" Height="120"
+                          Background="{Binding SelectedTheme.PreviewBackground, Converter={StaticResource StringToSolidColorBrush}}"
+                          ClipToBounds="True">
+                    <!-- Grid lines (horizontal) -->
+                    <Rectangle Canvas.Left="0" Canvas.Top="20" Width="380" Height="1"
+                                Fill="{Binding SelectedTheme.PreviewToolbar, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="0" Canvas.Top="40" Width="380" Height="1"
+                                Fill="{Binding SelectedTheme.PreviewToolbar, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="0" Canvas.Top="60" Width="380" Height="1"
+                                Fill="{Binding SelectedTheme.PreviewToolbar, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="0" Canvas.Top="80" Width="380" Height="1"
+                                Fill="{Binding SelectedTheme.PreviewToolbar, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="0" Canvas.Top="100" Width="380" Height="1"
+                                Fill="{Binding SelectedTheme.PreviewToolbar, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <!-- Grid lines (vertical / beat markers) -->
+                    <Rectangle Canvas.Left="60"  Canvas.Top="0" Width="1" Height="120"
+                                Fill="{Binding SelectedTheme.PreviewGrid, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="120" Canvas.Top="0" Width="1" Height="120"
+                                Fill="{Binding SelectedTheme.PreviewGrid, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="180" Canvas.Top="0" Width="1" Height="120"
+                                Fill="{Binding SelectedTheme.PreviewGrid, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="240" Canvas.Top="0" Width="1" Height="120"
+                                Fill="{Binding SelectedTheme.PreviewGrid, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Rectangle Canvas.Left="300" Canvas.Top="0" Width="1" Height="120"
+                                Fill="{Binding SelectedTheme.PreviewGrid, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <!-- Fake note blocks -->
+                    <Border Canvas.Left="10"  Canvas.Top="15" Width="45" Height="16"
+                            Background="{Binding SelectedTheme.PreviewNote, Converter={StaticResource StringToSolidColorBrush}}"
+                            CornerRadius="3">
+                      <TextBlock Text="do" FontSize="9"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 Margin="3,1"/>
+                    </Border>
+                    <Border Canvas.Left="62"  Canvas.Top="35" Width="55" Height="16"
+                            Background="{Binding SelectedTheme.PreviewNote, Converter={StaticResource StringToSolidColorBrush}}"
+                            CornerRadius="3">
+                      <TextBlock Text="re" FontSize="9"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 Margin="3,1"/>
+                    </Border>
+                    <Border Canvas.Left="122" Canvas.Top="25" Width="35" Height="16"
+                            Background="{Binding SelectedTheme.PreviewSelectedNote, Converter={StaticResource StringToSolidColorBrush}}"
+                            BorderThickness="1.5"
+                            BorderBrush="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                            CornerRadius="3">
+                      <TextBlock Text="mi" FontSize="9"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 Margin="3,1"/>
+                    </Border>
+                    <Border Canvas.Left="162" Canvas.Top="45" Width="50" Height="16"
+                            Background="{Binding SelectedTheme.PreviewNote, Converter={StaticResource StringToSolidColorBrush}}"
+                            CornerRadius="3">
+                      <TextBlock Text="fa" FontSize="9"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 Margin="3,1"/>
+                    </Border>
+                    <Border Canvas.Left="218" Canvas.Top="20" Width="40" Height="16"
+                            Background="{Binding SelectedTheme.PreviewSelectedNote, Converter={StaticResource StringToSolidColorBrush}}"
+                            BorderThickness="1.5"
+                            BorderBrush="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                            CornerRadius="3">
+                      <TextBlock Text="sol" FontSize="9"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 Margin="3,1"/>
+                    </Border>
+                    <Border Canvas.Left="262" Canvas.Top="55" Width="60" Height="16"
+                            Background="{Binding SelectedTheme.PreviewNote, Converter={StaticResource StringToSolidColorBrush}}"
+                            CornerRadius="3">
+                      <TextBlock Text="la" FontSize="9"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 Margin="3,1"/>
+                    </Border>
+                    <Border Canvas.Left="328" Canvas.Top="30" Width="40" Height="16"
+                            Background="{Binding SelectedTheme.PreviewNote, Converter={StaticResource StringToSolidColorBrush}}"
+                            CornerRadius="3">
+                      <TextBlock Text="si" FontSize="9"
+                                 Foreground="{Binding SelectedTheme.PreviewForeground, Converter={StaticResource StringToSolidColorBrush}}"
+                                 Margin="3,1"/>
+                    </Border>
+                    <!-- Pitch curve (fake) -->
+                    <Polyline Points="10,23 55,23 62,43 117,43 122,33 157,33 162,53 212,53 218,28 258,28 262,63 322,63 328,38 368,38"
+                              Stroke="{Binding SelectedTheme.PreviewPitch, Converter={StaticResource StringToSolidColorBrush}}"
+                              StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+
+                    <!-- pitchbend control points (dots) on several notes -->
+                    <Ellipse Canvas.Left="52"  Canvas.Top="20" Width="6" Height="6"
+                             Fill="{Binding SelectedTheme.PreviewPitch, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Ellipse Canvas.Left="119" Canvas.Top="30" Width="6" Height="6"
+                             Fill="{Binding SelectedTheme.PreviewPitch, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Ellipse Canvas.Left="159" Canvas.Top="50" Width="6" Height="6"
+                             Fill="{Binding SelectedTheme.PreviewPitch, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Ellipse Canvas.Left="215" Canvas.Top="25" Width="6" Height="6"
+                             Fill="{Binding SelectedTheme.PreviewPitch, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Ellipse Canvas.Left="259" Canvas.Top="60" Width="6" Height="6"
+                             Fill="{Binding SelectedTheme.PreviewPitch, Converter={StaticResource StringToSolidColorBrush}}"/>
+                    <Ellipse Canvas.Left="325" Canvas.Top="35" Width="6" Height="6"
+                             Fill="{Binding SelectedTheme.PreviewPitch, Converter={StaticResource StringToSolidColorBrush}}"/>
+                  </Canvas>
+
+                  <!-- Fake expression bar -->
+                </Grid>
+              </Border>
+
+              <!-- Theme metadata -->
+              <StackPanel Margin="12,8,12,12" Spacing="6">
+                <TextBlock Text="{Binding SelectedTheme.Name}"
+                           FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <TextBlock Classes="muted" Text="{Binding SelectedTheme.AuthorDisplay}" FontSize="12"/>
+                <Border Classes="badge" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding SelectedTheme.TypeBadge}" FontSize="11"/>
+                </Border>
+                <TextBlock Text="{Binding SelectedTheme.Singers}"
+                           Classes="muted" FontSize="11" TextWrapping="Wrap"
+                           IsVisible="{Binding SelectedTheme.Singers, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <TextBlock Text="{Binding SelectedTheme.Description}"
+                           TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0"
+                           IsVisible="{Binding SelectedTheme.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                  <TextBlock Classes="label" Text="{DynamicResource packages.col.version}"/>
+                  <TextBlock Text="{Binding SelectedTheme.VersionDisplay}" FontSize="12"/>
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+
+            <!-- Placeholder when nothing is selected -->
+            <Border IsVisible="{Binding SelectedTheme, Converter={x:Static ObjectConverters.IsNull}}"
+                    Padding="20">
+              <TextBlock Text="{DynamicResource packages.themes.preview.placeholder}"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                         TextAlignment="Center" TextWrapping="Wrap"
+                         Opacity="0.5" FontSize="13"/>
+            </Border>
+           </Grid>
+          </ScrollViewer>
+        </Grid>
+      </Border>
     </Grid>
 
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-      <TextBlock Text="{Binding Status}" Margin="0,4,0,0"/>
-    </StackPanel>
-
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" Margin="0,8,0,0" HorizontalAlignment="Right">
-      <Button Content="{DynamicResource packages.installfromfile}" Click="OnInstallFromFile"/>
-      <Button Content="{DynamicResource packages.openinstalllocation}" Click="OpenLocation"/>
-      <Button Content="{DynamicResource packages.refresh}" Command="{Binding RefreshCommand}"/>
+    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+      <TextBlock Classes="muted" Text="{Binding Status}" Margin="0,2,0,0"/>
     </StackPanel>
   </Grid>
 </Window>

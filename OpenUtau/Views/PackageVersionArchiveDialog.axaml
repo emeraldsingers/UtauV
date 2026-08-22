@@ -1,0 +1,118 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:OpenUtau.App.ViewModels"
+        mc:Ignorable="d"
+        x:Class="OpenUtau.App.Views.PackageVersionArchiveDialog"
+        Icon="/Assets/open-utau.ico"
+        Title="{DynamicResource packages.archive.caption}"
+        Width="760" Height="560" MinWidth="640" MinHeight="460"
+        WindowStartupLocation="CenterOwner">
+  <Design.DataContext>
+    <vm:PackageVersionArchiveViewModel/>
+  </Design.DataContext>
+  <Window.Styles>
+    <Style Selector="Border.headerPanel">
+      <Setter Property="Padding" Value="14"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+    </Style>
+    <Style Selector="Border.versionCard">
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="Margin" Value="0,0,0,10"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+    </Style>
+    <Style Selector="Border.badge">
+      <Setter Property="Padding" Value="8,3"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Opacity" Value="0.8"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="Button.action">
+      <Setter Property="MinHeight" Value="28"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="Padding" Value="10,4"/>
+    </Style>
+  </Window.Styles>
+
+  <Grid Margin="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="10"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Border Grid.Row="0" Classes="headerPanel">
+      <Grid RowDefinitions="Auto,Auto">
+        <StackPanel Grid.Row="0" Spacing="2">
+          <TextBlock Text="{DynamicResource packages.archive.caption}" FontSize="18" FontWeight="SemiBold"/>
+          <TextBlock Text="{Binding Header}" Classes="muted"/>
+          <TextBlock Text="{Binding DescriptionDisplay}" Classes="muted" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,10,0,0">
+          <Border Classes="badge">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <TextBlock Text="{DynamicResource packages.col.version}" FontSize="11"/>
+              <TextBlock Text="{Binding Versions.Count}" FontWeight="SemiBold" FontSize="11"/>
+            </StackPanel>
+          </Border>
+          <Border Classes="badge">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <TextBlock Text="{DynamicResource packages.latest}" FontSize="11"/>
+              <TextBlock Text="{Binding LatestVersion}" FontWeight="SemiBold" FontSize="11"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <ItemsControl ItemsSource="{Binding Versions}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="versionCard">
+              <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+                  <TextBlock Text="{Binding Version}" FontSize="15" FontWeight="SemiBold"/>
+                  <TextBlock Text="{Binding DescriptionDisplay}" Classes="muted" TextWrapping="Wrap"/>
+                </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+                  <Border Classes="badge" IsVisible="{Binding IsLatest}">
+                    <TextBlock Text="{DynamicResource packages.latest}" FontSize="11"/>
+                  </Border>
+                  <Border Classes="badge" IsVisible="{Binding IsInstalled}">
+                    <TextBlock Text="{DynamicResource packages.installed}" FontSize="11"/>
+                  </Border>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal"
+                            HorizontalAlignment="Right" Margin="0,12,0,0">
+                  <Button Classes="action"
+                          Content="{DynamicResource packages.archive.installversion}"
+                          IsEnabled="{Binding CanInstall}"
+                          Click="OnInstallVersionClick"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <Grid Grid.Row="3" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
+      <TextBlock Grid.Column="0" Text="{Binding Status}" VerticalAlignment="Center" Opacity="0.8"/>
+      <Button Grid.Column="1" Classes="action" Content="{DynamicResource dialogs.messagebox.ok}" Click="OnCloseClicked"/>
+    </Grid>
+  </Grid>
+</Window>

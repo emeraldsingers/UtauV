@@ -1,0 +1,175 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="using:OpenUtau.App.Controls"
+        xmlns:vm="using:OpenUtau.App.ViewModels"
+        mc:Ignorable="d"
+        x:Class="OpenUtau.App.Views.VoicebankCatalogDialog"
+        Icon="/Assets/open-utau.ico"
+        Title="{DynamicResource voicebanks.catalog.caption}"
+        Width="980" Height="720" MinWidth="820" MinHeight="560"
+        WindowStartupLocation="CenterOwner">
+  <Window.Styles>
+    <Style Selector="Border.headerPanel">
+      <Setter Property="Padding" Value="14"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+    </Style>
+    <Style Selector="Border.variantCard">
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="Margin" Value="0,0,0,10"/>
+      <Setter Property="CornerRadius" Value="11"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+    </Style>
+    <Style Selector="Border.versionRow">
+      <Setter Property="Padding" Value="8"/>
+      <Setter Property="Margin" Value="0,6,0,0"/>
+      <Setter Property="CornerRadius" Value="9"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightBaseMediumBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+    </Style>
+    <Style Selector="Border.badge">
+      <Setter Property="Padding" Value="8,3"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SelectedTrackAccentBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+      <Setter Property="VerticalAlignment" Value="Top"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Opacity" Value="0.8"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="Button.action">
+      <Setter Property="MinHeight" Value="30"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="Padding" Value="10,4"/>
+      <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+  </Window.Styles>
+
+  <Grid Margin="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="10"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0" Classes="headerPanel">
+      <Grid ColumnDefinitions="96,*,Auto">
+        <Border Grid.Column="0" Width="86" Height="86" CornerRadius="12" ClipToBounds="True" Background="#40242424">
+          <Image Source="{Binding CoverImage}" Stretch="UniformToFill" IsVisible="{Binding CoverImage}"/>
+        </Border>
+        <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="4">
+          <TextBlock Text="{Binding Name}" FontSize="24" FontWeight="SemiBold"/>
+          <ItemsControl ItemsSource="{Binding AllLanguages}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Classes="badge" Padding="6,1" Margin="0,0,4,4">
+                  <TextBlock Text="{Binding}" FontSize="10" FontWeight="SemiBold" Opacity="0.9"/>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Classes="muted" Text="{Binding DescriptionDisplay}" TextWrapping="Wrap" FontSize="14" Margin="0,4,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" Spacing="4">
+          <Button Classes="action" Content="{DynamicResource voicebanks.website}" Click="OnOpenGroupWebsiteClick" IsVisible="{Binding HasWebsite}"/>
+          <Button Classes="action" Content="{DynamicResource voicebanks.singerlink}" Click="OnOpenGroupSingerLinkClick" IsVisible="{Binding HasSingerLink}"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="10">
+        <Border IsVisible="{Binding LongDescription, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" 
+                Classes="variantCard">
+          <StackPanel Spacing="8">
+            <TextBlock Text="NOTES &amp; DOCUMENTATION" FontSize="12" FontWeight="Bold" Opacity="0.5" LetterSpacing="1"/>
+            <Border Height="1" Background="{DynamicResource SystemControlHighlightBaseMediumBrush}" Opacity="0.3"/>
+            <controls:MarkdownView Markdown="{Binding LongDescription}" />
+          </StackPanel>
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Variants}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="variantCard">
+              <Grid RowDefinitions="Auto,Auto,Auto">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                  <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="{Binding VariantName}" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Classes="muted" Text="{Binding Id}"/>
+                    <TextBlock Classes="muted" Text="{Binding MetaDisplay}" TextWrapping="Wrap" IsVisible="{Binding !IsDiffSinger}"/>
+                    <TextBlock Classes="muted" Text="{Binding DescriptionDisplay}" TextWrapping="Wrap"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+                    <Border Classes="badge" IsVisible="{Binding IsInstalled}">
+                      <TextBlock Text="{DynamicResource packages.installed}" FontSize="11"/>
+                    </Border>
+                    <Border Classes="badge" IsVisible="{Binding HasUpdate}">
+                      <TextBlock Text="{DynamicResource packages.update}" FontSize="11"/>
+                    </Border>
+                  </StackPanel>
+                </Grid>
+
+                <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
+                  <Button Classes="action" Content="{Binding PrimaryActionLabel}" Click="OnInstallLatestVariantClick" IsVisible="{Binding CanInstallLatest}"/>
+                  <Button Classes="action" Content="{DynamicResource packages.uninstall}" Click="OnUninstallVariantClick" IsVisible="{Binding CanUninstall}"/>
+                  <Button Classes="action" Content="{DynamicResource voicebanks.website}" Click="OnOpenVariantWebsiteClick" IsVisible="{Binding HasWebsite}"/>
+                </WrapPanel>
+
+                <ItemsControl Grid.Row="2" Margin="0,10,0,0" ItemsSource="{Binding Versions}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Classes="versionRow">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                          <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="{Binding Version}" FontWeight="SemiBold"/>
+                            <TextBlock Classes="muted" Text="{Binding Variant.VariantName}" FontSize="11"/>
+                          </StackPanel>
+                          <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Classes="muted" Text="{Binding DescriptionDisplay}" TextWrapping="Wrap"/>
+                            <WrapPanel Orientation="Horizontal">
+                              <Border Classes="badge" IsVisible="{Binding IsLatest}" Margin="0,0,6,0">
+                                <TextBlock Text="{DynamicResource packages.latest}" FontSize="11"/>
+                              </Border>
+                              <Border Classes="badge" IsVisible="{Binding IsInstalled}">
+                                <TextBlock Text="{DynamicResource packages.installed}" FontSize="11"/>
+                              </Border>
+                            </WrapPanel>
+                          </StackPanel>
+                          <Button Grid.Column="2" Classes="action" Content="{DynamicResource voicebanks.installversion}"
+                                  Click="OnInstallVersionClick" IsVisible="{Binding CanInstall}" Margin="10,0,0,0"/>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+
+    <Grid Grid.Row="3" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
+      <TextBlock Grid.Column="0" Text="{Binding InstalledBadgeText}" VerticalAlignment="Center" Opacity="0.85"/>
+      <Button Grid.Column="1" Classes="action" Content="{DynamicResource dialogs.messagebox.ok}" Click="OnCloseClicked"/>
+    </Grid>
+  </Grid>
+</Window>
