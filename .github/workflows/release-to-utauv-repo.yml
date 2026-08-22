@@ -201,7 +201,7 @@ jobs:
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch.arch }} && rc /nologo /fo bin\${{ matrix.arch.name }}\UtauVLauncher.res OpenUtau\Assets\UtauVLauncher.rc && cl /nologo /O2 /DUNICODE /D_UNICODE /Fe:bin\${{ matrix.arch.name }}\UtauV.exe /Fo:bin\${{ matrix.arch.name }}\UtauVLauncher.obj OpenUtau\Assets\UtauVLauncher.c bin\${{ matrix.arch.name }}\UtauVLauncher.res && del /q bin\${{ matrix.arch.name }}\UtauVLauncher.res bin\${{ matrix.arch.name }}\UtauVLauncher.obj"
+          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch.arch }} -host_arch=amd64 && rc /nologo /fo bin\${{ matrix.arch.name }}\UtauVLauncher.res OpenUtau\Assets\UtauVLauncher.rc && cl /nologo /O2 /DUNICODE /D_UNICODE /Fe:bin\${{ matrix.arch.name }}\UtauV.exe /Fo:bin\${{ matrix.arch.name }}\UtauVLauncher.obj OpenUtau\Assets\UtauVLauncher.c bin\${{ matrix.arch.name }}\UtauVLauncher.res && del /q bin\${{ matrix.arch.name }}\UtauVLauncher.res bin\${{ matrix.arch.name }}\UtauVLauncher.obj"
 
       # Create packages (zip)
       - name: Create portable package (zip)
