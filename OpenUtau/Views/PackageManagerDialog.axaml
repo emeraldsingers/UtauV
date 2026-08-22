@@ -96,6 +96,9 @@
       <Setter Property="Margin" Value="0"/>
       <Setter Property="Padding" Value="12,4"/>
       <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource NeutralAccentBrush}"/>
     </Style>
     <Style Selector="Button.compactAction">
       <Setter Property="MinWidth" Value="0"/>
@@ -104,6 +107,9 @@
       <Setter Property="Margin" Value="0,0,8,8"/>
       <Setter Property="Padding" Value="12,4"/>
       <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource NeutralAccentBrush}"/>
     </Style>
     <Style Selector="Button.voiceAction">
       <Setter Property="MinHeight" Value="28"/>
@@ -111,6 +117,9 @@
       <Setter Property="Margin" Value="0,0,8,0"/>
       <Setter Property="Padding" Value="10,4"/>
       <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource NeutralAccentBrush}"/>
     </Style>
   </Window.Styles>
 
