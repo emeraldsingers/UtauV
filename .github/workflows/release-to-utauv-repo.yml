@@ -329,16 +329,16 @@ jobs:
           prerelease: ${{ inputs.beta }}
           draft: ${{ inputs.draft }}
           files: |
-            OpenUtau-win-x64-directml.exe
-            OpenUtau-win-x64-directml.zip
-            OpenUtau-win-x64-cuda.exe
-            OpenUtau-win-x64-cuda.zip
-            OpenUtau-win-x86.exe
-            OpenUtau-win-x86.zip
-            OpenUtau-win-arm64.exe
-            OpenUtau-win-arm64.zip
-            OpenUtau-osx-x64.dmg
-            OpenUtau-osx-arm64.dmg
+            UtauV-win-x64-directml.exe
+            UtauV-win-x64-directml.zip
+            UtauV-win-x64-cuda.exe
+            UtauV-win-x64-cuda.zip
+            UtauV-win-x86.exe
+            UtauV-win-x86.zip
+            UtauV-win-arm64.exe
+            UtauV-win-arm64.zip
+            UtauV-osx-x64.dmg
+            UtauV-osx-arm64.dmg
             UtauV-linux-x64.zip
             UtauV-linux-x64.tar.gz
             UtauV-linux-arm64.zip
