@@ -898,6 +898,8 @@ General
   <system:String x:Key="tracks.rename">Rename track</system:String>
   <system:String x:Key="tracks.selectrenderer">Select Renderer</system:String>
   <system:String x:Key="tracks.selectsinger">Select Singer</system:String>
+  <system:String x:Key="tracks.singer.updateavailable">update available</system:String>
+  <system:String x:Key="tracks.singer.outdated">The voicebank files on disk are newer than this version. Select the entry marked as "update available" to apply the updated version.</system:String>
   <system:String x:Key="tracks.singerdefault">(Singer default) </system:String>
   <system:String x:Key="tracks.solo">Solo</system:String>
   <system:String x:Key="tracks.solo.add">Solo additionally (which not removes solo from other tracks)</system:String>

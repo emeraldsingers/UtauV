@@ -5,7 +5,7 @@ using OpenUtau.Core.Ustx;
 
 namespace OpenUtau.Classic {
     public static class ClassicSingerLoader {
-        static USinger AdjustSingerType(Voicebank v) {
+        internal static USinger AdjustSingerType(Voicebank v) {
             switch (v.SingerType) {
                 case USingerType.Enunu:
                     return new Core.Enunu.EnunuSinger(v) as USinger;
@@ -21,12 +21,28 @@ namespace OpenUtau.Classic {
         }
         public static IEnumerable<USinger> FindAllSingers() {
             List<USinger> singers = new List<USinger>();
-            foreach (var path in PathManager.Inst.SingersPaths) {
-                var loader = new VoicebankLoader(path);
-                singers.AddRange(loader.SearchAll()
-                    .Select(AdjustSingerType));
+            foreach (var (basePath, characterFile) in FindAllSingerFiles()) {
+                try {
+                    singers.Add(LoadSinger(basePath, characterFile));
+                } catch (System.Exception e) {
+                    Serilog.Log.Error(e, $"Failed to load {characterFile} info.");
+                }
             }
             return singers;
+        }
+
+        public static IEnumerable<(string basePath, string characterFile)> FindAllSingerFiles() {
+            foreach (var path in PathManager.Inst.SingersPaths) {
+                var loader = new VoicebankLoader(path);
+                foreach (var file in loader.FindCharacterFiles()) {
+                    yield return (path, file);
+                }
+            }
+        }
+        public static USinger LoadSinger(string basePath, string characterFile) {
+            var voicebank = new Voicebank();
+            VoicebankLoader.LoadInfo(voicebank, characterFile, basePath);
+            return AdjustSingerType(voicebank);
         }
     }
 }

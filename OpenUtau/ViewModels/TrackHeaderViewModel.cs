@@ -328,11 +328,23 @@ namespace OpenUtau.App.ViewModels {
 
         private SingerMenuItemViewModel CreateSingerMenuItem(USinger singer) {
             return new SingerMenuItemViewModel() {
-                Header = singer.LocalizedName,
-                HeaderObj = singer.LocalizedName,
+                Header = GetSingerMenuHeader(singer),
+                HeaderObj = GetSingerMenuHeader(singer),
                 Command = SelectSingerCommand,
                 CommandParameter = singer,
             };
+        }
+
+        string GetSingerMenuHeader(USinger singer) {
+            var current = track.Singer;
+            if (current != null && current.Found && !ReferenceEquals(singer, current) &&
+                string.Equals(singer.Id, current.Id, StringComparison.Ordinal) &&
+                SingerManager.Inst.IsOutdated(current)) {
+                var label = ThemeManager.TryGetString("tracks.singer.updateavailable", out var text)
+                    ? text : "update available";
+                return $"{singer.LocalizedName}   [{label}]";
+            }
+            return singer.LocalizedName;
         }
 
         MenuItemViewModel BuildSingerSearchMenuItem() {

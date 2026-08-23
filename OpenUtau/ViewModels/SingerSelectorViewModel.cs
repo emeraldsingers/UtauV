@@ -28,7 +28,15 @@ namespace OpenUtau.App.ViewModels {
 
         public class SingerOption : ReactiveObject {
             public USinger Singer { get; }
-            public string Name => Singer.LocalizedName;
+            readonly USinger? trackSinger;
+            public string Name => Singer.LocalizedName + (IsNewerVersion ? $"   [{UpdateLabel}]" : string.Empty);
+            public bool IsNewerVersion =>
+                trackSinger != null && trackSinger.Found && !ReferenceEquals(trackSinger, Singer) &&
+                Singer.Id == trackSinger.Id &&
+                SingerManager.Inst.IsOutdated(trackSinger);
+            static string UpdateLabel =>
+                ThemeManager.TryGetString("tracks.singer.updateavailable", out var text)
+                    ? text : "update available";
             public string Id => Singer.Id;
             public string Location => Singer.Location;
             [Reactive] public bool IsSelected { get; set; }
@@ -56,9 +64,10 @@ namespace OpenUtau.App.ViewModels {
                 }
             }
 
-            public SingerOption(USinger singer, Action<string>? onFavouriteChanged = null) {
+            public SingerOption(USinger singer, Action<string>? onFavouriteChanged = null, USinger? trackSinger = null) {
                 Singer = singer;
                 this.onFavouriteChanged = onFavouriteChanged;
+                this.trackSinger = trackSinger;
             }
 
             public bool Matches(string keyword) {
@@ -101,7 +110,10 @@ namespace OpenUtau.App.ViewModels {
             USingerType.Vogen,
         };
 
+        readonly USinger? trackSinger;
+
         public SingerSelectorViewModel(USinger? currentSinger = null) {
+            trackSinger = currentSinger;
             this.WhenAnyValue(x => x.SelectedEngine)
                 .Subscribe(engine => {
                     ApplyFilterAndKeepSelection(SelectedSinger?.Id);
@@ -141,7 +153,7 @@ namespace OpenUtau.App.ViewModels {
                     group.Key,
                     GetEngineDisplayName(group.Key),
                     group.Value.Select(singer =>
-                        new SingerOption(singer, OnSingerFavouriteChanged)).ToList()))
+                        new SingerOption(singer, OnSingerFavouriteChanged, trackSinger)).ToList()))
                 .Where(group => group.Singers.Count > 0)
                 .ToList();
             EngineGroups = groups;
@@ -230,11 +242,18 @@ namespace OpenUtau.App.ViewModels {
             }
             var engineName = GetEngineDisplayName(singer.SingerType);
             var errors = singer.Errors ?? Array.Empty<string>();
+            string updateNotice = string.Empty;
+            if (SingerManager.Inst.IsOutdated(singer)) {
+                var text = ThemeManager.TryGetString("tracks.singer.outdated", out var localized)
+                    ? localized : "The voicebank files on disk are newer than this version. Select the updated entry to apply it.";
+                updateNotice = $"> {text}\n\n";
+            }
             SelectedSingerName = singer.LocalizedName;
             SelectedSingerSubtitle = string.IsNullOrWhiteSpace(singer.Author)
                 ? engineName
                 : $"{engineName} - {singer.Author}";
             SelectedSingerInfo =
+                updateNotice +
                 $"ID: {singer.Id}\n" +
                 $"Voice: {singer.Voice}\n" +
                 $"Web: {singer.Web}\n" +

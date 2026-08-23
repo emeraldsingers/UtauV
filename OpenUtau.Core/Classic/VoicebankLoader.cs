@@ -44,18 +44,7 @@ namespace OpenUtau.Classic {
 
         public IEnumerable<Voicebank> SearchAll() {
             List<Voicebank> result = new List<Voicebank>();
-            if (!Directory.Exists(basePath)) {
-                return result;
-            }
-            IEnumerable<string> files;
-            if (Preferences.Default.LoadDeepFolderSinger) {
-                files = Directory.EnumerateFiles(basePath, kCharTxt, SearchOption.AllDirectories);
-            } else {
-                // TopDirectoryOnly
-                files = Directory.GetDirectories(basePath)
-                    .SelectMany(path => Directory.EnumerateFiles(path, kCharTxt));
-            }
-            result.AddRange(files
+            result.AddRange(FindCharacterFiles()
                 .Select(filePath => {
                     try {
                         var voicebank = new Voicebank();
@@ -68,6 +57,19 @@ namespace OpenUtau.Classic {
                 })
                 .OfType<Voicebank>());
             return result;
+        }
+        public IEnumerable<string> FindCharacterFiles() {
+            if (!Directory.Exists(basePath)) {
+                return Enumerable.Empty<string>();
+            }
+            IEnumerable<string> files;
+            if (Preferences.Default.LoadDeepFolderSinger) {
+                files = Directory.EnumerateFiles(basePath, kCharTxt, SearchOption.AllDirectories);
+            } else {
+                files = Directory.GetDirectories(basePath)
+                    .SelectMany(path => Directory.EnumerateFiles(path, kCharTxt));
+            }
+            return files.ToList();
         }
 
         public static void LoadVoicebank(Voicebank voicebank) {

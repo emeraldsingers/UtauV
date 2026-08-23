@@ -41,6 +41,32 @@ namespace OpenUtau.Core.Vogen {
         public VogenSingerLoader(string basePath) {
             this.basePath = basePath;
         }
+        public IEnumerable<string> FindSingerFiles() {
+            var result = new List<string>();
+            if (!Directory.Exists(basePath)) {
+                return result;
+            }
+            if (Preferences.Default.LoadDeepFolderSinger) {
+                result.AddRange(Directory.EnumerateFiles(basePath, "*.vogeon", SearchOption.AllDirectories));
+            } else {
+                result.AddRange(Directory.EnumerateFiles(basePath, "*.vogeon"));
+            }
+            return result;
+        }
+
+        public static IEnumerable<string> FindAllSingerFiles() {
+            foreach (var path in PathManager.Inst.SingersPaths) {
+                var loader = new VogenSingerLoader(path);
+                foreach (var file in loader.FindSingerFiles()) {
+                    yield return file;
+                }
+            }
+        }
+
+        public static USinger LoadSingerAt(string filePath) {
+            var loader = new VogenSingerLoader(Path.GetDirectoryName(filePath));
+            return loader.LoadSinger(filePath);
+        }
 
         public IEnumerable<USinger> SearchAll() {
             var result = new List<USinger>();

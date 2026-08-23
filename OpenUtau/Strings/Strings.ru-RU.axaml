@@ -603,6 +603,8 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="tracks.rename">Переименовать трек</system:String>
   <system:String x:Key="tracks.selectrenderer">Выбрать рендерер</system:String>
   <system:String x:Key="tracks.selectsinger">Выберите вокалиста</system:String>
+  <system:String x:Key="tracks.singer.updateavailable">есть обновление</system:String>
+  <system:String x:Key="tracks.singer.outdated">Файлы вокалиста на диске обновлены. Выберите запись с пометкой «есть обновление», чтобы применить новую версию.</system:String>
   <system:String x:Key="tracks.singerdefault">(Стандартные значения певца) </system:String>
   <system:String x:Key="tracks.solo">Соло</system:String>
   <system:String x:Key="tracks.solo.add">Соло дополнительно (которое не удаляет соло из других треков)</system:String>

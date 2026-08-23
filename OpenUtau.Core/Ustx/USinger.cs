@@ -341,5 +341,8 @@ namespace OpenUtau.Core.Ustx {
         /// - this method may be called even when the singer has not been used
         /// </summary>
         public virtual void FreeMemory() { }
+        public string Fingerprint { get; set; } = string.Empty;
+        public bool IsOutdated => SingerManager.Inst.IsOutdated(this);
+        public USinger? GetLatestVersion() => SingerManager.Inst.GetReplacement(this) ?? this;
     }
 }
