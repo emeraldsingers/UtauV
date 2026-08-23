@@ -173,7 +173,7 @@ namespace OpenUtau.App.Controls {
             ClipToBounds = true;
             pointGeometry = new EllipseGeometry(new Rect(-2.5, -2.5, 5, 5));
             highlightTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 30.0) };
-            highlightTimer.Tick += (_, _) => InvalidateVisual();
+            highlightTimer.Tick += (_, _) => UpdatePlaybackHighlight(false);
             RofloficEffects.Changed += InvalidateVisual;
             hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 60.0) };
             hoverTimer.Tick += (_, _) => UpdateHoverGlow();
@@ -363,7 +363,7 @@ namespace OpenUtau.App.Controls {
             double leftTick = TickOffset - 480;
             double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
             bool hidePitch = viewModel.TickWidth <= ViewConstants.PianoRollTickWidthShowDetails * 0.5;
-            UpdatePlaybackHighlight();
+            UpdatePlaybackHighlight(false);
             PrepareNoteRenderState();
 
             if (showGhostNotes) {
@@ -626,13 +626,12 @@ namespace OpenUtau.App.Controls {
             return brush;
         }
 
-        private void UpdatePlaybackHighlight() {
+        private void UpdatePlaybackHighlight(bool seek) {
             var now = DateTime.UtcNow;
             float dt = (float)Math.Clamp((now - highlightLastFrame).TotalSeconds, 0, 0.1);
             highlightLastFrame = now;
-            var target = (ShowPlaybackNoteHighlight || ShowPlaybackNoteBounce || ShowPlaybackNoteOrbit) &&
-                PlaybackManager.Inst.PlayingMaster
-                ? FindPlaybackNote() : null;
+            bool anyEffect = ShowPlaybackNoteHighlight || ShowPlaybackNoteBounce || ShowPlaybackNoteOrbit;
+            var target = anyEffect && PlaybackManager.Inst.PlayingMaster ? FindPlaybackNote() : null;
             if (target != activePlaybackNote) {
                 if (activePlaybackNote != null && activeHighlight > 0.001f) {
                     fadingPlaybackNote = activePlaybackNote;
@@ -642,27 +641,45 @@ namespace OpenUtau.App.Controls {
                 activeHighlight = 0;
                 activeBounceElapsed = 0;
             }
-            activeHighlight = MoveTowards(activeHighlight, !ShowPlaybackNoteHighlight || activePlaybackNote == null ? 0 : 1,
+            bool changed = target != activePlaybackNote || seek;
+            float newActive = MoveTowards(activeHighlight, !ShowPlaybackNoteHighlight || activePlaybackNote == null ? 0 : 1,
                 (float)Math.Clamp(Preferences.Default.PlaybackHighlightFadeInPerSecond, 0.1, 30.0) * dt);
-            fadingHighlight = MoveTowards(fadingHighlight, 0,
+            if (newActive != activeHighlight) {
+                activeHighlight = newActive;
+                changed = true;
+            }
+            float newFading = MoveTowards(fadingHighlight, 0,
                 (float)Math.Clamp(Preferences.Default.PlaybackHighlightFadeOutPerSecond, 0.1, 30.0) * dt);
+            if (newFading != fadingHighlight) {
+                fadingHighlight = newFading;
+                changed = true;
+            }
             if (fadingHighlight <= 0.001f) {
                 fadingPlaybackNote = null;
                 fadingHighlight = 0;
             }
-            if (ShowPlaybackNoteBounce && activePlaybackNote != null) {
+            if (ShowPlaybackNoteBounce && activePlaybackNote != null &&
+                activeBounceElapsed < Math.Clamp(Preferences.Default.PlaybackNoteBounceDuration, 0.05, 2.0)) {
                 activeBounceElapsed += dt;
+                changed = true;
             }
             if (ShowPlaybackNoteOrbit && PlaybackManager.Inst.PlayingMaster) {
                 playbackOrbitElapsed += dt;
+                changed = true;
             }
             bool bouncing = ShowPlaybackNoteBounce && activePlaybackNote != null &&
                 activeBounceElapsed < Math.Clamp(Preferences.Default.PlaybackNoteBounceDuration, 0.05, 2.0);
             bool orbiting = ShowPlaybackNoteOrbit && PlaybackManager.Inst.PlayingMaster;
-            if (activeHighlight > 0.001f || fadingHighlight > 0.001f || bouncing || orbiting) {
-                highlightTimer.Start();
-            } else {
+            bool needed = activeHighlight > 0.001f || fadingHighlight > 0.001f || bouncing || orbiting;
+            if (needed || (anyEffect && PlaybackManager.Inst.PlayingMaster)) {
+                if (!highlightTimer.IsEnabled) {
+                    highlightTimer.Start();
+                }
+            } else if (highlightTimer.IsEnabled) {
                 highlightTimer.Stop();
+            }
+            if (changed) {
+                InvalidateVisual();
             }
         }
 
