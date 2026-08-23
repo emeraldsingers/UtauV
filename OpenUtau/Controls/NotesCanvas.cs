@@ -731,12 +731,8 @@ namespace OpenUtau.App.Controls {
         }
 
         private UNote? FindPlaybackNote() {
-            if (Part == null) return null;
-            foreach (var note in Part.notes) {
-                if (note.LeftBound <= PlayPosTick && PlayPosTick < note.RightBound) return note;
-                if (note.LeftBound > PlayPosTick) break;
-            }
-            return null;
+            var viewModel = ((PianoRollViewModel?)DataContext)?.NotesViewModel;
+            return viewModel?.FindVoiceNoteAtTick(PlayPosTick);
         }
 
         private IBrush BlendBrush(IBrush from, IBrush to, float amount) {

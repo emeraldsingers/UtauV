@@ -1318,18 +1318,19 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private bool IsVerticalFollowOutlier(UNote note) {
-            var surrounding = new List<int>(6);
-            for (var previous = note.Prev; previous != null && surrounding.Count < 3; previous = previous.Prev) {
-                surrounding.Add(previous.tone);
+            Span<int> surrounding = stackalloc int[6];
+            int count = 0;
+            for (var previous = note.Prev; previous != null && count < 3; previous = previous.Prev) {
+                surrounding[count++] = previous.tone;
             }
-            for (var next = note.Next; next != null && surrounding.Count < 6; next = next.Next) {
-                surrounding.Add(next.tone);
+            for (var next = note.Next; next != null && count < 6; next = next.Next) {
+                surrounding[count++] = next.tone;
             }
-            if (surrounding.Count == 0) {
+            if (count == 0) {
                 return false;
             }
-            surrounding.Sort();
-            return Math.Abs(note.tone - surrounding[surrounding.Count / 2]) > PlaybackVerticalFollowOutlierThreshold;
+            surrounding.Slice(0, count).Sort();
+            return Math.Abs(note.tone - surrounding[count / 2]) > PlaybackVerticalFollowOutlierThreshold;
         }
 
         private int GetVerticalFollowPreparationTick(UNote note) {
@@ -1351,6 +1352,23 @@ namespace OpenUtau.App.ViewModels {
 
         private void RebuildPlaybackNoteIndex() {
             playbackNotes = Part?.notes.ToArray() ?? Array.Empty<UNote>();
+        }
+
+        public UNote? FindVoiceNoteAtTick(int tick) {
+            int low = 0;
+            int high = playbackNotes.Length - 1;
+            while (low <= high) {
+                int mid = low + (high - low) / 2;
+                var note = playbackNotes[mid];
+                if (tick < note.LeftBound) {
+                    high = mid - 1;
+                } else if (tick >= note.RightBound) {
+                    low = mid + 1;
+                } else {
+                    return note;
+                }
+            }
+            return null;
         }
 
         private void ResetPlaybackVerticalFollow() {
