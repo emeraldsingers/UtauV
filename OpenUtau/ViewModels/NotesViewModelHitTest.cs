@@ -57,6 +57,16 @@ namespace OpenUtau.App.ViewModels {
         public Point point;
     }
 
+    public struct PhonemePanelHitInfo {
+        public UNote note;
+        public UNote? leading;
+        public List<UPhoneme> groupPhonemes;
+        public List<UPhoneme> phonemes;
+        public List<int> indices;
+        public string text;
+        public bool hit;
+    }
+
     class NotesViewModelHitTest {
         private readonly NotesViewModel viewModel;
 
@@ -424,6 +434,39 @@ namespace OpenUtau.App.ViewModels {
                 var rightPoint = viewModel.TickToneToPoint(right, 0).X;
                 if (leftPoint <= mousePos.X && mousePos.X <= rightPoint && mousePos.Y >= 36) {
                     result.phoneme = phoneme;
+                    result.hit = true;
+                    return result;
+                }
+            }
+            return result;
+        }
+
+        public PhonemePanelHitInfo HitTestPhonemePanel(Point mousePos) {
+            var result = default(PhonemePanelHitInfo);
+            if (viewModel.Part == null || !viewModel.ShowPhonemePanel || !viewModel.ShowPhonemePanelButton) {
+                return result;
+            }
+            double leftTick = viewModel.TickOffset - 480;
+            double rightTick = leftTick + viewModel.ViewportTicks + 480;
+            string langCode = PhonemeUIRender.getLangCode(viewModel.Part);
+            var phonemesByParent = PhonemePanelLayout.GetPhonemesByParent(viewModel.Part);
+            foreach (var note in viewModel.Part.notes) {
+                if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
+                    continue;
+                }
+                var size = viewModel.TickToneToSize(note.duration, 1);
+                var layout = PhonemePanelLayout.Build(note, langCode, size.Width, phonemesByParent);
+                if (layout == null) {
+                    continue;
+                }
+                var bounds = PhonemePanelLayout.GetPanelBounds(viewModel, note, layout);
+                if (bounds.Contains(mousePos)) {
+                    result.note = note;
+                    result.leading = layout.leading;
+                    result.groupPhonemes = layout.groupPhonemes;
+                    result.phonemes = layout.phonemes;
+                    result.indices = layout.indices;
+                    result.text = layout.text;
                     result.hit = true;
                     return result;
                 }

@@ -74,6 +74,11 @@ namespace OpenUtau.App.Controls {
                 nameof(ShowPhonemizerTags),
                 o => o.ShowPhonemizerTags,
                 (o, v) => o.ShowPhonemizerTags = v);
+        public static readonly DirectProperty<NotesCanvas, bool> ShowPhonemePanelProperty =
+            AvaloniaProperty.RegisterDirect<NotesCanvas, bool>(
+                nameof(ShowPhonemePanel),
+                o => o.ShowPhonemePanel,
+                (o, v) => o.ShowPhonemePanel = v);
 
         public double TickWidth {
             get => tickWidth;
@@ -127,6 +132,10 @@ namespace OpenUtau.App.Controls {
             get => showPhonemizerTags;
             private set => SetAndRaise(ShowPhonemizerTagsProperty, ref showPhonemizerTags, value);
         }
+        public bool ShowPhonemePanel {
+            get => showPhonemePanel;
+            private set => SetAndRaise(ShowPhonemePanelProperty, ref showPhonemePanel, value);
+        }
 
         private double tickWidth;
         private double trackHeight;
@@ -150,6 +159,7 @@ namespace OpenUtau.App.Controls {
         private readonly DispatcherTimer highlightTimer;
         private readonly Dictionary<(Color from, Color to, byte amount), IBrush> highlightBrushes = new();
         private bool showPhonemizerTags = true;
+        private bool showPhonemePanel;
         private PolylineGeometry polylineGeometry = new PolylineGeometry();
         private Points points = new Points();
 
@@ -409,6 +419,9 @@ namespace OpenUtau.App.Controls {
                     }
                     RenderNoteBody(note, viewModel, context);
                 }
+                if (ShowPhonemePanel && viewModel.ShowPhonemePanelButton) {
+                    RenderPhonemePanels(viewModel, context, leftTick, rightTick);
+                }
                 RenderDiffSingerPhraseBoundaries(leftTick, rightTick, viewModel, context);
                 if (ShowFinalPitch && !hidePitch) {
                     RenderFinalPitch(leftTick, rightTick, viewModel, context);
@@ -435,6 +448,30 @@ namespace OpenUtau.App.Controls {
 
         private void DrawBackgroundForHitTest(DrawingContext context) {
             context.DrawRectangle(Brushes.Transparent, null, Bounds.WithX(0).WithY(0));
+        }
+
+        private void RenderPhonemePanels(NotesViewModel viewModel, DrawingContext context, double leftTick, double rightTick) {
+            if (Part == null) {
+                return;
+            }
+            string langCode = PhonemeUIRender.getLangCode(Part);
+            var phonemesByParent = PhonemePanelLayout.GetPhonemesByParent(Part);
+            foreach (var note in Part.notes) {
+                if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
+                    continue;
+                }
+                var size = viewModel.TickToneToSize(note.duration, 1);
+                var layout = PhonemePanelLayout.Build(note, langCode, size.Width, phonemesByParent);
+                if (layout == null) {
+                    continue;
+                }
+                var bounds = PhonemePanelLayout.GetPanelBounds(viewModel, note, layout);
+                foreach (var token in layout.tokens) {
+                    using (var state = context.PushTransform(Matrix.CreateTranslation(bounds.X + token.x, bounds.Y))) {
+                        token.layout.Draw(context, new Point());
+                    }
+                }
+            }
         }
 
         private readonly HashSet<UNote> renderErroredParents = new();
@@ -578,6 +615,15 @@ namespace OpenUtau.App.Controls {
                 }
             }
             string displayLyric = note.lyric;
+            if (ShowPhonemePanel && viewModel.ShowPhonemePanelButton) {
+                int bracketIndex = displayLyric.IndexOf('[');
+                if (bracketIndex >= 0) {
+                    displayLyric = displayLyric.Substring(0, bracketIndex).TrimEnd();
+                }
+            }
+            if (displayLyric.Length == 0) {
+                return;
+            }
             int txtsize = 12;
             var textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize,
                 useUiFont: Preferences.Default.UseUiFontForNotes);

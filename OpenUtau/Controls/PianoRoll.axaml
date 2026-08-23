@@ -174,6 +174,7 @@
                      ShowPlaybackNoteOrbit="{Binding NotesViewModel.ShowPlaybackNoteOrbit}"
                      PlayPosTick="{Binding NotesViewModel.PlayPosTick}"
                      ShowPhonemizerTags="{Binding ShowPhonemizerTags}"
+                     ShowPhonemePanel="{Binding NotesViewModel.ShowPhonemePanel}"
                      Part="{Binding NotesViewModel.Part}"
                      PointerPressed="NotesCanvasPointerPressed"
                      PointerMoved="NotesCanvasPointerMoved"
@@ -523,6 +524,14 @@
                           ToolTip.Tip="{DynamicResource pianoroll.toggle.phoneme}">
               <Grid Width="18" Height="18">
                 <Path Classes="stroked" Data="M 3 13 L 6 5.5 L 12 5.5 L 15 13"/>
+              </Grid>
+            </ToggleButton>
+            <ToggleButton Classes="toolbar" Margin="0" Padding="1" Height="20" Width="20"
+                          IsChecked="{Binding NotesViewModel.ShowPhonemePanel}"
+                          IsVisible="{Binding NotesViewModel.ShowPhonemePanelButton}"
+                          ToolTip.Tip="Phoneme Editor Panel">
+              <Grid Width="18" Height="18">
+                <Path Classes="stroked" Data="M 3 4.5 L 6.5 4.5 M 8 4.5 L 11.5 4.5 M 13 4.5 L 15 4.5 M 4.5 8.5 L 4.5 14 L 12.5 14 L 12.5 8.5"/>
               </Grid>
             </ToggleButton>
             <ToggleButton Classes="toolbar" Margin="0" Padding="1" Height="20" IsChecked="{Binding NotesViewModel.ShowExpressions}"

@@ -65,6 +65,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowRenderPhraseBoundaries { get; set; }
         [Reactive] public bool ShowRenderPhraseBoundariesButton { get; set; }
         [Reactive] public bool ShowPhoneme { get; set; }
+        [Reactive] public bool ShowPhonemePanel { get; set; }
+        [Reactive] public bool ShowPhonemePanelButton { get; set; }
         [Reactive] public bool ShowNoteParams { get; set; }
         [Reactive] public bool ShowExpressions { get; set; }
         [Reactive] public bool ShowPlaybackVerticalFollow { get; set; }
@@ -273,6 +275,13 @@ namespace OpenUtau.App.ViewModels {
             .Subscribe(showPhoneme => {
                 Preferences.Default.ShowPhoneme = showPhoneme;
                 Preferences.Save();
+            });
+            ShowPhonemePanel = Preferences.Default.ShowPhonemePanel;
+            this.WhenAnyValue(x => x.ShowPhonemePanel)
+            .Subscribe(showPhonemePanel => {
+                Preferences.Default.ShowPhonemePanel = showPhonemePanel;
+                Preferences.Save();
+                MessageBus.Current.SendMessage(new NotesRefreshEvent());
             });
             ShowPlaybackNoteHighlight = Preferences.Default.ShowPlaybackNoteHighlight;
             this.WhenAnyValue(x => x.ShowPlaybackNoteHighlight)
@@ -632,6 +641,7 @@ namespace OpenUtau.App.ViewModels {
             }
             TickOrigin = Part.position;
             UpdateRenderPhraseBoundariesButton();
+            UpdatePhonemePanelButton();
             Notify();
         }
 
@@ -642,8 +652,20 @@ namespace OpenUtau.App.ViewModels {
             }
             var settings = Project.tracks[Part.trackNo].RendererSettings;
             var renderer = settings?.renderer ?? settings?.Renderer?.ToString();
-            ShowRenderPhraseBoundariesButton = string.Equals(renderer, Renderers.DIFFSINGER, StringComparison.OrdinalIgnoreCase) 
+            ShowRenderPhraseBoundariesButton = string.Equals(renderer, Renderers.DIFFSINGER, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(renderer, Renderers.ENUNU, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void UpdatePhonemePanelButton() {
+            if (Part == null || Project == null || Part.trackNo < 0 || Part.trackNo >= Project.tracks.Count) {
+                ShowPhonemePanelButton = false;
+                return;
+            }
+            var settings = Project.tracks[Part.trackNo].RendererSettings;
+            var renderer = settings?.renderer ?? settings?.Renderer?.ToString();
+            bool isClassic = string.Equals(renderer, Renderers.CLASSIC, StringComparison.OrdinalIgnoreCase)
+                || (renderer?.StartsWith("WORLDLINE", StringComparison.OrdinalIgnoreCase) ?? false);
+            ShowPhonemePanelButton = !isClassic;
         }
 
         private void DeselectNote(UNote note) {
@@ -1243,6 +1265,7 @@ namespace OpenUtau.App.ViewModels {
                     }
                 }
                 MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                UpdatePhonemePanelButton();
                 if (cmd is TrackChangeSingerCommand trackChangeSinger) {
                     if (Part != null && trackChangeSinger.track.TrackNo == Part.trackNo) {
                         LoadPortrait(Part, Project);

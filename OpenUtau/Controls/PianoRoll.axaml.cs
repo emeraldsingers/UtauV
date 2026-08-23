@@ -1182,6 +1182,19 @@ namespace OpenUtau.App.Controls {
                 editState = null;
                 Cursor = null;
             }
+            var notesVm = ViewModel.NotesViewModel;
+            if (notesVm?.Part != null) {
+                var panelHitInfo = notesVm.HitTest.HitTestPhonemePanel(point);
+                if (panelHitInfo.hit) {
+                    LyricBox?.Show(notesVm.Part,
+                        new LyricBoxNotePhonemes(
+                            panelHitInfo.note, panelHitInfo.leading!,
+                            panelHitInfo.groupPhonemes!, panelHitInfo.phonemes!,
+                            panelHitInfo.indices!, panelHitInfo.text),
+                        panelHitInfo.text);
+                    return;
+                }
+            }
             var noteHitInfo = ViewModel.NotesViewModel.HitTest.HitTestNote(point);
             if (noteHitInfo.hitBody && ViewModel?.NotesViewModel?.Part != null) {
                 var note = noteHitInfo.note;
