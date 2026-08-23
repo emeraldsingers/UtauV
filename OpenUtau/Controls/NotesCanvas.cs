@@ -340,11 +340,11 @@ namespace OpenUtau.App.Controls {
             if (glow <= 0.01f || !(ThemeManager.AccentBrush2 is ISolidColorBrush solid)) {
                 return;
             }
-            byte alpha = (byte)Math.Clamp((int)Math.Round(glow * 140), 0, 255);
-            context.DrawRectangle(null, GetGlowPen(solid.Color, alpha, 3),
-                Inflate(leftTop, size, 2), radius + 2, radius + 2);
-            context.DrawRectangle(null, GetGlowPen(solid.Color, (byte)(alpha / 2), 5),
-                Inflate(leftTop, size, 4.5), radius + 4.5, radius + 4.5);
+            byte alpha = (byte)Math.Clamp((int)Math.Round(glow * 100), 0, 255);
+            context.DrawRectangle(null, GetGlowPen(solid.Color, alpha, 2),
+                Inflate(leftTop, size, 1), radius + 1, radius + 1);
+            context.DrawRectangle(null, GetGlowPen(solid.Color, (byte)(alpha * 2 / 5), 3),
+                Inflate(leftTop, size, 2.5), radius + 2.5, radius + 2.5);
         }
 
         static Rect Inflate(Point leftTop, Size size, double d) =>
