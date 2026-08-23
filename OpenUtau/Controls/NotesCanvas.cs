@@ -372,59 +372,64 @@ namespace OpenUtau.App.Controls {
             if (viewModel == null) {
                 return;
             }
-            DrawBackgroundForHitTest(context);
-            double leftTick = TickOffset - 480;
-            double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
-            bool hidePitch = viewModel.TickWidth <= ViewConstants.PianoRollTickWidthShowDetails * 0.5;
-            bool seek = playbackSeekPending;
-            playbackSeekPending = false;
-            UpdatePlaybackHighlight(seek);
-            PrepareNoteRenderState();
+            renderPassActive = true;
+            try {
+                DrawBackgroundForHitTest(context);
+                double leftTick = TickOffset - 480;
+                double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
+                bool hidePitch = viewModel.TickWidth <= ViewConstants.PianoRollTickWidthShowDetails * 0.5;
+                bool seek = playbackSeekPending;
+                playbackSeekPending = false;
+                UpdatePlaybackHighlight(seek);
+                PrepareNoteRenderState();
 
-            if (showGhostNotes) {
-                foreach (UPart otherPart in otherPartsInView) {
-                    if (otherPart is UVoicePart otherVoicePart) {
-                        var xOffset = otherVoicePart.position - Part.position;
-                        var brush = ThemeManager.NeutralAccentBrushSemi;
-                        if (otherVoicePart.trackNo >= 0) {
-                            var track = DocManager.Inst.Project.tracks[otherVoicePart.trackNo];
-                            brush = ThemeManager.GetTrackColor(track.TrackColor).AccentColorLightSemi;
-                        }
-
-                        foreach (var note in otherVoicePart.notes) {
-                            if (note.LeftBound + xOffset >= rightTick || note.RightBound + xOffset <= leftTick) {
-                                continue;
+                if (showGhostNotes) {
+                    foreach (UPart otherPart in otherPartsInView) {
+                        if (otherPart is UVoicePart otherVoicePart) {
+                            var xOffset = otherVoicePart.position - Part.position;
+                            var brush = ThemeManager.NeutralAccentBrushSemi;
+                            if (otherVoicePart.trackNo >= 0) {
+                                var track = DocManager.Inst.Project.tracks[otherVoicePart.trackNo];
+                                brush = ThemeManager.GetTrackColor(track.TrackColor).AccentColorLightSemi;
                             }
-                            RenderGhostNote(note, viewModel, context, xOffset, brush);
+
+                            foreach (var note in otherVoicePart.notes) {
+                                if (note.LeftBound + xOffset >= rightTick || note.RightBound + xOffset <= leftTick) {
+                                    continue;
+                                }
+                                RenderGhostNote(note, viewModel, context, xOffset, brush);
+                            }
                         }
                     }
                 }
-            }
 
-            foreach (var note in Part.notes) {
-                if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
-                    continue;
+                foreach (var note in Part.notes) {
+                    if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
+                        continue;
+                    }
+                    RenderNoteBody(note, viewModel, context);
                 }
-                RenderNoteBody(note, viewModel, context);
-            }
-            RenderDiffSingerPhraseBoundaries(leftTick, rightTick, viewModel, context);
-            if (ShowFinalPitch && !hidePitch) {
-                RenderFinalPitch(leftTick, rightTick, viewModel, context);
-            }
-            foreach (var note in Part.notes) {
-                if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
-                    continue;
+                RenderDiffSingerPhraseBoundaries(leftTick, rightTick, viewModel, context);
+                if (ShowFinalPitch && !hidePitch) {
+                    RenderFinalPitch(leftTick, rightTick, viewModel, context);
                 }
-                if (ShowPitch && !hidePitch) {
-                    RenderPitchBend(note, viewModel, context);
+                foreach (var note in Part.notes) {
+                    if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
+                        continue;
+                    }
+                    if (ShowPitch && !hidePitch) {
+                        RenderPitchBend(note, viewModel, context);
+                    }
+                    if ((ShowPitch || ShowVibrato) && !hidePitch) {
+                        RenderVibrato(note, viewModel, context);
+                    }
+                    if (ShowVibrato && !note.Error && !hidePitch) {
+                        RenderVibratoToggle(note, viewModel, context);
+                        RenderVibratoControl(note, viewModel, context);
+                    }
                 }
-                if ((ShowPitch || ShowVibrato) && !hidePitch) {
-                    RenderVibrato(note, viewModel, context);
-                }
-                if (ShowVibrato && !note.Error && !hidePitch) {
-                    RenderVibratoToggle(note, viewModel, context);
-                    RenderVibratoControl(note, viewModel, context);
-                }
+            } finally {
+                renderPassActive = false;
             }
         }
 
@@ -642,6 +647,8 @@ namespace OpenUtau.App.Controls {
         }
 
         private bool playbackSeekPending = true;
+        private bool renderPassActive;
+        private bool invalidatePending;
 
         private void UpdatePlaybackHighlight(bool seek) {
             var now = DateTime.UtcNow;
@@ -698,7 +705,17 @@ namespace OpenUtau.App.Controls {
                 highlightTimer.Stop();
             }
             if (changed) {
-                InvalidateVisual();
+                if (renderPassActive) {
+                    if (!invalidatePending) {
+                        invalidatePending = true;
+                        Dispatcher.UIThread.Post(() => {
+                            invalidatePending = false;
+                            InvalidateVisual();
+                        }, DispatcherPriority.Background);
+                    }
+                } else {
+                    InvalidateVisual();
+                }
             }
         }
 
