@@ -364,6 +364,7 @@ namespace OpenUtau.App.Controls {
             double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
             bool hidePitch = viewModel.TickWidth <= ViewConstants.PianoRollTickWidthShowDetails * 0.5;
             UpdatePlaybackHighlight();
+            PrepareNoteRenderState();
 
             if (showGhostNotes) {
                 foreach (UPart otherPart in otherPartsInView) {
@@ -416,6 +417,33 @@ namespace OpenUtau.App.Controls {
             context.DrawRectangle(Brushes.Transparent, null, Bounds.WithX(0).WithY(0));
         }
 
+        private readonly HashSet<UNote> renderErroredParents = new();
+        private readonly HashSet<UNote> renderPhonemeParents = new();
+        private Pen? renderHighlightPen;
+
+        private void PrepareNoteRenderState() {
+            renderErroredParents.Clear();
+            renderPhonemeParents.Clear();
+            var phonemes = Part?.phonemes;
+            if (phonemes != null) {
+                foreach (var phoneme in phonemes) {
+                    if (phoneme.Parent == null) {
+                        continue;
+                    }
+                    renderPhonemeParents.Add(phoneme.Parent);
+                    if (phoneme.Error) {
+                        renderErroredParents.Add(phoneme.Parent);
+                    }
+                }
+            }
+            renderHighlightPen = new Pen(ThemeManager.AccentBrush2, Preferences.Default.NoteHighlightThickness);
+        }
+
+        private sealed class NullDisposable : IDisposable {
+            public static readonly NullDisposable Instance = new NullDisposable();
+            public void Dispose() { }
+        }
+
         private void RenderNoteBody(UNote note, NotesViewModel viewModel, DrawingContext context) {
             Point leftTop = viewModel.TickToneToPoint(note.position, note.AdjustedTone);
             leftTop = leftTop.WithX(leftTop.X + 1).WithY(Math.Round(leftTop.Y + 1));
@@ -425,30 +453,16 @@ namespace OpenUtau.App.Controls {
             size = size.WithWidth(size.Width - 1).WithHeight(Math.Floor(size.Height - 2));
             Point rightBottom = new Point(leftTop.X + size.Width, leftTop.Y + size.Height);
 
-            bool hasError = note.Error;
+            bool hasError = note.Error ||
+                renderErroredParents.Contains(note) ||
+                (!note.lyric.StartsWith("+") && !note.lyric.StartsWith("-") &&
+                 !renderPhonemeParents.Contains(note));
 
-            // Check for Phoneme Errors (mimicking PhonemeCanvas behavior)
-            if (!hasError && Part != null && Part.phonemes != null) {
-                int phonemeCount = 0;
-                foreach (var p in Part.phonemes) {
-                    if (p.Parent == note) {
-                        phonemeCount++;
-                        // If any attached phoneme has an error, the whole note is flagged
-                        if (p.Error) {
-                            hasError = true;
-                            break;
-                        }
-                    }
-                }
-                // Edge Case: If the note is not a continuation/rest but generated 0 phonemes,
-                // it means the phonemizer completely failed to process the lyric.
-                if (!hasError && phonemeCount == 0 && !note.lyric.StartsWith("+") && !note.lyric.StartsWith("-")) {
-                    hasError = true;
-                }
-            }
-
-            using var rotation = context.PushTransform(GetPlaybackRotation(note, new Point(
-                leftTop.X + size.Width / 2, leftTop.Y + size.Height / 2)));
+            Matrix rotationMatrix = GetPlaybackRotation(note, new Point(
+                leftTop.X + size.Width / 2, leftTop.Y + size.Height / 2));
+            using IDisposable rotation = rotationMatrix == Matrix.Identity
+                ? (IDisposable)NullDisposable.Instance
+                : context.PushTransform(rotationMatrix);
             var brush = selectedNotes.Contains(note)
                 ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
                 : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
@@ -465,8 +479,7 @@ namespace OpenUtau.App.Controls {
             double radius = GetNoteCornerRadius(size);
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
             if (!selectedNotes.Contains(note)) {
-                var highlightPen = new Pen(ThemeManager.AccentBrush2, Preferences.Default.NoteHighlightThickness);
-                context.DrawRectangle(null, highlightPen, new Rect(leftTop, rightBottom), radius, radius);
+                context.DrawRectangle(null, renderHighlightPen, new Rect(leftTop, rightBottom), radius, radius);
             }
             if (Preferences.Default.NoteHoverGlow) {
                 DrawHoverGlow(context, leftTop, size, radius, GetHoverGlow(note));
@@ -512,7 +525,7 @@ namespace OpenUtau.App.Controls {
                         context.DrawEllipse(Brushes.White, null, center, dotRadius, dotRadius);
                         
                     } else {
-                        var factory = OpenUtau.Api.PhonemizerFactory.Get(currentPh) ?? OpenUtau.Api.PhonemizerFactory.GetAll().FirstOrDefault(f => f.name == currentPh || (currentPh.Length > 0 && f.name.EndsWith(currentPh)));
+                        var factory = GetPhonemizerFactoryCached(currentPh);
                         string displayLang = factory?.language ?? "";
                         if (string.IsNullOrEmpty(displayLang) && !string.IsNullOrEmpty(factory?.tag)) {
                             displayLang = factory.tag.Split(' ')[0]; 
@@ -593,10 +606,24 @@ namespace OpenUtau.App.Controls {
             return Math.Clamp(Preferences.Default.NoteCornerRadius, 0, Math.Min(10, maxRadius));
         }
 
-        private static IBrush ApplyNoteOpacity(IBrush brush) {
-            return brush is ISolidColorBrush solidBrush
-                ? new SolidColorBrush(solidBrush.Color, solidBrush.Opacity * Preferences.Default.NoteOpacity)
-                : brush;
+        private readonly Dictionary<(Color color, byte alpha), IBrush> opacityBrushCache = new();
+
+        private IBrush ApplyNoteOpacity(IBrush brush) {
+            if (brush is ISolidColorBrush solidBrush) {
+                byte alpha = (byte)Math.Clamp(
+                    (int)Math.Round(solidBrush.Color.A * solidBrush.Opacity * Preferences.Default.NoteOpacity), 0, 255);
+                var key = (solidBrush.Color, alpha);
+                if (!opacityBrushCache.TryGetValue(key, out var cached)) {
+                    cached = new ImmutableSolidColorBrush(Color.FromArgb(
+                        alpha, solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B));
+                    if (opacityBrushCache.Count > 4096) {
+                        opacityBrushCache.Clear();
+                    }
+                    opacityBrushCache[key] = cached;
+                }
+                return cached;
+            }
+            return brush;
         }
 
         private void UpdatePlaybackHighlight() {
@@ -754,6 +781,18 @@ namespace OpenUtau.App.Controls {
                 }
                 segStart = tick;
             }
+        }
+
+        private static readonly Dictionary<string, OpenUtau.Api.PhonemizerFactory?> phonemizerFactoryCache = new();
+
+        private static OpenUtau.Api.PhonemizerFactory? GetPhonemizerFactoryCached(string name) {
+            if (!phonemizerFactoryCache.TryGetValue(name, out var factory)) {
+                factory = OpenUtau.Api.PhonemizerFactory.Get(name)
+                    ?? OpenUtau.Api.PhonemizerFactory.GetAll().FirstOrDefault(
+                        f => f.name == name || (name.Length > 0 && f.name.EndsWith(name)));
+                phonemizerFactoryCache[name] = factory;
+            }
+            return factory;
         }
 
         private void DrawPhraseBoundaryLine(DrawingContext context, IPen pen, double x) {
