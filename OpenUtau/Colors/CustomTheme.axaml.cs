@@ -159,7 +159,7 @@ public class CustomTheme {
 
         public string WhiteKeyColorLeft = "Transparent";
         public string WhiteKeyColorRight = "Transparent";
-        public string WhiteKeyNameColor = "#FF347c";
+        public string WhiteKeyNameColor = "#FF347C";
             
         public string CenterKeyColorLeft = "#FFDDE6";
         public string CenterKeyColorRight = "#FFCEDC";
@@ -168,6 +168,11 @@ public class CustomTheme {
         public string BlackKeyColorLeft = "#FF71A3";
         public string BlackKeyColorRight = "#FF347C";
         public string BlackKeyNameColor = "#FFFFFF";
+
+        public string MainColorA = "#4EA6EA";
+        public string MainColorB = "#FF347C";
+        public bool IsDarkModeEasy = false;
+
     }
 }
 
