@@ -386,6 +386,10 @@
             <TextBlock Text="{DynamicResource prefs.appearance.showghostnotes}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding ShowGhostNotes}"/>
           </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.notehoverglow}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding NoteHoverGlow}"/>
+          </Grid>
         </StackPanel>
 
         <!-- UTAU -->

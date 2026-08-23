@@ -410,6 +410,7 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="prefs.appearance.diffsingerlangcodehide">Спрятать Языковой префикс </system:String>
   <system:String x:Key="prefs.appearance.lang">Язык</system:String>
   <system:String x:Key="prefs.appearance.showghostnotes">Отображать ноты других треков на пианоролле</system:String>
+  <system:String x:Key="prefs.appearance.notehoverglow">Свечение ноты при наведении</system:String>
   <system:String x:Key="prefs.appearance.showicon">Отображать иконку на пианоролле</system:String>
   <system:String x:Key="prefs.appearance.showportrait">Отображать портрет на пианоролле</system:String>
   <system:String x:Key="prefs.appearance.sortorder">Порядок сортировки вокалистов</system:String>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
@@ -158,12 +159,24 @@ namespace OpenUtau.App.Controls {
         private bool showGhostNotes = true;
         private List<UPart> otherPartsInView = new List<UPart>();
 
+        private const double HoverGlowDuration = 0.12;
+        private UNote? hoverNote;
+        private UNote? fadingHoverNote;
+        private float hoverGlow;
+        private float hoverFadeGlow;
+        private DateTime hoverLastFrame = DateTime.UtcNow;
+        private readonly DispatcherTimer hoverTimer;
+        private Point lastPointerPos;
+        private readonly Dictionary<(Color color, byte alpha, int thickness), Pen> glowPens = new();
+
         public NotesCanvas() {
             ClipToBounds = true;
             pointGeometry = new EllipseGeometry(new Rect(-2.5, -2.5, 5, 5));
             highlightTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 30.0) };
             highlightTimer.Tick += (_, _) => InvalidateVisual();
             RofloficEffects.Changed += InvalidateVisual;
+            hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 60.0) };
+            hoverTimer.Tick += (_, _) => UpdateHoverGlow();
 
             MessageBus.Current.Listen<NotesRefreshEvent>()
                 .Subscribe(_ => InvalidateVisual());
@@ -177,7 +190,14 @@ namespace OpenUtau.App.Controls {
             MessageBus.Current.Listen<PartRefreshEvent>()
                 .Subscribe(_ => RefreshGhostNotes());
             this.WhenAnyValue(x => x.Part)
-                .Subscribe(_ => RefreshGhostNotes());
+                .Subscribe(_ => {
+                    RefreshGhostNotes();
+                    hoverNote = null;
+                    fadingHoverNote = null;
+                    hoverGlow = 0;
+                    hoverFadeGlow = 0;
+                    hoverTimer.Stop();
+                });
         }
 
         void RefreshGhostNotes() {
@@ -200,6 +220,135 @@ namespace OpenUtau.App.Controls {
             }
             InvalidateVisual();
         }
+
+        protected override void OnPointerMoved(PointerEventArgs e) {
+            base.OnPointerMoved(e);
+            lastPointerPos = e.GetPosition(this);
+            UpdateHoveredNote();
+        }
+
+        protected override void OnPointerExited(PointerEventArgs e) {
+            base.OnPointerExited(e);
+            SetHoveredNote(null);
+        }
+
+        protected override void OnPointerPressed(PointerPressedEventArgs e) {
+            base.OnPointerPressed(e);
+            SetHoveredNote(null);
+        }
+
+        protected override void OnPointerReleased(PointerReleasedEventArgs e) {
+            base.OnPointerReleased(e);
+            UpdateHoveredNote();
+        }
+
+        void UpdateHoveredNote() {
+            if (!Preferences.Default.NoteHoverGlow || Part == null) {
+                SetHoveredNote(null);
+                return;
+            }
+            var viewModel = ((PianoRollViewModel?)DataContext)?.NotesViewModel;
+            if (viewModel == null) {
+                SetHoveredNote(null);
+                return;
+            }
+            double tick = viewModel.PointToTick(lastPointerPos);
+            int tone = viewModel.PointToTone(lastPointerPos);
+            UNote? found = null;
+            foreach (var note in Part.notes) {
+                if (note.position > tick && note.LeftBound > tick) {
+                    break;
+                }
+                if (note.LeftBound <= tick && tick < note.RightBound && note.AdjustedTone == tone) {
+                    found = note;
+                    break;
+                }
+            }
+            SetHoveredNote(found);
+        }
+
+        void SetHoveredNote(UNote? note) {
+            if (!Preferences.Default.NoteHoverGlow) {
+                note = null;
+            }
+            if (ReferenceEquals(note, hoverNote)) {
+                return;
+            }
+            if (hoverNote != null && hoverGlow > 0.001f) {
+                fadingHoverNote = hoverNote;
+                hoverFadeGlow = hoverGlow;
+            } else if (hoverNote != null) {
+                fadingHoverNote = null;
+                hoverFadeGlow = 0;
+            }
+            hoverNote = note;
+            hoverGlow = 0;
+            hoverLastFrame = DateTime.UtcNow;
+            hoverTimer.Start();
+        }
+
+        void UpdateHoverGlow() {
+            var now = DateTime.UtcNow;
+            float dt = (float)Math.Clamp((now - hoverLastFrame).TotalSeconds, 0, 0.1);
+            hoverLastFrame = now;
+            float step = dt / (float)HoverGlowDuration;
+            bool changed = false;
+            float newActive = MoveTowards(hoverGlow, hoverNote == null ? 0f : 1f, step);
+            if (newActive != hoverGlow) {
+                hoverGlow = newActive;
+                changed = true;
+            }
+            float newFade = MoveTowards(hoverFadeGlow, 0f, step);
+            if (newFade != hoverFadeGlow) {
+                hoverFadeGlow = newFade;
+                changed = true;
+            }
+            if (hoverFadeGlow <= 0.001f) {
+                fadingHoverNote = null;
+                hoverFadeGlow = 0;
+            }
+            bool settled = (hoverNote == null ? hoverGlow == 0f : hoverGlow == 1f) && fadingHoverNote == null;
+            if (!changed && settled) {
+                hoverTimer.Stop();
+                return;
+            }
+            InvalidateVisual();
+        }
+
+        float GetHoverGlow(UNote note) {
+            if (note == hoverNote) {
+                return hoverGlow;
+            }
+            if (note == fadingHoverNote) {
+                return hoverFadeGlow;
+            }
+            return 0f;
+        }
+
+        Pen GetGlowPen(Color color, byte alpha, int thickness) {
+            var key = (color, alpha, thickness);
+            if (!glowPens.TryGetValue(key, out var pen)) {
+                pen = new Pen(new ImmutableSolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B)), thickness) {
+                    LineJoin = PenLineJoin.Round,
+                };
+                glowPens[key] = pen;
+            }
+            return pen;
+        }
+
+        void DrawHoverGlow(DrawingContext context, Point leftTop, Size size, double radius, float glow) {
+            if (glow <= 0.01f || !(ThemeManager.AccentBrush2 is ISolidColorBrush solid)) {
+                return;
+            }
+            byte alpha = (byte)Math.Clamp((int)Math.Round(glow * 140), 0, 255);
+            context.DrawRectangle(null, GetGlowPen(solid.Color, alpha, 3),
+                Inflate(leftTop, size, 2), radius + 2, radius + 2);
+            context.DrawRectangle(null, GetGlowPen(solid.Color, (byte)(alpha / 2), 5),
+                Inflate(leftTop, size, 4.5), radius + 4.5, radius + 4.5);
+        }
+
+        static Rect Inflate(Point leftTop, Size size, double d) =>
+            new Rect(leftTop.X - d, leftTop.Y - d, size.Width + d * 2, size.Height + d * 2);
 
         public override void Render(DrawingContext context) {
             base.Render(context);
@@ -318,6 +467,9 @@ namespace OpenUtau.App.Controls {
             if (!selectedNotes.Contains(note)) {
                 var highlightPen = new Pen(ThemeManager.AccentBrush2, Preferences.Default.NoteHighlightThickness);
                 context.DrawRectangle(null, highlightPen, new Rect(leftTop, rightBottom), radius, radius);
+            }
+            if (Preferences.Default.NoteHoverGlow) {
+                DrawHoverGlow(context, leftTop, size, radius, GetHoverGlow(note));
             }
             if (TrackHeight < 10 || note.lyric.Length == 0) {
                 return;
