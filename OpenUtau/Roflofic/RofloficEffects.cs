@@ -1,12 +1,19 @@
 using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 
 namespace OpenUtau.App.Roflofic {
     public static class RofloficEffects {
+        private const int HueSteps = 256;
+
         private static readonly DispatcherTimer Timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
+        private static readonly Dictionary<(int hue, byte alpha), IBrush> brushCache = new();
+        private static readonly Dictionary<(int fromHue, int toHue, byte alpha), IBrush> gradientCache = new();
+        private static readonly Dictionary<(int hue, byte alpha, double thickness), Pen> penCache = new();
         private static double phase;
         public static event Action? Changed;
         public static bool RainbowEnabled { get; private set; }
@@ -29,37 +36,77 @@ namespace OpenUtau.App.Roflofic {
             Changed?.Invoke();
         }
 
-        public static Avalonia.Media.Color RainbowColor(double seed, byte alpha = 255) {
-            double h = (seed + phase) % 1.0;
-            if (h < 0) h += 1;
+        public static Color RainbowColor(double seed, byte alpha = 255) {
+            double h = ((seed + phase) % 1 + 1) % 1;
+            return RainbowColorOf(h, alpha);
+        }
+
+        static Color RainbowColorOf(double h, byte alpha) {
             double h6 = h * 6;
             int sector = (int)Math.Floor(h6);
             double f = h6 - sector;
             double q = 1 - f;
             double t = f;
-            double r, g, b;
+            byte r, g, b;
             switch (sector) {
-                case 0: r = 1; g = t; b = 0; break;
-                case 1: r = q; g = 1; b = 0; break;
-                case 2: r = 0; g = 1; b = t; break;
-                case 3: r = 0; g = q; b = 1; break;
-                case 4: r = t; g = 0; b = 1; break;
-                default: r = 1; g = 0; b = q; break;
+                case 0: r = 255; g = ToByte(t); b = 0; break;
+                case 1: r = ToByte(q); g = 255; b = 0; break;
+                case 2: r = 0; g = 255; b = ToByte(t); break;
+                case 3: r = 0; g = ToByte(q); b = 255; break;
+                case 4: r = ToByte(t); g = 0; b = 255; break;
+                default: r = 255; g = 0; b = ToByte(q); break;
             }
-            return Avalonia.Media.Color.FromArgb(alpha, (byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
+            return Color.FromArgb(alpha, r, g, b);
         }
 
-        public static IBrush Brush(double seed, byte alpha = 255) => new SolidColorBrush(RainbowColor(seed, alpha));
+        static byte ToByte(double v) => (byte)Math.Round(v * 255);
+
+        static int QuantizedHue(double seed) {
+            double h = ((seed + phase) % 1 + 1) % 1;
+            return (int)(h * HueSteps) % HueSteps;
+        }
+
+        public static IBrush Brush(double seed, byte alpha = 255) {
+            var key = (QuantizedHue(seed), alpha);
+            if (!brushCache.TryGetValue(key, out var brush)) {
+                if (brushCache.Count > 4096) {
+                    brushCache.Clear();
+                }
+                brush = new ImmutableSolidColorBrush(RainbowColorOf(key.Item1 / (double)HueSteps, alpha));
+                brushCache[key] = brush;
+            }
+            return brush;
+        }
 
         public static IBrush Gradient(double seed, byte alpha = 255) {
-            return new LinearGradientBrush {
-                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
-                EndPoint = new RelativePoint(1, 0, RelativeUnit.Relative),
-                GradientStops = {
-                    new GradientStop(RainbowColor(seed - 0.08, alpha), 0),
-                    new GradientStop(RainbowColor(seed + 0.08, alpha), 1),
-                },
-            };
+            var key = (fromHue: QuantizedHue(seed - 0.08), toHue: QuantizedHue(seed + 0.08), alpha);
+            if (!gradientCache.TryGetValue(key, out var brush)) {
+                if (gradientCache.Count > 16384) {
+                    gradientCache.Clear();
+                }
+                brush = new LinearGradientBrush {
+                    StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                    EndPoint = new RelativePoint(1, 0, RelativeUnit.Relative),
+                    GradientStops = {
+                        new GradientStop(RainbowColorOf(key.fromHue / (double)HueSteps, alpha), 0),
+                        new GradientStop(RainbowColorOf(key.toHue / (double)HueSteps, alpha), 1),
+                    },
+                };
+                gradientCache[key] = brush;
+            }
+            return brush;
+        }
+
+        public static Pen Pen(double seed, double thickness, byte alpha = 255) {
+            var key = (QuantizedHue(seed), alpha, thickness);
+            if (!penCache.TryGetValue(key, out var pen)) {
+                if (penCache.Count > 4096) {
+                    penCache.Clear();
+                }
+                pen = new Pen(Brush(seed, alpha), thickness);
+                penCache[key] = pen;
+            }
+            return pen;
         }
 
         public static Vector OrbitOffset(double notePosition, double elapsed, double trackHeight, bool enabled) {

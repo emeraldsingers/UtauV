@@ -142,7 +142,7 @@ namespace OpenUtau.App.Controls {
                     double y4 = (1 - phoneme.envelope.data[4].Y / 100) * height;
 
                     var pen = RofloficEffects.RainbowEnabled
-                        ? new Pen(RofloficEffects.Brush(phoneme.position * 0.002), 1.5)
+                        ? RofloficEffects.Pen(phoneme.position * 0.002, 1.5)
                         : selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
                     var brush = RofloficEffects.RainbowEnabled
                         ? RofloficEffects.Brush(phoneme.position * 0.002, 110)
@@ -180,7 +180,7 @@ namespace OpenUtau.App.Controls {
                             bool isSelected = selectedNotes.Contains(phoneme.Parent);
                             bool isHovered = mouseoverPhoneme == phoneme;
                             var pen = RofloficEffects.RainbowEnabled && !phoneme.Error
-                                ? new Pen(RofloficEffects.Brush(phoneme.position * 0.002), 1.5)
+                                ? RofloficEffects.Pen(phoneme.position * 0.002, 1.5)
                                 : phoneme.Error ? ErrorPen
                                 : isHovered ? ThemeManager.AccentPen1Thickness2
                                 : isSelected ? ThemeManager.AccentPen2
