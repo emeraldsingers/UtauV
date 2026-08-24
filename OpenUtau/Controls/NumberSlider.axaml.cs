@@ -27,6 +27,11 @@ namespace OpenUtau.App.Controls {
             AvaloniaProperty.Register<NumberSlider, string>(nameof(Format), "{0:0.###}");
         public static readonly StyledProperty<double?> DefaultProperty =
             AvaloniaProperty.Register<NumberSlider, double?>(nameof(Default));
+        public static readonly StyledProperty<bool> IsDirectionReversedProperty =
+            AvaloniaProperty.Register<NumberSlider, bool>(nameof(IsDirectionReversed));
+        public static readonly StyledProperty<Avalonia.Media.FontWeight> LabelFontWeightProperty =
+            AvaloniaProperty.Register<NumberSlider, Avalonia.Media.FontWeight>(
+                nameof(LabelFontWeight), Avalonia.Media.FontWeight.Normal);
 
         public string? Label {
             get => GetValue(LabelProperty);
@@ -60,6 +65,17 @@ namespace OpenUtau.App.Controls {
             get => GetValue(DefaultProperty);
             set => SetValue(DefaultProperty, value);
         }
+        public bool IsDirectionReversed {
+            get => GetValue(IsDirectionReversedProperty);
+            set => SetValue(IsDirectionReversedProperty, value);
+        }
+        public Avalonia.Media.FontWeight LabelFontWeight {
+            get => GetValue(LabelFontWeightProperty);
+            set => SetValue(LabelFontWeightProperty, value);
+        }
+
+        public event EventHandler<double>? ValueCommitted;
+        public event EventHandler? ResetRequested;
 
         private double value;
 
@@ -112,13 +128,21 @@ namespace OpenUtau.App.Controls {
             ValueBox.IsVisible = false;
             if (double.TryParse(ValueBox.Text, out var v)) {
                 Value = Math.Clamp(v, Minimum, Maximum);
+                ValueCommitted?.Invoke(this, Value);
             }
             UpdateValueText();
         }
 
         void RootContextRequested(object? sender, ContextRequestedEventArgs e) {
-            if (Default.HasValue) {
+            bool handled = false;
+            if (ResetRequested != null) {
+                ResetRequested?.Invoke(this, EventArgs.Empty);
+                handled = true;
+            } else if (Default.HasValue) {
                 Value = Math.Clamp(Default.Value, Minimum, Maximum);
+                handled = true;
+            }
+            if (handled) {
                 e.Handled = true;
             }
         }

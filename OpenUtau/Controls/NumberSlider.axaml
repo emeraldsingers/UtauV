@@ -7,6 +7,7 @@
   <Grid ColumnDefinitions="*,8,44,8,*" ContextRequested="RootContextRequested">
     <TextBlock Grid.Column="0"
                Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}"
+               FontWeight="{Binding LabelFontWeight, RelativeSource={RelativeSource AncestorType=UserControl}}"
                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
     <Panel Grid.Column="2">
       <TextBlock Name="ValueText" VerticalAlignment="Center" TextAlignment="Right"
@@ -16,6 +17,8 @@
                KeyDown="ValueBoxKeyDown" LostFocus="ValueBoxLostFocus"/>
     </Panel>
     <Slider Grid.Column="4" Name="Slider" Classes="fader" VerticalAlignment="Center" TickPlacement="BottomRight"
+            Tag="{Binding Tag, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            IsDirectionReversed="{Binding IsDirectionReversed, RelativeSource={RelativeSource AncestorType=UserControl}}"
             Minimum="{Binding Minimum, RelativeSource={RelativeSource AncestorType=UserControl}}"
             Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=UserControl}}"
             TickFrequency="{Binding TickFrequency, RelativeSource={RelativeSource AncestorType=UserControl}}"

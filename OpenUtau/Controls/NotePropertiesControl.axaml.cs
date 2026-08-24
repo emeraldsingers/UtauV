@@ -29,6 +29,10 @@ foreach (var box in this.GetLogicalDescendants().OfType<TextBox>()) {
                   slider.AddHandler(PointerReleasedEvent, SliderPointerReleased, RoutingStrategies.Tunnel);
                   slider.AddHandler(PointerMovedEvent, SliderPointerMoved, RoutingStrategies.Tunnel);
               }
+              foreach (var numberSlider in this.GetLogicalDescendants().OfType<NumberSlider>()) {
+                  numberSlider.ValueCommitted += NumberSliderValueCommitted;
+                  numberSlider.ResetRequested += NumberSliderResetRequested;
+              }
           
             MessageBus.Current.Listen<PianorollRefreshEvent>()
                 .Subscribe(e => {
@@ -82,14 +86,6 @@ foreach (var box in this.GetLogicalDescendants().OfType<TextBox>()) {
                 if (point.Properties.IsLeftButtonPressed) {
                     DocManager.Inst.StartUndoGroup("command.property.edit");
                     NotePropertiesViewModel.PanelControlPressed = true;
-                } else if (point.Properties.IsRightButtonPressed) {
-                    if (control.Tag is string tag && !string.IsNullOrEmpty(tag)) {
-                        DocManager.Inst.StartUndoGroup("command.property.reset");
-                        NotePropertiesViewModel.PanelControlPressed = true;
-                        ViewModel.SetNoteParams(tag, null);
-                        NotePropertiesViewModel.PanelControlPressed = false;
-                        DocManager.Inst.EndUndoGroup();
-                    }
                 }
             }
         }
@@ -106,6 +102,26 @@ foreach (var box in this.GetLogicalDescendants().OfType<TextBox>()) {
         void SliderPointerMoved(object? sender, PointerEventArgs args) {
             if (sender is Slider slider && slider.Tag is string tag && !string.IsNullOrEmpty(tag)) {
                 ViewModel.SetNoteParams(tag, (float)slider.Value);
+            }
+        }
+
+        void NumberSliderValueCommitted(object? sender, double value) {
+            if (sender is NumberSlider numberSlider && numberSlider.Tag is string tag && !string.IsNullOrEmpty(tag)) {
+                DocManager.Inst.StartUndoGroup("command.property.edit");
+                NotePropertiesViewModel.PanelControlPressed = true;
+                ViewModel.SetNoteParams(tag, (float)value);
+                NotePropertiesViewModel.PanelControlPressed = false;
+                DocManager.Inst.EndUndoGroup();
+            }
+        }
+
+        void NumberSliderResetRequested(object? sender, EventArgs e) {
+            if (sender is NumberSlider numberSlider && numberSlider.Tag is string tag && !string.IsNullOrEmpty(tag)) {
+                DocManager.Inst.StartUndoGroup("command.property.reset");
+                NotePropertiesViewModel.PanelControlPressed = true;
+                ViewModel.SetNoteParams(tag, null);
+                NotePropertiesViewModel.PanelControlPressed = false;
+                DocManager.Inst.EndUndoGroup();
             }
         }
 
