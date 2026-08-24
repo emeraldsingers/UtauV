@@ -4,18 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="500"
              x:Class="OpenUtau.App.Controls.NumberSlider">
-  <Grid ColumnDefinitions="*,8,44,8,*" ContextRequested="RootContextRequested">
+  <Grid ColumnDefinitions="*,12,54,12,*" ContextRequested="RootContextRequested">
     <TextBlock Grid.Column="0"
                Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}"
                FontWeight="{Binding LabelFontWeight, RelativeSource={RelativeSource AncestorType=UserControl}}"
                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-    <Panel Grid.Column="2">
-      <TextBlock Name="ValueText" VerticalAlignment="Center" TextAlignment="Right"
-                 Background="Transparent" FontFamily="monospace" FontSize="11"
-                 PointerPressed="ValueTextPointerPressed"/>
-      <TextBox Name="ValueBox" IsVisible="False" MinWidth="44" Height="22" Padding="2,1" FontSize="11"
+    <TextBox Name="ValueBox" Grid.Column="2" Width="54" Height="24" Margin="0" Padding="4,2" FontSize="12"
+               HorizontalContentAlignment="Left" TextAlignment="Left" VerticalContentAlignment="Center"
                KeyDown="ValueBoxKeyDown" LostFocus="ValueBoxLostFocus"/>
-    </Panel>
     <Slider Grid.Column="4" Name="Slider" Classes="fader" VerticalAlignment="Center" TickPlacement="BottomRight"
             Tag="{Binding Tag, RelativeSource={RelativeSource AncestorType=UserControl}}"
             IsDirectionReversed="{Binding IsDirectionReversed, RelativeSource={RelativeSource AncestorType=UserControl}}"

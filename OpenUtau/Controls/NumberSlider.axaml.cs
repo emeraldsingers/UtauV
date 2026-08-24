@@ -92,27 +92,19 @@ namespace OpenUtau.App.Controls {
         }
 
         void UpdateValueText() {
-            if (ValueText != null) {
-                ValueText.Text = string.Format(Format, Value);
-            }
-        }
-
-        void ValueTextPointerPressed(object? sender, PointerPressedEventArgs e) {
-            if (e.ClickCount == 2) {
-                ValueBox.Text = Value.ToString();
-                ValueBox.IsVisible = true;
-                ValueBox.Focus();
-                ValueBox.SelectAll();
-                e.Handled = true;
+            if (ValueBox != null && !ValueBox.IsFocused) {
+                ValueBox.Text = string.Format(Format, Value);
             }
         }
 
         void ValueBoxKeyDown(object? sender, KeyEventArgs e) {
             if (e.Key == Key.Enter) {
                 CommitInput();
+                TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
                 e.Handled = true;
             } else if (e.Key == Key.Escape) {
-                ValueBox.IsVisible = false;
+                UpdateValueText();
+                TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
                 e.Handled = true;
             }
         }
@@ -122,10 +114,6 @@ namespace OpenUtau.App.Controls {
         }
 
         void CommitInput() {
-            if (!ValueBox.IsVisible) {
-                return;
-            }
-            ValueBox.IsVisible = false;
             if (double.TryParse(ValueBox.Text, out var v)) {
                 Value = Math.Clamp(v, Minimum, Maximum);
                 ValueCommitted?.Invoke(this, Value);
