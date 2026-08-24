@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="500"
              x:Class="OpenUtau.App.Controls.NumberSlider">
-  <Grid ColumnDefinitions="*,8,44,8,*">
+  <Grid ColumnDefinitions="*,8,44,8,*" ContextRequested="RootContextRequested">
     <TextBlock Grid.Column="0"
                Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}"
                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>

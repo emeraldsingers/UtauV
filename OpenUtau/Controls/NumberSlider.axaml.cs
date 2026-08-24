@@ -25,6 +25,8 @@ namespace OpenUtau.App.Controls {
             AvaloniaProperty.Register<NumberSlider, bool>(nameof(IsSnapToTickEnabled), true);
         public static readonly StyledProperty<string> FormatProperty =
             AvaloniaProperty.Register<NumberSlider, string>(nameof(Format), "{0:0.###}");
+        public static readonly StyledProperty<double?> DefaultProperty =
+            AvaloniaProperty.Register<NumberSlider, double?>(nameof(Default));
 
         public string? Label {
             get => GetValue(LabelProperty);
@@ -53,6 +55,10 @@ namespace OpenUtau.App.Controls {
         public string Format {
             get => GetValue(FormatProperty);
             set => SetValue(FormatProperty, value);
+        }
+        public double? Default {
+            get => GetValue(DefaultProperty);
+            set => SetValue(DefaultProperty, value);
         }
 
         private double value;
@@ -108,6 +114,13 @@ namespace OpenUtau.App.Controls {
                 Value = Math.Clamp(v, Minimum, Maximum);
             }
             UpdateValueText();
+        }
+
+        void RootContextRequested(object? sender, ContextRequestedEventArgs e) {
+            if (Default.HasValue) {
+                Value = Math.Clamp(Default.Value, Minimum, Maximum);
+                e.Handled = true;
+            }
         }
     }
 }
