@@ -4,6 +4,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
@@ -43,6 +44,11 @@ namespace OpenUtau.App.Controls {
         public static readonly DirectProperty<ExpressionCanvas, ExpDisMode> DisplayModeProperty =
             AvaloniaProperty.RegisterDirect<ExpressionCanvas, ExpDisMode>(
                 nameof(DisplayMode), o => o.DisplayMode, (o, v) => o.DisplayMode = v);
+        public static readonly DirectProperty<ExpressionCanvas, bool> PitchEditModeProperty =
+            AvaloniaProperty.RegisterDirect<ExpressionCanvas, bool>(
+                nameof(PitchEditMode),
+                o => o.PitchEditMode,
+                (o, v) => o.PitchEditMode = v);
 
         public double TickWidth {
             get => tickWidth;
@@ -69,6 +75,10 @@ namespace OpenUtau.App.Controls {
             get => displayMode;
             set => SetAndRaise(DisplayModeProperty, ref displayMode, value);
         }
+        public bool PitchEditMode {
+            get => pitchEditMode;
+            private set => SetAndRaise(PitchEditModeProperty, ref pitchEditMode, value);
+        }
 
         private double tickWidth;
         private double tickOffset;
@@ -76,6 +86,9 @@ namespace OpenUtau.App.Controls {
         private string key = string.Empty;
         private bool showRealCurve = true;
         private ExpDisMode displayMode = ExpDisMode.Visible;
+        private bool pitchEditMode;
+
+        private static readonly IBrush PitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
 
         private HashSet<UNote> selectedNotes = new HashSet<UNote>();
         private CurveSelection curveSelection = new CurveSelection();
@@ -379,6 +392,10 @@ namespace OpenUtau.App.Controls {
                         textLayout.Draw(context, new Point());
                     }
                 }
+            }
+
+            if (PitchEditMode) {
+                context.FillRectangle(PitchEditDimBrush, Bounds.WithX(0).WithY(0));
             }
         }
 

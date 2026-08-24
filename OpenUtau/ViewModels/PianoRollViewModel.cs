@@ -120,16 +120,25 @@ namespace OpenUtau.App.ViewModels {
 
         private ReactiveCommand<Classic.Plugin, Unit> legacyPluginCommand;
 
+        private void UpdatePitchEditMode() {
+            NotesViewModel.PitchEditMode = Preferences.Default.PitchEditMode && EditTool.IsPitchTool;
+        }
+
         public PianoRollViewModel() {
             NotesViewModel = new NotesViewModel();
             CurveViewModel = new CurveViewModel();
 
             this.WhenAnyValue(vm => vm.ToolIndex)
-                .Subscribe(index => EditTool.BaseTool = index);
+                .Subscribe(index => {
+                    EditTool.BaseTool = index;
+                    UpdatePitchEditMode();
+                });
             this.WhenAnyValue(vm => vm.PenToolIndex)
                 .Subscribe(index => EditTool.PenToolVariation = index);
             this.WhenAnyValue(vm => vm.PitchOverwrite)
                 .Subscribe(val => { EditTool.OverwritePitch = val; Preferences.Default.EditTool.OverwritePitch = val; Preferences.Save(); });
+            MessageBus.Current.Listen<PitchEditModePrefChangedEvent>()
+                .Subscribe(_ => UpdatePitchEditMode());
 
             NoteDeleteCommand = ReactiveCommand.Create<NoteHitInfo>(info => {
                 NotesViewModel.DeleteSelectedNotes();

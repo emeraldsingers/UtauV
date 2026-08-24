@@ -79,6 +79,11 @@ namespace OpenUtau.App.Controls {
                 nameof(ShowPhonemePanel),
                 o => o.ShowPhonemePanel,
                 (o, v) => o.ShowPhonemePanel = v);
+        public static readonly DirectProperty<NotesCanvas, bool> PitchEditModeProperty =
+            AvaloniaProperty.RegisterDirect<NotesCanvas, bool>(
+                nameof(PitchEditMode),
+                o => o.PitchEditMode,
+                (o, v) => o.PitchEditMode = v);
 
         public double TickWidth {
             get => tickWidth;
@@ -136,6 +141,10 @@ namespace OpenUtau.App.Controls {
             get => showPhonemePanel;
             private set => SetAndRaise(ShowPhonemePanelProperty, ref showPhonemePanel, value);
         }
+        public bool PitchEditMode {
+            get => pitchEditMode;
+            private set => SetAndRaise(PitchEditModeProperty, ref pitchEditMode, value);
+        }
 
         private double tickWidth;
         private double trackHeight;
@@ -160,6 +169,10 @@ namespace OpenUtau.App.Controls {
         private readonly Dictionary<(Color from, Color to, byte amount), IBrush> highlightBrushes = new();
         private bool showPhonemizerTags = true;
         private bool showPhonemePanel;
+        private bool pitchEditMode;
+
+        private static readonly IBrush PitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
+        private Pen? pitchEditPen;
         private PolylineGeometry polylineGeometry = new PolylineGeometry();
         private Points points = new Points();
 
@@ -441,8 +454,32 @@ namespace OpenUtau.App.Controls {
                         RenderVibratoControl(note, viewModel, context);
                     }
                 }
+                if (PitchEditMode) {
+                    UpdatePitchEditVisuals();
+                    context.FillRectangle(PitchEditDimBrush, Bounds.WithX(0).WithY(0));
+                    RenderFinalPitch(leftTick, rightTick, viewModel, context, bright: true);
+                }
             } finally {
                 renderPassActive = false;
+            }
+        }
+
+        private void UpdatePitchEditVisuals() {
+            const double blend = 0.6;
+            var source = ThemeManager.FinalPitchPen?.Brush as ISolidColorBrush;
+            if (source == null && ThemeManager.AccentBrush3 is ISolidColorBrush accent) {
+                source = accent;
+            }
+            if (source != null) {
+                var c = source.Color;
+                var bright = Color.FromRgb(
+                    (byte)(c.R + (255 - c.R) * blend),
+                    (byte)(c.G + (255 - c.G) * blend),
+                    (byte)(c.B + (255 - c.B) * blend));
+                var brush = new ImmutableSolidColorBrush(bright);
+                pitchEditPen = new Pen(brush, 2.5);
+            } else {
+                pitchEditPen = new Pen(Brushes.White, 2.5);
             }
         }
 
@@ -1065,8 +1102,8 @@ namespace OpenUtau.App.Controls {
             context.DrawLine(pen, periodEnd, periodEnd + new Vector(0, height));
         }
 
-        private void RenderFinalPitch(double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context) {
-            var pen = ThemeManager.FinalPitchPen!;
+        private void RenderFinalPitch(double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context, bool bright = false) {
+            var pen = bright ? pitchEditPen : ThemeManager.FinalPitchPen!;
             lock (Part!) {
                 foreach (var phrase in Part!.renderPhrases) {
                     if (phrase.position - Part.position > rightTick || phrase.end - Part.position < leftTick) {

@@ -117,6 +117,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowIcon { get; set; }
         [Reactive] public bool ShowGhostNotes { get; set; }
         [Reactive] public bool NoteHoverGlow { get; set; }
+        [Reactive] public bool PitchEditMode { get; set; }
         [Reactive] public bool ThemeEditable { get; set; }
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
         public bool IsThemeEditorOpen => Views.ThemeEditorWindow.IsOpen;
@@ -247,6 +248,7 @@ namespace OpenUtau.App.ViewModels {
             ShowIcon = Preferences.Default.ShowIcon;
             ShowGhostNotes = Preferences.Default.ShowGhostNotes;
             NoteHoverGlow = Preferences.Default.NoteHoverGlow;
+            PitchEditMode = Preferences.Default.PitchEditMode;
             Beta = Preferences.Default.Beta;
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
@@ -450,6 +452,12 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Default.NoteHoverGlow = noteHoverGlow;
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                });
+            this.WhenAnyValue(vm => vm.PitchEditMode)
+                .Subscribe(pitchEditMode => {
+                    Preferences.Default.PitchEditMode = pitchEditMode;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new PitchEditModePrefChangedEvent());
                 });
             this.WhenAnyValue(vm => vm.Beta)
                 .Subscribe(beta => {

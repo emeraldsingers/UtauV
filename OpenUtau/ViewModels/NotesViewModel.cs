@@ -26,6 +26,7 @@ using SharpCompress;
 
 namespace OpenUtau.App.ViewModels {
     public class NotesRefreshEvent { }
+    public class PitchEditModePrefChangedEvent { }
     public class RealCurveRefreshEvent { }
     public class NotesSelectionEvent {
         public readonly UNote[] selectedNotes;
@@ -67,6 +68,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPhoneme { get; set; }
         [Reactive] public bool ShowPhonemePanel { get; set; }
         [Reactive] public bool ShowPhonemePanelButton { get; set; }
+        [Reactive] public bool PitchEditMode { get; set; }
         [Reactive] public bool ShowNoteParams { get; set; }
         [Reactive] public bool ShowExpressions { get; set; }
         [Reactive] public bool ShowPlaybackVerticalFollow { get; set; }

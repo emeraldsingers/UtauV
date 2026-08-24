@@ -40,6 +40,11 @@ namespace OpenUtau.App.Controls {
                 nameof(ShowPhoneme),
                 o => o.ShowPhoneme,
                 (o, v) => o.ShowPhoneme = v);
+        public static readonly DirectProperty<PhonemeCanvas, bool> PitchEditModeProperty =
+            AvaloniaProperty.RegisterDirect<PhonemeCanvas, bool>(
+                nameof(PitchEditMode),
+                o => o.PitchEditMode,
+                (o, v) => o.PitchEditMode = v);
 
         public IBrush Background {
             get => background;
@@ -61,12 +66,19 @@ namespace OpenUtau.App.Controls {
             get => showPhoneme;
             private set => SetAndRaise(ShowPhonemeProperty, ref showPhoneme, value);
         }
+        public bool PitchEditMode {
+            get => pitchEditMode;
+            private set => SetAndRaise(PitchEditModeProperty, ref pitchEditMode, value);
+        }
 
         private IBrush background = Brushes.White;
         private double tickWidth;
         private double tickOffset;
         private UVoicePart? part;
         private bool showPhoneme = true;
+        private bool pitchEditMode;
+
+        private static readonly IBrush PitchEditDimBrush = new SolidColorBrush(Color.FromArgb(150, 0, 0, 0));
 
         private HashSet<UNote> selectedNotes = new HashSet<UNote>();
         private Geometry pointGeometry;
@@ -196,6 +208,9 @@ namespace OpenUtau.App.Controls {
                         }
                     }
                 }
+            }
+            if (PitchEditMode) {
+                context.FillRectangle(PitchEditDimBrush, Bounds.WithX(0).WithY(0));
             }
         }
 
