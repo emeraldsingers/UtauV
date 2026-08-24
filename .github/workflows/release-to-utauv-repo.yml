@@ -230,7 +230,7 @@ jobs:
           set -euo pipefail
 
           OUT="bin/${{ matrix.arch.name }}"
-          APP="$OUT/OpenUtau.app"
+          APP="$OUT/UtauV.app"
           MACOS="$APP/Contents/MacOS"
           RES="$APP/Contents/Resources"
 
@@ -244,7 +244,7 @@ jobs:
           chmod +x "$MACOS/UtauV" || true
 
           if [ -f "OpenUtau/Assets/OpenUtau.icns" ]; then
-            cp "OpenUtau/Assets/OpenUtau.icns" "$RES/OpenUtau.icns"
+            cp "OpenUtau/Assets/OpenUtau.icns" "$RES/UtauV.icns"
           fi
 
           cat > "$APP/Contents/Info.plist" <<'PLIST'
@@ -256,10 +256,13 @@ jobs:
             <key>CFBundleDisplayName</key><string>UtauV</string>
             <key>CFBundleIdentifier</key><string>asoqwer.UtauV</string>
             <key>CFBundleExecutable</key><string>UtauV</string>
+            <key>CFBundleIconFile</key><string>UtauV.icns</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>CFBundleVersion</key><string>${{ inputs.version }}</string>
             <key>CFBundleShortVersionString</key><string>${{ inputs.version }}</string>
             <key>LSMinimumSystemVersion</key><string>10.13</string>
+            <key>NSPrincipalClass</key><string>NSApplication</string>
+            <key>NSHighResolutionCapable</key><true/>
           </dict>
           </plist>
           PLIST
@@ -352,23 +355,23 @@ jobs:
             ### Windows
 
             **DirectML builds** (recommended for most users - works on all GPUs including AMD, Intel, and NVIDIA):
-            - [Installer (64-bit DirectML)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-directml.exe)
-            - [Portable ZIP (64-bit DirectML)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-directml.zip)
-            - [Installer (32-bit)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x86.exe)
-            - [Portable ZIP (32-bit)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x86.zip)
-            - [Installer (ARM64)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-arm64.exe)
-            - [Portable ZIP (ARM64)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-arm64.zip)
+            - [Installer (64-bit DirectML)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x64-directml.exe)
+            - [Portable ZIP (64-bit DirectML)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x64-directml.zip)
+            - [Installer (32-bit)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x86.exe)
+            - [Portable ZIP (32-bit)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x86.zip)
+            - [Installer (ARM64)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-arm64.exe)
+            - [Portable ZIP (ARM64)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-arm64.zip)
 
             **CUDA builds** (NVIDIA GPUs only - requires CUDA 12.x + cuDNN 9.x):
-            - [Installer (64-bit CUDA)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-cuda.exe)
-            - [Portable ZIP (64-bit CUDA)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-win-x64-cuda.zip)
+            - [Installer (64-bit CUDA)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x64-cuda.exe)
+            - [Portable ZIP (64-bit CUDA)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x64-cuda.zip)
 
             > **⚠️ CUDA builds require additional setup!**
             > Follow this tutorial: [CUDA + cuDNN Installation Guide](https://docs.google.com/document/d/17FBZxb5J1tMN-gR7cO_b-UJ8XUL5Xs_e7NYv3ewTmOI)
 
             ### macOS
-            - [Intel Mac (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-osx-x64.dmg)
-            - [Apple Silicon (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/OpenUtau-osx-arm64.dmg)
+            - [Intel Mac (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-osx-x64.dmg)
+            - [Apple Silicon (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-osx-arm64.dmg)
 
             ### Linux
             - [64-bit (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-x64.zip)
@@ -389,7 +392,7 @@ jobs:
             **macOS users:**
             - **Intel Macs**: Download osx-x64 (CPU-only)
             - **Apple Silicon (M1/M2/M3)**: Download osx-arm64 (CPU-only)
-            - If you see "This app is damaged", run: `xattr -rc /Applications/OpenUtau.app`
+            - If you see "This app is damaged", run: `xattr -rc /Applications/UtauV.app`
 
             **Linux users:**
             - **Most systems**: Download linux-x64 (CPU-only by default, automatically uses CUDA if installed)

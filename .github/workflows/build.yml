@@ -198,8 +198,33 @@ jobs:
       - name: Create Dmg
         run: |
           npm install -g create-dmg
-          cp OpenUtau/Assets/OpenUtau.icns bin/${{ matrix.arch.name }}/publish/OpenUtau.app/Contents/Resources/
-          create-dmg bin/${{ matrix.arch.name }}/publish/OpenUtau.app || true
+          APP=$(find bin/${{ matrix.arch.name }}/publish -maxdepth 1 -name "*.app" -type d | head -1)
+          if [ -z "$APP" ]; then
+            APP=bin/${{ matrix.arch.name }}/publish/UtauV.app
+            mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+            cp -R bin/${{ matrix.arch.name }}/publish/* "$APP/Contents/MacOS/"
+            cat > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>UtauV</string>
+            <key>CFBundleDisplayName</key><string>UtauV</string>
+            <key>CFBundleIdentifier</key><string>asoqwer.UtauV</string>
+            <key>CFBundleExecutable</key><string>UtauV</string>
+            <key>CFBundleIconFile</key><string>UtauV.icns</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleVersion</key><string>0.0.0</string>
+            <key>CFBundleShortVersionString</key><string>0.0.0</string>
+            <key>LSMinimumSystemVersion</key><string>10.13</string>
+            <key>NSPrincipalClass</key><string>NSApplication</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          fi
+          cp OpenUtau/Assets/OpenUtau.icns "$APP/Contents/Resources/UtauV.icns"
+          create-dmg "$APP" || true
           mv *.dmg UtauV-${{ matrix.arch.name }}.dmg
           codesign -fvs - UtauV-${{ matrix.arch.name }}.dmg
         if: ${{ matrix.arch.os == 'osx' }}
