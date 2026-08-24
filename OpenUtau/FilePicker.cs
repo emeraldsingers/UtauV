@@ -54,6 +54,9 @@ namespace OpenUtau.App {
         public static FilePickerFileType FontFiles { get; } = new("Font Files") {
             Patterns = new[] { "*.ttf", "*.otf" },
         };
+        public static FilePickerFileType YamlFiles { get; } = new("YAML Files") {
+            Patterns = new[] { "*.yaml", "*.yml" },
+        };
         public static FilePickerFileType PrefsJson { get; } = new("Preferences") {
             Patterns = new[] { "prefs.json", "*.json" },
         };

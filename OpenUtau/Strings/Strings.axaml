@@ -659,6 +659,8 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.appearance.customtheme.create.title">Create Custom Theme</system:String>
   <system:String x:Key="prefs.appearance.customtheme.create.prompt">Enter Theme Name</system:String>
   <system:String x:Key="prefs.appearance.customtheme.create.empty">Theme name cannot be empty.</system:String>
+  <system:String x:Key="prefs.appearance.customtheme.import.title">Import Theme File</system:String>
+  <system:String x:Key="prefs.appearance.customtheme.import.failed">Failed to import theme.</system:String>
   <system:String x:Key="prefs.appearance.trackcolor">Use track color in UI</system:String>
   <system:String x:Key="prefs.cache">Cache</system:String>
   <system:String x:Key="prefs.cache.clearonquit">Clear cache on quit</system:String>

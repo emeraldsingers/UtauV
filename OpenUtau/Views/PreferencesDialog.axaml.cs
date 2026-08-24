@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -8,6 +9,7 @@ using Avalonia.Platform.Storage;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Colors;
 using OpenUtau.Core;
+using OpenUtau.Core.Util;
 
 namespace OpenUtau.App.Views {
     public partial class PreferencesDialog : Window {
@@ -197,6 +199,26 @@ namespace OpenUtau.App.Views {
                 File.Delete(CustomTheme.Themes[viewModel!.ThemeName]);
                 viewModel!.RefreshThemes();
                 viewModel!.ThemeName = previousTheme;
+            }
+        }
+
+        async void OnCustomThemeImport(object sender, RoutedEventArgs e) {
+            var path = await FilePicker.OpenFile(this, "prefs.appearance.customtheme.import.title", FilePicker.YamlFiles);
+            if (string.IsNullOrEmpty(path)) {
+                return;
+            }
+            try {
+                Yaml.DefaultDeserializer.Deserialize<CustomTheme.ThemeYaml>(File.ReadAllText(path, Encoding.UTF8));
+                Directory.CreateDirectory(PathManager.Inst.ThemesPath);
+                string dest = Path.Join(PathManager.Inst.ThemesPath, Path.GetFileName(path));
+                File.Copy(path, dest, true);
+                viewModel!.RefreshThemes();
+                string? imported = CustomTheme.Themes.FirstOrDefault(kv => kv.Value == dest).Key;
+                if (imported != null) {
+                    viewModel!.ThemeName = imported;
+                }
+            } catch (Exception ex) {
+                await MessageBox.ShowError(this, ex, ThemeManager.GetString("prefs.appearance.customtheme.import.failed"));
             }
         }
     }

@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="500"
+             x:Class="OpenUtau.App.Controls.NumberSlider">
+  <Grid ColumnDefinitions="*,8,44,8,*">
+    <TextBlock Grid.Column="0"
+               Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}"
+               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+    <Panel Grid.Column="2">
+      <TextBlock Name="ValueText" VerticalAlignment="Center" TextAlignment="Right"
+                 FontFamily="monospace" FontSize="11"/>
+      <TextBox Name="ValueBox" IsVisible="False" MinWidth="44" Height="22" Padding="2,1" FontSize="11"
+               KeyDown="ValueBoxKeyDown" LostFocus="ValueBoxLostFocus"/>
+    </Panel>
+    <Slider Grid.Column="4" Name="Slider" Classes="fader" VerticalAlignment="Center" TickPlacement="BottomRight"
+            Minimum="{Binding Minimum, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            TickFrequency="{Binding TickFrequency, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            IsSnapToTickEnabled="{Binding IsSnapToTickEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            Value="{Binding Value, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+  </Grid>
+</UserControl>
