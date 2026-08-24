@@ -10,7 +10,8 @@
                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
     <Panel Grid.Column="2">
       <TextBlock Name="ValueText" VerticalAlignment="Center" TextAlignment="Right"
-                 FontFamily="monospace" FontSize="11"/>
+                 Background="Transparent" FontFamily="monospace" FontSize="11"
+                 PointerPressed="ValueTextPointerPressed"/>
       <TextBox Name="ValueBox" IsVisible="False" MinWidth="44" Height="22" Padding="2,1" FontSize="11"
                KeyDown="ValueBoxKeyDown" LostFocus="ValueBoxLostFocus"/>
     </Panel>
