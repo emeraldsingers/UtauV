@@ -1,0 +1,116 @@
+using System;
+using System.Linq;
+using OpenUtau.Core.Render;
+using OpenUtau.Core.Ustx;
+using Xunit;
+
+namespace OpenUtau.Core {
+    public class SineFallbackTest {
+        static UProject CreateProject(out UTrack track, out UVoicePart part) {
+            var project = new UProject();
+            project.RegisterExpression(new UExpressionDescriptor("pitch deviation", Format.Ustx.PITD, -1200, 1200, 0) {
+                type = UExpressionType.Curve,
+            });
+            foreach (var abbr in new[] { Format.Ustx.VEL, Format.Ustx.VOL, Format.Ustx.MOD, Format.Ustx.DIR, Format.Ustx.SHFT, Format.Ustx.CLR, Format.Ustx.XSYC }) {
+                project.RegisterExpression(new UExpressionDescriptor(abbr, abbr, 0, 100, 0));
+            }
+            project.RegisterExpression(new UExpressionDescriptor("resampler", Format.Ustx.ENG, 0, 0, 0) {
+                type = UExpressionType.Options,
+                options = new string[] { "default" },
+            });
+            track = new UTrack(project);
+            project.tracks.Add(track);
+            part = new UVoicePart { trackNo = 0 };
+            project.parts.Add(part);
+            return project;
+        }
+
+        static UNote MakeNote(int position, int duration, int tone) {
+            var note = UNote.Create();
+            note.position = position;
+            note.duration = duration;
+            note.tone = tone;
+            return note;
+        }
+
+        [Fact]
+        public void FromPartBuildsOneSinePhrasePerNoteWithoutSinger() {
+            var project = CreateProject(out var track, out var part);
+            part.notes.Add(MakeNote(0, 480, 60));
+            part.notes.Add(MakeNote(480, 240, 64));
+
+            var phrases = RenderPhrase.FromPart(project, track, part);
+
+            Assert.Equal(2, phrases.Count);
+            Assert.All(phrases, phrase => Assert.Same(SineRenderer.Instance, phrase.renderer));
+            Assert.All(phrases, phrase => Assert.NotEmpty(phrase.phones));
+            Assert.Equal(60 * 100, phrases[0].pitches[0], 0);
+            Assert.Equal(64 * 100, phrases[1].pitches[0], 0);
+        }
+
+        [Fact]
+        public void SinePhraseCoversExtendedNoteChain() {
+            var project = CreateProject(out var track, out var part);
+            var note1 = MakeNote(0, 480, 60);
+            var note2 = MakeNote(480, 240, 60);
+            note2.Extends = note1;
+            note1.Next = note2;
+            note2.Prev = note1;
+            part.notes.Add(note1);
+            part.notes.Add(note2);
+
+            var phrases = RenderPhrase.FromPart(project, track, part);
+
+            var phrase = Assert.Single(phrases);
+            Assert.Equal(720, phrase.duration);
+        }
+
+        [Fact]
+        public void SinePhrasePitchesApplyPitdCurve() {
+            var project = CreateProject(out var track, out var part);
+            part.notes.Add(MakeNote(0, 240, 60));
+            var pitd = new UCurve(project.expressions[Format.Ustx.PITD]);
+            pitd.xs.AddRange(new[] { 0, 240 });
+            pitd.ys.AddRange(new[] { 100, 200 });
+            part.curves.Add(pitd);
+
+            var phrases = RenderPhrase.FromPart(project, track, part);
+
+            var phrase = Assert.Single(phrases);
+            Assert.Equal(60 * 100 + 100, phrase.pitches[0], 0);
+            Assert.True(Math.Abs(phrase.pitches.Last() - (60 * 100 + 200)) < 1);
+        }
+
+        [Fact]
+        public void FromPartUsesPhonemesWhenSingerLoaded() {
+            var project = CreateProject(out var track, out var part);
+            track.Singer = new MockLoadedSinger();
+            track.RendererSettings.Validate(track);
+            part.notes.Add(MakeNote(0, 480, 60));
+
+            Assert.False(SineRenderer.IsFallbackActive(track));
+
+            var phoneme = new UPhoneme {
+                position = 0,
+                phoneme = "a",
+                Parent = part.notes.First(),
+            };
+            part.phonemes.Add(phoneme);
+
+            var phrases = RenderPhrase.FromPart(project, track, part);
+            Assert.NotEmpty(phrases);
+            Assert.All(phrases, phrase => Assert.NotSame(SineRenderer.Instance, phrase.renderer));
+        }
+
+        class MockLoadedSinger : USinger {
+            public MockLoadedSinger() {
+                found = true;
+                loaded = true;
+            }
+            public override string Id => "mock";
+            public override string Name => "mock";
+            public override USingerType SingerType => USingerType.Classic;
+            public override System.Collections.Generic.IList<USubbank> Subbanks => new USubbank[0];
+        }
+    }
+}

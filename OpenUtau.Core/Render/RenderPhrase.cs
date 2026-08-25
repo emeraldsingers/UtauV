@@ -145,6 +145,17 @@ namespace OpenUtau.Core.Render {
             }
             hash = Hash();
         }
+        internal RenderPhone(RenderNote note) {
+            position = note.position;
+            duration = note.duration;
+            end = note.end;
+            positionMs = note.positionMs;
+            durationMs = note.durationMs;
+            endMs = note.endMs;
+            phoneme = "sine";
+            tone = (int)note.adjustedTone;
+        }
+
         private ulong Hash() {
             using (var stream = new MemoryStream()) {
                 using (var writer = new BinaryWriter(stream)) {
@@ -195,16 +206,16 @@ namespace OpenUtau.Core.Render {
         public readonly RenderPhone[] phones;
         internal readonly UNote[] sourceNotes;
 
-        public readonly float[] pitches;
-        public readonly float[] pitchesBeforeDeviation;
-        public readonly float[] dynamics;
-        public readonly float[] gender;
-        public readonly float[] breathiness;
-        public readonly float[] toneShift;
-        public readonly float[] tension;
-        public readonly float[] voicing;
-        public readonly float[] xsy;
-        public readonly Tuple<string, float[]>[] curves;//custom curves defined by renderer
+        public float[] pitches;
+        public float[] pitchesBeforeDeviation;
+        public float[] dynamics;
+        public float[] gender;
+        public float[] breathiness;
+        public float[] toneShift;
+        public float[] tension;
+        public float[] voicing;
+        public float[] xsy;
+        public Tuple<string, float[]>[] curves;//custom curves defined by renderer
         public readonly ulong preEffectHash;
         public readonly ulong hash;
 
@@ -262,6 +273,40 @@ namespace OpenUtau.Core.Render {
             durationMs = endMs - positionMs;
             leadingMs = phones.First().leadingMs;
 
+            ComputePitchAndCurves(project, track, part, uNotes, phrasePhonemes.ToList());
+            preEffectHash = Hash(false);
+            hash = Hash(true);
+        }
+
+        internal RenderPhrase(UProject project, UTrack track, UVoicePart part, List<UNote> sineNotes) {
+            sourceNotes = sineNotes.ToArray();
+            singer = track.Singer;
+            renderer = SineRenderer.Instance;
+            wavtool = null;
+            timeAxis = project.timeAxis.Clone();
+
+            position = part.position + sineNotes[0].position;
+            end = part.position + sineNotes[sineNotes.Count - 1].End;
+            duration = end - position;
+
+            notes = sineNotes
+                .Select(n => new RenderNote(project, part, n, position))
+                .ToArray();
+            phones = new RenderPhone[] { new RenderPhone(notes[0]) };
+
+            leading = 0;
+
+            positionMs = notes[0].positionMs;
+            endMs = notes[notes.Length - 1].endMs;
+            durationMs = endMs - positionMs;
+            leadingMs = 0;
+
+            ComputePitchAndCurves(project, track, part, sineNotes, new List<UPhoneme>());
+            preEffectHash = Hash(false);
+            hash = Hash(true);
+        }
+
+        private void ComputePitchAndCurves(UProject project, UTrack track, UVoicePart part, List<UNote> uNotes, List<UPhoneme> phonemes) {
             const int pitchInterval = 5;
             int pitchStart = position - part.position - leading;
             pitches = new float[(end - part.position - pitchStart) / pitchInterval + 1];
@@ -497,8 +542,6 @@ namespace OpenUtau.Core.Render {
                 }
             }
             this.curves = curves.ToArray();
-            preEffectHash = Hash(false);
-            hash = Hash(true);
         }
 
         private static float[] SampleCurve(UCurve curve, int start, int length, Func<float, UCurve, float> convert) {
@@ -521,7 +564,7 @@ namespace OpenUtau.Core.Render {
         private ulong Hash(bool postEffect) {
             using (var stream = new MemoryStream()) {
                 using (var writer = new BinaryWriter(stream)) {
-                    writer.Write(singer.Id);
+                    writer.Write(singer?.Id ?? string.Empty);
                     writer.Write(renderer?.ToString() ?? "");
                     writer.Write(wavtool ?? "");
                     writer.Write(timeAxis.Timestamp);
@@ -554,6 +597,9 @@ namespace OpenUtau.Core.Render {
         }
 
         public static List<RenderPhrase> FromPart(UProject project, UTrack track, UVoicePart part) {
+            if (SineRenderer.IsFallbackActive(track)) {
+                return FromPartSine(project, track, part);
+            }
             var phrases = new List<RenderPhrase>();
             var phonemes = part.phonemes
                 .Where(phoneme => !phoneme.Error)
@@ -572,6 +618,25 @@ namespace OpenUtau.Core.Render {
             if (phrasePhonemes.Count > 0) {
                 phrases.Add(new RenderPhrase(project, track, part, phrasePhonemes));
                 phrasePhonemes.Clear();
+            }
+            return phrases;
+        }
+
+        private static List<RenderPhrase> FromPartSine(UProject project, UTrack track, UVoicePart part) {
+            var phrases = new List<RenderPhrase>();
+            foreach (var note in part.notes) {
+                if (note.Extends != null || note.OverlapError) {
+                    continue;
+                }
+                var uNotes = new List<UNote> { note };
+                var tail = note;
+                var next = tail.Next;
+                while (next != null && next.Extends == tail) {
+                    uNotes.Add(next);
+                    tail = next;
+                    next = next.Next;
+                }
+                phrases.Add(new RenderPhrase(project, track, part, uNotes));
             }
             return phrases;
         }
