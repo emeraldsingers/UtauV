@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
@@ -191,16 +192,29 @@ namespace OpenUtau.App.Controls {
             }
             Array.Clear(sampleData, 0, sampleCount);
 
+            var mix = part.Mix;
+            bool useLiveCache = PlaybackManager.Inst.StartingToPlay || mix == null;
+            if (!useLiveCache && part.renderPhrases.Count > 0) {
+                useLiveCache = part.renderPhrases.All(phrase =>
+                    PlaybackManager.Inst.LiveWaveformCache.ContainsKey(phrase.hash.ToString()));
+            }
+
             if (!PlaybackManager.Inst.IsWaveformBlanked) {
-                if (PlaybackManager.Inst.StartingToPlay || part.Mix == null) {
-                    foreach (var cacheItem in PlaybackManager.Inst.LiveWaveformCache.Values) {
-                        if (cacheItem.trackNo != part.trackNo) {
+                if (useLiveCache || mix == null) {
+                    var phraseHashes = new HashSet<string>(
+                        part.renderPhrases.Select(phrase => phrase.hash.ToString()));
+                    foreach (var cacheItem in PlaybackManager.Inst.LiveWaveformCache) {
+                        if (!phraseHashes.Contains(cacheItem.Key)) {
+                            continue;
+                        }
+                        var cacheValue = cacheItem.Value;
+                        if (cacheValue.trackNo != part.trackNo) {
                             continue;
                         }
 
-                        int phraseStartFrame = (int)(cacheItem.posMs * SampleRate / 1000);
+                        int phraseStartFrame = (int)(cacheValue.posMs * SampleRate / 1000);
                         int phraseStartSample = phraseStartFrame - leftFrame;
-                        double ageMs = (DateTime.Now - cacheItem.renderTime).TotalMilliseconds;
+                        double ageMs = (DateTime.Now - cacheValue.renderTime).TotalMilliseconds;
                         double animationProgress = Math.Clamp(ageMs / 300.0, 0.0, 1.0);
                         if (animationProgress < 1.0) {
                             needsAnotherFrame = true;
@@ -208,16 +222,16 @@ namespace OpenUtau.App.Controls {
                         float scale = 1.0f - (float)Math.Pow(1.0 - animationProgress, 3);
 
                         int start = Math.Max(0, -phraseStartSample);
-                        int end = Math.Min(cacheItem.samples.Length, sampleCount / 2 - phraseStartSample);
+                        int end = Math.Min(cacheValue.samples.Length, sampleCount / 2 - phraseStartSample);
                         for (int i = start; i < end; i++) {
                             int target = (phraseStartSample + i) * 2;
-                            float sample = cacheItem.samples[i] * scale;
+                            float sample = cacheValue.samples[i] * scale;
                             sampleData[target] += sample;
                             sampleData[target + 1] += sample;
                         }
                     }
                 } else {
-                    part.Mix.Mix(leftFrame * 2, sampleData, 0, sampleCount);
+                    mix.Mix(leftFrame * 2, sampleData, 0, sampleCount);
                 }
             }
 
