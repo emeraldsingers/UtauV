@@ -59,6 +59,10 @@ namespace OpenUtau.App.Views {
         public bool ctrlHeld = false;
         public bool altHeld = false;
 
+        static readonly TimeSpan LiveValidateInterval = TimeSpan.FromMilliseconds(40);
+        UVoicePart? liveValidatePart;
+        DateTime lastLiveValidate = DateTime.MinValue;
+
         public NoteEditState(Control control, PianoRollViewModel vm, IValueTip valueTip) {
             this.control = control;
             this.vm = vm;
@@ -68,6 +72,8 @@ namespace OpenUtau.App.Views {
             pointer.Capture(control);
             startPoint = point;
             DocManager.Inst.StartUndoGroup(commandNameKey, DeferValidate);
+            liveValidatePart = vm.NotesViewModel?.Part;
+            lastLiveValidate = DateTime.MinValue;
             if (ShowValueTip) {
                 valueTip.ShowValueTip();
             }
@@ -78,6 +84,19 @@ namespace OpenUtau.App.Views {
             if (ShowValueTip) {
                 valueTip.HideValueTip();
             }
+            liveValidatePart = null;
+        }
+        protected void LiveValidate() {
+            if (liveValidatePart == null || DateTime.Now - lastLiveValidate < LiveValidateInterval) {
+                return;
+            }
+            lastLiveValidate = DateTime.Now;
+            DocManager.Inst.Project.Validate(new ValidateOptions {
+                SkipTiming = true,
+                Part = liveValidatePart,
+                SkipPhonemizer = true,
+                SkipPhoneme = true,
+            });
         }
         public virtual void Update(IPointer pointer, Point point) { }
         public static void Swap<T>(ref T a, ref T b) {
@@ -797,6 +816,7 @@ namespace OpenUtau.App.Views {
             valueTip.UpdateValueTip(valueTipText);
             lastPoint = point;
             shiftWasHeld = shiftHeld;
+            LiveValidate();
         }
         private void UpdatePhonemeExp(IPointer pointer, Point point) {
             if (descriptor == null) {
@@ -899,6 +919,7 @@ namespace OpenUtau.App.Views {
                 ResetCurveExp(pointer, point);
             }
             valueTip.UpdateValueTip(descriptor.CustomDefaultValue.ToString());
+            LiveValidate();
         }
         private void ResetPhonemeExp(IPointer pointer, Point point) {
             var notesVm = vm.NotesViewModel;
@@ -1357,10 +1378,6 @@ namespace OpenUtau.App.Views {
         private readonly bool overwrite;
         double? lastPitch;
         Point lastPoint;
-        UVoicePart? part;
-        DateTime lastValidate = DateTime.MinValue;
-
-        static readonly TimeSpan ValidateInterval = TimeSpan.FromMilliseconds(40);
 
         public DrawPitchState(
             Control control,
@@ -1371,8 +1388,6 @@ namespace OpenUtau.App.Views {
         }
         public override void Begin(IPointer pointer, Point point) {
             base.Begin(pointer, point);
-            part = vm.NotesViewModel.Part;
-            lastValidate = DateTime.MinValue;
             lastPoint = point;
         }
         public override void Update(IPointer pointer, Point point) {
@@ -1397,19 +1412,7 @@ namespace OpenUtau.App.Views {
                 (int)Math.Round(tone * 100 - (lastPitch ?? pitch.Value))));
             lastPitch = pitch;
             lastPoint = point;
-            ThrottledValidate();
-        }
-        void ThrottledValidate() {
-            if (part == null || DateTime.Now - lastValidate < ValidateInterval) {
-                return;
-            }
-            lastValidate = DateTime.Now;
-            DocManager.Inst.Project.Validate(new ValidateOptions {
-                SkipTiming = true,
-                Part = part,
-                SkipPhonemizer = true,
-                SkipPhoneme = true,
-            });
+            LiveValidate();
         }
     }
 
@@ -1879,6 +1882,7 @@ namespace OpenUtau.App.Views {
                 Core.Format.Ustx.PITD,
                 newPoints.Select(p => p.tick),
                 newPoints.Select(p => p.pitch)));
+            LiveValidate();
         }
     }
 
@@ -1910,6 +1914,7 @@ namespace OpenUtau.App.Views {
                 vm.NotesViewModel.PointToTick(lastPoint),
                 0));
             lastPoint = point;
+            LiveValidate();
         }
     }
 }
