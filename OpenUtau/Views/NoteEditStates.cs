@@ -1357,6 +1357,10 @@ namespace OpenUtau.App.Views {
         private readonly bool overwrite;
         double? lastPitch;
         Point lastPoint;
+        UVoicePart? part;
+        DateTime lastValidate = DateTime.MinValue;
+
+        static readonly TimeSpan ValidateInterval = TimeSpan.FromMilliseconds(40);
 
         public DrawPitchState(
             Control control,
@@ -1367,6 +1371,8 @@ namespace OpenUtau.App.Views {
         }
         public override void Begin(IPointer pointer, Point point) {
             base.Begin(pointer, point);
+            part = vm.NotesViewModel.Part;
+            lastValidate = DateTime.MinValue;
             lastPoint = point;
         }
         public override void Update(IPointer pointer, Point point) {
@@ -1391,6 +1397,19 @@ namespace OpenUtau.App.Views {
                 (int)Math.Round(tone * 100 - (lastPitch ?? pitch.Value))));
             lastPitch = pitch;
             lastPoint = point;
+            ThrottledValidate();
+        }
+        void ThrottledValidate() {
+            if (part == null || DateTime.Now - lastValidate < ValidateInterval) {
+                return;
+            }
+            lastValidate = DateTime.Now;
+            DocManager.Inst.Project.Validate(new ValidateOptions {
+                SkipTiming = true,
+                Part = part,
+                SkipPhonemizer = true,
+                SkipPhoneme = true,
+            });
         }
     }
 
@@ -1813,6 +1832,7 @@ namespace OpenUtau.App.Views {
     class SmoothenPitchState : NoteEditState {
         protected override bool ShowValueTip => false;
         protected override string? commandNameKey => "command.pitch.edit";
+        protected override bool DeferValidate => true;
         private readonly bool overwrite;
         int brushRadius = 10;
         int kernelRadius = 3;
@@ -1853,13 +1873,12 @@ namespace OpenUtau.App.Views {
                 newPoints.Add((baseTick, (int)Math.Round(total * kernelWeight - GetPitch(baseTick))));
                 total -= GetPitch(baseTick - kernelRadius * 5, curve);
             }
-            foreach (var (tick, pitch) in newPoints)
-                DocManager.Inst.ExecuteCmd(new SetCurveCommand(
-                    vm.NotesViewModel.Project,
-                    vm.NotesViewModel.Part,
-                    Core.Format.Ustx.PITD,
-                    tick, pitch,
-                    tick, pitch));
+            DocManager.Inst.ExecuteCmd(new PasteCurveCommand(
+                vm.NotesViewModel.Project,
+                vm.NotesViewModel.Part,
+                Core.Format.Ustx.PITD,
+                newPoints.Select(p => p.tick),
+                newPoints.Select(p => p.pitch)));
         }
     }
 
@@ -1867,6 +1886,7 @@ namespace OpenUtau.App.Views {
         public override MouseButton MouseButton => MouseButton.Right;
         protected override bool ShowValueTip => false;
         protected override string? commandNameKey => "command.pitch.reset";
+        protected override bool DeferValidate => true;
         Point lastPoint;
 
         public ResetPitchState(
