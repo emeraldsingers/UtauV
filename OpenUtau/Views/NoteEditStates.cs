@@ -1390,7 +1390,7 @@ namespace OpenUtau.App.Views {
             base.Begin(pointer, point);
             lastPoint = point;
         }
-        protected virtual void OnPointDrawn(int tick) { }
+        protected virtual void OnPointDrawn(int tick, int value) { }
         public override void Update(IPointer pointer, Point point) {
             int tick = vm.NotesViewModel.PointToTick(point);
             var samplePoint = vm.NotesViewModel.TickToneToPoint(
@@ -1403,23 +1403,24 @@ namespace OpenUtau.App.Views {
                 return;
             }
             double tone = vm.NotesViewModel.PointToToneDouble(point);
+            int value = (int)Math.Round(tone * 100 - pitch.Value);
             DocManager.Inst.ExecuteCmd(new SetCurveCommand(
                 vm.NotesViewModel.Project,
                 vm.NotesViewModel.Part,
                 Core.Format.Ustx.PITD,
-                vm.NotesViewModel.PointToTick(point),
-                (int)Math.Round(tone * 100 - pitch.Value),
+                tick,
+                value,
                 vm.NotesViewModel.PointToTick(lastPitch == null ? point : lastPoint),
                 (int)Math.Round(tone * 100 - (lastPitch ?? pitch.Value))));
             lastPitch = pitch;
             lastPoint = point;
-            OnPointDrawn(vm.NotesViewModel.PointToTick(point));
+            OnPointDrawn(tick, value);
             LiveValidate();
         }
     }
 
     class DrawPitchPlusState : DrawPitchState {
-        readonly List<int> drawnTicks = new List<int>();
+        readonly Dictionary<int, int> drawnPoints = new Dictionary<int, int>();
 
         public DrawPitchPlusState(
             Control control,
@@ -1428,8 +1429,8 @@ namespace OpenUtau.App.Views {
             bool overwrite = false) : base(control, vm, valueTip, overwrite) {
         }
 
-        protected override void OnPointDrawn(int tick) {
-            drawnTicks.Add(tick);
+        protected override void OnPointDrawn(int tick, int value) {
+            drawnPoints[tick] = value;
         }
 
         public override void End(IPointer pointer, Point point) {
@@ -1439,40 +1440,63 @@ namespace OpenUtau.App.Views {
 
         void SmoothDrawnPitch() {
             var notesVm = vm.NotesViewModel;
-            if (notesVm?.Part == null || drawnTicks.Count == 0) {
-                return;
-            }
-            var curve = notesVm.Part.curves.FirstOrDefault(c => c.abbr == Core.Format.Ustx.PITD);
-            if (curve == null) {
+            if (notesVm?.Part == null || drawnPoints.Count == 0) {
                 return;
             }
             const int step = 5;
             const int kernelRadius = 3;
-            int minTick = drawnTicks.Min() / step * step;
-            int maxTick = (drawnTicks.Max() + step - 1) / step * step;
+            const int passes = 2;
+            var sorted = drawnPoints.OrderBy(p => p.Key).ToList();
+            int minTick = sorted[0].Key / step * step;
+            int maxTick = (sorted[sorted.Count - 1].Key + step - 1) / step * step;
+            int count = (maxTick - minTick) / step + 1;
+            var samples = new double[count];
+            if (sorted.Count == 1) {
+                for (int i = 0; i < count; ++i) {
+                    samples[i] = sorted[0].Value;
+                }
+            } else {
+                int cursor = 0;
+                for (int i = 0; i < count; ++i) {
+                    int tick = minTick + i * step;
+                    while (cursor < sorted.Count - 2 && sorted[cursor + 1].Key < tick) {
+                        cursor++;
+                    }
+                    int x0 = sorted[cursor].Key;
+                    int x1 = sorted[cursor + 1].Key;
+                    if (tick <= x0) {
+                        samples[i] = sorted[cursor].Value;
+                    } else if (tick >= x1) {
+                        samples[i] = sorted[cursor + 1].Value;
+                    } else {
+                        samples[i] = sorted[cursor].Value +
+                            (sorted[cursor + 1].Value - sorted[cursor].Value) * ((double)tick - x0) / (x1 - x0);
+                    }
+                }
+            }
+            for (int pass = 0; pass < passes; ++pass) {
+                var next = new double[count];
+                for (int i = 0; i < count; ++i) {
+                    double total = 0;
+                    for (int k = -kernelRadius; k <= kernelRadius; ++k) {
+                        total += samples[Math.Clamp(i + k, 0, count - 1)];
+                    }
+                    next[i] = total / (2 * kernelRadius + 1);
+                }
+                samples = next;
+            }
             var xs = new List<int>();
             var ys = new List<int>();
-            for (int tick = minTick - kernelRadius * step; tick <= maxTick + kernelRadius * step; tick += step) {
-                xs.Add(tick);
-                ys.Add(curve.Sample(tick));
-            }
-            if (ys.Count == 0) {
-                return;
-            }
-            var smoothed = new List<int>();
-            for (int i = 0; i < ys.Count; ++i) {
-                double total = 0;
-                for (int k = -kernelRadius; k <= kernelRadius; ++k) {
-                    total += ys[Math.Clamp(i + k, 0, ys.Count - 1)];
-                }
-                smoothed.Add((int)Math.Round(total / (2 * kernelRadius + 1)));
+            for (int i = 0; i < count; ++i) {
+                xs.Add(minTick + i * step);
+                ys.Add((int)Math.Round(samples[i]));
             }
             DocManager.Inst.ExecuteCmd(new PasteCurveCommand(
                 notesVm.Project,
                 notesVm.Part,
                 Core.Format.Ustx.PITD,
                 xs,
-                smoothed));
+                ys));
         }
     }
 
