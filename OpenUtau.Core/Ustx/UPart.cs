@@ -282,9 +282,15 @@ namespace OpenUtau.Core.Ustx {
                     phoneme.Validate(options, project, track, this, note);
                 }
             }
+            var previousHashes = Mix == null
+                ? null
+                : new HashSet<ulong>(renderPhrases.Select(phrase => phrase.hash));
             renderPhrases.Clear();
             if (PhonemesUpToDate) {
                 renderPhrases.AddRange(RenderPhrase.FromPart(project, track, this));
+                if (previousHashes != null && !previousHashes.SetEquals(renderPhrases.Select(phrase => phrase.hash))) {
+                    Mix = null;
+                }
             }
         }
 
