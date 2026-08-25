@@ -870,6 +870,7 @@ namespace OpenUtau.App.Views {
         public override MouseButton MouseButton => mouseButton;
         private MouseButton mouseButton;
         protected override string? commandNameKey => "command.exp.reset";
+        protected override bool DeferValidate => true;
 
         public ExpResetValueState(
             Control control,
@@ -1352,6 +1353,7 @@ namespace OpenUtau.App.Views {
     class DrawPitchState : NoteEditState {
         protected override bool ShowValueTip => false;
         protected override string? commandNameKey => "command.pitch.draw";
+        protected override bool DeferValidate => true;
         private readonly bool overwrite;
         double? lastPitch;
         Point lastPoint;
