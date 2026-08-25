@@ -192,15 +192,8 @@ namespace OpenUtau.App.Controls {
             }
             Array.Clear(sampleData, 0, sampleCount);
 
-            var mix = part.Mix;
-            bool useLiveCache = PlaybackManager.Inst.StartingToPlay || mix == null;
-            if (!useLiveCache && part.renderPhrases.Count > 0) {
-                useLiveCache = part.renderPhrases.All(phrase =>
-                    PlaybackManager.Inst.LiveWaveformCache.ContainsKey(phrase.hash.ToString()));
-            }
-
             if (!PlaybackManager.Inst.IsWaveformBlanked) {
-                if (useLiveCache || mix == null) {
+                if (PlaybackManager.Inst.StartingToPlay || part.Mix == null) {
                     var phraseHashes = new HashSet<string>(
                         part.renderPhrases.Select(phrase => phrase.hash.ToString()));
                     foreach (var cacheItem in PlaybackManager.Inst.LiveWaveformCache) {
@@ -231,7 +224,7 @@ namespace OpenUtau.App.Controls {
                         }
                     }
                 } else {
-                    mix.Mix(leftFrame * 2, sampleData, 0, sampleCount);
+                    part.Mix.Mix(leftFrame * 2, sampleData, 0, sampleCount);
                 }
             }
 
