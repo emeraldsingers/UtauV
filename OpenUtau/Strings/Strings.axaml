@@ -584,6 +584,10 @@ Warning: this option removes custom presets.</system:String>
     Left click to draw
     Right click to reset
     Hold Ctrl to select</system:String>
+  <system:String x:Key="pianoroll.tool.drawpitchplus">Draw Pitch Tool Plus (Ctrl + Shift + 1)
+    Left click to draw, release to smoothen the drawn pitch
+    Right click to reset
+    Hold Ctrl to select</system:String>
   <system:String x:Key="pianoroll.tool.eraser">Eraser Tool (3)</system:String>
   <system:String x:Key="pianoroll.tool.knife">Knife Tool (4)</system:String>
   <system:String x:Key="pianoroll.tool.pitchline">Pitch Line Tool (Shift + 2)

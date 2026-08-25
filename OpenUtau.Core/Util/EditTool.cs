@@ -11,6 +11,7 @@ namespace OpenUtau.Core.Util {
         EraserTool = 20,
         KnifeTool = 30,
         DrawPitchTool = 40,
+        DrawPitchPlusTool = 45,
         PitchLineTool = 50,
         PitchSCurveTool = 60,
         PitchSineWaveTool = 70,
@@ -28,12 +29,14 @@ namespace OpenUtau.Core.Util {
                 switch (BaseTool) {
                     case 1:
                         return PenToolVariation == 1 ? EditTools.PenPlusTool : EditTools.PenTool;
+                    case 5:
+                        return EditTools.DrawPitchPlusTool;
                     default:
                         return (EditTools)(BaseTool * 10);
                 }
             }
         }
-        [JsonIgnore] public bool IsPitchTool => BaseTool >= 4 && BaseTool <= 8;
+        [JsonIgnore] public bool IsPitchTool => BaseTool >= 4 && BaseTool <= 9;
         public bool IsMatch(IEnumerable<EditTools> tools) => tools.Contains(CurrentTool);
     }
 }

@@ -1390,6 +1390,7 @@ namespace OpenUtau.App.Views {
             base.Begin(pointer, point);
             lastPoint = point;
         }
+        protected virtual void OnPointDrawn(int tick) { }
         public override void Update(IPointer pointer, Point point) {
             int tick = vm.NotesViewModel.PointToTick(point);
             var samplePoint = vm.NotesViewModel.TickToneToPoint(
@@ -1412,7 +1413,66 @@ namespace OpenUtau.App.Views {
                 (int)Math.Round(tone * 100 - (lastPitch ?? pitch.Value))));
             lastPitch = pitch;
             lastPoint = point;
+            OnPointDrawn(vm.NotesViewModel.PointToTick(point));
             LiveValidate();
+        }
+    }
+
+    class DrawPitchPlusState : DrawPitchState {
+        readonly List<int> drawnTicks = new List<int>();
+
+        public DrawPitchPlusState(
+            Control control,
+            PianoRollViewModel vm,
+            IValueTip valueTip,
+            bool overwrite = false) : base(control, vm, valueTip, overwrite) {
+        }
+
+        protected override void OnPointDrawn(int tick) {
+            drawnTicks.Add(tick);
+        }
+
+        public override void End(IPointer pointer, Point point) {
+            SmoothDrawnPitch();
+            base.End(pointer, point);
+        }
+
+        void SmoothDrawnPitch() {
+            var notesVm = vm.NotesViewModel;
+            if (notesVm?.Part == null || drawnTicks.Count == 0) {
+                return;
+            }
+            var curve = notesVm.Part.curves.FirstOrDefault(c => c.abbr == Core.Format.Ustx.PITD);
+            if (curve == null) {
+                return;
+            }
+            const int step = 5;
+            const int kernelRadius = 3;
+            int minTick = drawnTicks.Min() / step * step;
+            int maxTick = (drawnTicks.Max() + step - 1) / step * step;
+            var xs = new List<int>();
+            var ys = new List<int>();
+            for (int tick = minTick - kernelRadius * step; tick <= maxTick + kernelRadius * step; tick += step) {
+                xs.Add(tick);
+                ys.Add(curve.Sample(tick));
+            }
+            if (ys.Count == 0) {
+                return;
+            }
+            var smoothed = new List<int>();
+            for (int i = 0; i < ys.Count; ++i) {
+                double total = 0;
+                for (int k = -kernelRadius; k <= kernelRadius; ++k) {
+                    total += ys[Math.Clamp(i + k, 0, ys.Count - 1)];
+                }
+                smoothed.Add((int)Math.Round(total / (2 * kernelRadius + 1)));
+            }
+            DocManager.Inst.ExecuteCmd(new PasteCurveCommand(
+                notesVm.Project,
+                notesVm.Part,
+                Core.Format.Ustx.PITD,
+                xs,
+                smoothed));
         }
     }
 

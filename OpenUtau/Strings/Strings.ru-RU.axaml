@@ -375,6 +375,9 @@ Syntax: prefix,suffix</system:String>-->
     зажмите Alt, чтобы сгладить
   </system:String>
   <system:String x:Key="pianoroll.tool.drawpitch">Инструмент рисовки питча (4)</system:String>
+  <system:String x:Key="pianoroll.tool.drawpitchplus">Инструмент рисовки питча Plus (Ctrl + Shift + 1)
+    Левая кнопка для рисования, при отпускании нарисованный питч сглаживается
+    Правая кнопка для сбрасывания</system:String>
   <system:String x:Key="pianoroll.tool.eraser">Ластик (3)</system:String>
   <system:String x:Key="pianoroll.tool.knife">Нож (5)</system:String>
   <system:String x:Key="pianoroll.tool.overwritepitch">Инструмент переписывания питча (Ctrl + 4)

@@ -835,6 +835,8 @@ namespace OpenUtau.App.Controls {
                         editState = new SmoothenPitchState(control, ViewModel, this, overwrite);
                     } else if (tool == EditTools.DrawPitchTool) {
                         editState = new DrawPitchState(control, ViewModel, this, overwrite);
+                    } else if (tool == EditTools.DrawPitchPlusTool) {
+                        editState = new DrawPitchPlusState(control, ViewModel, this, overwrite);
                     } else if (tool == EditTools.PitchLineTool) {
                         editState = new PitchCurveState(control, ViewModel, this, PitchPreviewLine, PitchCurveState.CurveMode.Line, overwrite);
                     } else if (tool == EditTools.PitchSCurveTool) {
@@ -1103,7 +1105,7 @@ namespace OpenUtau.App.Controls {
             if (ViewModel?.NotesViewModel?.HitTest == null) {
                 return;
             }
-            if (ViewModel.EditTool.IsMatch([EditTools.DrawPitchTool, EditTools.PitchLineTool, EditTools.PitchSCurveTool, EditTools.PitchSineWaveTool, EditTools.PitchSmoothenTool, EditTools.EraserTool]) && args.KeyModifiers != cmdKey) {
+            if (ViewModel.EditTool.IsMatch([EditTools.DrawPitchTool, EditTools.DrawPitchPlusTool, EditTools.PitchLineTool, EditTools.PitchSCurveTool, EditTools.PitchSineWaveTool, EditTools.PitchSmoothenTool, EditTools.EraserTool]) && args.KeyModifiers != cmdKey) {
                 Cursor = null;
                 return;
             }
@@ -1667,13 +1669,18 @@ namespace OpenUtau.App.Controls {
                     case Key.D4: ViewModel.ToolIndex = 3; return true;
                 }
             }
+            if (isBoth) {
+                switch (args.Key) {
+                    case Key.D1: ViewModel.ToolIndex = 5; return true;
+                }
+            }
             if (isShift) {
                 switch (args.Key) {
                     case Key.D1: ViewModel.ToolIndex = 4; return true;
-                    case Key.D2: ViewModel.ToolIndex = 5; return true;
-                    case Key.D3: ViewModel.ToolIndex = 6; return true;
-                    case Key.D4: ViewModel.ToolIndex = 7; return true;
-                    case Key.D5: ViewModel.ToolIndex = 8; return true;
+                    case Key.D2: ViewModel.ToolIndex = 6; return true;
+                    case Key.D3: ViewModel.ToolIndex = 7; return true;
+                    case Key.D4: ViewModel.ToolIndex = 8; return true;
+                    case Key.D5: ViewModel.ToolIndex = 9; return true;
                 }
             }
             if (isAlt) {

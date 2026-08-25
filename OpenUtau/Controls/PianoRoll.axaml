@@ -447,6 +447,7 @@
                   <ListBoxItem Classes="toolbar eraserTool" ToolTip.Tip="{DynamicResource pianoroll.tool.eraser}"/>
                   <ListBoxItem Classes="toolbar knifeTool" ToolTip.Tip="{DynamicResource pianoroll.tool.knife}"/>
                   <ListBoxItem Classes="toolbar drawPitchTool" ToolTip.Tip="{DynamicResource pianoroll.tool.drawpitch}"/>
+                  <ListBoxItem Classes="toolbar drawPitchPlusTool" ToolTip.Tip="{DynamicResource pianoroll.tool.drawpitchplus}"/>
                   <ListBoxItem Classes="toolbar pitchLineTool" ToolTip.Tip="{DynamicResource pianoroll.tool.pitchline}"/>
                   <ListBoxItem Classes="toolbar pitchSCurveTool" ToolTip.Tip="{DynamicResource pianoroll.tool.pitchscurve}"/>
                   <ListBoxItem Classes="toolbar pitchSineWaveTool" ToolTip.Tip="{DynamicResource pianoroll.tool.pitchesinewave}"/>
