@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Media.TextFormatting;
 using OpenUtau.App.ViewModels;
 using OpenUtau.App.Roflofic;
@@ -45,6 +46,11 @@ namespace OpenUtau.App.Controls {
                 nameof(PitchEditMode),
                 o => o.PitchEditMode,
                 (o, v) => o.PitchEditMode = v);
+        public static readonly DirectProperty<PhonemeCanvas, double> PitchEditDimProperty =
+            AvaloniaProperty.RegisterDirect<PhonemeCanvas, double>(
+                nameof(PitchEditDim),
+                o => o.PitchEditDim,
+                (o, v) => o.PitchEditDim = v);
 
         public IBrush Background {
             get => background;
@@ -70,6 +76,15 @@ namespace OpenUtau.App.Controls {
             get => pitchEditMode;
             private set => SetAndRaise(PitchEditModeProperty, ref pitchEditMode, value);
         }
+        public double PitchEditDim {
+            get => pitchEditDim;
+            private set {
+                if (SetAndRaise(PitchEditDimProperty, ref pitchEditDim, value)) {
+                    pitchEditDimBrush = new ImmutableSolidColorBrush(
+                        Color.FromArgb((byte)Math.Clamp(pitchEditDim * 2.55, 0, 255), 0, 0, 0));
+                }
+            }
+        }
 
         private IBrush background = Brushes.White;
         private double tickWidth;
@@ -77,8 +92,9 @@ namespace OpenUtau.App.Controls {
         private UVoicePart? part;
         private bool showPhoneme = true;
         private bool pitchEditMode;
+        private double pitchEditDim = 59;
 
-        private static readonly IBrush PitchEditDimBrush = new SolidColorBrush(Color.FromArgb(150, 0, 0, 0));
+        private IBrush pitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
 
         private HashSet<UNote> selectedNotes = new HashSet<UNote>();
         private Geometry pointGeometry;
@@ -210,7 +226,7 @@ namespace OpenUtau.App.Controls {
                 }
             }
             if (PitchEditMode) {
-                context.FillRectangle(PitchEditDimBrush, Bounds.WithX(0).WithY(0));
+                context.FillRectangle(pitchEditDimBrush, Bounds.WithX(0).WithY(0));
             }
         }
 

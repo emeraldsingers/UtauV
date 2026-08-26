@@ -84,6 +84,11 @@ namespace OpenUtau.App.Controls {
                 nameof(PitchEditMode),
                 o => o.PitchEditMode,
                 (o, v) => o.PitchEditMode = v);
+        public static readonly DirectProperty<NotesCanvas, double> PitchEditDimProperty =
+            AvaloniaProperty.RegisterDirect<NotesCanvas, double>(
+                nameof(PitchEditDim),
+                o => o.PitchEditDim,
+                (o, v) => o.PitchEditDim = v);
 
         public double TickWidth {
             get => tickWidth;
@@ -145,6 +150,15 @@ namespace OpenUtau.App.Controls {
             get => pitchEditMode;
             private set => SetAndRaise(PitchEditModeProperty, ref pitchEditMode, value);
         }
+        public double PitchEditDim {
+            get => pitchEditDim;
+            private set {
+                if (SetAndRaise(PitchEditDimProperty, ref pitchEditDim, value)) {
+                    pitchEditDimBrush = new ImmutableSolidColorBrush(
+                        Color.FromArgb((byte)Math.Clamp(pitchEditDim * 2.55, 0, 255), 0, 0, 0));
+                }
+            }
+        }
 
         private double tickWidth;
         private double trackHeight;
@@ -170,8 +184,9 @@ namespace OpenUtau.App.Controls {
         private bool showPhonemizerTags = true;
         private bool showPhonemePanel;
         private bool pitchEditMode;
+        private double pitchEditDim = 59;
 
-        private static readonly IBrush PitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
+        private IBrush pitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
         private Pen? pitchEditPen;
         private PolylineGeometry polylineGeometry = new PolylineGeometry();
         private Points points = new Points();
@@ -456,7 +471,7 @@ namespace OpenUtau.App.Controls {
                 }
                 if (PitchEditMode) {
                     UpdatePitchEditVisuals();
-                    context.FillRectangle(PitchEditDimBrush, Bounds.WithX(0).WithY(0));
+                    context.FillRectangle(pitchEditDimBrush, Bounds.WithX(0).WithY(0));
                     RenderFinalPitch(leftTick, rightTick, viewModel, context, bright: true);
                 }
             } finally {

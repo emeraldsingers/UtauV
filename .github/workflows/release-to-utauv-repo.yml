@@ -28,6 +28,10 @@ on:
         description: "Windows x64 CUDA"
         type: boolean
         default: false
+      win_x64_openvino:
+        description: "Windows x64 OpenVINO (Intel)"
+        type: boolean
+        default: false
       win_x86:
         description: "Windows x86 DirectML"
         type: boolean
@@ -70,6 +74,7 @@ jobs:
         env:
           WIN_X64_DIRECTML: ${{ inputs.win_x64_directml }}
           WIN_X64_CUDA: ${{ inputs.win_x64_cuda }}
+          WIN_X64_OPENVINO: ${{ inputs.win_x64_openvino }}
           WIN_X86: ${{ inputs.win_x86 }}
           WIN_ARM64: ${{ inputs.win_arm64 }}
           OSX_X64: ${{ inputs.osx_x64 }}
@@ -81,6 +86,7 @@ jobs:
           add() { targets+=("$1"); }
           [[ "$WIN_X64_DIRECTML" == true ]] && add '{"name":"win-x64-directml","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","variant":"directml"}'
           [[ "$WIN_X64_CUDA" == true ]] && add '{"name":"win-x64-cuda","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","variant":"cuda"}'
+          [[ "$WIN_X64_OPENVINO" == true ]] && add '{"name":"win-x64-openvino","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","variant":"openvino"}'
           [[ "$WIN_X86" == true ]] && add '{"name":"win-x86","rid":"win-x86","arch":"x86","os":"win","runs-on":"windows-latest","variant":"directml"}'
           [[ "$WIN_ARM64" == true ]] && add '{"name":"win-arm64","rid":"win-arm64","arch":"arm64","os":"win","runs-on":"windows-latest","variant":"directml"}'
           [[ "$OSX_X64" == true ]] && add '{"name":"osx-x64","rid":"osx-x64","arch":"x64","os":"osx","runs-on":"macos-15-intel"}'
@@ -136,10 +142,10 @@ jobs:
 
       # Build
       - name: Restore dependencies
-        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || matrix.arch.variant == 'directml' && 'DirectML' || 'Default' }}
+        run: dotnet restore OpenUtau -r ${{ matrix.arch.rid }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || matrix.arch.variant == 'directml' && 'DirectML' || matrix.arch.variant == 'openvino' && 'OpenVINO' || 'Default' }}
 
       - name: Publish (Windows and Linux)
-        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || matrix.arch.variant == 'directml' && 'DirectML' || 'Default' }}
+        run: dotnet publish OpenUtau -c Release -r ${{ matrix.arch.rid }} --self-contained true -o bin/${{ matrix.arch.name }} -p:PublishTargetOs=${{ matrix.arch.os }} -p:OnnxRuntimeProvider=${{ matrix.arch.variant == 'cuda' && 'CUDA' || matrix.arch.variant == 'directml' && 'DirectML' || matrix.arch.variant == 'openvino' && 'OpenVINO' || 'Default' }}
         if: ${{ matrix.arch.os != 'osx' }}
 
       - name: Publish (MacOS)
@@ -336,6 +342,8 @@ jobs:
             UtauV-win-x64-directml.zip
             UtauV-win-x64-cuda.exe
             UtauV-win-x64-cuda.zip
+            UtauV-win-x64-openvino.exe
+            UtauV-win-x64-openvino.zip
             UtauV-win-x86.exe
             UtauV-win-x86.zip
             UtauV-win-arm64.exe
@@ -369,6 +377,10 @@ jobs:
             > **⚠️ CUDA builds require additional setup!**
             > Follow this tutorial: [CUDA + cuDNN Installation Guide](https://docs.google.com/document/d/17FBZxb5J1tMN-gR7cO_b-UJ8XUL5Xs_e7NYv3ewTmOI)
 
+            **OpenVINO build** (Intel GPUs/CPUs - fastest option for Intel hardware):
+            - [Installer (64-bit OpenVINO)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x64-openvino.exe)
+            - [Portable ZIP (64-bit OpenVINO)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-win-x64-openvino.zip)
+
             ### macOS
             - [Intel Mac (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-osx-x64.dmg)
             - [Apple Silicon (.dmg)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-osx-arm64.dmg)
@@ -386,6 +398,7 @@ jobs:
             **Windows users:**
             - **Most users**: Download **DirectML** builds - they work on all GPUs (AMD, Intel, NVIDIA) without extra setup
             - **NVIDIA GPU users who want maximum performance**: Download **CUDA** builds - requires CUDA 12.x + cuDNN 9.x installation
+            - **Intel GPU/CPU users**: Try the **OpenVINO** build - usually faster than DirectML on Intel hardware, no extra setup needed
             - **32-bit systems**: Download x86 builds (DirectML only)
             - **ARM devices**: Download ARM64 builds (DirectML only)
 

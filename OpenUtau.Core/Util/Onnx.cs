@@ -33,14 +33,15 @@ namespace OpenUtau.Core {
         private static readonly bool cudaAvailable = false;
 #endif
 
-        private static readonly Dictionary<int, OrtEpDevice> devices = initializeDevices();
+        private static readonly Dictionary<int, OrtEpDevice> devices = initializeDevices("dml");
+        private static readonly Dictionary<int, OrtEpDevice> openVinoDevices = initializeDevices("openvino");
 
-        private static Dictionary<int, OrtEpDevice> initializeDevices() {
+        private static Dictionary<int, OrtEpDevice> initializeDevices(string nameFragment) {
             var env = OrtEnv.Instance();
             var ortDevices = env.GetEpDevices();
 
             return ortDevices
-                .Where(device => device.EpName.ToLower().Contains("dml"))
+                .Where(device => device.EpName.ToLower().Contains(nameFragment))
                 .Select((device, index) => new { index, device })
                 .ToDictionary(x => x.index, x => x.device);
         }
@@ -52,9 +53,13 @@ namespace OpenUtau.Core {
                     ? new List<string> { "CPU", "CUDA" }
                     : new List<string> { "CPU" };
 #else
-                return devices.Count > 0
+                var options = devices.Count > 0
                     ? new List<string> { "CPU", "DirectML" }
                     : new List<string> { "CPU" };
+                if (openVinoDevices.Count > 0) {
+                    options.Add("OpenVINO");
+                }
+                return options;
 #endif
             } else if (OS.IsMacOS()) {
                 return new List<string> {
@@ -88,12 +93,12 @@ namespace OpenUtau.Core {
                 }};
             }
 
-            List<GpuInfo> gpuList = new List<GpuInfo>();
-            var env = OrtEnv.Instance();
-            var ortDevices = env.GetEpDevices();
-
-            var i = 0;
-            foreach (var device in ortDevices.Where(device => device.EpName.ToLower().Contains("dml"))) {
+            var source = Preferences.Default.OnnxRunner == "OpenVINO"
+                ? openVinoDevices
+                : devices;
+            var gpuList = new List<GpuInfo>();
+            foreach (var pair in source) {
+                var device = pair.Value;
                 var description = "";
                 foreach (var item in device.HardwareDevice.Metadata.Entries) {
                     if (item.Key.ToLower() == "description") {
@@ -104,9 +109,8 @@ namespace OpenUtau.Core {
                 if (string.IsNullOrEmpty(description)) { // fallback
                     description = $"{device.EpName} {device.HardwareDevice.Vendor} ({device.HardwareDevice.Type})";
                 }
-                devices[i] = device;
                 gpuList.Add(new GpuInfo {
-                    deviceId = i++,
+                    deviceId = pair.Key,
                     description = description
                 });
             }
@@ -131,6 +135,17 @@ namespace OpenUtau.Core {
                         new List<OrtEpDevice> { d },
                         new Dictionary<string, string> { }
                      );
+                    break;
+                case "OpenVINO":
+                    int gpuIndex = Math.Clamp(Preferences.Default.OnnxGpu, 0, openVinoDevices.Count - 1);
+                    string cacheDir = Path.Combine(PathManager.Inst.CachePath, "openvino");
+                    Directory.CreateDirectory(cacheDir);
+                    options.AppendExecutionProvider(
+                        OrtEnv.Instance(),
+                        new List<OrtEpDevice> { openVinoDevices[gpuIndex] },
+                        new Dictionary<string, string> {
+                            { "cache_dir", cacheDir },
+                        });
                     break;
                 case "CoreML":
                     // Note: MLProgram format has stricter validation and may fail with complex DiffSinger models

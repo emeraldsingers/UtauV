@@ -122,6 +122,7 @@ namespace OpenUtau.App.ViewModels {
 
         private void UpdatePitchEditMode() {
             NotesViewModel.PitchEditMode = Preferences.Default.PitchEditMode && EditTool.IsPitchTool;
+            NotesViewModel.PitchEditDim = Preferences.Default.PitchEditDim;
         }
 
         public PianoRollViewModel() {

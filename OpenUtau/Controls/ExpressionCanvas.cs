@@ -49,6 +49,11 @@ namespace OpenUtau.App.Controls {
                 nameof(PitchEditMode),
                 o => o.PitchEditMode,
                 (o, v) => o.PitchEditMode = v);
+        public static readonly DirectProperty<ExpressionCanvas, double> PitchEditDimProperty =
+            AvaloniaProperty.RegisterDirect<ExpressionCanvas, double>(
+                nameof(PitchEditDim),
+                o => o.PitchEditDim,
+                (o, v) => o.PitchEditDim = v);
 
         public double TickWidth {
             get => tickWidth;
@@ -79,6 +84,15 @@ namespace OpenUtau.App.Controls {
             get => pitchEditMode;
             private set => SetAndRaise(PitchEditModeProperty, ref pitchEditMode, value);
         }
+        public double PitchEditDim {
+            get => pitchEditDim;
+            private set {
+                if (SetAndRaise(PitchEditDimProperty, ref pitchEditDim, value)) {
+                    pitchEditDimBrush = new ImmutableSolidColorBrush(
+                        Color.FromArgb((byte)Math.Clamp(pitchEditDim * 2.55, 0, 255), 0, 0, 0));
+                }
+            }
+        }
 
         private double tickWidth;
         private double tickOffset;
@@ -87,8 +101,9 @@ namespace OpenUtau.App.Controls {
         private bool showRealCurve = true;
         private ExpDisMode displayMode = ExpDisMode.Visible;
         private bool pitchEditMode;
+        private double pitchEditDim = 59;
 
-        private static readonly IBrush PitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
+        private IBrush pitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
 
         private HashSet<UNote> selectedNotes = new HashSet<UNote>();
         private CurveSelection curveSelection = new CurveSelection();
@@ -395,7 +410,7 @@ namespace OpenUtau.App.Controls {
             }
 
             if (PitchEditMode) {
-                context.FillRectangle(PitchEditDimBrush, Bounds.WithX(0).WithY(0));
+                context.FillRectangle(pitchEditDimBrush, Bounds.WithX(0).WithY(0));
             }
         }
 

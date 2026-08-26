@@ -26,6 +26,10 @@ on:
         type: boolean
         default: false
         description: "Windows x64 CUDA"
+      win_x64_openvino:
+        type: boolean
+        default: false
+        description: "Windows x64 OpenVINO (Intel)"
       win_x86:
         type: boolean
         default: false
@@ -64,6 +68,7 @@ jobs:
         env:
           WIN_X64_DIRECTML: ${{ inputs.win_x64_directml }}
           WIN_X64_CUDA: ${{ inputs.win_x64_cuda }}
+          WIN_X64_OPENVINO: ${{ inputs.win_x64_openvino }}
           WIN_X86: ${{ inputs.win_x86 }}
           WIN_ARM64: ${{ inputs.win_arm64 }}
           OSX_X64: ${{ inputs.osx_x64 }}
@@ -75,6 +80,7 @@ jobs:
           add() { targets+=("$1"); }
           [[ "$WIN_X64_DIRECTML" == true ]] && add '{"name":"win-x64","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
           [[ "$WIN_X64_CUDA" == true ]] && add '{"name":"win-x64-cuda","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"CUDA"}'
+          [[ "$WIN_X64_OPENVINO" == true ]] && add '{"name":"win-x64-openvino","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"OpenVINO"}'
           [[ "$WIN_X86" == true ]] && add '{"name":"win-x86","rid":"win-x86","arch":"x86","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
           [[ "$WIN_ARM64" == true ]] && add '{"name":"win-arm64","rid":"win-arm64","arch":"arm64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
           [[ "$OSX_X64" == true ]] && add '{"name":"osx-x64","rid":"osx-x64","arch":"x64","os":"osx","runs-on":"macos-15-intel","onnx_provider":"Default"}'

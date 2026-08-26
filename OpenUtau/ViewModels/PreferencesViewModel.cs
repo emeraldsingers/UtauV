@@ -118,6 +118,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowGhostNotes { get; set; }
         [Reactive] public bool NoteHoverGlow { get; set; }
         [Reactive] public bool PitchEditMode { get; set; }
+        [Reactive] public double PitchEditDim { get; set; }
         [Reactive] public bool ThemeEditable { get; set; }
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
         public bool IsThemeEditorOpen => Views.ThemeEditorWindow.IsOpen;
@@ -219,7 +220,7 @@ namespace OpenUtau.App.ViewModels {
             OnnxGpu = OnnxGpuOptions.Count > 0
                 ? OnnxGpuOptions.FirstOrDefault(x => x.deviceId == Preferences.Default.OnnxGpu, OnnxGpuOptions[0])
                 : null;
-            ShowOnnxGpu = (OnnxRunner == "DirectML" || OnnxRunner == "CUDA");
+            ShowOnnxGpu = (OnnxRunner == "DirectML" || OnnxRunner == "CUDA" || OnnxRunner == "OpenVINO");
             DiffSingerDepth = Preferences.Default.DiffSingerDepth * 100;
             DiffSingerSteps = Preferences.Default.DiffSingerSteps;
             DiffSingerStepsVariance = Preferences.Default.DiffSingerStepsVariance;
@@ -249,6 +250,7 @@ namespace OpenUtau.App.ViewModels {
             ShowGhostNotes = Preferences.Default.ShowGhostNotes;
             NoteHoverGlow = Preferences.Default.NoteHoverGlow;
             PitchEditMode = Preferences.Default.PitchEditMode;
+            PitchEditDim = Preferences.Default.PitchEditDim;
             Beta = Preferences.Default.Beta;
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
@@ -459,6 +461,12 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new PitchEditModePrefChangedEvent());
                 });
+            this.WhenAnyValue(vm => vm.PitchEditDim)
+                .Subscribe(pitchEditDim => {
+                    Preferences.Default.PitchEditDim = pitchEditDim;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new PitchEditModePrefChangedEvent());
+                });
             this.WhenAnyValue(vm => vm.Beta)
                 .Subscribe(beta => {
                     Preferences.Default.Beta = beta;
@@ -495,7 +503,7 @@ namespace OpenUtau.App.ViewModels {
                 .Subscribe(index => {
                     Preferences.Default.OnnxRunner = index;
                     Preferences.Save();
-                    ToggleOnnxGpuDisplay(index == "DirectML" || index == "CUDA");
+                    ToggleOnnxGpuDisplay(index == "DirectML" || index == "CUDA" || index == "OpenVINO");
                 });
             this.WhenAnyValue(vm => vm.OnnxGpu)
                 .WhereNotNull()
