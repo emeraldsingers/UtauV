@@ -237,6 +237,7 @@ namespace OpenUtau.Core.Util {
             public bool ShowPhoneme = true;
             public bool ShowPhonemePanel = false;
             public bool PitchEditMode = false;
+            public double PitchEditDim = 59;
             public bool ShowExpressions = true;
             public bool ShowPhonemizerTags = true;
             public bool ShowNoteParams = true;

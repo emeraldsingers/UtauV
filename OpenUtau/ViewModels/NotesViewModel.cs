@@ -69,6 +69,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPhonemePanel { get; set; }
         [Reactive] public bool ShowPhonemePanelButton { get; set; }
         [Reactive] public bool PitchEditMode { get; set; }
+        [Reactive] public double PitchEditDim { get; set; } = 59;
         [Reactive] public bool ShowNoteParams { get; set; }
         [Reactive] public bool ShowExpressions { get; set; }
         [Reactive] public bool ShowPlaybackVerticalFollow { get; set; }
