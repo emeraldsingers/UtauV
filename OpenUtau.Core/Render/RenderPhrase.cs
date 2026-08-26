@@ -145,14 +145,14 @@ namespace OpenUtau.Core.Render {
             }
             hash = Hash();
         }
-        internal RenderPhone(RenderNote note) {
+        internal RenderPhone(RenderNote note, string sinePhoneme = "sine") {
             position = note.position;
             duration = note.duration;
             end = note.end;
             positionMs = note.positionMs;
             durationMs = note.durationMs;
             endMs = note.endMs;
-            phoneme = "sine";
+            phoneme = sinePhoneme;
             tone = (int)note.adjustedTone;
         }
 
@@ -292,7 +292,11 @@ namespace OpenUtau.Core.Render {
             notes = sineNotes
                 .Select(n => new RenderNote(project, part, n, position))
                 .ToArray();
-            phones = new RenderPhone[] { new RenderPhone(notes[0]) };
+            phones = new RenderPhone[sineNotes.Count];
+            for (int i = 0; i < sineNotes.Count; ++i) {
+                var vowel = SineVowels.GetVowel(sineNotes[i].lyric);
+                phones[i] = new RenderPhone(notes[i], vowel?.ToString() ?? "sine");
+            }
 
             leading = 0;
 
@@ -624,10 +628,19 @@ namespace OpenUtau.Core.Render {
 
         private static List<RenderPhrase> FromPartSine(UProject project, UTrack track, UVoicePart part) {
             var phrases = new List<RenderPhrase>();
+            var headNotes = new List<UNote>();
             foreach (var note in part.notes) {
                 if (note.Extends != null || note.OverlapError) {
                     continue;
                 }
+                headNotes.Add(note);
+            }
+            int totalNotes = headNotes.Count;
+            int moraNotes = headNotes.Count(note => SineVowels.GetVowel(note.lyric) != null);
+            bool japaneseLyrics = totalNotes > 0 && moraNotes * 10 >= totalNotes * 3;
+
+            var group = new List<UNote>();
+            foreach (var note in headNotes) {
                 var uNotes = new List<UNote> { note };
                 var tail = note;
                 var next = tail.Next;
@@ -636,7 +649,20 @@ namespace OpenUtau.Core.Render {
                     tail = next;
                     next = next.Next;
                 }
-                phrases.Add(new RenderPhrase(project, track, part, uNotes));
+                bool mergeable = japaneseLyrics
+                    && SineVowels.IsBareVowel(uNotes[0].lyric)
+                    && group.Count > 0
+                    && group.Last().End == uNotes[0].position;
+                if (!mergeable) {
+                    if (group.Count > 0) {
+                        phrases.Add(new RenderPhrase(project, track, part, group));
+                        group.Clear();
+                    }
+                }
+                group.AddRange(uNotes);
+            }
+            if (group.Count > 0) {
+                phrases.Add(new RenderPhrase(project, track, part, group));
             }
             return phrases;
         }

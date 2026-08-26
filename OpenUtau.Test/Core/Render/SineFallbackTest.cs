@@ -34,16 +34,22 @@ namespace OpenUtau.Core {
         }
 
         [Fact]
-        public void FromPartBuildsOneSinePhrasePerNoteWithoutSinger() {
+        public void FromPartBuildsOnePhrasePerConsonantNoteWithoutSinger() {
             var project = CreateProject(out var track, out var part);
-            part.notes.Add(MakeNote(0, 480, 60));
-            part.notes.Add(MakeNote(480, 240, 64));
+            var note1 = MakeNote(0, 480, 60);
+            note1.lyric = "ka";
+            var note2 = MakeNote(480, 240, 64);
+            note2.lyric = "ki";
+            part.notes.Add(note1);
+            part.notes.Add(note2);
 
             var phrases = RenderPhrase.FromPart(project, track, part);
 
             Assert.Equal(2, phrases.Count);
             Assert.All(phrases, phrase => Assert.Same(SineRenderer.Instance, phrase.renderer));
             Assert.All(phrases, phrase => Assert.NotEmpty(phrase.phones));
+            Assert.Equal("a", phrases[0].phones[0].phoneme);
+            Assert.Equal("i", phrases[1].phones[0].phoneme);
             Assert.Equal(60 * 100, phrases[0].pitches[0], 0);
             Assert.Equal(64 * 100, phrases[1].pitches[0], 0);
         }
