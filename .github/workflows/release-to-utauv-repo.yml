@@ -56,6 +56,10 @@ on:
         description: "Linux ARM64"
         type: boolean
         default: false
+      linux_x64_openvino:
+        description: "Linux x64 OpenVINO (Intel)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -81,6 +85,7 @@ jobs:
           OSX_ARM64: ${{ inputs.osx_arm64 }}
           LINUX_X64: ${{ inputs.linux_x64 }}
           LINUX_ARM64: ${{ inputs.linux_arm64 }}
+          LINUX_X64_OPENVINO: ${{ inputs.linux_x64_openvino }}
         run: |
           targets=()
           add() { targets+=("$1"); }
@@ -93,6 +98,7 @@ jobs:
           [[ "$OSX_ARM64" == true ]] && add '{"name":"osx-arm64","rid":"osx-arm64","arch":"arm64","os":"osx","runs-on":"macos-15-intel"}'
           [[ "$LINUX_X64" == true ]] && add '{"name":"linux-x64","rid":"linux-x64","arch":"x64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"x86_64"}'
           [[ "$LINUX_ARM64" == true ]] && add '{"name":"linux-arm64","rid":"linux-arm64","arch":"arm64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"aarch64"}'
+          [[ "$LINUX_X64_OPENVINO" == true ]] && add '{"name":"linux-x64-openvino","rid":"linux-x64","arch":"x64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"x86_64","variant":"openvino"}'
           matrix=$(printf '%s\n' "${targets[@]}" | jq -sc '{arch:.}')
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
@@ -174,6 +180,19 @@ jobs:
         run: |
           echo Downloading CUDA dependencies for win-x64-cuda build
           REM Add CUDA DLL downloads here when ready
+
+      # Linux OpenVINO
+      - name: Download OpenVINO EP natives (Linux OpenVINO builds)
+        if: matrix.arch.os == 'linux' && matrix.arch.variant == 'openvino'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sL "https://files.pythonhosted.org/packages/50/cf/17ba72de2df0fcba349937d2788f154397bbc2d1a2d67772a97e26f6bc5f/onnxruntime_openvino-1.24.1-cp312-cp312-manylinux_2_28_x86_64.whl" -o ort-openvino.whl
+          mkdir ort-ov && cd ort-ov
+          unzip -q ../ort-openvino.whl "onnxruntime/capi/*"
+          find onnxruntime/capi -maxdepth 1 -name '*.so*' -exec cp -a {} "../bin/${{ matrix.arch.name }}/" \;
+          cd "../bin/${{ matrix.arch.name }}"
+          [ -e libonnxruntime.so ] || ln -s libonnxruntime.so.1.24.1 libonnxruntime.so
 
       - name: Download VC Redist (Windows)
         if: matrix.arch.os == 'win'
@@ -352,6 +371,8 @@ jobs:
             UtauV-osx-arm64.dmg
             UtauV-linux-x64.zip
             UtauV-linux-x64.tar.gz
+            UtauV-linux-x64-openvino.zip
+            UtauV-linux-x64-openvino.tar.gz
             UtauV-linux-arm64.zip
             UtauV-linux-arm64.tar.gz
             bin/linux-x64/*.AppImage
@@ -388,6 +409,8 @@ jobs:
             ### Linux
             - [64-bit (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-x64.zip)
             - [64-bit (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-x64.tar.gz)
+            - [64-bit OpenVINO (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-x64-openvino.zip)
+            - [64-bit OpenVINO (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-x64-openvino.tar.gz)
             - [ARM64 (.zip)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-arm64.zip)
             - [ARM64 (.tar.gz)](${{ env.REPO_URL }}/releases/download/${{ inputs.version }}/UtauV-linux-arm64.tar.gz)
 
@@ -409,6 +432,7 @@ jobs:
 
             **Linux users:**
             - **Most systems**: Download linux-x64 (CPU-only by default, automatically uses CUDA if installed)
+            - **Intel GPU/CPU users**: Try **linux-x64-openvino** - usually faster than CPU on Intel hardware, no extra setup needed
             - **ARM devices**: Download linux-arm64 (CPU-only)
             - **For CUDA acceleration on Linux**: Install CUDA 12.x + cuDNN 9.x, the build will automatically detect and use it
 

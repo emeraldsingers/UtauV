@@ -66,20 +66,20 @@ namespace OpenUtau.Core {
                 "CPU",
                 "CoreML"
                 };
-            } else if (cudaAvailable) {
-                return new List<string> {
-                "CPU",
-                "CUDA"
-                };
             } else if (OS.IsAndroid()) {
                 return new List<string> {
                 "CPU",
                 "NNAPI"
                 };
+            } else {
+                var options = cudaAvailable
+                    ? new List<string> { "CPU", "CUDA" }
+                    : new List<string> { "CPU" };
+                if (openVinoDevices.Count > 0) {
+                    options.Add("OpenVINO");
+                }
+                return options;
             }
-            return new List<string> {
-                "CPU"        
-            };
         }
 
         public static List<GpuInfo> getGpuInfo() {

@@ -54,6 +54,10 @@ on:
         type: boolean
         default: false
         description: "Linux ARM64"
+      linux_x64_openvino:
+        type: boolean
+        default: false
+        description: "Linux x64 OpenVINO (Intel)"
 
 env:
   release-name: ${{ inputs.version }}${{ inputs.beta && ' Beta' || '' }}
@@ -75,6 +79,7 @@ jobs:
           OSX_ARM64: ${{ inputs.osx_arm64 }}
           LINUX_X64: ${{ inputs.linux_x64 }}
           LINUX_ARM64: ${{ inputs.linux_arm64 }}
+          LINUX_X64_OPENVINO: ${{ inputs.linux_x64_openvino }}
         run: |
           targets=()
           add() { targets+=("$1"); }
@@ -87,6 +92,7 @@ jobs:
           [[ "$OSX_ARM64" == true ]] && add '{"name":"osx-arm64","rid":"osx-arm64","arch":"arm64","os":"osx","runs-on":"macos-15-intel","onnx_provider":"Default"}'
           [[ "$LINUX_X64" == true ]] && add '{"name":"linux-x64","rid":"linux-x64","arch":"x64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"x86_64","onnx_provider":"Default"}'
           [[ "$LINUX_ARM64" == true ]] && add '{"name":"linux-arm64","rid":"linux-arm64","arch":"arm64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"aarch64","onnx_provider":"Default"}'
+          [[ "$LINUX_X64_OPENVINO" == true ]] && add '{"name":"linux-x64-openvino","rid":"linux-x64","arch":"x64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"x86_64","onnx_provider":"OpenVINO"}'
           matrix=$(printf '%s\n' "${targets[@]}" | jq -sc '{arch:.}')
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
@@ -147,6 +153,18 @@ jobs:
           tar -xf Microsoft.AI.DirectML.nupkg -C Microsoft.AI.DirectML
           copy /y Microsoft.AI.DirectML\bin\${{ matrix.arch.arch }}-${{ matrix.arch.os }}\DirectML.dll bin\${{ matrix.arch.name }}\
         if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+
+      - name: OpenVINO EP natives (Linux OpenVINO builds)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sL "https://files.pythonhosted.org/packages/50/cf/17ba72de2df0fcba349937d2788f154397bbc2d1a2d67772a97e26f6bc5f/onnxruntime_openvino-1.24.1-cp312-cp312-manylinux_2_28_x86_64.whl" -o ort-openvino.whl
+          mkdir ort-ov && cd ort-ov
+          unzip -q ../ort-openvino.whl "onnxruntime/capi/*"
+          find onnxruntime/capi -maxdepth 1 -name '*.so*' -exec cp -a {} "../bin/${{ matrix.arch.name }}/" \;
+          cd "../bin/${{ matrix.arch.name }}"
+          [ -e libonnxruntime.so ] || ln -s libonnxruntime.so.1.24.1 libonnxruntime.so
+        if: ${{ matrix.arch.os == 'linux' && matrix.arch.onnx_provider == 'OpenVINO' }}
 
       - name: Set executable permission
         if: ${{ matrix.arch.os == 'win' || matrix.arch.os == 'linux' }}
