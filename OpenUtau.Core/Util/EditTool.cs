@@ -29,8 +29,18 @@ namespace OpenUtau.Core.Util {
                 switch (BaseTool) {
                     case 1:
                         return PenToolVariation == 1 ? EditTools.PenPlusTool : EditTools.PenTool;
+                    case 4:
+                        return EditTools.DrawPitchTool;
                     case 5:
                         return EditTools.DrawPitchPlusTool;
+                    case 6:
+                        return EditTools.PitchLineTool;
+                    case 7:
+                        return EditTools.PitchSCurveTool;
+                    case 8:
+                        return EditTools.PitchSineWaveTool;
+                    case 9:
+                        return EditTools.PitchSmoothenTool;
                     default:
                         return (EditTools)(BaseTool * 10);
                 }
