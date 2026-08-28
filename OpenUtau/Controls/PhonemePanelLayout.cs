@@ -39,7 +39,7 @@ namespace OpenUtau.App.Controls {
             var leading = note.Extends ?? note;
             var group = new List<UNote> { leading };
             var g = leading;
-            while (g.Next != null && g.Next.Extends == g) {
+            while (g.Next != null && g.Next.Extends == leading) {
                 g = g.Next;
                 group.Add(g);
             }
