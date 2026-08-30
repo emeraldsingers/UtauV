@@ -14,7 +14,7 @@ namespace OpenUtau.App.Views {
         }
 
         public void SetWatermark(string watermark) {
-            TextBox.Watermark = watermark;
+            TextBox.PlaceholderText = watermark;
         }
 
         public void SetPrompt(string prompt) {

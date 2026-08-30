@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using OpenUtau.Core;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.SourceGenerators;
+using ReactiveUI.Primitives;
 
 namespace OpenUtau.App.ViewModels {
-    public class PackageVersionRowViewModel : ViewModelBase {
+    public partial class PackageVersionRowViewModel : ViewModelBase {
         public RegistryVersion VersionInfo { get; }
         public string Version => VersionInfo.version;
         public string DescriptionDisplay { get; }
@@ -26,7 +27,7 @@ namespace OpenUtau.App.ViewModels {
         }
     }
 
-    public class PackageVersionArchiveViewModel : ViewModelBase {
+    public partial class PackageVersionArchiveViewModel : ViewModelBase {
         class VersionStringComparer : IComparer<string> {
             public int Compare(string? x, string? y) {
                 var a = x ?? string.Empty;
@@ -44,7 +45,7 @@ namespace OpenUtau.App.ViewModels {
 
         public RegistrySoftware Software { get; }
         public ObservableCollection<PackageVersionRowViewModel> Versions { get; } = new ObservableCollection<PackageVersionRowViewModel>();
-        [Reactive] public string Status { get; set; } = string.Empty;
+        [Reactive] public partial string Status { get; set; } = string.Empty;
         public string Header => $"{Software.LocalizedName()} ({Software.id})";
         public string DescriptionDisplay => string.IsNullOrWhiteSpace(Software.LocalizedDescription())
             ? ThemeManager.GetString("packages.nodescription")

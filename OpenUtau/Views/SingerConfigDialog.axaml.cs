@@ -92,7 +92,7 @@ namespace OpenUtau.App.Views {
 
         void TextBox_KeyDown(object? sender, KeyEventArgs e) {
             if (e.Key == Key.Enter) {
-                TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
+                TopLevel.GetTopLevel(this)?.FocusManager?.Focus(null);
             }
         }
 

@@ -14,7 +14,6 @@ using OpenUtau.Core.Util;
 using OpenUtau.Core.Util.nnmnkwii.frontend;
 using OpenUtau.Core.Util.nnmnkwii.io.hts;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenUtau.Plugins {
     // Minimal concrete HTSLabelPhonemizer for testing without external aligners.

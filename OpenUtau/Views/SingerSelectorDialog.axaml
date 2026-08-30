@@ -2,8 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:repeater="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ItemsRepeater"
-        xmlns:layout="clr-namespace:Avalonia.Layout;assembly=Avalonia.Controls.ItemsRepeater"
         mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="680"
         x:Class="OpenUtau.App.Views.SingerSelectorDialog"
         Icon="/Assets/open-utau.ico"
@@ -21,11 +19,11 @@
       <Setter Property="Padding" Value="8"/>
       <Setter Property="HorizontalAlignment" Value="Center"/>
     </Style>
-    <Style Selector="ItemsRepeater#SingerList Border.singer-card.selected">
+    <Style Selector="ItemsControl#SingerList Border.singer-card.selected">
       <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
       <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltMediumBrush}"/>
     </Style>
-    <Style Selector="ItemsRepeater#SingerList Border.singer-card:pointerover">
+    <Style Selector="ItemsControl#SingerList Border.singer-card:pointerover">
       <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltMediumBrush}"/>
     </Style>
     <Style Selector="ToggleButton.favorite">
@@ -98,7 +96,7 @@
             </Path>
           </ToggleButton>
           <TextBox Grid.Column="1" Text="{Binding SearchText}"
-                   Watermark="Search singer name, localized name, or ID"/>
+                   PlaceholderText="Search singer name, localized name, or ID"/>
         </Grid>
         <Grid Grid.Row="3">
           <TextBlock IsVisible="{Binding !HasFilteredSingers}" Text="{DynamicResource tracks.nosinger}"
@@ -106,12 +104,11 @@
           <ScrollViewer VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Disabled"
                         IsVisible="{Binding HasFilteredSingers}">
-            <repeater:ItemsRepeater Name="SingerList" ItemsSource="{Binding FilteredCurrentSingers}">
-              <repeater:ItemsRepeater.Layout>
-                <layout:UniformGridLayout MinItemWidth="132" MinItemHeight="154"
-                                          MinColumnSpacing="0" MinRowSpacing="0" />
-              </repeater:ItemsRepeater.Layout>
-              <repeater:ItemsRepeater.ItemTemplate>
+            <ItemsControl Name="SingerList" ItemsSource="{Binding FilteredCurrentSingers}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><UniformGrid Columns="6" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <Border Classes="singer-card" Classes.selected="{Binding IsSelected}"
                           ToolTip.Tip="{Binding Location}" PointerPressed="OnSingerPointerPressed"
@@ -141,8 +138,8 @@
                     </Grid>
                   </Border>
                 </DataTemplate>
-              </repeater:ItemsRepeater.ItemTemplate>
-            </repeater:ItemsRepeater>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
           </ScrollViewer>
         </Grid>
       </Grid>

@@ -162,7 +162,7 @@
 
         <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" Margin="0,10,0,0">
           <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsPluginsSection}">
-            <TextBox Width="200" Watermark="Search plugins..." Text="{Binding SearchQuery}"/>
+            <TextBox Width="200" PlaceholderText="Search plugins..." Text="{Binding SearchQuery}"/>
             <ComboBox Width="150" ItemsSource="{Binding PluginCategories}" SelectedItem="{Binding SelectedCategory}"/>
           </StackPanel>
           <WrapPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -388,22 +388,22 @@
                          IsChecked="True"
                          GroupName="ThemeTypeFilter"
                          Tag="All"
-                         Checked="OnThemeTypeFilterChanged"/>
+                         IsCheckedChanged="OnThemeTypeFilterChanged"/>
             <RadioButton x:Name="ThemeFilterUi"
                          Content="{DynamicResource packages.themes.filter.ui}"
                          GroupName="ThemeTypeFilter"
                          Tag="UI Themes"
-                         Checked="OnThemeTypeFilterChanged"/>
+                         IsCheckedChanged="OnThemeTypeFilterChanged"/>
             <RadioButton x:Name="ThemeFilterSinger"
                          Content="{DynamicResource packages.themes.filter.singer}"
                          GroupName="ThemeTypeFilter"
                          Tag="Singer Themes"
-                         Checked="OnThemeTypeFilterChanged"/>
+                         IsCheckedChanged="OnThemeTypeFilterChanged"/>
           </StackPanel>
 
           <!-- Search box -->
           <TextBox Grid.Column="2"
-                   Watermark="{DynamicResource packages.themes.search.watermark}"
+                   PlaceholderText="{DynamicResource packages.themes.search.watermark}"
                    Text="{Binding ThemeSearchText}"/>
 
           <!-- Refresh button -->

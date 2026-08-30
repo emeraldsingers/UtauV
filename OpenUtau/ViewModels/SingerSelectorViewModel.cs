@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
+using static ReactiveUI.Primitives.SubscribeExtensions;
 using Avalonia.Media.Imaging;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.SourceGenerators;
+using ReactiveUI.Primitives;
 using Serilog;
 
 namespace OpenUtau.App.ViewModels {
-    public class SingerSelectorViewModel : ViewModelBase {
+    public partial class SingerSelectorViewModel : ViewModelBase {
         public class SingerEngineGroup {
             public USingerType Type { get; }
             public string Header { get; }
@@ -26,7 +28,7 @@ namespace OpenUtau.App.ViewModels {
             public override string ToString() => Header;
         }
 
-        public class SingerOption : ReactiveObject {
+        public partial class SingerOption : ReactiveObject {
             public USinger Singer { get; }
             readonly USinger? trackSinger;
             public string Name => Singer.LocalizedName + (IsNewerVersion ? $"   [{UpdateLabel}]" : string.Empty);
@@ -39,7 +41,7 @@ namespace OpenUtau.App.ViewModels {
                     ? text : "update available";
             public string Id => Singer.Id;
             public string Location => Singer.Location;
-            [Reactive] public bool IsSelected { get; set; }
+            [Reactive] public partial bool IsSelected { get; set; }
             readonly Action<string>? onFavouriteChanged;
             Bitmap? avatar;
             bool avatarLoaded;
@@ -83,19 +85,19 @@ namespace OpenUtau.App.ViewModels {
             }
         }
 
-        [Reactive] public IReadOnlyList<SingerEngineGroup> EngineGroups { get; private set; } =
+        [Reactive] public partial IReadOnlyList<SingerEngineGroup> EngineGroups { get; private set; } =
             Array.Empty<SingerEngineGroup>();
-        [Reactive] public SingerEngineGroup? SelectedEngine { get; set; }
-        [Reactive] public SingerOption? SelectedSingerOption { get; set; }
-        [Reactive] public string SearchText { get; set; } = string.Empty;
-        [Reactive] public bool ShowFavoritesOnly { get; set; }
-        [Reactive] public IReadOnlyList<SingerOption> FilteredCurrentSingers { get; private set; } =
+        [Reactive] public partial SingerEngineGroup? SelectedEngine { get; set; }
+        [Reactive] public partial SingerOption? SelectedSingerOption { get; set; }
+        [Reactive] public partial string SearchText { get; set; } = string.Empty;
+        [Reactive] public partial bool ShowFavoritesOnly { get; set; }
+        [Reactive] public partial IReadOnlyList<SingerOption> FilteredCurrentSingers { get; private set; } =
             Array.Empty<SingerOption>();
-        [Reactive] public string SelectedSingerName { get; private set; } = string.Empty;
-        [Reactive] public string SelectedSingerSubtitle { get; private set; } = string.Empty;
-        [Reactive] public string SelectedSingerInfo { get; private set; } = string.Empty;
-        [Reactive] public Bitmap? SelectedSingerPortrait { get; private set; }
-        [Reactive] public bool HasSelectedSinger { get; private set; }
+        [Reactive] public partial string SelectedSingerName { get; private set; } = string.Empty;
+        [Reactive] public partial string SelectedSingerSubtitle { get; private set; } = string.Empty;
+        [Reactive] public partial string SelectedSingerInfo { get; private set; } = string.Empty;
+        [Reactive] public partial Bitmap? SelectedSingerPortrait { get; private set; }
+        [Reactive] public partial bool HasSelectedSinger { get; private set; }
 
         public IReadOnlyList<SingerOption> CurrentSingers =>
             SelectedEngine?.Singers ?? Array.Empty<SingerOption>();
@@ -119,7 +121,7 @@ namespace OpenUtau.App.ViewModels {
                     ApplyFilterAndKeepSelection(SelectedSinger?.Id);
                 });
             this.WhenAnyValue(x => x.SearchText)
-                .Throttle(TimeSpan.FromMilliseconds(120), RxApp.MainThreadScheduler)
+                .Throttle(TimeSpan.FromMilliseconds(120))
                 .Subscribe(_ => {
                     ApplyFilterAndKeepSelection(SelectedSinger?.Id);
                 });

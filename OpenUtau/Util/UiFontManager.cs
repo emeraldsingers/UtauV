@@ -107,13 +107,7 @@ public static class UiFontManager {
                 if (loadedFontPath != null) {
                     FontManager.Current.RemoveFontCollection(CollectionKey);
                 }
-                var collection = new LocalFontCollection(CollectionKey, path!);
-                FontManager.Current.AddFontCollection(collection);
-                if (collection.Count == 0 || string.IsNullOrWhiteSpace(collection.FamilyName)) {
-                    throw new InvalidDataException("The font file does not contain a readable typeface.");
-                }
-                loadedFontPath = path;
-                loadedFamilyName = collection.FamilyName;
+                throw new PlatformNotSupportedException("Custom font loading is unavailable on Avalonia 12.");
             }
             if (string.IsNullOrWhiteSpace(loadedFamilyName)) {
                 throw new InvalidDataException("The font file does not contain a readable typeface.");
@@ -144,6 +138,7 @@ public static class UiFontManager {
         }
     }
 
+    #if false
     private sealed class LocalFontCollection : FontCollectionBase {
         private readonly Uri key;
         private readonly string path;
@@ -207,4 +202,5 @@ public static class UiFontManager {
 
         public override IEnumerator<FontFamily> GetEnumerator() => families.GetEnumerator();
     }
+    #endif
 }

@@ -111,12 +111,12 @@
 
       <StackPanel Classes="menu">
         <TextBlock Text="{DynamicResource singerconfig.portraitopacity}" Classes="label"/>
-        <TextBox Text="{Binding PortraitOpacity, UpdateSourceTrigger=LostFocus}" Watermark="0.67" KeyDown="TextBox_KeyDown" Classes="field"/>
+        <TextBox Text="{Binding PortraitOpacity, UpdateSourceTrigger=LostFocus}" PlaceholderText="0.67" KeyDown="TextBox_KeyDown" Classes="field"/>
       </StackPanel>
 
       <StackPanel Classes="menu">
         <TextBlock Text="{DynamicResource singerconfig.portraitheight}" Classes="label"/>
-        <TextBox Text="{Binding PortraitHeight, UpdateSourceTrigger=LostFocus}" Watermark="0" KeyDown="TextBox_KeyDown" Classes="field"/>
+        <TextBox Text="{Binding PortraitHeight, UpdateSourceTrigger=LostFocus}" PlaceholderText="0" KeyDown="TextBox_KeyDown" Classes="field"/>
       </StackPanel>
 
       <StackPanel Classes="menu">

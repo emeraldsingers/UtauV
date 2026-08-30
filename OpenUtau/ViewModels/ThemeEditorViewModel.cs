@@ -61,11 +61,11 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial Color BlackKeyColorRight { get; set; }
         [Reactive] public partial Color BlackKeyNameColor { get; set; }
 
-        [Reactive] public Color MainColorA { get; set; }
-        [Reactive] public Color MainColorB { get; set; }
-        [Reactive] public bool IsDarkModeEasy { get; set; }
+        [Reactive] public partial Color MainColorA { get; set; }
+        [Reactive] public partial Color MainColorB { get; set; }
+        [Reactive] public partial bool IsDarkModeEasy { get; set; }
 
-        [Reactive] public bool IsEasyMode { get; set; } = true;
+        [Reactive] public partial bool IsEasyMode { get; set; } = true;
 
         public ThemeEditorViewModel(string customThemePath) {
             this.customThemePath = customThemePath;

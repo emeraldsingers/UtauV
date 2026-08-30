@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
+using static ReactiveUI.Primitives.SubscribeExtensions;
 using System.Text;
 using Avalonia.Media;
 using OpenUtau.Classic;
@@ -13,39 +14,40 @@ using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.SourceGenerators;
+using ReactiveUI.Primitives;
 using SharpCompress;
 using OpenUtau.Api;
 
 namespace OpenUtau.App.ViewModels {
-    public class NotePropertiesViewModel : ViewModelBase, ICmdSubscriber {
+    public partial class NotePropertiesViewModel : ViewModelBase, ICmdSubscriber {
         public string Title { get => ThemeManager.GetString("noteproperty") + " (" + selectedNotes.Count + " notes)"; }
-        [Reactive] public string Lyric { get; set; } = string.Empty;
-        [Reactive] public string Tone { get; set; } = string.Empty;
-        [Reactive] public int Tuning { get; set; }
-        [Reactive] public FontWeight TuningFontWeight { get; set; } = FontWeight.Normal;
-        [Reactive] public float PortamentoLength { get; set; }
-        [Reactive] public float PortamentoStart { get; set; }
-        [Reactive] public int PitchCurveShape { get; set; } = -1;
-        [Reactive] public bool VibratoEnable { get; set; }
-        [Reactive] public float VibratoLength { get; set; }
-        [Reactive] public float VibratoPeriod { get; set; }
-        [Reactive] public float VibratoDepth { get; set; }
-        [Reactive] public float VibratoIn { get; set; }
-        [Reactive] public float VibratoOut { get; set; }
-        [Reactive] public float VibratoShift { get; set; }
-        [Reactive] public float VibratoDrift { get; set; }
-        [Reactive] public float VibratoVolLink { get; set; }
-        [Reactive] public float VariationDepth { get; set; }
-        [Reactive] public float PitchVariationDepth { get; set; }
-        [Reactive] public float VariationFrequency { get; set; }
-        [Reactive] public int VariationSeed { get; set; }
-        [Reactive] public float AutoVibratoNoteLength { get; set; }
-        [Reactive] public bool AutoVibratoToggle { get; set; }
-        [Reactive] public bool IsNoteSelected { get; set; } = false;
-        [Reactive] public IReadOnlyList<MenuItemViewModel>? PhonemizerMenuItems { get; set; }
-        public ReactiveCommand<string?, System.Reactive.Unit> SelectPhonemizerCommand { get; }
-        [Reactive] public bool IsPhonemizerEnabled { get; set; } = true;
+        [Reactive] public partial string Lyric { get; set; } = string.Empty;
+        [Reactive] public partial string Tone { get; set; } = string.Empty;
+        [Reactive] public partial int Tuning { get; set; }
+        [Reactive] public partial FontWeight TuningFontWeight { get; set; } = FontWeight.Normal;
+        [Reactive] public partial float PortamentoLength { get; set; }
+        [Reactive] public partial float PortamentoStart { get; set; }
+        [Reactive] public partial int PitchCurveShape { get; set; } = -1;
+        [Reactive] public partial bool VibratoEnable { get; set; }
+        [Reactive] public partial float VibratoLength { get; set; }
+        [Reactive] public partial float VibratoPeriod { get; set; }
+        [Reactive] public partial float VibratoDepth { get; set; }
+        [Reactive] public partial float VibratoIn { get; set; }
+        [Reactive] public partial float VibratoOut { get; set; }
+        [Reactive] public partial float VibratoShift { get; set; }
+        [Reactive] public partial float VibratoDrift { get; set; }
+        [Reactive] public partial float VibratoVolLink { get; set; }
+        [Reactive] public partial float VariationDepth { get; set; }
+        [Reactive] public partial float PitchVariationDepth { get; set; }
+        [Reactive] public partial float VariationFrequency { get; set; }
+        [Reactive] public partial int VariationSeed { get; set; }
+        [Reactive] public partial float AutoVibratoNoteLength { get; set; }
+        [Reactive] public partial bool AutoVibratoToggle { get; set; }
+        [Reactive] public partial bool IsNoteSelected { get; set; } = false;
+        [Reactive] public partial IReadOnlyList<MenuItemViewModel>? PhonemizerMenuItems { get; set; }
+        public ReactiveCommand<string?, RxVoid> SelectPhonemizerCommand { get; }
+        [Reactive] public partial bool IsPhonemizerEnabled { get; set; } = true;
         public string PhonemizerOverrideText {
             get {
                 string? targetId = PhonemizerOverride;
@@ -74,12 +76,12 @@ namespace OpenUtau.App.ViewModels {
                 this.RaisePropertyChanged(nameof(PhonemizerOverrideText));
             }
         }
-        [Reactive] public ObservableCollection<NotePresets.PortamentoPreset>? PortamentoPresets { get; private set; }
+        [Reactive] public partial ObservableCollection<NotePresets.PortamentoPreset>? PortamentoPresets { get; private set; }
         public NotePresets.PortamentoPreset? ApplyPortamentoPreset {
             get => appliedPortamentoPreset;
             set => this.RaiseAndSetIfChanged(ref appliedPortamentoPreset, value);
         }
-        [Reactive] public ObservableCollection<NotePresets.VibratoPreset>? VibratoPresets { get; private set; }
+        [Reactive] public partial ObservableCollection<NotePresets.VibratoPreset>? VibratoPresets { get; private set; }
         public NotePresets.VibratoPreset? ApplyVibratoPreset {
             get => appliedVibratoPreset;
             set => this.RaiseAndSetIfChanged(ref appliedVibratoPreset, value);
@@ -99,7 +101,7 @@ namespace OpenUtau.App.ViewModels {
             VibratoPresets = new ObservableCollection<NotePresets.VibratoPreset>(NotePresets.Default.VibratoPresets);
 
             this.WhenAnyValue(vm => vm.ApplyPortamentoPreset)
-                .WhereNotNull()
+                .Where(x => x != null).Select(x => x!)
                 .Subscribe(portamentoPreset => {
                     if (portamentoPreset != null) {
                         PortamentoLength = portamentoPreset.PortamentoLength;
@@ -115,7 +117,7 @@ namespace OpenUtau.App.ViewModels {
                     }
                 });
             this.WhenAnyValue(vm => vm.ApplyVibratoPreset)
-                .WhereNotNull()
+                .Where(x => x != null).Select(x => x!)
                 .Subscribe(vibratoPreset => {
                     if (vibratoPreset != null) {
                         DocManager.Inst.StartUndoGroup("command.vibrato.edit");
@@ -137,7 +139,6 @@ namespace OpenUtau.App.ViewModels {
                     }
                 });
             this.WhenAnyValue(vm => vm.PitchCurveShape)
-                .WhereNotNull()
                 .Subscribe(shape => {
                     if (shape >= 0) {
                         DocManager.Inst.StartUndoGroup("command.pitch.editpoint");
@@ -930,7 +931,7 @@ namespace OpenUtau.App.ViewModels {
         }
     }
 
-    public class NotePropertyExpViewModel : ViewModelBase {
+    public partial class NotePropertyExpViewModel : ViewModelBase {
         public string Name { get; set; }
         public bool IsNumerical { get; set; } = false;
         public bool IsOptions { get; set; } = false;
@@ -941,14 +942,14 @@ namespace OpenUtau.App.ViewModels {
         public string abbr;
         public float defaultValue;
 
-        [Reactive] public bool IsNoteSelected { get; set; } = false;
-        [Reactive] public float Value { get; set; }
-        [Reactive] public string FlagValue { get; set; } = string.Empty;
-        [Reactive] public int SelectedOption { get; set; }
-        [Reactive] public bool DropDownOpen { get; set; }
-        [Reactive] public bool HasValue { get; set; } = false;
-        [Reactive] public FontWeight NameFontWeight { get; set; }
-        [Reactive] public string Warning { get; set; } = string.Empty;
+        [Reactive] public partial bool IsNoteSelected { get; set; } = false;
+        [Reactive] public partial float Value { get; set; }
+        [Reactive] public partial string FlagValue { get; set; } = string.Empty;
+        [Reactive] public partial int SelectedOption { get; set; }
+        [Reactive] public partial bool DropDownOpen { get; set; }
+        [Reactive] public partial bool HasValue { get; set; } = false;
+        [Reactive] public partial FontWeight NameFontWeight { get; set; }
+        [Reactive] public partial string Warning { get; set; } = string.Empty;
 
         private NotePropertiesViewModel parentViewmodel;
 

@@ -9,7 +9,6 @@
         CanResize="False"
         ExtendClientAreaTitleBarHeightHint="-1"
         ExtendClientAreaToDecorationsHint="True"
-        SystemDecorations="None"
         TransparencyLevelHint="Transparent"
         Background="Transparent"
         WindowDecorations="BorderOnly"

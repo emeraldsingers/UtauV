@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reactive;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,11 +12,12 @@ using Avalonia.Media.Imaging;
 using OpenUtau.Core;
 using OpenUtau.Core.Util;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.SourceGenerators;
+using ReactiveUI.Primitives;
 
 namespace OpenUtau.App.ViewModels {
 
-    public class ThemeRowViewModel : ViewModelBase {
+    public partial class ThemeRowViewModel : ViewModelBase {
         public RegistrySoftware? Software { get; }
         public string Id { get; }
         public string Name { get; }
@@ -52,9 +52,9 @@ namespace OpenUtau.App.ViewModels {
             return fallback;
         }
 
-        [Reactive] public bool IsInstalled { get; set; }
-        [Reactive] public string InstalledVersion { get; set; } = string.Empty;
-        [Reactive] public Bitmap? PreviewImage { get; private set; }
+        [Reactive] public partial bool IsInstalled { get; set; }
+        [Reactive] public partial string InstalledVersion { get; set; } = string.Empty;
+        [Reactive] public partial Bitmap? PreviewImage { get; private set; }
         bool imageLoadAttempted;
 
         public bool HasRegistry => Software != null;
@@ -213,7 +213,7 @@ namespace OpenUtau.App.ViewModels {
     }
 
 
-    public class PluginRowViewModel : ViewModelBase {
+    public partial class PluginRowViewModel : ViewModelBase {
         public RegistrySoftware? Software { get; }
         public string Id { get; }
         public string Name { get; }
@@ -223,8 +223,8 @@ namespace OpenUtau.App.ViewModels {
         public string LongDescription { get; }
         public string RepoUrl { get; }
 
-        [Reactive] public bool IsInstalled { get; set; }
-        [Reactive] public string InstalledVersion { get; set; } = string.Empty;
+        [Reactive] public partial bool IsInstalled { get; set; }
+        [Reactive] public partial string InstalledVersion { get; set; } = string.Empty;
 
         public bool HasRegistry => Software != null;
         public bool HasInstallableVersion => Software?.versions?.Any(v =>
@@ -308,14 +308,14 @@ namespace OpenUtau.App.ViewModels {
         }
     }
 
-    public class PackageRowViewModel : ViewModelBase {
+    public partial class PackageRowViewModel : ViewModelBase {
         public RegistrySoftware? Software { get; }
         public string Id { get; }
         public string Name { get; }
         public string Developer { get; }
         public string Version { get; }
-        [Reactive] public bool IsInstalled { get; set; }
-        [Reactive] public string InstalledVersion { get; set; } = string.Empty;
+        [Reactive] public partial bool IsInstalled { get; set; }
+        [Reactive] public partial string InstalledVersion { get; set; } = string.Empty;
 
         public bool HasRegistry => Software != null;
         public bool HasInstallableVersion => Software?.versions?.Any(v =>
@@ -380,7 +380,7 @@ namespace OpenUtau.App.ViewModels {
         }
     }
 
-    public class VoicebankVersionEntryViewModel : ViewModelBase {
+    public partial class VoicebankVersionEntryViewModel : ViewModelBase {
         public VoicebankVariantViewModel Variant { get; }
         public RegistryVersion VersionInfo { get; }
         public string Version => VersionInfo.version;
@@ -406,7 +406,7 @@ namespace OpenUtau.App.ViewModels {
         }
     }
 
-    public class VoicebankVariantViewModel : ViewModelBase {
+    public partial class VoicebankVariantViewModel : ViewModelBase {
         public RegistrySoftware? Software { get; }
         public string Team { get; }
         public string Id { get; }
@@ -426,9 +426,9 @@ namespace OpenUtau.App.ViewModels {
         public string LatestVersion { get; }
         public ObservableCollection<VoicebankVersionEntryViewModel> Versions { get; } = new ObservableCollection<VoicebankVersionEntryViewModel>();
 
-        [Reactive] public bool IsInstalled { get; set; }
-        [Reactive] public string InstalledVersion { get; set; } = string.Empty;
-        [Reactive] public string InstallPath { get; set; } = string.Empty;
+        [Reactive] public partial bool IsInstalled { get; set; }
+        [Reactive] public partial string InstalledVersion { get; set; } = string.Empty;
+        [Reactive] public partial string InstallPath { get; set; } = string.Empty;
 
         public bool IsUpToDate => IsInstalled && !string.IsNullOrWhiteSpace(LatestVersion) &&
             string.Equals(InstalledVersion, LatestVersion, StringComparison.OrdinalIgnoreCase);
@@ -604,7 +604,7 @@ namespace OpenUtau.App.ViewModels {
         }
     }
 
-    public class VoicebankTeamViewModel : ViewModelBase {
+    public partial class VoicebankTeamViewModel : ViewModelBase {
         public string Name { get; }
         public ObservableCollection<VoicebankGroupViewModel> Groups { get; } = new ObservableCollection<VoicebankGroupViewModel>();
 
@@ -617,7 +617,7 @@ namespace OpenUtau.App.ViewModels {
         public bool HasUpdate => Groups.Any(g => g.HasUpdate);
     }
 
-    public class VoicebankGroupViewModel : ViewModelBase {
+    public partial class VoicebankGroupViewModel : ViewModelBase {
         static readonly HttpClient imageClient = new HttpClient {
             Timeout = TimeSpan.FromSeconds(20),
         };
@@ -637,7 +637,7 @@ namespace OpenUtau.App.ViewModels {
         public string MetaDisplay { get; }
         public ObservableCollection<VoicebankVariantViewModel> Variants { get; } = new ObservableCollection<VoicebankVariantViewModel>();
 
-        [Reactive] public Bitmap? CoverImage { get; private set; }
+        [Reactive] public partial Bitmap? CoverImage { get; private set; }
         bool coverLoadAttempted;
         public bool HasCover => CoverImage != null;
         public bool HasNoCover => CoverImage == null;
@@ -759,44 +759,44 @@ namespace OpenUtau.App.ViewModels {
         }
     }
 
-    public class PackageManagerViewModel : ViewModelBase {
+    public partial class PackageManagerViewModel : ViewModelBase {
         public ObservableCollection<PackageRowViewModel> Available { get; } = new ObservableCollection<PackageRowViewModel>();
         public ObservableCollection<VoicebankTeamViewModel> VoicebankGroups { get; } = new ObservableCollection<VoicebankTeamViewModel>();
 
-        [Reactive] public string Status { get; set; } = string.Empty;
-        [Reactive] public int TotalCount { get; private set; }
-        [Reactive] public int InstalledCount { get; private set; }
-        [Reactive] public int UpdateCount { get; private set; }
-        [Reactive] public int VoicebankTotalCount { get; private set; }
-        [Reactive] public int VoicebankInstalledCount { get; private set; }
-        [Reactive] public int VoicebankUpdateCount { get; private set; }
-        [Reactive] public bool IsPackagesSection { get; private set; } = true;
-        [Reactive] public bool IsVoicebanksSection { get; private set; } = false;
-        [Reactive] public bool IsPluginsSection { get; private set; } = false;
+        [Reactive] public partial string Status { get; set; } = string.Empty;
+        [Reactive] public partial int TotalCount { get; private set; }
+        [Reactive] public partial int InstalledCount { get; private set; }
+        [Reactive] public partial int UpdateCount { get; private set; }
+        [Reactive] public partial int VoicebankTotalCount { get; private set; }
+        [Reactive] public partial int VoicebankInstalledCount { get; private set; }
+        [Reactive] public partial int VoicebankUpdateCount { get; private set; }
+        [Reactive] public partial bool IsPackagesSection { get; private set; } = true;
+        [Reactive] public partial bool IsVoicebanksSection { get; private set; } = false;
+        [Reactive] public partial bool IsPluginsSection { get; private set; } = false;
 
         public ObservableCollection<PluginRowViewModel> Plugins { get; } = new ObservableCollection<PluginRowViewModel>();
         public ObservableCollection<PluginRowViewModel> FilteredPlugins { get; } = new ObservableCollection<PluginRowViewModel>();
         public ObservableCollection<string> PluginCategories { get; } = new ObservableCollection<string>();
 
-        [Reactive] public string SearchQuery { get; set; } = string.Empty;
-        [Reactive] public string SelectedCategory { get; set; } = "All";
+        [Reactive] public partial string SearchQuery { get; set; } = string.Empty;
+        [Reactive] public partial string SelectedCategory { get; set; } = "All";
 
-        [Reactive] public int PluginTotalCount { get; private set; }
-        [Reactive] public int PluginInstalledCount { get; private set; }
-        [Reactive] public int PluginUpdateCount { get; private set; }
+        [Reactive] public partial int PluginTotalCount { get; private set; }
+        [Reactive] public partial int PluginInstalledCount { get; private set; }
+        [Reactive] public partial int PluginUpdateCount { get; private set; }
 
         public ObservableCollection<ThemeRowViewModel> Themes { get; } = new ObservableCollection<ThemeRowViewModel>();
         public ObservableCollection<ThemeRowViewModel> FilteredThemes { get; } = new ObservableCollection<ThemeRowViewModel>();
 
-        [Reactive] public string ThemeSearchText { get; set; } = string.Empty;
-        [Reactive] public string SelectedThemeTypeFilter { get; set; } = "All";
-        [Reactive] public ThemeRowViewModel? SelectedTheme { get; set; }
-        [Reactive] public bool IsThemesLoading { get; private set; }
-        [Reactive] public bool IsThemesSection { get; private set; } = false;
+        [Reactive] public partial string ThemeSearchText { get; set; } = string.Empty;
+        [Reactive] public partial string SelectedThemeTypeFilter { get; set; } = "All";
+        [Reactive] public partial ThemeRowViewModel? SelectedTheme { get; set; }
+        [Reactive] public partial bool IsThemesLoading { get; private set; }
+        [Reactive] public partial bool IsThemesSection { get; private set; } = false;
 
-        [Reactive] public int ThemeTotalCount { get; private set; }
-        [Reactive] public int ThemeInstalledCount { get; private set; }
-        [Reactive] public int ThemeUpdateCount { get; private set; }
+        [Reactive] public partial int ThemeTotalCount { get; private set; }
+        [Reactive] public partial int ThemeInstalledCount { get; private set; }
+        [Reactive] public partial int ThemeUpdateCount { get; private set; }
 
         public int SelectedTotalCount => IsPackagesSection ? TotalCount : (IsVoicebanksSection ? VoicebankTotalCount : (IsPluginsSection ? PluginTotalCount : ThemeTotalCount));
         public int SelectedInstalledCount => IsPackagesSection ? InstalledCount : (IsVoicebanksSection ? VoicebankInstalledCount : (IsPluginsSection ? PluginInstalledCount : ThemeInstalledCount));
@@ -813,20 +813,20 @@ namespace OpenUtau.App.ViewModels {
             : (IsPluginsSection ? "Open Plugins Location"
             : ThemeManager.GetString("packages.themes.openinstalllocation")));
 
-        public ReactiveCommand<Unit, Unit> RefreshCommand { get; }
-        public ReactiveCommand<Unit, Unit> SelectPackagesCommand { get; }
-        public ReactiveCommand<Unit, Unit> SelectVoicebanksCommand { get; }
-        public ReactiveCommand<Unit, Unit> SelectPluginsCommand { get; }
-        public ReactiveCommand<Unit, Unit> SelectThemesCommand { get; }
-        public ReactiveCommand<PackageRowViewModel, Unit> InstallCommand { get; }
-        public ReactiveCommand<PackageRowViewModel, Unit> UninstallCommand { get; }
-        public ReactiveCommand<VoicebankVariantViewModel, Unit> InstallVoicebankCommand { get; }
-        public ReactiveCommand<VoicebankVariantViewModel, Unit> UninstallVoicebankCommand { get; }
-        public ReactiveCommand<PluginRowViewModel, Unit> InstallPluginCommand { get; }
-        public ReactiveCommand<PluginRowViewModel, Unit> UninstallPluginCommand { get; }
-        public ReactiveCommand<ThemeRowViewModel, Unit> InstallThemeCommand { get; }
-        public ReactiveCommand<ThemeRowViewModel, Unit> UninstallThemeCommand { get; }
-        public ReactiveCommand<Unit, Unit> RefreshThemesCommand { get; }
+        public ReactiveCommand<RxVoid, RxVoid> RefreshCommand { get; }
+        public ReactiveCommand<RxVoid, RxVoid> SelectPackagesCommand { get; }
+        public ReactiveCommand<RxVoid, RxVoid> SelectVoicebanksCommand { get; }
+        public ReactiveCommand<RxVoid, RxVoid> SelectPluginsCommand { get; }
+        public ReactiveCommand<RxVoid, RxVoid> SelectThemesCommand { get; }
+        public ReactiveCommand<PackageRowViewModel, RxVoid> InstallCommand { get; }
+        public ReactiveCommand<PackageRowViewModel, RxVoid> UninstallCommand { get; }
+        public ReactiveCommand<VoicebankVariantViewModel, RxVoid> InstallVoicebankCommand { get; }
+        public ReactiveCommand<VoicebankVariantViewModel, RxVoid> UninstallVoicebankCommand { get; }
+        public ReactiveCommand<PluginRowViewModel, RxVoid> InstallPluginCommand { get; }
+        public ReactiveCommand<PluginRowViewModel, RxVoid> UninstallPluginCommand { get; }
+        public ReactiveCommand<ThemeRowViewModel, RxVoid> InstallThemeCommand { get; }
+        public ReactiveCommand<ThemeRowViewModel, RxVoid> UninstallThemeCommand { get; }
+        public ReactiveCommand<RxVoid, RxVoid> RefreshThemesCommand { get; }
 
         public PackageManagerViewModel() {
             RefreshCommand = ReactiveCommand.CreateFromTask(RefreshAsync);

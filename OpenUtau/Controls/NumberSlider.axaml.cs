@@ -100,11 +100,11 @@ namespace OpenUtau.App.Controls {
         void ValueBoxKeyDown(object? sender, KeyEventArgs e) {
             if (e.Key == Key.Enter) {
                 CommitInput();
-                TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
+                TopLevel.GetTopLevel(this)?.FocusManager?.Focus(null);
                 e.Handled = true;
             } else if (e.Key == Key.Escape) {
                 UpdateValueText();
-                TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
+                TopLevel.GetTopLevel(this)?.FocusManager?.Focus(null);
                 e.Handled = true;
             }
         }

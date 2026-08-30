@@ -10,29 +10,30 @@ using OpenUtau.Classic;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.SourceGenerators;
+using ReactiveUI.Primitives;
 using Serilog;
 
 namespace OpenUtau.App.ViewModels {
-    class SingerConfigViewModel : ViewModelBase {
-        [Reactive] public string Name { get; set; }
-        [Reactive] public ObservableCollection<LocalizedName> LocalizedNames { get; set; }
-        [Reactive] public string SingerType { get; set; } = string.Empty;
-        [Reactive] public string TextFileEncoding { get; set; } = string.Empty;
-        [Reactive] public string Image { get; set; }
-        [Reactive] public string Portrait { get; set; } = string.Empty;
-        [Reactive] public string PortraitOpacity { get; set; } = string.Empty;
-        [Reactive] public string PortraitHeight { get; set; } = string.Empty;
-        [Reactive] public string Author { get; set; }
-        [Reactive] public string Team { get; set; }
-        [Reactive] public string Voice { get; set; }
-        [Reactive] public string Web { get; set; }
-        [Reactive] public string Version { get; set; }
-        [Reactive] public string Sample { get; set; }
-        [Reactive] public string OtherInfo { get; set; }
-        [Reactive] public string DefaultPhonemizer { get; set; } = string.Empty;
-        [Reactive] public bool UseFilenameAsAlias { get; set; } = false;
-        [Reactive] public int TxtOutputOption { get; set; } = 0;
+    partial class SingerConfigViewModel : ViewModelBase {
+        [Reactive] public partial string Name { get; set; }
+        [Reactive] public partial ObservableCollection<LocalizedName> LocalizedNames { get; set; }
+        [Reactive] public partial string SingerType { get; set; } = string.Empty;
+        [Reactive] public partial string TextFileEncoding { get; set; } = string.Empty;
+        [Reactive] public partial string Image { get; set; }
+        [Reactive] public partial string Portrait { get; set; } = string.Empty;
+        [Reactive] public partial string PortraitOpacity { get; set; } = string.Empty;
+        [Reactive] public partial string PortraitHeight { get; set; } = string.Empty;
+        [Reactive] public partial string Author { get; set; }
+        [Reactive] public partial string Team { get; set; }
+        [Reactive] public partial string Voice { get; set; }
+        [Reactive] public partial string Web { get; set; }
+        [Reactive] public partial string Version { get; set; }
+        [Reactive] public partial string Sample { get; set; }
+        [Reactive] public partial string OtherInfo { get; set; }
+        [Reactive] public partial string DefaultPhonemizer { get; set; } = string.Empty;
+        [Reactive] public partial bool UseFilenameAsAlias { get; set; } = false;
+        [Reactive] public partial int TxtOutputOption { get; set; } = 0;
 
         public List<string> SingerTypeList { get; }
         public List<string> TextFileEncodingList { get; }

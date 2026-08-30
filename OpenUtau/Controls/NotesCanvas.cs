@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
+using static ReactiveUI.Primitives.SubscribeExtensions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;

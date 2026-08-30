@@ -59,7 +59,6 @@
     <PackageReference Include="DynamicData" Version="9.4.33" />
     <PackageReference Include="MonoMac.Core" Version="0.0.23728" />
     <PackageReference Include="NetSparkleUpdater.SparkleUpdater" Version="2.2.3" />
-    <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
     <PackageReference Include="ReactiveUI" Version="24.0.0-beta.3" />
     <PackageReference Include="ReactiveUI.Avalonia" Version="12.1.0-beta.1" />
     <PackageReference Include="Avalonia" Version="12.1.0" />
