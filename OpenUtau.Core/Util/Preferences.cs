@@ -258,8 +258,11 @@ namespace OpenUtau.Core.Util {
             public bool RememberUst = true;
             public bool RememberVsqx = true;
             public string WinePath = string.Empty;
-            public bool UseWayland  = Environment.GetEnvironmentVariable("WAYLAND_DISPLAY") != null
-                                         || Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") == "wayland"; //Check for Wayland
+            // Wayland is opt-in because some Linux compositors exhibit frame pacing issues.
+            // Set OPENUTAU_USE_WAYLAND=1 to enable it explicitly.
+            public bool UseWayland = string.Equals(
+                Environment.GetEnvironmentVariable("OPENUTAU_USE_WAYLAND"), "1",
+                StringComparison.OrdinalIgnoreCase);
             public string PhoneticAssistant = string.Empty;
             public string RecentOpenSingerDirectory = string.Empty;
             public string RecentOpenProjectDirectory = string.Empty;
