@@ -10,6 +10,7 @@ using OpenUtau.App.Roflofic;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 
 namespace OpenUtau.App.Controls {
     class PhonemeCanvas : Control {

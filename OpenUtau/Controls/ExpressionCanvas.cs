@@ -10,6 +10,7 @@ using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using OpenUtau.ViewModels;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 
 namespace OpenUtau.App.Controls {
     public enum ExpDisMode { Hidden, Visible, Shadow };

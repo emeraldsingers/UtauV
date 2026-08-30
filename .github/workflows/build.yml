@@ -101,6 +101,7 @@ jobs:
           dotnet-version: |
             6.0.x
             8.0.x
+            10.0.x
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -126,6 +127,16 @@ jobs:
 
       - name: Build (MacOS)
         run: dotnet msbuild OpenUtau -t:BundleApp -p:Configuration=Release -p:RuntimeIdentifier=${{ matrix.arch.rid }} -p:UseAppHost=true -p:SelfContained=true -p:OutputPath=../bin/${{ matrix.arch.name }}/
+        if: ${{ matrix.arch.os == 'osx' }}
+      
+      - name: Add Liquid Glass icon (macOS)
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.2.app
+          chmod +x .github/scripts/add-liquid-glass-icon.sh
+          .github/scripts/add-liquid-glass-icon.sh \
+            bin/${{ matrix.arch.name }}/publish/OpenUtau.app \
+            OpenUtau/Assets/OpenUtau.icon \
+            OpenUtau
         if: ${{ matrix.arch.os == 'osx' }}
       
       - name: Write release channel info

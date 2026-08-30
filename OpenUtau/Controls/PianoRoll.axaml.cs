@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -21,6 +20,7 @@ using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using OpenUtau.ViewModels;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using Serilog;
 
 namespace OpenUtau.App.Controls {
@@ -46,9 +46,9 @@ namespace OpenUtau.App.Controls {
         private Point rangeSelectStartPoint = default;
         private const double RangeSelectThreshold = 5; // pixels
 
-        private ReactiveCommand<Unit, Unit>? lyricsDialogCommand;
-        private ReactiveCommand<Unit, Unit>? noteDefaultsCommand;
-        private ReactiveCommand<BatchEdit, Unit>? noteBatchEditCommand;
+        private ReactiveCommand<RxVoid, RxVoid>? lyricsDialogCommand;
+        private ReactiveCommand<RxVoid, RxVoid>? noteDefaultsCommand;
+        private ReactiveCommand<BatchEdit, RxVoid>? noteBatchEditCommand;
 
         private Window RootWindow => (Window)TopLevel.GetTopLevel(this)!;
 
@@ -632,7 +632,7 @@ namespace OpenUtau.App.Controls {
             dialog.ShowDialog(RootWindow);
         }
 
-        private void OnPianoRollFocus(object sender, GotFocusEventArgs e) {
+        private void OnPianoRollFocus(object sender, FocusChangedEventArgs e) {
             var input = e.Source as InputElement;
             if (input is TextBox or ComboBox or ComboBoxItem) {
                 input.Focus();
@@ -819,6 +819,9 @@ namespace OpenUtau.App.Controls {
                     }
                     editState = null;
                 } else {
+                    args.Pointer.Capture(null);
+                    editState = null;
+                    Cursor = null; 
                     return;
                 }
             }
@@ -1153,6 +1156,7 @@ namespace OpenUtau.App.Controls {
                 return;
             }
             if (editState.MouseButton != args.InitialPressMouseButton) {
+                args.Pointer.Capture(null);
                 return;
             }
             var control = (Control)sender;
@@ -1183,6 +1187,7 @@ namespace OpenUtau.App.Controls {
             }
             editState = null;
             Cursor = null;
+            args.Pointer.Capture(null);
         }
 
         public void NotesCanvasDoubleTapped(object sender, TappedEventArgs args) {
@@ -1328,6 +1333,9 @@ namespace OpenUtau.App.Controls {
                 return;
             }
             if (editState.MouseButton != args.InitialPressMouseButton) {
+                args.Pointer.Capture(null);
+                editState = null;
+                Cursor = null;
                 return;
             }
             var control = (Control)sender;
@@ -1338,6 +1346,7 @@ namespace OpenUtau.App.Controls {
             editState.End(point.Pointer, point.Position);
             editState = null;
             Cursor = null;
+            args.Pointer.Capture(null);
         }
 
         public void PhonemeCanvasDoubleTapped(object sender, TappedEventArgs args) {
@@ -1484,6 +1493,9 @@ namespace OpenUtau.App.Controls {
                 return;
             }
             if (editState.MouseButton != args.InitialPressMouseButton) {
+                args.Pointer.Capture(null);
+                editState = null;
+                Cursor = null;
                 return;
             }
             var control = (Control)sender;
@@ -1492,6 +1504,7 @@ namespace OpenUtau.App.Controls {
             editState.End(point.Pointer, point.Position);
             editState = null;
             Cursor = null;
+            args.Pointer.Capture(null);
         }
 
         public void BackgroundPointerMoved(object sender, PointerEventArgs args) {

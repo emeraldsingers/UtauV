@@ -10,6 +10,7 @@ using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using Serilog;
 
 namespace OpenUtau.App.Controls {

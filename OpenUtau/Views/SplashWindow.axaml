@@ -7,12 +7,12 @@
         Title="SplashWindow"
         Icon="/Assets/open-utau.ico"
         CanResize="False"
-        ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1"
         ExtendClientAreaToDecorationsHint="True"
         SystemDecorations="None"
         TransparencyLevelHint="Transparent"
         Background="Transparent"
+        WindowDecorations="BorderOnly"
         WindowStartupLocation="CenterScreen">
   <Grid ClipToBounds="True">
     <Rectangle Fill="{DynamicResource SystemControlBackgroundAltHighBrush}" Opacity="0.98"/>

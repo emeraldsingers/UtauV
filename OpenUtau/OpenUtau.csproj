@@ -1,13 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <AssemblyName>UtauV</AssemblyName>
     <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -18,14 +17,14 @@
     <StartupObject />
   </PropertyGroup>
   <PropertyGroup>
-    <CFBundleName>UtauV</CFBundleName>
-    <CFBundleDisplayName>UtauV</CFBundleDisplayName>
-    <CFBundleIdentifier>asoqwer.UtauV</CFBundleIdentifier>
+    <CFBundleName>OpenUtau</CFBundleName>
+    <CFBundleDisplayName>OpenUtau</CFBundleDisplayName>
+    <CFBundleIdentifier>com.stakira.openutau</CFBundleIdentifier>
     <CFBundleVersion>0.0.0</CFBundleVersion>
     <CFBundleShortVersionString>0.0.0</CFBundleShortVersionString>
     <CFBundlePackageType>APPL</CFBundlePackageType>
     <CFBundleSignature>????</CFBundleSignature>
-    <CFBundleExecutable>UtauV</CFBundleExecutable>
+    <CFBundleExecutable>OpenUtau</CFBundleExecutable>
     <CFBundleIconFile>OpenUtau.icns</CFBundleIconFile>
     <NSPrincipalClass>NSApplication</NSPrincipalClass>
     <NSHighResolutionCapable>true</NSHighResolutionCapable>
@@ -33,7 +32,7 @@
         <array>
             <dict>
                 <key>CFBundleTypeName</key>
-                    <string>UtauV Sequence File</string>
+                <string>OpenUtau Sequence File</string>
                 <key>CFBundleTypeExtensions</key>
                 <array>
                     <string>ustx</string>
@@ -44,7 +43,7 @@
                 <string>Editor</string>
                 <key>LSItemContentTypes</key>
                 <array>
-                    <string>asoqwer.utauv.ustx</string>
+                    <string>com.stakira.openutau.ustx</string>
                 </array>
             </dict>
         </array>          
@@ -54,25 +53,29 @@
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia.Native" Version="11.2.4" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.0" />
+    <PackageReference Include="Avalonia.Wayland" Version="12.1.0" />
     <PackageReference Include="Dotnet.Bundle" Version="0.9.13" />
-    <PackageReference Include="Material.Avalonia" Version="3.13.3" />
+    <PackageReference Include="DynamicData" Version="9.4.33" />
     <PackageReference Include="MonoMac.Core" Version="0.0.23728" />
     <PackageReference Include="NetSparkleUpdater.SparkleUpdater" Version="2.2.3" />
     <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
-    <PackageReference Include="Avalonia" Version="11.2.4" />
-    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.2.4" />
-    <PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="11.1.5" />
-    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.2.4" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.4" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.4" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.4" />
+    <PackageReference Include="ReactiveUI" Version="24.0.0-beta.3" />
+    <PackageReference Include="ReactiveUI.Avalonia" Version="12.1.0-beta.1" />
+    <PackageReference Include="Avalonia" Version="12.1.0" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.0" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.0" />
+    <PackageReference Include="Material.Avalonia" Version="3.13.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.0" />
+    <PackageReference Include="ReactiveUI.SourceGenerators" Version="3.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Serilog" Version="4.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.2" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.94.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenUtau.Core\OpenUtau.Core.csproj" />
@@ -130,6 +133,21 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+    <PropertyGroup>
+        <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    </PropertyGroup>
+    <!-- This matches old behavior from .NET 8, should be removed when not needed -->
+    <PropertyGroup>
+        <NuGetAuditMode>direct</NuGetAuditMode>
+    </PropertyGroup>
+    <!-- Intercept references during compilation to alias System.Reactive -->
+    <Target Name="AliasSystemReactive" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
+        <ItemGroup>
+            <ReferencePath Condition="'%(FileName)' == 'System.Reactive'">
+                <Aliases>SystemReactiveHidden</Aliases>
+            </ReferencePath>
+        </ItemGroup>
+    </Target>
     <PropertyGroup>
         <DefineConstants Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(DefineConstants);MACOS</DefineConstants>
     </PropertyGroup>

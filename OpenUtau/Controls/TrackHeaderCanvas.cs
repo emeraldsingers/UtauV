@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 
 namespace OpenUtau.App.Controls {
     class TrackHeaderCanvas : Canvas {

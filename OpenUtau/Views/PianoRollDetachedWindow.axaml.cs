@@ -31,7 +31,7 @@ namespace OpenUtau.App.Views {
             WindowState = (WindowState)ws.State;
         }
 
-        public void WindowGotFocus(object sender, GotFocusEventArgs e) {
+        public void WindowGotFocus(object sender, FocusChangedEventArgs e) {
             if (e.Source is PianoRollDetachedWindow) {
                 pianoRoll.Focus();
             }
