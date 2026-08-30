@@ -333,10 +333,6 @@
           <c:NumberSlider Label="Pitch edit dimming" Margin="0,5,0,0" ToolTip.Tip="Strength of the pitch edit mode dimming"
                           Value="{Binding PitchEditDim}" Default="59" Minimum="0" Maximum="100"
                           TickFrequency="10" IsSnapToTickEnabled="False" Format="{}{0:#0}%"/>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.detachpianoroll}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding DetachPianoRoll}"/>
-          </Grid>
         </StackPanel>
 
         <!-- UTAU -->

@@ -123,7 +123,6 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool NoteHoverGlow { get; set; }
         [Reactive] public bool PitchEditMode { get; set; }
         [Reactive] public double PitchEditDim { get; set; }
-        [Reactive] public bool DetachPianoRoll { get; set; }
         [Reactive] public bool ThemeEditable { get; set; }
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
         public bool IsThemeEditorOpen => Views.ThemeEditorWindow.IsOpen;
@@ -262,7 +261,6 @@ namespace OpenUtau.App.ViewModels {
             NoteHoverGlow = Preferences.Default.NoteHoverGlow;
             PitchEditMode = Preferences.Default.PitchEditMode;
             PitchEditDim = Preferences.Default.PitchEditDim;
-            DetachPianoRoll = Preferences.Default.DetachPianoRoll;
             Beta = Preferences.Default.Beta;
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
@@ -478,12 +476,6 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Default.PitchEditDim = pitchEditDim;
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new PitchEditModePrefChangedEvent());
-            this.WhenAnyValue(vm => vm.DetachPianoRoll)
-                .Subscribe(detachPianoRoll => {
-                    Preferences.Default.DetachPianoRoll = detachPianoRoll;
-                    Preferences.Save();
-                     MessageBus.Current.SendMessage(new PianorollRefreshEvent("Attachment"));
-                 });
                 });
             this.WhenAnyValue(vm => vm.Beta)
                 .Subscribe(beta => {

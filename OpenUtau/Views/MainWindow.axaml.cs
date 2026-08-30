@@ -1450,7 +1450,12 @@ namespace OpenUtau.App.Views {
             tikTokSavedMargin = prefs.PlayPosMarkerMargin;
             tikTokStateWasSaved = true;
 
-            if (!tikTokSavedDetach) {
+            if (!prefs.DetachPianoRoll) {
+                prefs.DetachPianoRoll = true;
+                Preferences.Save();
+                SetPianoRollAttachment();
+            }
+            if (pianoRollWindow == null) {
                 SetPianoRollAttachment();
             }
             if (pianoRollWindow != null) {
@@ -1467,6 +1472,7 @@ namespace OpenUtau.App.Views {
             var prefs = Preferences.Default;
             prefs.PlaybackAutoScroll = tikTokSavedAutoScroll;
             prefs.PlayPosMarkerMargin = tikTokSavedMargin;
+            prefs.DetachPianoRoll = tikTokSavedDetach;
             prefs.PianorollWindowSize.Set(tikTokSavedWidth, tikTokSavedHeight, tikTokSavedX, tikTokSavedY, tikTokSavedWindowState);
             Preferences.Save();
             RefreshPlaybackAutoScrollMenu();
