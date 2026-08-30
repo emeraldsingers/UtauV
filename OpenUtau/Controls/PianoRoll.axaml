@@ -330,6 +330,11 @@
                   </MenuItem.Icon>
                 </MenuItem>
               </MenuItem>
+              <MenuItem Header="{DynamicResource prefs.appearance.detachpianoroll}" Click="OnMenuDetachPianoRoll">
+                <MenuItem.Icon>
+                  <CheckBox IsChecked="{Binding PianoRollDetached}" />
+                </MenuItem.Icon>
+              </MenuItem>
               <MenuItem Header="{DynamicResource prefs.appearance.trackcolor}" Click="OnMenuUseTrackColor">
                 <MenuItem.Icon>
                   <CheckBox IsChecked="{Binding UseTrackColor}" />
@@ -388,12 +393,7 @@
                 </MenuItem>
               </MenuItem>
               <MenuItem Header="{DynamicResource pianoroll.menu.view.pianoroll}">
-                <MenuItem Header="{DynamicResource pianoroll.menu.view.pianoroll.detach}" Click="OnMenuDetachPianoRoll">
-                  <MenuItem.Icon>
-                    <CheckBox IsChecked="{Binding PianoRollDetached}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="{DynamicResource pianoroll.menu.view.pianoroll.hide}" Click="OnMenuHidePianoRoll"/>
+                <MenuItem Header="{DynamicResource pianoroll.menu.view.pianoroll.hide}" Click="OnHidePianoRoll"/>
                 <MenuItem Header="{DynamicResource pianoroll.menu.view.tiktokmode}" Click="OnMenuTikTokMode">
                   <MenuItem.Icon>
                     <CheckBox IsChecked="{Binding IsTikTokMode}" IsHitTestVisible="False"/>
@@ -602,6 +602,7 @@
             </Button>
           </StackPanel>
         </Border>
+        <Border Grid.Column="3" Background="Transparent" DoubleTapped="OnHidePianoRoll"/>
         <Border Grid.Column="4">
           <StackPanel Orientation="Horizontal">
             <ToggleButton Classes="toolbar" Margin="0" Padding="1" Height="20" Width="20" IsChecked="{Binding NotesViewModel.ShowNoteParams}"
@@ -617,6 +618,10 @@
                 </Path>
               </Grid>
             </ToggleButton>
+            <!-- Hide PianoRoll Padding -->
+            <Border IsVisible="{Binding HideMenuItemVisible}">
+              <Border Width="20" IsVisible="{Binding !NotesViewModel.ShowNoteParams}"/>
+            </Border>
           </StackPanel>
         </Border>
       </Grid>
@@ -709,6 +714,18 @@
               Background="{DynamicResource SystemRegionBrush}" Padding="0">
         <c:NotePropertiesControl/>
       </Border>
+
+      <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4"
+              Classes="toolbar clear" Margin="2"
+              HorizontalAlignment="Right" VerticalAlignment="Top"
+              Height="20" Width="20" Padding="1"
+              Click="OnHidePianoRoll"
+              IsVisible="{Binding HideMenuItemVisible}"
+              ToolTip.Tip="{DynamicResource pianoroll.toggle.hidepianoroll}">
+        <Grid Width="18" Height="18">
+          <Path Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}" StrokeThickness="1" Data="M 4 4 L 14 14 M 14 4 L 4 14"/>
+        </Grid>
+      </Button>
 
       <Border Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
               BoxShadow="inset 0 0 5 1 #3F000000" ClipToBounds="True" IsHitTestVisible="False">

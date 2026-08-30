@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -11,6 +11,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
 using OpenUtau.App.Views;
 using OpenUtau.Core;
@@ -21,7 +22,6 @@ using OpenUtau.Core.Util;
 using OpenUtau.ViewModels;
 using ReactiveUI;
 using Serilog;
-using Avalonia.Threading;
 
 namespace OpenUtau.App.Controls {
     interface IValueTip {
@@ -251,6 +251,14 @@ namespace OpenUtau.App.Controls {
                     }
                 });
 
+            MessageBus.Current.Listen<PianorollRefreshEvent>()
+                .Subscribe(e => {
+                    if(e.refreshItem == "Attachment") {
+                        MainWindow?.SetPianoRollAttachment();
+                        ViewModel.RaisePropertyChanged(nameof(ViewModel.PianoRollDetached));
+                    }
+                });
+
             DocManager.Inst.AddSubscriber(this);
         }
 
@@ -400,19 +408,22 @@ namespace OpenUtau.App.Controls {
         }
 
         void OnMenuDetachPianoRoll(object sender, RoutedEventArgs args) {
-            MainWindow?.SetPianoRollAttachment();
-            ViewModel.RaisePropertyChanged(nameof(ViewModel.PianoRollDetached));
+            Preferences.Default.DetachPianoRoll ^= true;
+            Preferences.Save();
+            MessageBus.Current.SendMessage(new PianorollRefreshEvent("Attachment"));
+            Dispatcher.UIThread.Post(() => {
+                ViewModel.RaisePropertyChanged(nameof(ViewModel.HideMenuItemVisible));
+            });
         }
 
-        void OnMenuHidePianoRoll(object sender, RoutedEventArgs args) {
+        void OnHidePianoRoll(object sender, RoutedEventArgs args) {
             if (RootWindow.DataContext is MainWindowViewModel mwvm) {
                 mwvm.ShowPianoRoll = false;
-            } else {
-                RootWindow.Hide();
             }
         }
 
         // Edit Tools
+
         private CancellationTokenSource? _longPressCts;
         private async void OnToolButtonPointerPressed(object? sender, PointerPressedEventArgs args) {
             if (!args.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;

@@ -1423,21 +1423,18 @@ namespace OpenUtau.App.Views {
                 return;
             }
             if (Preferences.Default.DetachPianoRoll) {
-                pianoRollWindow?.ForceClose();
-                pianoRollWindow = null;
-                PianoRollContainer.Content = pianoRoll;
-                viewModel.ShowPianoRoll = true;
-                Preferences.Default.DetachPianoRoll = false;
-            } else {
                 PianoRollContainer.Content = null;
                 viewModel.ShowPianoRoll = false;
                 if (pianoRollWindow == null) {
                     pianoRollWindow = new(pianoRoll);
                     pianoRollWindow.Show();
                 }
-                Preferences.Default.DetachPianoRoll = true;
+            } else {
+                pianoRollWindow?.ForceClose();
+                pianoRollWindow = null;
+                PianoRollContainer.Content = pianoRoll;
+                viewModel.ShowPianoRoll = true;
             }
-            Preferences.Save();
         }
 
         public void EnterTikTokMode() {
