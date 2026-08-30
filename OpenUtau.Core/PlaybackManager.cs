@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -198,6 +198,7 @@ namespace OpenUtau.Core {
         // boundary even when looping is disabled.
         private int playbackRangeStartTick = 0;
         private int playbackRangeEndTick = -1;
+        private int playbackEndTick = -1;
         private bool loopProjectOnPlaybackEnd;
 
         public Audio.IAudioOutput AudioOutput { get; set; } = new Audio.DummyAudioOutput();
@@ -274,10 +275,13 @@ namespace OpenUtau.Core {
                     // Explicit bounds are used for one-shot previews such as Alt+Space
                     // on selected notes; they must not fall through to project looping.
                     loopProjectOnPlaybackEnd = endTick == -1;
+                    int playbackEndTick = endTick == -1
+                        ? DocManager.Inst.Project.EndTick
+                        : endTick;
                     Play(
                         DocManager.Inst.Project,
                         tick: tick == -1 ? DocManager.Inst.playPosTick : tick,
-                        endTick: endTick,
+                        endTick: playbackEndTick,
                         trackNo: trackNo);
                 }
             }
@@ -289,6 +293,7 @@ namespace OpenUtau.Core {
                 AudioOutput.Play();
                 return;
             }
+            playbackEndTick = endTick;
             AudioOutput.Stop();
             StartingToPlay = true;
             PlayingMaster = true;
@@ -300,6 +305,7 @@ namespace OpenUtau.Core {
             StartingToPlay = false;
             PlayingMaster = false;
             playbackRangeEndTick = -1;
+            playbackEndTick = -1;
             loopProjectOnPlaybackEnd = false;
         }
 
@@ -308,6 +314,7 @@ namespace OpenUtau.Core {
             StartingToPlay = false;
             PlayingMaster = false;
             playbackRangeEndTick = -1;
+            playbackEndTick = -1;
             loopProjectOnPlaybackEnd = false;
         }
 
@@ -348,8 +355,8 @@ namespace OpenUtau.Core {
             if (AudioOutput != null && AudioOutput.PlaybackState == PlaybackState.Playing && PlayingMaster) {
                 double ms = (AudioOutput.GetPosition() / sizeof(float) - masterMix.Waited / 2) * 1000.0 / 44100;
                 int tick = DocManager.Inst.Project.timeAxis.MsPosToTickPos(startMs + ms);
-                if (playbackRangeEndTick > 0 && tick >= playbackRangeEndTick) {
-                    HandlePlaybackBoundary(hasPlaybackRange: true);
+                if (playbackEndTick > 0 && tick >= playbackEndTick) {
+                    HandlePlaybackBoundary(hasPlaybackRange: playbackRangeEndTick > 0);
                     return;
                 }
                 DocManager.Inst.ExecuteCmd(new SetPlayPosTickNotification(tick, masterMix.IsWaiting));
@@ -371,7 +378,10 @@ namespace OpenUtau.Core {
                     return;
                 }
                 if (loopProjectOnPlaybackEnd && DocManager.Inst.Project.EndTick > 0) {
-                    Play(DocManager.Inst.Project, tick: 0);
+                    Play(
+                        DocManager.Inst.Project,
+                        tick: 0,
+                        endTick: DocManager.Inst.Project.EndTick);
                     return;
                 }
             }
