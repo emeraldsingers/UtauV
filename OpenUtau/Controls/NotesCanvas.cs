@@ -190,7 +190,6 @@ namespace OpenUtau.App.Controls {
 
         private IBrush pitchEditDimBrush = new ImmutableSolidColorBrush(Color.FromArgb(150, 0, 0, 0));
         private Pen? pitchEditPen;
-        private PolylineGeometry polylineGeometry = new PolylineGeometry();
         private Points points = new Points();
 
         private HashSet<UNote> selectedNotes = new HashSet<UNote>();
@@ -1050,8 +1049,7 @@ namespace OpenUtau.App.Controls {
                     context.DrawGeometry(null, pen, pointGeometry);
                 }
             }
-            polylineGeometry.Points = points;
-            context.DrawGeometry(null, pen, polylineGeometry);
+            DrawPolyline(context, pen);
         }
 
         private void RenderVibrato(UNote note, NotesViewModel viewModel, DrawingContext context) {
@@ -1071,8 +1069,7 @@ namespace OpenUtau.App.Controls {
                 point = vibrato.Evaluate(nPos, nPeriod, note);
                 points.Add(viewModel.TickToneToPoint(point.X, point.Y - 0.5));
             }
-            polylineGeometry.Points = points;
-            context.DrawGeometry(null, pen, polylineGeometry);
+            DrawPolyline(context, pen);
         }
 
         private readonly Geometry vibratoIcon = Geometry.Parse("M-6.5 1 L-6 1.5 L-4.5 0 L-2 2.5 L0.5 0 L3 2.5 L6.5 -1 L6 -1.5 L4.5 0 L2 -2.5 L-0.5 0 L-3 -2.5 Z");
@@ -1135,10 +1132,15 @@ namespace OpenUtau.App.Controls {
                         float p = phrase.pitches[i];
                         points.Add(viewModel.TickToneToPoint(t, p / 100 - 0.5));
                     }
-                    polylineGeometry.Points = points;
-                    context.DrawGeometry(null, pen, polylineGeometry);
+                    DrawPolyline(context, pen);
                 }
             }
+        }
+
+        private void DrawPolyline(DrawingContext context, IPen? pen) {
+            // Drawing is deferred; use an immutable snapshot so later point edits cannot
+            // mutate geometry already queued for the current render pass.
+            context.DrawGeometry(null, pen, new PolylineGeometry(points.ToArray(), false));
         }
     }
 }
