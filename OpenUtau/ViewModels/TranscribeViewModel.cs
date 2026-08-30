@@ -100,10 +100,15 @@ namespace OpenUtau.App.ViewModels {
                 SelectedAlgorithm = TranscribeAlgorithm.SOME;
             }
 
-            // Load GAME config (no model sessions) to populate options
+            // Load config from the backend that will actually run (no model sessions).
+            // In particular, GGML-only installs must not probe the ONNX package.
             GameConfig? gameConfig = null;
             if (GameAvailable) {
-                gameConfig = Game.LoadConfig();
+                try {
+                    gameConfig = GameBackendFactory.LoadResolvedConfig();
+                } catch {
+                    GameAvailable = false;
+                }
             }
 
             GameHasLanguages = (gameConfig?.Languages?.Count ?? 0) > 0;

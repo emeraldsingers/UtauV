@@ -100,6 +100,10 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public GpuInfo? OnnxGpu { get; set; }
         [Reactive] public bool ShowOnnxGpu { get; set; }
 
+        // GAME backend (onnx / ggml)
+        public List<string> GameBackendOptions { get; } = new() { "ONNX", "GGML" };
+        [Reactive] public string GameBackend { get; set; }
+
         // Appearance
         [Reactive] public string ThemeName { get; set; }
         [Reactive] public string UiFontPath { get; set; }
@@ -221,6 +225,12 @@ namespace OpenUtau.App.ViewModels {
                 ? OnnxGpuOptions.FirstOrDefault(x => x.deviceId == Preferences.Default.OnnxGpu, OnnxGpuOptions[0])
                 : null;
             ShowOnnxGpu = (OnnxRunner == "DirectML" || OnnxRunner == "CUDA");
+            // GAME backend: ONNX is the default, GGML is available when installed.
+            // The options list always includes both so the ComboBox UX is stable.
+            GameBackend = Preferences.Default.GameBackend switch {
+                "ggml" => "GGML",
+                _ => "ONNX",  // default / empty / unrecognized all map to ONNX
+            };
             DiffSingerDepth = Preferences.Default.DiffSingerDepth * 100;
             DiffSingerSteps = Preferences.Default.DiffSingerSteps;
             DiffSingerStepsVariance = Preferences.Default.DiffSingerStepsVariance;
@@ -509,6 +519,11 @@ namespace OpenUtau.App.ViewModels {
                 .WhereNotNull()
                 .Subscribe(index => {
                     Preferences.Default.OnnxGpu = index.deviceId;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.GameBackend)
+                .Subscribe(index => {
+                    Preferences.Default.GameBackend = index == "GGML" ? "ggml" : "onnx";
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.RememberMid)

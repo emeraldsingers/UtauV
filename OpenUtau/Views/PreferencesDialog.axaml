@@ -217,6 +217,8 @@
             <ComboBox ItemsSource="{Binding OnnxGpuOptions}" SelectedItem="{Binding OnnxGpu}"/>
             <TextBlock Classes="restart"/>
           </StackPanel>
+          <TextBlock Text="{DynamicResource prefs.rendering.gamebackend}" Margin="0,10,0,0"/>
+          <ComboBox ItemsSource="{Binding GameBackendOptions}" SelectedItem="{Binding GameBackend}"/>
         </StackPanel>
 
         <!-- Appearance -->
