@@ -50,19 +50,27 @@ jobs:
 
             for (const commit of commits) {
               const message = (commit.message ?? '(no message)').split('\n')[0].slice(0, 1800);
-              const brandImage = `https://raw.githubusercontent.com/${context.payload.repository.full_name}/${commit.id}/OpenUtau/Assets/OpenUtau.png`;
+              const { data: commitDetails } = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: commit.id,
+              });
+              const author = commitDetails.author;
+              const authorName = author?.login ?? commit.author?.name ?? context.actor;
+              const authorAvatar = author?.avatar_url ?? context.payload.sender?.avatar_url;
               await post({
-                username: 'UtauV GitHub',
-                avatar_url: brandImage,
+                username: authorName,
+                ...(authorAvatar ? { avatar_url: authorAvatar } : {}),
                 allowed_mentions: { parse: [] },
                 embeds: [{
                   title: `New commit on ${context.ref.replace('refs/heads/', '')}`,
                   url: commit.url,
                   description: `[\`${commit.id.slice(0, 7)}\`](${commit.url}) ${message}`,
                   color: 5793266,
-                  author: { name: commit.author?.name ?? context.actor },
+                  author: authorAvatar
+                    ? { name: authorName, icon_url: authorAvatar }
+                    : { name: authorName },
                   footer: { text: context.payload.repository.full_name },
-                  thumbnail: { url: brandImage },
                 }],
               });
             }
