@@ -56,6 +56,15 @@ namespace OpenUtau.Core.Ustx {
             Error = note.Error;
             ValidateOto(track, note);
             ValidateDuration(project, track, part);
+            // Duration can temporarily mask a missing-singer error while it is
+            // being revalidated. Restore the singer diagnostic once duration is
+            // valid so later validation stages remain guarded.
+            if (track.Singer == null || !track.Singer.Found || !track.Singer.Loaded) {
+                if (ErrorException == null) {
+                    ErrorException = new Exception("Singer is not loaded.");
+                }
+                Error = true;
+            }
             if (ErrorException != null) {
                 Error = true;
             }
@@ -64,7 +73,13 @@ namespace OpenUtau.Core.Ustx {
         }
 
         void ValidateDuration(UProject project, UTrack track, UVoicePart part) {
-            if (Error) {
+            // A missing singer can set Error before duration validation runs. Still
+            // calculate the duration in clumped mode so a real negative-duration
+            // error remains the primary diagnostic (and can later be cleared).
+            bool canRevalidateDuration = !Util.Preferences.Default.ExtendEndingPhonemes &&
+                (ErrorException?.Message == "Singer is not loaded." ||
+                 ReferenceEquals(ErrorException, durationErrorException));
+            if (Error && !canRevalidateDuration) {
                 return;
             }
             var leadingNote = Parent.Extends ?? Parent;
@@ -108,7 +123,9 @@ namespace OpenUtau.Core.Ustx {
                 // validates, and Validate() keeps the error visible until it
                 // clears again.
                 durationErrorException ??= new Exception("Phoneme duration is not positive.");
-                ErrorException ??= durationErrorException;
+                if (ErrorException == null || ErrorException.Message == "Singer is not loaded.") {
+                    ErrorException = durationErrorException;
+                }
             } else if (ReferenceEquals(ErrorException, durationErrorException)) {
                 // Duration is valid again (e.g. the phoneme offset override was
                 // moved back), so clear the stale duration error. A phonemizer
