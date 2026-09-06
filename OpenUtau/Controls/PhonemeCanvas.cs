@@ -189,12 +189,8 @@ namespace OpenUtau.App.Controls {
                     double x4 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[4].X) - Part.position, 0).X;
                     double y4 = (1 - phoneme.envelope.data[4].Y / 100) * height;
 
-                    var pen = RofloficEffects.RainbowEnabled
-                        ? RofloficEffects.Pen(phoneme.position * 0.002, 1.5)
-                        : selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
-                    var brush = RofloficEffects.RainbowEnabled
-                        ? RofloficEffects.Brush(phoneme.position * 0.002, 110)
-                        : selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                    var pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
+                    var brush = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
                     if (customTheme != null) {
                         pen = selectedNotes.Contains(phoneme.Parent) && customTheme.HasPhonemeColor2
                             ? customTheme.GetPen(customTheme.PhonemeColor2)
@@ -204,6 +200,10 @@ namespace OpenUtau.App.Controls {
                                 ? customTheme.GetBrush(customTheme.AccentColorSemi)
                                 : new SolidColorBrush(color) { Opacity = 0.5 };
                         }
+                    }
+                    if (RofloficEffects.RainbowEnabled) {
+                        pen = RofloficEffects.Pen(phoneme.position * 0.002, 1.5);
+                        brush = RofloficEffects.Brush(phoneme.position * 0.002, 110);
                     }
 
                     var point0 = new Point(x0, y + y0);
@@ -229,6 +229,9 @@ namespace OpenUtau.App.Controls {
                     : phoneme.rawPosition != phoneme.position
                         ? ThemeManager.AccentPen2Thickness3
                         : ThemeManager.AccentPen2;
+                if (RofloficEffects.RainbowEnabled) {
+                    penPos = RofloficEffects.Pen(phoneme.position * 0.002, 2);
+                }
                 context.DrawLine(penPos, new Point(x, y), new Point(x, y + height));
 
                 // FIXME: Changing code below may break `HitTestAlias`.

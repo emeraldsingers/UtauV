@@ -588,6 +588,11 @@ namespace OpenUtau.App.Controls {
                     }
                 }
             }
+            // Rainbow is an explicit playback/view effect and must take
+            // precedence over singer-theme accent colors.
+            if (RofloficEffects.RainbowEnabled) {
+                brush = RofloficEffects.Gradient(note.position * 0.002, 230);
+            }
             brush = ApplyNoteOpacity(brush);
             double radius = GetNoteCornerRadius(size);
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
