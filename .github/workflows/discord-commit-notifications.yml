@@ -50,8 +50,10 @@ jobs:
 
             for (const commit of commits) {
               const message = (commit.message ?? '(no message)').split('\n')[0].slice(0, 1800);
+              const brandImage = `https://raw.githubusercontent.com/${context.payload.repository.full_name}/${commit.id}/OpenUtau/Assets/OpenUtau.png`;
               await post({
                 username: 'UtauV GitHub',
+                avatar_url: brandImage,
                 allowed_mentions: { parse: [] },
                 embeds: [{
                   title: `New commit on ${context.ref.replace('refs/heads/', '')}`,
@@ -60,6 +62,7 @@ jobs:
                   color: 5793266,
                   author: { name: commit.author?.name ?? context.actor },
                   footer: { text: context.payload.repository.full_name },
+                  thumbnail: { url: brandImage },
                 }],
               });
             }

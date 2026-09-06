@@ -445,17 +445,20 @@ jobs:
               return;
             }
             const stable = process.env.RELEASE_CHANNEL === 'stable';
+            const brandImage = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${context.sha}/OpenUtau/Assets/OpenUtau.png`;
             const response = await fetch(webhook, {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({
                 username: 'UtauV Releases',
+                avatar_url: brandImage,
                 allowed_mentions: { parse: [] },
                 embeds: [{
                   title: `${stable ? 'Stable' : 'Beta'} release: ${process.env.RELEASE_NAME}`,
                   url: process.env.RELEASE_URL,
                   description: `Tag: [\`${process.env.RELEASE_TAG}\`](${process.env.RELEASE_URL})`,
                   color: stable ? 5763719 : 16753920,
+                  image: { url: brandImage },
                 }],
               }),
             });
