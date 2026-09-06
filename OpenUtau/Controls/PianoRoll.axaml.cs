@@ -10,7 +10,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
 using OpenUtau.App.Views;
 using OpenUtau.Core;
@@ -411,7 +410,7 @@ namespace OpenUtau.App.Controls {
             Preferences.Default.DetachPianoRoll ^= true;
             Preferences.Save();
             MessageBus.Current.SendMessage(new PianorollRefreshEvent("Attachment"));
-            Dispatcher.UIThread.Post(() => {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => {
                 ViewModel.RaisePropertyChanged(nameof(ViewModel.HideMenuItemVisible));
             });
         }
@@ -2213,7 +2212,7 @@ namespace OpenUtau.App.Controls {
                     LoadingWindow.EndLoading();
                 }
             } else if (cmd is WaveformReadyNotification) {
-                Dispatcher.UIThread.Post(() => {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => {
                     MessageBus.Current.SendMessage(new WaveformRefreshEvent());
                 }, Avalonia.Threading.DispatcherPriority.Normal);
             }
