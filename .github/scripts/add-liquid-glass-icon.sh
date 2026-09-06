@@ -31,8 +31,13 @@ actool "$ICON_SOURCE" --compile "$TMP_DIR" \
     --enable-on-demand-resources NO \
     --development-region en \
     --target-device mac \
-    --minimum-deployment-target 26.0 \
+    --minimum-deployment-target 15.0 \
     --platform macosx
+
+if [ ! -f "$TMP_DIR/Assets.car" ]; then
+    echo "actool did not produce Assets.car; keeping the regular macOS icon."
+    exit 0
+fi
 
 cp "$TMP_DIR/Assets.car" "$APP_PATH/Contents/Resources/Assets.car"
 
