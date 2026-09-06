@@ -82,7 +82,7 @@ namespace OpenUtau.Core.Vogen {
                     if (result.samples != null) {
                         Renderers.ApplyDynamics(phrase, result);
                         PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
-                        DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
+                        Task.Factory.StartNew(() => DocManager.Inst.ExecuteCmd(new WaveformReadyNotification()), CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                     }
                     progress.Complete(phrase.phones.Length, progressInfo);
                     return result;

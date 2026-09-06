@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Reactive.Linq;
 using static ReactiveUI.Primitives.SubscribeExtensions;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -1072,17 +1073,24 @@ namespace OpenUtau.App.ViewModels {
             if (Part != null && !Selection.IsEmpty) {
                 DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, ThemeManager.GetString("progress.clearingcache")));
                 var selectedNotes = Selection.ToList();
-                var phrases = Part.renderPhrases.Where(phrase => selectedNotes.Any(note => phrase.notes.Any(rnote => rnote.position == Part.position + note.position - phrase.position && rnote.duration == note.duration)));
-                foreach (var phrase in phrases) {
-                    phrase.DeleteCacheFiles();
-                }
-                DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, ThemeManager.GetString("progress.cachecleared")));
+                var phrases = Part.renderPhrases
+                    .Where(phrase => selectedNotes.Any(note =>
+                        phrase.notes.Any(rnote => rnote.position == Part.position + note.position - phrase.position
+                                            && rnote.duration == note.duration)))
+                    .ToList();
                 foreach (var phrase in phrases) {
                     PlaybackManager.Inst.LiveWaveformCache.TryRemove(phrase.hash.ToString(), out _);
                 }
-                // can't clear individual phrases :'(
                 Part.Mix = null;
                 DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
+                Task.Run(() => {
+                    foreach (var phrase in phrases) {
+                        phrase.DeleteCacheFiles();
+                    }
+                    Task.Factory.StartNew(() => {
+                        DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, ThemeManager.GetString("progress.cachecleared")));
+                    }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
+                });
             }
         }
 
