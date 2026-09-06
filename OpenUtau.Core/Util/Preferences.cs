@@ -258,6 +258,7 @@ namespace OpenUtau.Core.Util {
             public bool ShowWaveform = true;
             public bool ShowPhoneme = true;
             public bool ShowPhonemePanel = false;
+            public bool DiffSingerBarStyle = false;
             public bool PitchEditMode = false;
             public double PitchEditDim = 59;
             public bool ShowExpressions = true;

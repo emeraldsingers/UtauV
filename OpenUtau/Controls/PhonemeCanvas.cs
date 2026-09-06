@@ -141,6 +141,7 @@ namespace OpenUtau.App.Controls {
                 return;
             }
             context.DrawRectangle(Background, null, Bounds.WithX(0).WithY(0));
+            bool diffSinger = PhonemeUIRender.UseDiffSingerBarStyle(Part);
             double leftTick = TickOffset - 480;
             double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
             bool raiseText = false;
@@ -159,6 +160,12 @@ namespace OpenUtau.App.Controls {
                 double x = Math.Round(viewModel.TickToneToPoint(phoneme.position, 0).X) + 0.5;
                 double posMs = phoneme.PositionMs;
                 if (!phoneme.Error) {
+                    if (diffSinger) {
+                        double xRight = Math.Round(viewModel.TickToneToPoint(phoneme.End, 0).X) + 0.5;
+                        var brushBar = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                        context.DrawRectangle(brushBar, null, new Rect(x, y, xRight - x, height));
+                        goto DrawPosition;
+                    }
                     double x0 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[0].X) - Part.position, 0).X;
                     double y0 = (1 - phoneme.envelope.data[0].Y / 100) * height;
                     double x1 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[1].X) - Part.position, 0).X;
@@ -193,6 +200,7 @@ namespace OpenUtau.App.Controls {
                     }
                 }
 
+            DrawPosition:
                 var penPos = ThemeManager.AccentPen2;
                 if (phoneme.rawPosition != phoneme.position) {
                     penPos = ThemeManager.AccentPen2Thickness3;

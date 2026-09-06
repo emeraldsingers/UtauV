@@ -123,6 +123,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial bool ShowIcon { get; set; }
         [Reactive] public partial bool ShowGhostNotes { get; set; }
         [Reactive] public partial bool NoteHoverGlow { get; set; }
+        [Reactive] public partial bool DiffSingerBarStyle { get; set; }
         [Reactive] public partial bool PitchEditMode { get; set; }
         [Reactive] public partial double PitchEditDim { get; set; }
         [Reactive] public partial bool ThemeEditable { get; set; }
@@ -261,6 +262,7 @@ namespace OpenUtau.App.ViewModels {
             ShowIcon = Preferences.Default.ShowIcon;
             ShowGhostNotes = Preferences.Default.ShowGhostNotes;
             NoteHoverGlow = Preferences.Default.NoteHoverGlow;
+            DiffSingerBarStyle = Preferences.Default.DiffSingerBarStyle;
             PitchEditMode = Preferences.Default.PitchEditMode;
             PitchEditDim = Preferences.Default.PitchEditDim;
             Beta = Preferences.Default.Beta;
@@ -463,6 +465,12 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.NoteHoverGlow)
                 .Subscribe(noteHoverGlow => {
                     Preferences.Default.NoteHoverGlow = noteHoverGlow;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                });
+            this.WhenAnyValue(vm => vm.DiffSingerBarStyle)
+                .Subscribe(value => {
+                    Preferences.Default.DiffSingerBarStyle = value;
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 });
