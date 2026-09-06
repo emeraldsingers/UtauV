@@ -121,9 +121,15 @@ namespace OpenUtau.App.ViewModels {
             string suffix = PathManager.Inst.IsInstalled ? "-installer"
                                 : PathManager.Inst.IsAppImage ? "-appimage"
                                 : "";
-            return release.assets
-                .Where(a => a.name == $"appcast.{OS.GetUpdaterRid()}{suffix}.xml")
-                .FirstOrDefault();
+            string rid = OS.GetUpdaterRid();
+            var names = new List<string> { $"appcast.{rid}{suffix}.xml" };
+            // Older build workflow runs named the DirectML x64 target win-x64
+            // instead of win-x64-directml. Keep accepting those appcasts while
+            // new releases use the canonical runtime RID.
+            if (rid == "win-x64-directml") {
+                names.Add($"appcast.win-x64{suffix}.xml");
+            }
+            return release.assets.FirstOrDefault(a => names.Contains(a.name));
         }
 
         async void Init() {

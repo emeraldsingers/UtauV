@@ -141,7 +141,7 @@ jobs:
         run: |
           targets=()
           add() { targets+=("$1"); }
-          [[ "$WIN_X64_DIRECTML" == true ]] && add '{"name":"win-x64","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
+          [[ "$WIN_X64_DIRECTML" == true ]] && add '{"name":"win-x64-directml","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
           [[ "$WIN_X64_CUDA" == true ]] && add '{"name":"win-x64-cuda","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"CUDA"}'
           [[ "$WIN_ARM64" == true ]] && add '{"name":"win-arm64","rid":"win-arm64","arch":"arm64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
           [[ "$OSX_ARM64" == true ]] && add '{"name":"osx-arm64","rid":"osx-arm64","arch":"arm64","os":"osx","runs-on":"macos-15-intel","onnx_provider":"Default"}'
@@ -435,8 +435,8 @@ jobs:
             ### Windows
 
             **DirectML builds** (recommended for most users - works on AMD, Intel, and NVIDIA GPUs):
-            - [Installer (64-bit DirectML)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64.exe)
-            - [Portable ZIP (64-bit DirectML)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64.zip)
+            - [Installer (64-bit DirectML)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64-directml.exe)
+            - [Portable ZIP (64-bit DirectML)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64-directml.zip)
             - [Installer (ARM64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-arm64.exe)
             - [Portable ZIP (ARM64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-arm64.zip)
 
