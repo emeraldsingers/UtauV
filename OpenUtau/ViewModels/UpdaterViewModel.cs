@@ -40,6 +40,21 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial FontWeight UpdateButtonFontWeight { get; set; }
         public Action? CloseApplication { get; set; }
 
+        public static bool IsReleaseForChannel(GithubRelease release, string channel) {
+            if (release.draft) {
+                return false;
+            }
+            string tag = release.tag_name ?? string.Empty;
+            bool alpha = tag.Contains("-alpha", StringComparison.OrdinalIgnoreCase);
+            bool beta = tag.Contains("-beta", StringComparison.OrdinalIgnoreCase);
+            return channel.ToLowerInvariant() switch {
+                "stable" => !release.prerelease,
+                "beta" => release.prerelease && !alpha,
+                "alpha" => release.prerelease || alpha,
+                _ => !release.prerelease,
+            };
+        }
+
         private SparkleUpdater? sparkle;
         private UpdateInfo? updateInfo;
         private bool updateAccepted;
