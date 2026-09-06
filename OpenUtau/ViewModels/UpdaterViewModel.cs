@@ -108,7 +108,7 @@ namespace OpenUtau.App.ViewModels {
                 return null;
             }
             return releases
-                .Where(r => !r.draft && r.prerelease == Preferences.Default.Beta)
+                .Where(r => IsReleaseForChannel(r, Preferences.Default.Channel))
                 .OrderByDescending(r => r.id)
                 .FirstOrDefault();
         }

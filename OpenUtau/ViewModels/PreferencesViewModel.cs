@@ -14,6 +14,7 @@ using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using ReactiveUI.Primitives;
 using OpenUtau.Core.Render;
+using OpenUtau.Colors;
 using Serilog;
 
 namespace OpenUtau.App.ViewModels {
@@ -42,7 +43,8 @@ namespace OpenUtau.App.ViewModels {
             get => sortingOrder;
             set => this.RaiseAndSetIfChanged(ref sortingOrder, value);
         }
-        [Reactive] public partial bool Beta { get; set; }
+        // Release channel index: 0 = stable, 1 = beta, 2 = alpha.
+        [Reactive] public partial int Channel { get; set; }
 
         // Playback
         private List<AudioOutputDevice>? audioOutputDevices;
@@ -123,6 +125,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial double UiCornerRadius { get; set; }
         [Reactive] public partial int DegreeStyle { get; set; }
         [Reactive] public partial bool UseTrackColor { get; set; }
+        [Reactive] public partial bool UseCustomSingerTheme { get; set; }
         [Reactive] public partial bool ShowPortrait { get; set; }
         [Reactive] public partial bool ShowIcon { get; set; }
         [Reactive] public partial bool ShowGhostNotes { get; set; }
@@ -133,6 +136,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial bool ThemeEditable { get; set; }
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
         public bool IsThemeEditorOpen => Views.ThemeEditorWindow.IsOpen;
+        public bool IsSingerThemeEditorOpen => Views.SingerThemeEditorWindow.IsOpen;
 
         // UTAU
         public List<string> DefaultRendererOptions { get; set; }
@@ -267,6 +271,7 @@ namespace OpenUtau.App.ViewModels {
             UiCornerRadius = Preferences.Default.UiCornerRadius;
             DegreeStyle = Preferences.Default.DegreeStyle;
             UseTrackColor = Preferences.Default.UseTrackColor;
+            UseCustomSingerTheme = Preferences.Default.UseCustomSingerTheme;
             ShowPortrait = Preferences.Default.ShowPortrait;
             ShowIcon = Preferences.Default.ShowIcon;
             ShowGhostNotes = Preferences.Default.ShowGhostNotes;
@@ -274,7 +279,11 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerBarStyle = Preferences.Default.DiffSingerBarStyle;
             PitchEditMode = Preferences.Default.PitchEditMode;
             PitchEditDim = Preferences.Default.PitchEditDim;
-            Beta = Preferences.Default.Beta;
+            Channel = Preferences.Default.Channel switch {
+                "beta" => 1,
+                "alpha" => 2,
+                _ => 0
+            };
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
             OtoEditor = Preferences.Default.OtoEditor;
@@ -469,6 +478,12 @@ namespace OpenUtau.App.ViewModels {
                     MessageBus.Current.SendMessage(new PianorollRefreshEvent("TrackColor"));
                     MessageBus.Current.SendMessage(new TracksRefreshEvent());
                 });
+            this.WhenAnyValue(vm => vm.UseCustomSingerTheme)
+                .Subscribe(value => {
+                    Preferences.Default.UseCustomSingerTheme = value;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new PianorollRefreshEvent("Part"));
+                });
             this.WhenAnyValue(vm => vm.ShowPortrait)
                 .Subscribe(showPortrait => {
                     Preferences.Default.ShowPortrait = showPortrait;
@@ -511,9 +526,13 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new PitchEditModePrefChangedEvent());
                 });
-            this.WhenAnyValue(vm => vm.Beta)
-                .Subscribe(beta => {
-                    Preferences.Default.Beta = beta;
+            this.WhenAnyValue(vm => vm.Channel)
+                .Subscribe(channel => {
+                    Preferences.Default.Channel = channel switch {
+                        1 => "beta",
+                        2 => "alpha",
+                        _ => "stable"
+                    };
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.LyricsHelper)
