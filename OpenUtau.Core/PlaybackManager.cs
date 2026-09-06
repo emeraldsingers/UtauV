@@ -343,8 +343,8 @@ namespace OpenUtau.Core {
                     RenderEngine engine = new RenderEngine(project, startTick: tick, endTick: endTick, trackNo: trackNo);
                     var result = engine.RenderProject(DocManager.Inst.MainScheduler, ref renderCancellation);
                     faders = result.Item2;
-                    StartingToPlay = false;
                     StartPlayback(project.timeAxis.TickPosToMsPos(tick), result.Item1);
+                    StartingToPlay = false;
 
                     Task.Factory.StartNew(() => {
                         DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
