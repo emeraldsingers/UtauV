@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
 using OpenUtau.App.Controls;
+using OpenUtau.App.ViewModels;
 using OpenUtau.Core.Util;
 using ReactiveUI;
 
@@ -179,6 +180,7 @@ namespace OpenUtau.App {
             SetKeyboardBrush();
             TextLayoutCache.Clear();
             MessageBus.Current.SendMessage(new ThemeChangedEvent());
+            MessageBus.Current.SendMessage(new NotesRefreshEvent());
         }
 
         public static void ChangePianorollColor(string color) {
@@ -199,6 +201,7 @@ namespace OpenUtau.App {
                 SetKeyboardBrush();
             } catch { }
             MessageBus.Current.SendMessage(new ThemeChangedEvent());
+            MessageBus.Current.SendMessage(new NotesRefreshEvent());
         }
         private static void SetPianorollAccent() {
             if (Application.Current == null) {
