@@ -24,7 +24,7 @@ namespace OpenUtau.App.Views {
                 .Subscribe(_ => UpdateLogo())
                 .DisposeWith(disposable);
             this.Cursor = new Cursor(StandardCursorType.AppStarting);
-            this.Opened += SplashWindow_Opened;
+            this.Activated += SplashWindow_Opened;
         }
 
         private readonly MultipleDisposable disposable = new();
