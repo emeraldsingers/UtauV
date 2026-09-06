@@ -132,7 +132,7 @@ const perRule = CFG.rules.map((rule) => {
 // files in their paths only?
 const touched = perRule.filter((p) => p.files > 0);
 const withinLimits = (p) =>
-  (p.rule.max_files === undefined || p.files < p.rule.max_files) && p.lines < p.rule.max_lines;
+  (p.rule.max_files === undefined || p.files <= p.rule.max_files) && p.lines <= p.rule.max_lines;
 
 // Team pages are org-members-only, so spell the team out as well as link it.
 const TEAM_LINK = `[@${org}/${CFG.approvers_team}](https://github.com/orgs/${org}/teams/${CFG.approvers_team})`;
@@ -164,8 +164,8 @@ if (becameReady) {
         const filePart =
           p.rule.max_files === undefined
             ? `${p.files} files (no limit)`
-            : `${p.files} files (max ${p.rule.max_files - 1})`;
-        const linePart = `${p.lines} lines (max ${p.rule.max_lines - 1})`;
+            : `${p.files} files (max ${p.rule.max_files})`;
+        const linePart = `${p.lines} lines (max ${p.rule.max_lines})`;
         lines.push(
           `- ${p.rule.name} (${p.rule.paths.join(', ')}): ${filePart}, ${linePart} — ` +
             (withinLimits(p) ? 'within limits' : '**exceeds a limit**')
@@ -219,10 +219,10 @@ if (!files.every((f) => perRule.some((p) => inRule(f.filename, p.rule))))
 for (const p of touched) {
   if (p.opaque.length > 0)
     notEligible(`rule "${p.rule.name}": binary or renamed files cannot be size-checked: ${p.opaque.join(', ')}`);
-  if (p.rule.max_files !== undefined && p.files >= p.rule.max_files)
-    notEligible(`rule "${p.rule.name}": touches ${p.files} files (must be < ${p.rule.max_files})`);
-  if (p.lines >= p.rule.max_lines)
-    notEligible(`rule "${p.rule.name}": ${p.lines} changed lines (must be < ${p.rule.max_lines})`);
+  if (p.rule.max_files !== undefined && p.files > p.rule.max_files)
+    notEligible(`rule "${p.rule.name}": touches ${p.files} files (max ${p.rule.max_files})`);
+  if (p.lines > p.rule.max_lines)
+    notEligible(`rule "${p.rule.name}": ${p.lines} changed lines (max ${p.rule.max_lines})`);
 }
 if (touched.length === 0) notEligible('no changed files');
 // The strictest approval requirement among the touched rules applies.

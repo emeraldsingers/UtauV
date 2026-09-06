@@ -6,9 +6,9 @@
     "",
     "paths:      a trailing '/' means 'this directory and everything below',",
     "            otherwise it must be the exact file name",
-    "max_lines:  strict upper bound of added+removed lines, counted per rule",
-    "            over the files inside that rule's paths only",
-    "max_files:  strict upper bound on file count, same counting"
+    "max_lines:  greatest allowed number of added+removed lines, counted per",
+    "            rule over the files inside that rule's paths only",
+    "max_files:  greatest allowed file count, same counting"
   ],
   "merge_method": "squash",
   "approvers_team": "approvers",
