@@ -24,9 +24,26 @@ jobs:
               return;
             }
 
-            const commits = context.payload.commits ?? [];
+            const pushedCommits = context.payload.commits ?? [];
+            const before = context.payload.before;
+            const firstParentCommits = new Set();
+            let sha = context.payload.after;
+
+            // A merge push includes commits from its second parent. Only announce
+            // commits that become part of master's first-parent history.
+            while (sha && sha !== before) {
+              firstParentCommits.add(sha);
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: sha,
+              });
+              sha = commit.parents[0]?.sha;
+            }
+
+            const commits = pushedCommits.filter(commit => firstParentCommits.has(commit.id));
             if (commits.length === 0) {
-              core.notice('This push has no commit payload to announce.');
+              core.notice('This push has no first-parent commits to announce.');
               return;
             }
 
