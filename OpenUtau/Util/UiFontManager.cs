@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Fonts;
@@ -23,12 +19,6 @@ public static class UiFontManager {
     private static bool customFontApplied;
     private static string? loadedFontPath;
     private static string? loadedFamilyName;
-
-    private static readonly MethodInfo? CreateGlyphTypefaceFromStream = typeof(IFontManagerImpl)
-        .GetMethods()
-        .FirstOrDefault(method => method.Name == "TryCreateGlyphTypeface"
-            && method.GetParameters().Length == 3
-            && method.GetParameters()[0].ParameterType == typeof(Stream));
 
     public static bool IsSupportedFontPath(string? path) {
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) {
@@ -107,7 +97,13 @@ public static class UiFontManager {
                 if (loadedFontPath != null) {
                     FontManager.Current.RemoveFontCollection(CollectionKey);
                 }
-                throw new PlatformNotSupportedException("Custom font loading is unavailable on Avalonia 12.");
+                var collection = new LocalFontCollection(CollectionKey, path!);
+                FontManager.Current.AddFontCollection(collection);
+                if (collection.Count == 0 || string.IsNullOrWhiteSpace(collection.FamilyName)) {
+                    throw new InvalidDataException("The font file does not contain a readable typeface.");
+                }
+                loadedFontPath = path;
+                loadedFamilyName = collection.FamilyName;
             }
             if (string.IsNullOrWhiteSpace(loadedFamilyName)) {
                 throw new InvalidDataException("The font file does not contain a readable typeface.");
@@ -138,69 +134,20 @@ public static class UiFontManager {
         }
     }
 
-    #if false
     private sealed class LocalFontCollection : FontCollectionBase {
         private readonly Uri key;
-        private readonly string path;
-        private readonly List<FontFamily> families = new();
         public string FamilyName { get; private set; } = string.Empty;
 
         public LocalFontCollection(Uri key, string path) {
             this.key = key;
-            this.path = path;
+            using var stream = File.OpenRead(path);
+            if (!TryAddGlyphTypeface(stream, out var glyphTypeface)) {
+                return;
+            }
+            FamilyName = glyphTypeface.FamilyName;
+            AddFontFamily(new FontFamily(key, FamilyName));
         }
 
         public override Uri Key => key;
-        public override int Count => families.Count;
-        public override FontFamily this[int index] => families[index];
-
-        public override void Initialize(IFontManagerImpl fontManager) {
-            using var stream = File.OpenRead(path);
-            if (CreateGlyphTypefaceFromStream == null) {
-                return;
-            }
-            var args = new object?[] { stream, FontSimulations.None, null };
-            var loaded = (bool)(CreateGlyphTypefaceFromStream.Invoke(fontManager, args) ?? false);
-            if (!loaded || args[2] is not IGlyphTypeface glyphTypeface) {
-                return;
-            }
-
-            var collectionKey = new FontCollectionKey(
-                glyphTypeface.Style, glyphTypeface.Weight, glyphTypeface.Stretch);
-            FamilyName = glyphTypeface.FamilyName;
-            families.Add(new FontFamily(key, FamilyName));
-            var typefaces = _glyphTypefaceCache.GetOrAdd(
-                FamilyName, _ => new ConcurrentDictionary<FontCollectionKey, IGlyphTypeface?>());
-            typefaces[collectionKey] = glyphTypeface;
-        }
-
-        public override bool TryGetGlyphTypeface(
-            string familyName,
-            FontStyle style,
-            FontWeight weight,
-            FontStretch stretch,
-            [NotNullWhen(true)] out IGlyphTypeface? glyphTypeface) {
-            glyphTypeface = null;
-            if (!_glyphTypefaceCache.TryGetValue(familyName, out var typefaces)) {
-                foreach (var pair in _glyphTypefaceCache) {
-                    if (pair.Key.StartsWith(familyName, StringComparison.OrdinalIgnoreCase)) {
-                        typefaces = pair.Value;
-                        break;
-                    }
-                }
-            }
-            if (typefaces == null) {
-                return false;
-            }
-            if (typefaces.TryGetValue(new FontCollectionKey(style, weight, stretch), out glyphTypeface)
-                && glyphTypeface != null) {
-                return true;
-            }
-            glyphTypeface = typefaces.Values.FirstOrDefault(value => value != null);
-            return glyphTypeface != null;
-        }
-
-        public override IEnumerator<FontFamily> GetEnumerator() => families.GetEnumerator();
     }
-    #endif
 }
