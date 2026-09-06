@@ -707,8 +707,10 @@ namespace OpenUtau.App.ViewModels {
                 IsDiffSinger = false;
                 return;
             }
-            var renderer = Project.tracks[Part.trackNo].RendererSettings.Renderer;
-            IsDiffSinger = renderer != null && renderer.SingerType == USingerType.DiffSinger;
+            var track = Project.tracks[Part.trackNo];
+            var renderer = track.RendererSettings.Renderer;
+            IsDiffSinger = renderer?.SingerType == USingerType.DiffSinger
+                || track.Singer?.SingerType == USingerType.DiffSinger;
         }
 
         private void DeselectNote(UNote note) {

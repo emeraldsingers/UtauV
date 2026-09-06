@@ -33,7 +33,7 @@ namespace OpenUtau.Core.DiffSinger {
         readonly object scheduleLock = new();
         readonly Dictionary<UVoicePart, CancellationTokenSource> debounceTokens = new();
         readonly Dictionary<UVoicePart, HashSet<UNote>> pendingNotesByPart = new();
-        readonly HashSet<UVoicePart> lyricPendingParts = new();
+        readonly HashSet<UVoicePart> phonemizationPendingParts = new();
         readonly LoadRenderedPitch pitchLoader = new();
 
         readonly struct RealtimePitchSettings {
@@ -80,7 +80,7 @@ namespace OpenUtau.Core.DiffSinger {
             var settings = GetSettings();
             if (cmd is ChangeNoteLyricCommand lyricCmd) {
                 lock (scheduleLock) {
-                    lyricPendingParts.Add(lyricCmd.Part);
+                    phonemizationPendingParts.Add(lyricCmd.Part);
                     TrackAffectedNotes(lyricCmd.Part, lyricCmd.Notes);
                 }
                 SchedulePart(lyricCmd.Part, settings.LyricFallbackMs);
@@ -89,7 +89,7 @@ namespace OpenUtau.Core.DiffSinger {
             if (cmd is PhonemizedNotification phonemized) {
                 bool schedule;
                 lock (scheduleLock) {
-                    schedule = lyricPendingParts.Remove(phonemized.part);
+                    schedule = phonemizationPendingParts.Remove(phonemized.part);
                 }
                 if (schedule) {
                     SchedulePart(phonemized.part, settings.AfterPhonemizeMs);
@@ -98,6 +98,7 @@ namespace OpenUtau.Core.DiffSinger {
             }
             if (cmd is NoteCommand noteCmd && TriggerCommandTypes.Contains(cmd.GetType())) {
                 lock (scheduleLock) {
+                    phonemizationPendingParts.Add(noteCmd.Part);
                     TrackAffectedNotes(noteCmd.Part, noteCmd.Notes);
                 }
                 SchedulePart(noteCmd.Part, settings.DebounceMs);
@@ -158,6 +159,11 @@ namespace OpenUtau.Core.DiffSinger {
             if (!project.parts.Contains(part) || !IsDiffSingerPart(part)) {
                 return;
             }
+            // Render phrases are rebuilt asynchronously by the phonemizer. Keep the
+            // pending notes until its notification arrives instead of losing this edit.
+            if (!part.PhonemesUpToDate) {
+                return;
+            }
             List<UNote> affectedNotes;
             lock (scheduleLock) {
                 if (!pendingNotesByPart.TryGetValue(part, out var set) || set.Count == 0) {
@@ -189,10 +195,11 @@ namespace OpenUtau.Core.DiffSinger {
             if (part == null || part.trackNo < 0 || part.trackNo >= DocManager.Inst.Project.tracks.Count) {
                 return false;
             }
-            var renderer = DocManager.Inst.Project.tracks[part.trackNo].RendererSettings.Renderer;
-            return renderer != null
-                && renderer.SupportsRenderPitch
-                && renderer.SingerType == USingerType.DiffSinger;
+            var track = DocManager.Inst.Project.tracks[part.trackNo];
+            var renderer = track.RendererSettings.Renderer;
+            return (renderer?.SupportsRenderPitch == true
+                    && renderer.SingerType == USingerType.DiffSinger)
+                || track.Singer?.SingerType == USingerType.DiffSinger;
         }
     }
 }

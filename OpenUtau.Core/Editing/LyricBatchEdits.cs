@@ -154,7 +154,6 @@ namespace OpenUtau.Core.Editing {
         public virtual string Name => name;
         private string name;
         static readonly Regex phoneticHintPattern = new Regex(@"\[(.*)\]");
-        static readonly List<string> ignoreList = new List<string>(new string[] {"R", "br", "AP", "SP", "cl", "息", "吸"});
 
         public AddPhoneticHints() {
             name = "pianoroll.menu.lyrics.addphonetichints";
@@ -181,44 +180,26 @@ namespace OpenUtau.Core.Editing {
                 var constructNote = note.ToPhonemizerNote(track, part);
                 // reconstruct Note so that we can isolate response from phonemizer.
 
+                string[] phonemeList;
                 if (phonemizer is IG2pSymbols sym) {
-                    var phonemeList = sym.GetSymbols(constructNote);
-                    string lyric = note.lyric + " [" + string.Join(" ", phonemeList) + "]";
-                    if (lyric == "[]") {
-                        lyric = note.lyric;
-                    }
-                    docManager.ExecuteCmd(new ChangeNoteLyricCommand(part, note, lyric));
+                    phonemeList = sym.GetSymbols(constructNote);
                 } else {
-
-                    // fallback behaviour given phonemizer is neither SBP not PBP instance.
-                    // splits the note at each phoneme boundary and assigns the phonemizer's
-                    // original (unoverridden) alias to the resulting note as its lyric.
-
-                    var phonemeList = part.phonemes
-                    .Where(p => note.phonemeIndexes.Contains(p.index) && p.position >= note.position && p.position < (note.position + note.duration))
-                    .OrderBy(p => p.position)
-                    .ToList();
-
-                    if (phonemeList.Count == 0) {
-                        continue;
-                    }
-
-                    var currentNote = note;
-                    for (int i = 1; i < phonemeList.Count; i++) {
-                        int splitPos = phonemeList[i].position;
-
-                        var newNote = project.CreateNote(currentNote.tone, splitPos, currentNote.End - splitPos);
-                        docManager.ExecuteCmd(new AddNoteCommand(part, newNote));
-                        foreach (var exp in currentNote.phonemeExpressions.OrderBy(exp => exp.index)) {
-                            docManager.ExecuteCmd(new SetNoteExpressionCommand(project, track, part, newNote, exp.abbr, new float?[] { exp.value }));
-                        }
-                        docManager.ExecuteCmd(new ResizeNoteCommand(part, currentNote, splitPos - currentNote.End));
-                        docManager.ExecuteCmd(new ChangeNoteLyricCommand(part, currentNote, phonemeList[i - 1].rawPhoneme));
-
-                        currentNote = newNote;
-                    }
-                    docManager.ExecuteCmd(new ChangeNoteLyricCommand(part, currentNote, note.lyric + " [" + phonemeList[phonemeList.Count - 1].rawPhoneme + ']'));
+                    phonemeList = part.phonemes
+                        .Where(p => note.phonemeIndexes.Contains(p.index)
+                            && p.position >= note.position
+                            && p.position < note.position + note.duration)
+                        .OrderBy(p => p.position)
+                        .Select(p => p.rawPhoneme)
+                        .ToArray();
                 }
+                phonemeList = phonemeList
+                    .Where(phoneme => !string.IsNullOrWhiteSpace(phoneme))
+                    .ToArray();
+                if (phonemeList.Length == 0) {
+                    continue;
+                }
+                docManager.ExecuteCmd(new ChangeNoteLyricCommand(
+                    part, note, $"{note.lyric} [{string.Join(" ", phonemeList)}]"));
             }
 
             docManager.EndUndoGroup();
