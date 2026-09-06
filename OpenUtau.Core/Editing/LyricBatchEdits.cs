@@ -164,11 +164,10 @@ namespace OpenUtau.Core.Editing {
             if (notes.Length == 0) {
                 return; // make no edits if no notes exist
             }
-            //string lyric = notes[0].lyric + "[ka]";
             var track = project.tracks[part.trackNo];
-            var phonemizer = track.Phonemizer;
-            if (phonemizer == null) return;
-
+            if (track.Phonemizer == null || !part.PhonemesUpToDate) {
+                return;
+            }
 
             docManager.StartUndoGroup("command.batch.lyric", true);
             foreach (var note in notes) {
@@ -176,23 +175,10 @@ namespace OpenUtau.Core.Editing {
                     continue;
                 }
 
-                // note.tone = -1; prevent tone from interfering from phonemizer output.
-                var constructNote = note.ToPhonemizerNote(track, part);
-                // reconstruct Note so that we can isolate response from phonemizer.
-
-                string[] phonemeList;
-                if (phonemizer is IG2pSymbols sym) {
-                    phonemeList = sym.GetSymbols(constructNote);
-                } else {
-                    phonemeList = part.phonemes
-                        .Where(p => note.phonemeIndexes.Contains(p.index)
-                            && p.position >= note.position
-                            && p.position < note.position + note.duration)
-                        .OrderBy(p => p.position)
-                        .Select(p => p.rawPhoneme)
-                        .ToArray();
-                }
-                phonemeList = phonemeList
+                var phonemeList = part.phonemes
+                    .Where(phoneme => phoneme.Parent == note)
+                    .OrderBy(phoneme => phoneme.position)
+                    .Select(phoneme => phoneme.rawPhoneme)
                     .Where(phoneme => !string.IsNullOrWhiteSpace(phoneme))
                     .ToArray();
                 if (phonemeList.Length == 0) {
