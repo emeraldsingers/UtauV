@@ -1,6 +1,18 @@
 on:
+  schedule:
+    # Daily alpha build. Skipped if master has no new commits since the
+    # last alpha release (see the next-version job below).
+    - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
+      channel:
+        description: "Release channel"
+        type: choice
+        default: alpha
+        options:
+          - stable
+          - beta
+          - alpha
       version:
         description: "Version"
         default: "0.0.0"
@@ -43,10 +55,76 @@ on:
         default: false
         description: "Linux ARM64"
 
-env:
-  release-name: ${{ inputs.version }}${{ inputs.beta && ' Beta' || '' }}
+# Keep same-trigger-type runs from overlapping, e.g. a slow scheduled build
+# still running when the next day's cron fires.
+concurrency:
+  group: release-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  next-version:
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.nv.outputs.channel }}
+      version: ${{ steps.nv.outputs.version }}
+      tag: ${{ steps.nv.outputs.tag }}
+      name: ${{ steps.nv.outputs.name }}
+      release: ${{ steps.nv.outputs.release }}
+      draft: ${{ steps.nv.outputs.draft }}
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - id: check
+        if: github.event_name == 'schedule'
+        run: |
+          latest_tag=$(git tag --list '*-alpha' | sort -V | tail -1)
+          if [ -z "$latest_tag" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          elif [ "$(git rev-list -n 1 "$latest_tag")" = "$(git rev-parse HEAD)" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - id: nv
+        if: steps.check.outputs.skip != 'true'
+        env:
+          CHANNEL: ${{ github.event_name == 'schedule' && 'alpha' || inputs.channel }}
+          VERSION: ${{ inputs.version }}
+          RELEASE: ${{ github.event_name == 'schedule' && 'true' || inputs.release }}
+          DRAFT: ${{ github.event_name == 'schedule' && 'false' || inputs.draft }}
+        run: |
+          set -u
+          if [ "$CHANNEL" = alpha ]; then
+            git ls-remote --tags origin > tags.txt
+            version=$(python .github/scripts/next-version.py < tags.txt)
+            tag="$version-alpha"
+            name="${version%.*} Alpha"
+          else
+            if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+[.][0-9]+[.][0-9]+$'; then
+              echo "::error::version must be X.Y.Z for the $CHANNEL channel (got '$VERSION')"
+              exit 1
+            fi
+            version="$VERSION"
+            if [ "$CHANNEL" = beta ]; then
+              tag="$version-beta"
+              name="$version Beta"
+            else
+              tag="$version"
+              name="$version"
+            fi
+          fi
+          {
+            echo "channel=$CHANNEL"
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "name=$name"
+            echo "release=$RELEASE"
+            echo "draft=$DRAFT"
+          } | tee -a "$GITHUB_OUTPUT" >> "$GITHUB_STEP_SUMMARY"
+
   select-targets:
     runs-on: ubuntu-latest
     outputs:
@@ -73,7 +151,8 @@ jobs:
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
   build:
-    needs: select-targets
+    needs: [next-version, select-targets]
+    if: needs.next-version.outputs.skip != 'true'
     runs-on: ${{ matrix.arch.runs-on }}
     permissions:
       contents: write
@@ -100,7 +179,7 @@ jobs:
         if: ${{ matrix.arch.os == 'win' }}
       - uses: justalemon/VersionPatcher@v0.7.1
         with:
-          version: ${{ inputs.version }}
+          version: ${{ needs.next-version.outputs.version }}
           csproj-files: "OpenUtau/*.csproj"
 
       # Test
@@ -130,7 +209,7 @@ jobs:
         if: ${{ matrix.arch.os == 'osx' }}
       
       - name: Write release channel info
-        run: "@{Beta=$${{ inputs.beta }}} | ConvertTo-Json > bin/${{ matrix.arch.name }}/prefs-default.json"
+        run: "@{Channel='${{ needs.next-version.outputs.channel }}'; Beta=$${{ needs.next-version.outputs.channel == 'beta' }}} | ConvertTo-Json > bin/${{ matrix.arch.name }}/prefs-default.json"
         shell: pwsh
 
       # Create Zip
@@ -192,7 +271,7 @@ jobs:
         uses: joncloud/makensis-action@v4.1
         with:
           script-file: OpenUtau.nsi
-          arguments: "-DPRODUCT_VERSION=${{ inputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=UtauV-${{ matrix.arch.name }}.exe"
+          arguments: "-DPRODUCT_VERSION=${{ needs.next-version.outputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=UtauV-${{ matrix.arch.name }}.exe"
         if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       # Create Dmg
@@ -256,63 +335,63 @@ jobs:
         with:
           name: UtauV-${{ matrix.arch.name }}.tar.gz
           path: UtauV-${{ matrix.arch.name }}.tar.gz
-        if: ${{ !inputs.release && matrix.arch.os == 'linux' }}
+        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'linux' }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.zip
           path: UtauV-${{ matrix.arch.name }}.zip
-        if: ${{ !inputs.release && matrix.arch.os == 'win' }}
+        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'win' }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.exe
           path: UtauV-${{ matrix.arch.name }}.exe
-        if: ${{ !inputs.release && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
       
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.AppImage
           path: UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
-        if: ${{ !inputs.release && matrix.arch.os == 'linux' }}
+        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'linux' }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.dmg
           path: UtauV-${{ matrix.arch.name }}.dmg
-        if: ${{ !inputs.release && matrix.arch.os == 'osx' }}
+        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'osx' }}
 
       # Appcast
       - name: Appcast Windows
         shell: cmd
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
-        if: ${{ inputs.release && matrix.arch.os == 'win' }}
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
+        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' }}
 
       - name: Appcast Windows installer
         shell: cmd
-        run: python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
-        if: ${{ inputs.release && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+        run: python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
+        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       - name: Appcast MacOS
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
-        if: ${{ inputs.release && matrix.arch.os == 'osx' }}
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
+        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'osx' }}
 
       - name: Appcast Linux
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.tar.gz
-          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }}-appimage -f=UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
-        if: ${{ inputs.release && matrix.arch.os == 'linux' }}
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.tar.gz
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=linux -r=${{ matrix.arch.name }}-appimage -f=UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
+        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'linux' }}
 
       # Release
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.version }}
-          name: ${{ env.release-name }}
-          prerelease: ${{ inputs.beta }}
-          draft: ${{ inputs.draft }}
+          tag_name: ${{ needs.next-version.outputs.tag }}
+          name: ${{ needs.next-version.outputs.name }}
+          prerelease: ${{ needs.next-version.outputs.channel != 'stable' }}
+          draft: ${{ needs.next-version.outputs.draft }}
           files: |
             appcast.${{ matrix.arch.name }}*.xml
             UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
@@ -324,4 +403,4 @@ jobs:
 
             ## macOS says "This app is damaged"
             Open a terminal and run `xattr -rc /Applications/OpenUtau.app`. Try opening OpenUtau again.
-        if: ${{ inputs.release }}
+        if: ${{ needs.next-version.outputs.release == 'true' }}
