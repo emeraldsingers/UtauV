@@ -75,6 +75,8 @@ jobs:
   build:
     needs: select-targets
     runs-on: ${{ matrix.arch.runs-on }}
+    permissions:
+      contents: write
 
     strategy:
       fail-fast: false
