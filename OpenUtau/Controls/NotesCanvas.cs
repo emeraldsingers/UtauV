@@ -799,7 +799,7 @@ namespace OpenUtau.App.Controls {
                 changed = true;
             }
             if (ShowPlaybackNoteOrbit && PlaybackManager.Inst.PlayingMaster) {
-                playbackOrbitElapsed += dt;
+                playbackOrbitElapsed += dt * GetPlaybackOrbitTempoScale();
                 changed = true;
             }
             bool orbiting = ShowPlaybackNoteOrbit && PlaybackManager.Inst.PlayingMaster;
@@ -845,6 +845,25 @@ namespace OpenUtau.App.Controls {
                 y += orbit.Y;
             }
             return new Vector(x, y);
+        }
+
+        private float GetPlaybackOrbitTempoScale() {
+            var viewModel = ((PianoRollViewModel?)DataContext)?.NotesViewModel;
+            if (viewModel == null || viewModel.Project.timeAxis == null) {
+                return 1f;
+            }
+            double bpm;
+            try {
+                bpm = viewModel.Project.timeAxis.GetBpmAtTick(PlayPosTick);
+            } catch {
+                bpm = 120.0;
+            }
+            if (!double.IsFinite(bpm) || bpm <= 0) {
+                bpm = 120.0;
+            }
+            // Keep the default 120 BPM speed, with a deliberately gentle
+            // response and a cap so very fast tempo sections stay readable.
+            return (float)Math.Clamp(Math.Sqrt(bpm / 120.0), 0.75, 1.5);
         }
 
         private Matrix GetPlaybackRotation(UNote note, Point center) {
