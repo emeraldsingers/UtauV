@@ -237,8 +237,8 @@ jobs:
           test -n "$APP"
           .github/scripts/add-liquid-glass-icon.sh \
             "$APP" \
-            OpenUtau/Assets/OpenUtau.icon \
-            OpenUtau
+            OpenUtau/Assets/OpenUTAU.icon \
+            OpenUTAU
         if: ${{ matrix.arch.os == 'osx' }}
       
       - name: Write release channel info
@@ -430,12 +430,49 @@ jobs:
             UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
             UtauV-${{ matrix.arch.name }}.*
           body: |
-            See [Getting Started](https://github.com/emeraldsingers/UtauV/wiki/Getting-Started) for how to use.
+            ## Downloads
 
-            If you encountered issues, see [FAQ](https://github.com/emeraldsingers/UtauV/wiki/FAQ)
+            ### Windows
 
-            ## macOS says "This app is damaged"
-            Open a terminal and run `xattr -rc /Applications/OpenUtau.app`. Try opening OpenUtau again.
+            **DirectML builds** (recommended for most users - works on AMD, Intel, and NVIDIA GPUs):
+            - [Installer (64-bit DirectML)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64.exe)
+            - [Portable ZIP (64-bit DirectML)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64.zip)
+            - [Installer (ARM64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-arm64.exe)
+            - [Portable ZIP (ARM64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-arm64.zip)
+
+            **CUDA builds** (NVIDIA GPUs only - requires CUDA 12.x + cuDNN 9.x):
+            - [Portable ZIP (64-bit CUDA)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64-cuda.zip)
+
+            ### macOS
+            - [Apple Silicon (.dmg)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-osx-arm64.dmg)
+
+            ### Linux
+            - [64-bit (.tar.gz)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-linux-x64.tar.gz)
+            - [64-bit AppImage](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-linux-x86_64.AppImage)
+            - [ARM64 (.tar.gz)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-linux-arm64.tar.gz)
+            - [ARM64 AppImage](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-linux-aarch64.AppImage)
+
+            ### Removed platforms
+            Windows x86 and Intel macOS builds are no longer provided. The project moved to Avalonia 12 and .NET 10, whose current supported runtime and dependency set targets 64-bit Windows, Apple Silicon macOS, and the listed Linux architectures.
+
+            ---
+
+            ## Which build should I download?
+
+            **Windows users:**
+            - **Most users:** Download **DirectML** builds - they work without extra GPU setup
+            - **NVIDIA users who want maximum performance:** Download the **CUDA** build and install CUDA 12.x + cuDNN 9.x
+            - **ARM devices:** Download the ARM64 build
+
+            **macOS users:**
+            - **Apple Silicon (M1/M2/M3 and newer):** Download `osx-arm64`
+            - If macOS says the app is damaged, run `xattr -rc /Applications/UtauV.app` in Terminal
+
+            **Linux users:**
+            - **Most systems:** Download `linux-x64`
+            - **ARM devices:** Download `linux-arm64`
+
+            See [Getting Started](https://github.com/openutau/OpenUtau/wiki/Getting-Started) for setup instructions and the [FAQ](https://github.com/openutau/OpenUtau/wiki/FAQ) for troubleshooting.
         if: ${{ needs.next-version.outputs.release == 'true' }}
 
   notify-discord-release:
