@@ -840,7 +840,7 @@ namespace OpenUtau.App.Controls {
 
         private void NotesCanvasLeftPointerPressed(Control control, PointerPoint point, PointerPressedEventArgs args) {
             EditTools tool = ViewModel.EditTool.CurrentTool;
-            if (ViewModel.EditTool.IsPitchTool) {
+            if (ViewModel.EditTool.IsPitchTool && tool != EditTools.PitchPointTool) {
                 ViewModel.NotesViewModel.DeselectNotes();
                 if (args.KeyModifiers != cmdKey) {
                     bool overwrite = ViewModel.EditTool.OverwritePitch;
@@ -960,7 +960,7 @@ namespace OpenUtau.App.Controls {
                 ViewModel.NotesContextMenuItems.Clear();
             }
             var selectedNotes = ViewModel.NotesViewModel.Selection.ToList();
-            if (ViewModel.EditTool.IsPitchTool) {
+            if (ViewModel.EditTool.IsPitchTool && ViewModel.EditTool.CurrentTool != EditTools.PitchPointTool) {
                 editState = new ResetPitchState(control, ViewModel, this);
                 return;
             }

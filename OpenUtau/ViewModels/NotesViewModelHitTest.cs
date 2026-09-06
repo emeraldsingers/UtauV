@@ -155,7 +155,7 @@ namespace OpenUtau.App.ViewModels {
         }
 
         public PitchPointHitInfo HitTestPitchPoint(Point point, bool pitchPointTool) {
-            if (viewModel.Part == null || !viewModel.ShowPitch) {
+            if (viewModel.Part == null || (!viewModel.ShowPitch && !pitchPointTool)) {
                 return default;
             }
             double leftTick = viewModel.TickOffset - 480;

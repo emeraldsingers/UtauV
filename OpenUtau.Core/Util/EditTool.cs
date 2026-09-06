@@ -49,7 +49,7 @@ namespace OpenUtau.Core.Util {
                 }
             }
         }
-        [JsonIgnore] public bool IsPitchTool => BaseTool >= 5 && BaseTool <= 10;
+        [JsonIgnore] public bool IsPitchTool => BaseTool >= 4 && BaseTool <= 10;
         public bool IsMatch(IEnumerable<EditTools> tools) => tools.Contains(CurrentTool);
     }
 }
