@@ -103,8 +103,8 @@ jobs:
             tag="$version-alpha"
             name="${version%.*} Alpha"
           else
-            if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+[.][0-9]+[.][0-9]+$'; then
-              echo "::error::version must be X.Y.Z for the $CHANNEL channel (got '$VERSION')"
+            if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+([.][0-9]+){2,3}$'; then
+              echo "::error::version must be X.Y.Z or X.Y.Z.N for the $CHANNEL channel (got '$VERSION')"
               exit 1
             fi
             version="$VERSION"
