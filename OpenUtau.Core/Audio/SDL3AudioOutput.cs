@@ -15,6 +15,7 @@ namespace OpenUtau.Audio {
 
         public PlaybackState PlaybackState { get; private set; }
         public int DeviceNumber { get; private set; }
+        public event EventHandler? DevicesChanged;
 
         private ISampleProvider? sampleProvider;
         private double currentTimeMs;
