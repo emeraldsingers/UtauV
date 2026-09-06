@@ -62,13 +62,6 @@ namespace OpenUtau.App.Controls {
         private DateTime mixUnlockTime = DateTime.MinValue;
         private bool wasRendering;
 
-        // Waveform peak color, shared by the cached peaks and phrase bounds.
-        private const int WaveformArgb = 0x7F7F7F7F;
-        private static readonly IBrush WaveformBorderBrush =
-            new SolidColorBrush(Color.FromArgb(0x7F, 0x7F, 0x7F, 0x7F));
-        private IBrush? cachedFillBrush;
-        private Color? cachedFillColor;
-
         // Waveform peak color, shared by the bitmap peaks and the phrase bound border.
         private const int WaveformArgb = 0x7F7F7F7F;
         private static readonly IBrush WaveformBorderBrush = new SolidColorBrush(Color.FromArgb(0x7F, 0x7F, 0x7F, 0x7F));
