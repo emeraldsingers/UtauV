@@ -276,7 +276,11 @@ namespace OpenUtau.App.Controls {
         protected override void OnPointerMoved(PointerEventArgs e) {
             base.OnPointerMoved(e);
             lastPointerPos = e.GetPosition(this);
-            UpdateHoveredNote();
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) {
+                SetHoveredNote(null);
+            } else {
+                UpdateHoveredNote();
+            }
         }
 
         protected override void OnPointerExited(PointerEventArgs e) {
@@ -304,19 +308,7 @@ namespace OpenUtau.App.Controls {
                 SetHoveredNote(null);
                 return;
             }
-            double tick = viewModel.PointToTick(lastPointerPos);
-            int tone = viewModel.PointToTone(lastPointerPos);
-            UNote? found = null;
-            foreach (var note in Part.notes) {
-                if (note.position > tick && note.LeftBound > tick) {
-                    break;
-                }
-                if (note.LeftBound <= tick && tick < note.RightBound && note.AdjustedTone == tone) {
-                    found = note;
-                    break;
-                }
-            }
-            SetHoveredNote(found);
+            SetHoveredNote(viewModel.SelectableNote);
         }
 
         void SetHoveredNote(UNote? note) {
@@ -388,8 +380,8 @@ namespace OpenUtau.App.Controls {
             return pen;
         }
 
-        void DrawHoverGlow(DrawingContext context, Point leftTop, Size size, double radius, float glow) {
-            if (glow <= 0.01f || !(ThemeManager.AccentBrush2 is ISolidColorBrush solid)) {
+        void DrawHoverGlow(DrawingContext context, Point leftTop, Size size, double radius, IBrush brush, float glow) {
+            if (glow <= 0.01f || !(brush is ISolidColorBrush solid)) {
                 return;
             }
             byte alpha = (byte)Math.Clamp((int)Math.Round(glow * 100), 0, 255);
@@ -592,7 +584,7 @@ namespace OpenUtau.App.Controls {
                 context.DrawRectangle(null, renderHighlightPen, new Rect(leftTop, rightBottom), radius, radius);
             }
             if (Preferences.Default.NoteHoverGlow) {
-                DrawHoverGlow(context, leftTop, size, radius, GetHoverGlow(note));
+                DrawHoverGlow(context, leftTop, size, 2, brush, GetHoverGlow(note));
             }
             if (TrackHeight < 10 || note.lyric.Length == 0) {
                 return;
