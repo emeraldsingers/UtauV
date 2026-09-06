@@ -100,7 +100,10 @@ namespace OpenUtau.Core {
                         Log.Information($"Skipping {file}");
                         continue;
                     }
-                    assembly = Assembly.LoadFile(file);
+                    // LoadFrom preserves the plugin directory as the probing
+                    // path, allowing dependencies such as System.Text.Json to
+                    // resolve for externally installed .NET 10 plugins.
+                    assembly = Assembly.LoadFrom(file);
                     foreach (var type in assembly.GetExportedTypes()) {
                         if (!type.IsAbstract && type.IsSubclassOf(typeof(Phonemizer))) {
                             PhonemizerFactory.Get(type);
