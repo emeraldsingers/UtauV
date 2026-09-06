@@ -11,6 +11,10 @@
     <Setter Property="FontFamily" Value="{DynamicResource ui.fontfamily}"/>
     <Setter Property="Icon" Value="/Assets/open-utau.ico"/>
   </Style>
+  <!-- Popups are separate top-levels in Avalonia and do not inherit Window.FontFamily. -->
+  <Style Selector="ContextMenu, FlyoutPresenter, Menu, MenuItem, ComboBox, ComboBoxItem">
+    <Setter Property="FontFamily" Value="{DynamicResource ui.fontfamily}"/>
+  </Style>
   <Style Selector="Menu">
     <Setter Property="Height" Value="24"/>
   </Style>
