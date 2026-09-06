@@ -423,3 +423,42 @@ jobs:
             ## Support
             - [UtauV Discord Server](https://discord.gg/n3tTNa6JVT)
             - [Original OpenUtau Discord](https://discord.gg/UfpMnqMmEM)
+
+  notify-discord-release:
+    needs: build
+    if: ${{ inputs.release && !inputs.draft && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send release notification
+        uses: actions/github-script@v7
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RELEASE_NAME: ${{ env.RELEASE_NAME }}
+          RELEASE_TAG: ${{ inputs.version }}
+          RELEASE_CHANNEL: ${{ inputs.beta && 'beta' || 'stable' }}
+          RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ inputs.version }}
+        with:
+          script: |
+            const webhook = process.env.DISCORD_WEBHOOK_URL;
+            if (!webhook) {
+              core.setFailed('Set the DISCORD_WEBHOOK_URL repository secret before enabling notifications.');
+              return;
+            }
+            const stable = process.env.RELEASE_CHANNEL === 'stable';
+            const response = await fetch(webhook, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                username: 'UtauV Releases',
+                allowed_mentions: { parse: [] },
+                embeds: [{
+                  title: `${stable ? 'Stable' : 'Beta'} release: ${process.env.RELEASE_NAME}`,
+                  url: process.env.RELEASE_URL,
+                  description: `Tag: [\`${process.env.RELEASE_TAG}\`](${process.env.RELEASE_URL})`,
+                  color: stable ? 5763719 : 16753920,
+                }],
+              }),
+            });
+            if (!response.ok) {
+              throw new Error(`Discord webhook returned ${response.status}: ${await response.text()}`);
+            }

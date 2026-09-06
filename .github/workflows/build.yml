@@ -132,12 +132,12 @@ jobs:
     steps:
       - id: targets
         env:
-          WIN_X64_DIRECTML: ${{ inputs.win_x64_directml }}
-          WIN_X64_CUDA: ${{ inputs.win_x64_cuda }}
-          WIN_ARM64: ${{ inputs.win_arm64 }}
-          OSX_ARM64: ${{ inputs.osx_arm64 }}
-          LINUX_X64: ${{ inputs.linux_x64 }}
-          LINUX_ARM64: ${{ inputs.linux_arm64 }}
+          WIN_X64_DIRECTML: ${{ github.event_name == 'schedule' && 'true' || inputs.win_x64_directml }}
+          WIN_X64_CUDA: ${{ github.event_name == 'schedule' && 'false' || inputs.win_x64_cuda }}
+          WIN_ARM64: ${{ github.event_name == 'schedule' && 'false' || inputs.win_arm64 }}
+          OSX_ARM64: ${{ github.event_name == 'schedule' && 'false' || inputs.osx_arm64 }}
+          LINUX_X64: ${{ github.event_name == 'schedule' && 'true' || inputs.linux_x64 }}
+          LINUX_ARM64: ${{ github.event_name == 'schedule' && 'false' || inputs.linux_arm64 }}
         run: |
           targets=()
           add() { targets+=("$1"); }
@@ -404,3 +404,42 @@ jobs:
             ## macOS says "This app is damaged"
             Open a terminal and run `xattr -rc /Applications/OpenUtau.app`. Try opening OpenUtau again.
         if: ${{ needs.next-version.outputs.release == 'true' }}
+
+  notify-discord-release:
+    needs: [next-version, build]
+    if: ${{ needs.next-version.outputs.release == 'true' && needs.next-version.outputs.draft != 'true' && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send release notification
+        uses: actions/github-script@v7
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RELEASE_NAME: ${{ needs.next-version.outputs.name }}
+          RELEASE_TAG: ${{ needs.next-version.outputs.tag }}
+          RELEASE_CHANNEL: ${{ needs.next-version.outputs.channel }}
+          RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ needs.next-version.outputs.tag }}
+        with:
+          script: |
+            const webhook = process.env.DISCORD_WEBHOOK_URL;
+            if (!webhook) {
+              core.setFailed('Set the DISCORD_WEBHOOK_URL repository secret before enabling notifications.');
+              return;
+            }
+            const stable = process.env.RELEASE_CHANNEL === 'stable';
+            const response = await fetch(webhook, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                username: 'UtauV Releases',
+                allowed_mentions: { parse: [] },
+                embeds: [{
+                  title: `${stable ? 'Stable' : process.env.RELEASE_CHANNEL} release: ${process.env.RELEASE_NAME}`,
+                  url: process.env.RELEASE_URL,
+                  description: `Tag: [\`${process.env.RELEASE_TAG}\`](${process.env.RELEASE_URL})`,
+                  color: stable ? 5763719 : 16753920,
+                }],
+              }),
+            });
+            if (!response.ok) {
+              throw new Error(`Discord webhook returned ${response.status}: ${await response.text()}`);
+            }
