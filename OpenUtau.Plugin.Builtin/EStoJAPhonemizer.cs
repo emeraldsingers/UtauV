@@ -296,7 +296,7 @@ namespace OpenUtau.Plugin.Builtin {
             {"wu", "u" },
             {"wi", "uli" },
             {"we", "ule" },
-            {"wo", "ulo" },
+            {"wo", "ulo" }, 
         };
 
         private Dictionary<string, string> ConditionalAlt => conditionalAlt;
@@ -340,7 +340,7 @@ namespace OpenUtau.Plugin.Builtin {
             {"sula", new [] { "su", "wa" } },
             {"sui", new [] { "su", "uli" } },
             {"sule", new [] { "su", "ule" } },
-            {"sulo", new [] { "su", "ulo" } },
+            {"sulo", new [] { "su", "ulo" } }, 
             {"je", new [] { "ji", "e" } },
             {"jya", new [] { "ji", "ya" } },
             {"jye", new [] { "ji", "e" } },
@@ -680,13 +680,13 @@ namespace OpenUtau.Plugin.Builtin {
             bool isVcv = false;
 
             if (parts.Length == 2) {
-                var startingVowels = new[] { "a", "i", "u", "e", "o", "n", "N", "-" };
+                var startingVowels = new[] { "a", "i", "u", "e", "o", "n", "N", "-" }; 
                 var endingVowels = vowels;
-
+                
                 // First part must be a vowel (or a rest)
                 if (startingVowels.Contains(parts[0])) {
                     string cv = parts[1];
-
+                    
                     // Second part must end in a vowel (Romaji CV) OR be Japanese (Hiragana/Katakana)
                     bool isRomajiVcv = endingVowels.Contains(cv.Last().ToString());
                     bool isJapaneseVcv = cv.Any(c => c > 0xFF);

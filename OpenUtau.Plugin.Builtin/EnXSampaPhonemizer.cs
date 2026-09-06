@@ -41,8 +41,6 @@ namespace OpenUtau.Plugin.Builtin {
                 .Where(parts => parts[0] != parts[1])
                 .ToDictionary(parts => parts[0], parts => parts[1]);
         }
-
-        private bool isYamlFallbacks = false;
         protected override string[] GetVowels() => vowels;
         protected override string[] GetConsonants() => consonants;
         protected override string GetDictionaryName() => "";
@@ -188,11 +186,11 @@ namespace OpenUtau.Plugin.Builtin {
                     original[i] = replaced;
                 }
             }
-
+            
             // Splits diphthongs and affricates if not present in the bank
             string[] diphthongs = new[] { "aI", "eI", "OI", "aU", "oU", "VI", "VU", "@U", "ai", "ei", "Oi", "au", "ou", "Ou", "@u", };
             string[] affricates = new[] { "dZ", "tS" };
-
+            
             foreach (string s in original) {
                 if (diphthongs.Contains(s) && !HasOto($"- {s}", note.tone) && !HasOto(s, note.tone) && !HasOto(ValidateAlias($"- {s}"), note.tone) && !HasOto(ValidateAlias(s), note.tone)) {
                     finalProcessedPhonemes.AddRange(new string[] { s[0].ToString(), s[1] + '^'.ToString() });
@@ -204,17 +202,6 @@ namespace OpenUtau.Plugin.Builtin {
             }
             return finalProcessedPhonemes.ToArray();
         }
-        // prioritize yaml replacements over dictionary replacements
-        private string ReplacePhoneme(string phoneme, int tone) {
-            if (dictionaryReplacements.TryGetValue(phoneme, out var replaced)) {
-                return replaced;
-            }
-            if (HasOto(phoneme, tone) || HasOto(ValidateAlias(phoneme), tone)) {
-                return phoneme;
-            }
-            return phoneme;
-        }
-
         protected override List<string> ProcessSyllable(Syllable syllable) {
             syllable.prevV = tails.Contains(syllable.prevV) ? "" : syllable.prevV;
             var replacedPrevV = ReplacePhoneme(syllable.prevV, syllable.tone);
@@ -232,14 +219,8 @@ namespace OpenUtau.Plugin.Builtin {
 
 
             var rv = $"- {v}";
-
+            
             // Switch between phonetic systems, depending on certain aliases in the bank
-            foreach (var entry in yamlFallbacks) {
-                if (!HasOto(entry.Key, syllable.tone) && !HasOto(entry.Key, syllable.tone)) {
-                    isYamlFallbacks = true;
-                    break;
-                }
-            }
             if (HasOto($"- i:", syllable.tone) || HasOto($"i:", syllable.tone) || (!HasOto($"- 3", syllable.tone) && !HasOto($"3", syllable.tone))) {
                 isVocaSampa = true;
             }
@@ -292,8 +273,8 @@ namespace OpenUtau.Plugin.Builtin {
                         basePhoneme = $"{prevV} {v}";
                     } else if (HasOto($"{prevV}{v}", syllable.vowelTone) || HasOto(ValidateAlias($"{prevV}{v}"), syllable.vowelTone)) {
                         basePhoneme = $"{prevV}{v}";
-                    }
-
+                    } 
+                    
                     // Diphthong Fallbacks
                     else if (diphthongSplits.ContainsKey(prevV) || diphthongTails.ContainsKey(prevV)) {
                         string cv = "";
@@ -302,7 +283,7 @@ namespace OpenUtau.Plugin.Builtin {
                             var vc = splitOverride[0].Replace("{v}", v);
                             cv = splitOverride[1].Replace("{v}", v);
                             TryAddPhoneme(phonemes, syllable.tone, vc, ValidateAlias(vc));
-                        }
+                        } 
                         else { // Default YAML diphthong logic
                             var tail = diphthongTails[prevV];
                             var vcSpace = $"{prevV} {tail}";
@@ -329,7 +310,7 @@ namespace OpenUtau.Plugin.Builtin {
                             phonemes.Add($"{prevV} -");
                         }
                     }
-                }
+                } 
                 else {
                     basePhoneme = null;
                 }
@@ -742,8 +723,16 @@ namespace OpenUtau.Plugin.Builtin {
             return phonemes;
         }
 
-        protected override string ValidateAlias(string alias) {
+        protected override string ValidateAlias(string alias, int tone = 0) {
             // Validate alias depending on method
+            string baseResolved = base.ValidateAlias(alias, tone);
+            if (!string.IsNullOrEmpty(baseResolved) && baseResolved != alias) {
+                if (HasOto(baseResolved, tone)) {
+                    return baseResolved;
+                }
+                alias = baseResolved;
+            }
+
             if (isVocaSampa) {
                 foreach (var syllable in vocaSampa) {
                     alias = alias.Replace(syllable.Key, syllable.Value);
@@ -800,12 +789,6 @@ namespace OpenUtau.Plugin.Builtin {
 
             if (isDarkLVowel) {
                 foreach (var syllable in darkLVowel) {
-                    alias = alias.Replace(syllable.Key, syllable.Value);
-                }
-            }
-
-            if (isYamlFallbacks) {
-                foreach (var syllable in yamlFallbacks.OrderByDescending(f => f.Key.Length)) {
                     alias = alias.Replace(syllable.Key, syllable.Value);
                 }
             }

@@ -31,13 +31,13 @@ namespace OpenUtau.Plugin.Builtin {
             };
             this.consonants = "b,ch,d,dh,dr,dx,f,g,hh,jh,k,l,m,n,ng,p,q,r,s,sh,t,th,tr,v,w,y,z".Split(',');
             this.diphthongTails = new Dictionary<string, string>() {
-                { "ay", "ay-" },
-                { "ey", "ey-" },
-                { "oy", "oy-" },
-                { "aw", "aw-" },
+                { "ay", "ay-" }, 
+                { "ey", "ey-" }, 
+                { "oy", "oy-" }, 
+                { "aw", "aw-" }, 
                 { "ow", "ow-" }
             };
-
+            
         }
         private static string[] c_cR = Array.Empty<string>();
 
@@ -72,8 +72,6 @@ namespace OpenUtau.Plugin.Builtin {
         private Dictionary<string, string> diphthongTails = new Dictionary<string, string>() {
             { "ay", "ay-" }, { "ey", "ey-" }, { "oy", "oy-" }, { "aw", "aw-" }, { "ow", "ow-" }
         };
-
-        private bool isYamlFallbacks = false;
 
         private readonly string[] ccvException = { "ch", "dh", "dx", "fh", "gh", "hh", "jh", "kh", "ph", "ng", "sh", "th", "vh", "wh", "zh" };
         private readonly string[] RomajiException = { "a", "e", "i", "o", "u" };
@@ -112,7 +110,7 @@ namespace OpenUtau.Plugin.Builtin {
                     vowel3S.Add($"{V1}{C1}");
                 }
             }
-
+           
             foreach (string s in original) {
                 switch (s) {
                     case var str when dr.Contains(str) && !HasOto($"{str}", note.tone) && !HasOto(ValidateAlias(str), note.tone):
@@ -164,7 +162,7 @@ namespace OpenUtau.Plugin.Builtin {
             base.SetSinger(singer);
 
             if (this.singer != null && this.singer.Loaded) {
-
+                
                 string globalFile = Path.Combine(PluginDir, YamlFileName);
                 string singerFile = Path.Combine(this.singer.Location, YamlFileName);
 
@@ -179,13 +177,13 @@ namespace OpenUtau.Plugin.Builtin {
                         var data = Core.Yaml.DefaultDeserializer.Deserialize<YAMLData>(File.ReadAllText(file));
 
                         if (data?.symbols != null) {
-
+                            
                             string[] targetTypes = { "nasal", "liquid", "semivowel", "fricative", "aspirate" };
                             var newCcR = data.symbols
                                 .Where(s => targetTypes.Contains(s.type?.ToLower()))
                                 .Select(s => s.symbol)
                                 .ToArray();
-
+                                
                             c_cR = c_cR.Concat(newCcR).Distinct().ToArray();
 
                             var yamlDiphthongs = data.symbols
@@ -200,7 +198,7 @@ namespace OpenUtau.Plugin.Builtin {
                                 }
                             }
                         }
-
+                        
                     } catch (Exception ex) {
                         Log.Error($"Failed to parse symbols from {file}: {ex.Message}");
                     }
@@ -208,15 +206,6 @@ namespace OpenUtau.Plugin.Builtin {
             }
         }
 
-        private string ReplacePhoneme(string phoneme, int tone) {
-            if (dictionaryReplacements.TryGetValue(phoneme, out var replaced)) {
-                return replaced;
-            }
-            if (HasOto(phoneme, tone) || HasOto(ValidateAlias(phoneme), tone)) {
-                return phoneme;
-            }
-            return phoneme;
-        }
         protected override List<string> ProcessSyllable(Syllable syllable) {
             syllable.prevV = tails.Contains(syllable.prevV) ? "" : syllable.prevV;
             var replacedPrevV = ReplacePhoneme(syllable.prevV, syllable.tone);
@@ -256,14 +245,6 @@ namespace OpenUtau.Plugin.Builtin {
                 }
             }
 
-            foreach (var entry in yamlFallbacks) {
-                if (!HasOto(entry.Key, syllable.tone) && !HasOto(entry.Value, syllable.tone)) {
-                    isYamlFallbacks = true;
-                    break;
-                }
-            }
-
-
             // STARTING V
             if (syllable.IsStartingV) {
                 // TRIES - V THEN -V AND SO ON
@@ -274,7 +255,7 @@ namespace OpenUtau.Plugin.Builtin {
                 if (!CanMakeAliasExtension(syllable)) {
                     if (HasOto($"{prevV} {v}", syllable.vowelTone) || HasOto(ValidateAlias($"{prevV} {v}"), syllable.vowelTone)) {
                         basePhoneme = $"{prevV} {v}";
-                    }
+                    } 
                     else if (diphthongSplits.ContainsKey(prevV) || diphthongTails.ContainsKey(prevV)) {
                         string cv = "";
 
@@ -283,7 +264,7 @@ namespace OpenUtau.Plugin.Builtin {
                             var vc = AliasFormat(splitOverride[0].Replace("{v}", v), "vcEx", syllable.tone, prevV);
                             cv = AliasFormat(splitOverride[1].Replace("{v}", v), "vv", syllable.vowelTone, "");
                             TryAddPhoneme(phonemes, syllable.tone, vc, ValidateAlias(vc));
-                        }
+                        } 
                         else {
                             var tail = diphthongTails[prevV]; // gets e.g., "ay-"
                             var vcSpace = $"{prevV} {tail}";
@@ -307,7 +288,7 @@ namespace OpenUtau.Plugin.Builtin {
                         } else {
                             basePhoneme = AliasFormat(v, "vv", syllable.vowelTone, "");
                         }
-                    }
+                    } 
                     else {
                         if (HasOto(v, syllable.vowelTone) || HasOto(ValidateAlias(v), syllable.vowelTone)) {
                             basePhoneme = v;
@@ -315,7 +296,7 @@ namespace OpenUtau.Plugin.Builtin {
                             basePhoneme = AliasFormat(v, "vv", syllable.vowelTone, "");
                         }
                     }
-                }
+                } 
                 else {
                     basePhoneme = null;
                 }
@@ -824,9 +805,18 @@ namespace OpenUtau.Plugin.Builtin {
             return alias;
         }
 
-        protected override string ValidateAlias(string alias) {
+        protected override string ValidateAlias(string alias, int tone = 0) {
 
             // VALIDATE ALIAS DEPENDING ON METHOD
+            if (HasOto(alias, tone)) return alias;
+
+            string baseResolved = base.ValidateAlias(alias, tone);
+            if (!string.IsNullOrEmpty(baseResolved) && baseResolved != alias) {
+                if (HasOto(baseResolved, tone)) {
+                    return baseResolved;
+                }
+                alias = baseResolved;
+            }
             if (isTimitPhonemes) {
                 foreach (var fb in timitphonemes.OrderByDescending(f => f.Key.Length)) {
                     alias =  alias.Replace(fb.Key, fb.Value);
@@ -842,12 +832,6 @@ namespace OpenUtau.Plugin.Builtin {
                     alias = alias.Replace(fb.Key, fb.Value);
                 }
             }
-            if (isYamlFallbacks) {
-                foreach (var fb in yamlFallbacks.OrderByDescending(f => f.Key.Length)) {
-                    alias = alias.Replace(fb.Key, fb.Value);
-                }
-            }
-
             return alias;
 
         }
@@ -862,7 +846,7 @@ namespace OpenUtau.Plugin.Builtin {
 
             return alias.EndsWith(phoneme);
         }
-
+        
 
         protected override bool NoGap => true;
 
