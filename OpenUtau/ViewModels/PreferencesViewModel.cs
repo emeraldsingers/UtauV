@@ -186,7 +186,7 @@ namespace OpenUtau.App.ViewModels {
                 } catch { }
             }
             UseSystemDefaultDevice = Preferences.Default.UseSystemDefaultAudioDevice;
-            PreferPortAudio = Preferences.Default.PreferPortAudio ? 1 : 0;
+            PreferPortAudio = Preferences.Default.PreferPortAudio == true ? 1 : 0;
             PlaybackAutoScroll = Preferences.Default.PlaybackAutoScroll;
             PlaybackVerticalFollowMargin = Preferences.Default.PlaybackVerticalFollowMargin;
             PlaybackVerticalFollowDamping = Preferences.Default.PlaybackVerticalFollowDamping;

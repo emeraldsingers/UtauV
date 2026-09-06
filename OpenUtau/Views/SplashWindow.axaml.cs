@@ -102,7 +102,7 @@ namespace OpenUtau.App.Views {
 
         private static void InitAudio() {
             Log.Information("Initializing audio.");
-            if (!OS.IsWindows() || Core.Util.Preferences.Default.PreferPortAudio) {
+            if (!OS.IsWindows() || Core.Util.Preferences.Default.PreferPortAudio == true) {
                 try {
                     PlaybackManager.Inst.AudioOutput = new Audio.MiniAudioOutput();
                 } catch (Exception e1) {
