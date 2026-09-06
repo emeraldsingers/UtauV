@@ -15,12 +15,12 @@ jobs:
       - name: Send commit notifications
         uses: actions/github-script@v7
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_COMMITS_WEBHOOK_URL }}
         with:
           script: |
             const webhook = process.env.DISCORD_WEBHOOK_URL;
             if (!webhook) {
-              core.setFailed('Set the DISCORD_WEBHOOK_URL repository secret before enabling notifications.');
+              core.setFailed('Set the DISCORD_COMMITS_WEBHOOK_URL repository secret before enabling notifications.');
               return;
             }
 
