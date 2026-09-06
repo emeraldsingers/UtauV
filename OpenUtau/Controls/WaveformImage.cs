@@ -62,6 +62,19 @@ namespace OpenUtau.App.Controls {
         private DateTime mixUnlockTime = DateTime.MinValue;
         private bool wasRendering;
 
+        // Waveform peak color, shared by the cached peaks and phrase bounds.
+        private const int WaveformArgb = 0x7F7F7F7F;
+        private static readonly IBrush WaveformBorderBrush =
+            new SolidColorBrush(Color.FromArgb(0x7F, 0x7F, 0x7F, 0x7F));
+        private IBrush? cachedFillBrush;
+        private Color? cachedFillColor;
+
+        // Waveform peak color, shared by the bitmap peaks and the phrase bound border.
+        private const int WaveformArgb = 0x7F7F7F7F;
+        private static readonly IBrush WaveformBorderBrush = new SolidColorBrush(Color.FromArgb(0x7F, 0x7F, 0x7F, 0x7F));
+        private IBrush? cachedFillBrush;
+        private Color? cachedFillColor;
+
         public WaveformImage() {
             MessageBus.Current.Listen<WaveformRefreshEvent>()
                 .Subscribe(_ => {
@@ -140,10 +153,48 @@ namespace OpenUtau.App.Controls {
                     Avalonia.Threading.DispatcherPriority.Background);
             }
 
+            DrawPhraseBounds(context, project, part, viewModel);
             if (bitmap != null) {
                 var sourceRect = new Rect(worldLeftX - cacheStartX, 0, Bounds.Width, Bounds.Height);
                 var destinationRect = Bounds.WithX(0).WithY(0);
                 context.DrawImage(bitmap, sourceRect, destinationRect);
+            }
+        }
+
+        private void DrawPhraseBounds(
+            DrawingContext context,
+            UProject project,
+            UVoicePart part,
+            NotesViewModel viewModel) {
+            IBrush fill;
+            if (ThemeManager.BackgroundBrush is SolidColorBrush background) {
+                if (cachedFillBrush == null || cachedFillColor != background.Color) {
+                    cachedFillBrush = new SolidColorBrush(background.Color) { Opacity = 0.75 };
+                    cachedFillColor = background.Color;
+                }
+                fill = cachedFillBrush;
+            } else {
+                fill = ThemeManager.BackgroundBrush;
+            }
+
+            double width = Bounds.Width;
+            double height = Bounds.Height;
+            double tickOrigin = viewModel.TickOrigin + viewModel.TickOffset;
+            var pen = new Pen(WaveformBorderBrush, 0.5);
+            using var state = context.PushClip(new RoundedRect(new Rect(0, 0, width, height), 0, 0));
+            foreach (int pass in new[] { 0, 1 }) {
+                var brush = pass == 0 ? fill : null;
+                var stroke = pass == 0 ? null : pen;
+                foreach (var phrase in part.renderPhrases) {
+                    (double startMs, double endMs) = phrase.AudioRange;
+                    double x1 = Math.Round((project.timeAxis.MsPosToTickPos(startMs) - tickOrigin) * viewModel.TickWidth) + 0.5;
+                    double x2 = Math.Round((project.timeAxis.MsPosToTickPos(endMs) - tickOrigin) * viewModel.TickWidth) + 0.5;
+                    if (x2 < 0 || x1 > width) {
+                        continue;
+                    }
+                    var rect = new Rect(x1, 0.5, Math.Max(1.0, x2 - x1), Math.Max(1.0, height - 1.0));
+                    context.DrawGeometry(brush, stroke, new RectangleGeometry(rect, height / 4.0, height / 4.0));
+                }
             }
         }
 
@@ -290,9 +341,8 @@ namespace OpenUtau.App.Controls {
             if (y1 > y2) {
                 (y1, y2) = (y2, y1);
             }
-            const int color = 0x7F7F7F7F;
             for (int y = y1; y <= y2; y++) {
-                data[x + width * y] = color;
+                data[x + width * y] = WaveformArgb;
             }
         }
     }
