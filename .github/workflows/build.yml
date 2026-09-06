@@ -398,23 +398,23 @@ jobs:
       - name: Appcast Windows
         shell: cmd
         run: |
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
         if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' }}
 
       - name: Appcast Windows installer
         shell: cmd
-        run: python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
+        run: python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
         if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
 
       - name: Appcast MacOS
         run: |
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
         if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'osx' }}
 
       - name: Appcast Linux
         run: |
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.tar.gz
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=linux -r=${{ matrix.arch.name }}-appimage -f=UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.tar.gz
+          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=linux -r=${{ matrix.arch.name }}-appimage -f=UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
         if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'linux' }}
 
       # Release

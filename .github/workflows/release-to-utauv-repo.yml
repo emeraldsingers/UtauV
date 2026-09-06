@@ -296,18 +296,18 @@ jobs:
         if: inputs.release && matrix.arch.os == 'win'
         shell: cmd
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
-          python appcast.py -v=${{ inputs.version }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
+          python appcast.py -v=${{ inputs.version }} --repo=${{ github.repository }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
+          python appcast.py -v=${{ inputs.version }} --repo=${{ github.repository }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
 
       - name: Generate Appcast for macOS
         if: inputs.release && matrix.arch.os == 'osx'
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
+          python appcast.py -v=${{ inputs.version }} --repo=${{ github.repository }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
 
       - name: Generate Appcast for Linux
         if: inputs.release && matrix.arch.os == 'linux'
         run: |
-          python appcast.py -v=${{ inputs.version }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
+          python appcast.py -v=${{ inputs.version }} --repo=${{ github.repository }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
 
       # Upload all artifacts
       - name: Upload Artifacts

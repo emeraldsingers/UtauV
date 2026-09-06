@@ -1,4 +1,5 @@
 import argparse
+import os
 from datetime import datetime
 
 def main():
@@ -8,6 +9,8 @@ def main():
     parser.add_argument('-o', '--os', help='OS name', required=True)
     parser.add_argument('-r', '--rid', help='RID', required=True)
     parser.add_argument('-f', '--file', help='File name', required=True)
+    parser.add_argument('--repo', help='GitHub repository in owner/name form',
+                        default=os.environ.get('GITHUB_REPOSITORY', 'emeraldsingers/UtauV'))
     args = parser.parse_args()
 
     appcast_ver = args.version
@@ -26,7 +29,7 @@ def main():
     <item>
     <title>OpenUtau %s</title>
     <pubDate>%s</pubDate>
-    <enclosure url="https://github.com/stakira/OpenUtau/releases/download/%s/%s"
+    <enclosure url="https://github.com/%s/releases/download/%s/%s"
                 sparkle:version="%s"
                 sparkle:shortVersionString="%s"
                 sparkle:os="%s"
@@ -35,7 +38,7 @@ def main():
     </item>
 </channel>
 </rss>''' % (appcast_short, datetime.now().strftime("%a, %d %b %Y %H:%M:%S %z"),
-             appcast_tag, appcast_file, appcast_ver, appcast_short, appcast_os)
+             args.repo, appcast_tag, appcast_file, appcast_ver, appcast_short, appcast_os)
 
     with open("appcast.%s.xml" % (appcast_rid), 'w') as f:
         f.write(xml)
