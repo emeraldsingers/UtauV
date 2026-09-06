@@ -100,15 +100,19 @@ namespace OpenUtau.App.ViewModels {
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.DefaultRequestHeaders.Add("User-Agent", "Other");
             client.Timeout = TimeSpan.FromSeconds(30);
-            using var resposne = await client.GetAsync("https://api.github.com/repos/emeraldsingers/UtauV/releases");
+            using var resposne = await client.GetAsync("https://api.github.com/repos/emeraldsingers/UtauV/releases?per_page=100");
             resposne.EnsureSuccessStatusCode();
             string respBody = await resposne.Content.ReadAsStringAsync();
             List<GithubRelease>? releases = JsonConvert.DeserializeObject<List<GithubRelease>>(respBody);
             if (releases == null) {
                 return null;
             }
+            // Stable releases remain visible while using beta/alpha, so a newer
+            // stable build is never missed. The selected prerelease channel still
+            // controls which prereleases are eligible.
             return releases
-                .Where(r => IsReleaseForChannel(r, Preferences.Default.Channel))
+                .Where(r => IsReleaseForChannel(r, Preferences.Default.Channel) ||
+                            (!r.draft && !r.prerelease))
                 .OrderByDescending(r => r.id)
                 .FirstOrDefault();
         }
