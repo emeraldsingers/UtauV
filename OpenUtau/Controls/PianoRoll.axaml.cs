@@ -1708,6 +1708,7 @@ namespace OpenUtau.App.Controls {
                     case Key.D2: ViewModel.ToolIndex = 1; return true;
                     case Key.D3: ViewModel.ToolIndex = 2; return true;
                     case Key.D4: ViewModel.ToolIndex = 3; return true;
+                    case Key.D5: ViewModel.ToolIndex = 4; return true;
                 }
             }
             if (isBoth) {
@@ -1717,7 +1718,7 @@ namespace OpenUtau.App.Controls {
             }
             if (isShift) {
                 switch (args.Key) {
-                    case Key.D1: ViewModel.ToolIndex = 4; return true;
+                    case Key.D1: ViewModel.ToolIndex = 5; return true;
                     case Key.D2: ViewModel.ToolIndex = 6; return true;
                     case Key.D3: ViewModel.ToolIndex = 7; return true;
                     case Key.D4: ViewModel.ToolIndex = 8; return true;
