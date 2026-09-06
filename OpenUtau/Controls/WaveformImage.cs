@@ -74,6 +74,8 @@ namespace OpenUtau.App.Controls {
                     waveformDataChanged = true;
                     InvalidateVisual();
                 });
+            MessageBus.Current.Listen<NotesRefreshEvent>()
+                .Subscribe(_ => InvalidateVisual());
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
@@ -159,6 +161,11 @@ namespace OpenUtau.App.Controls {
             UProject project,
             UVoicePart part,
             NotesViewModel viewModel) {
+            bool isDiffSingerBoundaryMode = viewModel.ShowRenderPhraseBoundariesButton;
+            if ((isDiffSingerBoundaryMode && !viewModel.ShowRenderPhraseBoundaries) ||
+                (!isDiffSingerBoundaryMode && !viewModel.ShowWaveformPhraseBoundaries)) {
+                return;
+            }
             IBrush fill;
             if (ThemeManager.BackgroundBrush is SolidColorBrush background) {
                 if (cachedFillBrush == null || cachedFillColor != background.Color) {

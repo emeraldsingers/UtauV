@@ -71,6 +71,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial bool ShowWaveform { get; set; }
         [Reactive] public partial bool ShowRenderPhraseBoundaries { get; set; }
         [Reactive] public partial bool ShowRenderPhraseBoundariesButton { get; set; }
+        [Reactive] public partial bool ShowWaveformPhraseBoundaries { get; set; }
         [Reactive] public partial bool ShowPhoneme { get; set; }
         [Reactive] public partial bool ShowPhonemePanel { get; set; }
         [Reactive] public partial bool ShowPhonemePanelButton { get; set; }
@@ -298,11 +299,18 @@ namespace OpenUtau.App.ViewModels {
             });
             ShowRenderPhraseBoundaries = Preferences.Default.DiffSingerShowRenderPhraseBoundaries;
             this.WhenAnyValue(x => x.ShowRenderPhraseBoundaries)
-            .Subscribe(show => {
+                .Subscribe(show => {
                 Preferences.Default.DiffSingerShowRenderPhraseBoundaries = show;
                 Preferences.Save();
-                MessageBus.Current.SendMessage(new NotesRefreshEvent());
-            });
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                });
+            ShowWaveformPhraseBoundaries = Preferences.Default.ShowWaveformPhraseBoundaries;
+            this.WhenAnyValue(x => x.ShowWaveformPhraseBoundaries)
+                .Subscribe(show => {
+                    Preferences.Default.ShowWaveformPhraseBoundaries = show;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                });
             ShowPhoneme = Preferences.Default.ShowPhoneme;
             this.WhenAnyValue(x => x.ShowPhoneme)
             .Subscribe(showPhoneme => {

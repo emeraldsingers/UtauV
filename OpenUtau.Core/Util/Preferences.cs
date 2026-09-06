@@ -219,6 +219,7 @@ namespace OpenUtau.Core.Util {
             public int DiffSingerAutoSPMs = 40;
             public bool DiffSingerLocalRetaking = false;
             public bool DiffSingerShowRenderPhraseBoundaries = false;
+            public bool ShowWaveformPhraseBoundaries = false;
             public bool Metronome = false;
             public bool SkipRenderingMutedTracks = false;
             public string Language = string.Empty;

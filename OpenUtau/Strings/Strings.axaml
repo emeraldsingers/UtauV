@@ -721,6 +721,7 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.caption">Preferences</system:String>
   <system:String x:Key="prefs.diffsinger">DiffSinger</system:String>
   <system:String x:Key="prefs.diffsinger.renderphraseboundaries">Show render phrase boundaries</system:String>
+  <system:String x:Key="prefs.waveformphraseboundaries">Show waveform phrase boundaries</system:String>
   <system:String x:Key="prefs.editing">Editing</system:String>
   <system:String x:Key="prefs.general">General</system:String>
   <system:String x:Key="prefs.note.restart">Note: please restart UtauV after changing this item.</system:String>
