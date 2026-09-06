@@ -18,7 +18,7 @@ using Serilog;
 
 namespace OpenUtau.App.ViewModels {
     public partial class UpdaterViewModel : ViewModelBase {
-        class GithubReleaseAsset {
+        public class GithubReleaseAsset {
             public string name = string.Empty;
             public string browser_download_url = string.Empty;
         }
