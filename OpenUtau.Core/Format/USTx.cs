@@ -10,7 +10,10 @@ using Serilog;
 
 namespace OpenUtau.Core.Format {
     public class Ustx {
-        public static readonly Version kUstxVersion = new Version(0, 9, 1);
+        // USTX 0.9 is the current file format version. 0.9.1 was emitted by
+        // an intermediate build and remains readable for compatibility.
+        public static readonly Version kUstxVersion = new Version(0, 9);
+        private static readonly Version kLatestReadableUstxVersion = new Version(0, 9, 1);
 
         public const string DYN = "dyn";
         public const string PITD = "pitd";
@@ -136,7 +139,7 @@ namespace OpenUtau.Core.Format {
             project.Saved = true;
             project.AfterLoad();
             project.ValidateFull();
-            if (project.ustxVersion > kUstxVersion) {
+            if (project.ustxVersion > kLatestReadableUstxVersion) {
                 throw new MessageCustomizableException($"Project file is newer than software: {filePath}", $"<translate:errors.failed.opennewerproject>:\n{filePath}", new FileFormatException("Project file is newer than software."));
             }
             if (project.ustxVersion < kUstxVersion) {
