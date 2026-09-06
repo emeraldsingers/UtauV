@@ -168,33 +168,19 @@ namespace OpenUtau.Core.Voicevox {
         public const string VOLC = "volc";
         public const string REPM = "repm";
         public const string SMOC = "smoc";
-        public const string DUCM = "ducm";
         // phoneme replace mode
         public const string REPLACE = "replace";
         public const string OVERWRITE = "overwrite";
-        // duration correction mode
-        public const string AUTO = "auto";
-        public const string ON = "on";
-        public const string OFF = "off";
         // VOICEVOX constants
         public const int headS = 1;
         public const int tailS = 1;
         public const double fps = 93.75;
         public const string defaultID = "6000";
+        // Minimum number of frames the engine needs in order to synthesize a segment.
+        public const int minFrames = 2;
         // Phonemes and dictionaries
         public static Dictionary_list dic = new Dictionary_list();
         public static Phoneme_list phoneme_List = new Phoneme_list();
-        // JSON parse helper for testing
-        //private static bool TryParseJson(string json, out JToken token) {
-        //    try {
-        //        token = JToken.Parse(json);
-        //        return true;
-        //    } catch (JsonReaderException ex) {
-        //        Log.Error($"Invalid JSON: {ex.Message}");
-        //        token = null;
-        //        return false;
-        //    }
-        //}
 
         public static bool InitializedSpeaker(string id, bool skipReinit = false) {
             var queryurl = new VoicevoxURL() { method = "GET", path = "/is_initialized_speaker", query = new Dictionary<string, string> { { "speaker", id } } };
@@ -223,64 +209,45 @@ namespace OpenUtau.Core.Voicevox {
         public static VoicevoxSynthParams VoicevoxVoiceBase(VoicevoxQueryMain vqMain, string id) {
             var queryurl = new VoicevoxURL() { method = "POST", path = "/sing_frame_audio_query", query = new Dictionary<string, string> { { "speaker", id } }, body = JsonConvert.SerializeObject(vqMain) };
             var response = VoicevoxClient.Inst.SendRequest(queryurl);
-            VoicevoxSynthParams vvNotes;
             var jObj = JObject.Parse(response.Item1);
             if (jObj.ContainsKey("detail")) {
                 Log.Error($"Response was incorrect. : {jObj}");
                 throw new VoicevoxException($"Response was incorrect. : \n{jObj}\nScore:{string.Join(" ", vqMain.notes.Select(n => n.lyric))}");
-            } else {
-                vvNotes = jObj.ToObject<VoicevoxSynthParams>();
-                return vvNotes;
             }
-            return new VoicevoxSynthParams();
+            return jObj.ToObject<VoicevoxSynthParams>();
         }
 
         public static void Loaddic(VoicevoxSinger singer) {
             dic.Loaddic(singer.Location);
         }
 
-        public static bool IsPlosive(string lyric) {
-            string[] plosives = {
-                "p", "py",
-                "t", "ty", "ts",
-                "k", "ky", "kw",
-                "ch"
-            };
+        private static readonly string[] plosives = {
+            "p", "py",
+            "t", "ty", "ts",
+            "k", "ky", "kw",
+            "ch"
+        };
 
-            return plosives.Any(c =>
-                lyric.StartsWith(c));
+        //Takes a phoneme, or the romaji of a lyric, and reports whether it starts with a plosive.
+        public static bool IsPlosive(string lyric) {
+            if (string.IsNullOrEmpty(lyric)) {
+                return false;
+            }
+            return plosives.Any(p => lyric.StartsWith(p));
         }
 
-        public static readonly Dictionary<string, double> consonantOffsetMs = new() {
-            { "p", -25 },
-            { "py", -25 },
-
-            { "t", -20 },
-            { "ty", -20 },
-
-            { "k", -15 },
-            { "ky", -15 },
-            { "kw", -15 },
-
-            { "ch", -30 },
-            { "ts", -30 },
-
-            { "s", -10 },
-            { "sh", -15 },
-
-            //{ "f", -10 },
-            //{ "h", -5 },
-        };
-        public static double GetPhonemeOffset(string phoneme) {
-
-            if (consonantOffsetMs.TryGetValue(
-                phoneme,
-                out double offset)) {
-
-                return offset;
+        //Returns the end frame of a segment starting at startFrame.
+        //Segments are chained through startFrame so rounding never accumulates,
+        //and minLength keeps a segment long enough for the engine to synthesize it.
+        public static int ToEndFrame(int startFrame, double endMs, bool isPlosive, int minLength) {
+            double exactEnd = (endMs / 1000.0) * fps;
+            int endFrame = isPlosive
+                ? (int)Math.Ceiling(exactEnd)
+                : (int)Math.Round(exactEnd, MidpointRounding.AwayFromZero);
+            if (endFrame - startFrame < minLength) {
+                endFrame = startFrame + minLength;
             }
-
-            return 0;
+            return endFrame;
         }
 
         public static VoicevoxQueryMain NoteGroupsToVQuery(VoicevoxNote[] vNotes, TimeAxis timeAxis, bool pitch_slur = false) {
@@ -294,7 +261,10 @@ namespace OpenUtau.Core.Voicevox {
                 });
                 int slur_index = 0;
                 VoicevoxNote lastNote = new VoicevoxNote();
-                double currentMs = 0;
+                //Holds the end frame of the previous note so that notes stay contiguous.
+                int cursor = vNotes.Length > 0
+                    ? (int)Math.Round((vNotes[0].positionMs / 1000.0) * fps, MidpointRounding.AwayFromZero)
+                    : 0;
                 for (int index = 0; index < vNotes.Length;) {
                     string lyric = dic.Notetodic(vNotes, index);
                     // When slurs are considered in pitch generation, vowel-stretched notes inherit the Kana of the previous note
@@ -311,36 +281,22 @@ namespace OpenUtau.Core.Voicevox {
                         slur_index = 0;
                         lastNote = vNotes[index];
                     }
-                    double startMs = vNotes[index].positionMs;
-                    double endMs =
-                        vNotes[index].positionMs
-                        + vNotes[index].durationMs;
+                    //Usually synthesis adds the length of the slur to the previous note,
+                    //so a merged note needs no minimum length of its own.
+                    bool merge = IsSyllableVowelExtensionNote(vNotes[index].lyric) && !pitch_slur;
+                    double endMs = vNotes[index].positionMs + vNotes[index].durationMs;
 
-                    int startFrame = (int)Math.Round(
-                        (startMs / 1000.0) * VoicevoxUtils.fps,
-                        MidpointRounding.AwayFromZero);
-
-                    double exactEnd = (endMs / 1000.0) * VoicevoxUtils.fps;
-
-                    int endFrame;
-
-                    if (IsPlosive(WanaKanaNet.WanaKana.ToRomaji(lyric).ToList().FirstOrDefault().ToString())) {
-                        endFrame = (int)Math.Ceiling(exactEnd);
-                    } else {
-                        endFrame = (int)Math.Round(
-                            exactEnd,
-                            MidpointRounding.AwayFromZero);
-                    }
+                    int startFrame = cursor;
+                    int endFrame = ToEndFrame(
+                        startFrame,
+                        endMs,
+                        IsPlosive(WanaKanaNet.WanaKana.ToRomaji(lyric)),
+                        merge ? 0 : minFrames);
 
                     int length = endFrame - startFrame;
+                    cursor = endFrame;
 
-                    currentMs = endMs;
-                    //Avoid synthesis without at least two frames.
-                    //if (length < 2) {
-                    //    length = 2;
-                    //}
-                    //Usually synthesis adds the length of the slur to the previous note.
-                    if (IsSyllableVowelExtensionNote(vNotes[index].lyric) && !pitch_slur) {
+                    if (merge) {
                         vqMain.notes[^1].frame_length += length;
                         index++;
                         continue;
@@ -374,16 +330,22 @@ namespace OpenUtau.Core.Voicevox {
                 int actualFrames = vqMain.notes.Sum(x => x.frame_length) - vqMain.notes[0].frame_length - vqMain.notes[^1].frame_length;
 
                 int diff = expectedFrames - actualFrames;
-                for (int i = vqMain.notes.Count - 2; i >= 1; i--) {
-                    if (vqMain.notes[i].frame_length + diff >= 2) {
-                        vqMain.notes[i].frame_length += diff;
-                        break;
+                if (diff != 0) {
+                    bool applied = false;
+                    for (int i = vqMain.notes.Count - 2; i >= 1; i--) {
+                        if (vqMain.notes[i].frame_length + diff >= minFrames) {
+                            vqMain.notes[i].frame_length += diff;
+                            applied = true;
+                            break;
+                        }
+                    }
+                    if (!applied) {
+                        Log.Warning($"No note could absorb a frame length difference of {diff}. The phrase may drift by {(diff / fps) * 1000d:F1}ms.");
                     }
                 }
             } catch (Exception e) {
                 Log.Error(e, $"VoicevoxQueryNotes setup error: {e.Message}");
             }
-            Log.Information($"{vNotes.Sum(x => x.durationMs)},{(vqMain.notes.Sum(x => x.frame_length) / VoicevoxUtils.fps) * 1000f},{(int)Math.Round((vNotes.Sum(x => x.durationMs) / 1000f) * VoicevoxUtils.fps, MidpointRounding.AwayFromZero)},{vqMain.notes.Sum(x => x.frame_length)}");
             return vqMain;
         }
 

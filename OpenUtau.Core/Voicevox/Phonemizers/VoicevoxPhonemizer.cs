@@ -37,7 +37,7 @@ namespace OpenUtau.Core.Voicevox {
                     lyric = currentLyric,
                     positionMs = timeAxis.TickPosToMsPos(notes[i][0].position),
                     durationMs = timeAxis.TickPosToMsPos(notes[i][0].duration),
-                    tone = (int)(notes[i][0].tone + (notes[i][0].phonemeAttributes.Length > 0 ? notes[i][0].phonemeAttributes[0].toneShift : 0))
+                    tone = notes[i][0].tone + (notes[i][0].phonemeAttributes.FirstOrDefault().toneShift ?? 0)
                 };
             }
             VoicevoxQueryMain vqMain = VoicevoxUtils.NoteGroupsToVQuery(vNotes, timeAxis);
@@ -76,7 +76,7 @@ namespace OpenUtau.Core.Voicevox {
                         break;
                     } else if (VoicevoxUtils.phoneme_List.consonants.Contains(list[0].phoneme)) {
                         double consonantMs = (list[0].frame_length / VoicevoxUtils.fps) * 1000;
-                        int tickOffset = (int)timeAxis.MsPosToTickPos(Math.Max(0, consonantMs));
+                        int tickOffset = (int)timeAxis.MsPosToTickPos(consonantMs);
                         phoneme.Add(new Phoneme() {
                             phoneme = list[0].phoneme,
                             position = noteGroup[0].position - tickOffset
