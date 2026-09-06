@@ -9,6 +9,7 @@ using Avalonia.Media.Imaging;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 using ReactiveUI;
 using ReactiveUI.Primitives;
 using Serilog;
@@ -162,8 +163,9 @@ namespace OpenUtau.App.Controls {
             UVoicePart part,
             NotesViewModel viewModel) {
             bool isDiffSingerBoundaryMode = viewModel.ShowRenderPhraseBoundariesButton;
-            if ((isDiffSingerBoundaryMode && !viewModel.ShowRenderPhraseBoundaries) ||
-                (!isDiffSingerBoundaryMode && !viewModel.ShowWaveformPhraseBoundaries)) {
+            bool showBoundaries = Preferences.Default.ShowWaveformPhraseBoundaries &&
+                (!isDiffSingerBoundaryMode || viewModel.ShowRenderPhraseBoundaries);
+            if (!showBoundaries) {
                 return;
             }
             IBrush fill;

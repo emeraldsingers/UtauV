@@ -91,10 +91,6 @@
               <ComboBoxItem Content="{DynamicResource prefs.channel.alpha}"/>
             </ComboBox>
           </Grid>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.waveformphraseboundaries}" HorizontalAlignment="Left" />
-            <ToggleSwitch IsChecked="{Binding ShowWaveformPhraseBoundaries}" />
-          </Grid>
           <TextBlock Classes="restart"/>
         </StackPanel>
         
@@ -379,6 +375,10 @@
           <Grid Margin="0,5,0,0">
             <TextBlock Text="{DynamicResource prefs.appearance.diffsingerbarstyle}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding DiffSingerBarStyle}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.waveformphraseboundaries}" HorizontalAlignment="Left" />
+            <ToggleSwitch IsChecked="{Binding ShowWaveformPhraseBoundaries}" />
           </Grid>
           <Grid Margin="0,5,0,0" ToolTip.Tip="Dims the whole piano roll except the pitch curve while a pitch tool (Shift+1-5) is active">
             <TextBlock Text="Pitch edit mode" HorizontalAlignment="Left"/>

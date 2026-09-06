@@ -514,16 +514,6 @@
                 </Path>
               </Grid>
             </ToggleButton>
-            <ToggleButton Classes="toolbar" Margin="0" Padding="1" Height="20" Width="20"
-                          IsChecked="{Binding NotesViewModel.ShowWaveformPhraseBoundaries}"
-                          IsVisible="{Binding !NotesViewModel.ShowRenderPhraseBoundariesButton}"
-                          ToolTip.Tip="{DynamicResource prefs.waveformphraseboundaries}">
-              <Grid Width="18" Height="18">
-                <Path Classes="stroked" StrokeDashArray="3,1.5" Data="M 3 0 L 3 18" StrokeThickness="1.5"/>
-                <Path Classes="stroked" StrokeDashArray="3,1.5" Data="M 15 0 L 15 18" StrokeThickness="1.5"/>
-                <Path Classes="stroked" Data="M 3 3 L 15 3" StrokeThickness="2"/>
-              </Grid>
-            </ToggleButton>
             <ToggleButton Classes="toolbar" Margin="0" Padding="1" Height="20" Width="20" 
                           IsChecked="{Binding NotesViewModel.ShowRenderPhraseBoundaries}"
                           IsVisible="{Binding NotesViewModel.ShowRenderPhraseBoundariesButton}"
