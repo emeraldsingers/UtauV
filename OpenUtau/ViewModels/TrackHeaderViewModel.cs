@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using static ReactiveUI.Primitives.SubscribeExtensions;
 using Avalonia;
 using Avalonia.Controls;
@@ -583,6 +584,11 @@ namespace OpenUtau.App.ViewModels {
             SingerMenuItems = items;
             ApplySingerSearchFilter();
             this.RaisePropertyChanged(nameof(SingerMenuItems));
+        }
+
+        public Task RefreshSingersAsync() {
+            RefreshSingers();
+            return Task.CompletedTask;
         }
 
         public string GetPhonemizerGroupHeader(string key) {
