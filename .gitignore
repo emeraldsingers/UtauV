@@ -340,6 +340,7 @@ appcast.*.xml
 *.tar.gz
 .vscode/
 Microsoft.AI.DirectML
+tmp/
 
 # VS Code extensions autogen
 *.csproj.lscache
