@@ -195,6 +195,7 @@ namespace OpenUtau.Core.Util {
             public double UiCornerRadius = 0;
             public int DegreeStyle;
             public bool UseTrackColor = false;
+            public bool UseCustomSingerTheme = true;
             public bool ClearCacheOnQuit = false;
             public bool PreRender = true;
             public int NumRenderThreads = 2;

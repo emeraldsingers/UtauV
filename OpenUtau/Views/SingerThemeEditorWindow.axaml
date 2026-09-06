@@ -1,0 +1,102 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" MinWidth="580" Width="680" MinHeight="440" Height="540"
+        x:Class="OpenUtau.App.Views.SingerThemeEditorWindow" WindowStartupLocation="CenterOwner"
+        Icon="/Assets/open-utau.ico"
+        Title="Singer Themes"
+        Closing="WindowClosing" Topmost="True">
+  <Grid RowDefinitions="*,auto" Margin="0,0,0,10">
+    <Grid Grid.Row="0" ColumnDefinitions="180,*">
+      <!-- Left: Theme List -->
+      <Grid Grid.Column="0" RowDefinitions="*,auto" Margin="8,8,4,0">
+        <ListBox Grid.Row="0" ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme}">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding Name}" Padding="4,2"/>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <Grid Grid.Row="1" ColumnDefinitions="*,4,*" Margin="0,4,0,0">
+          <Button Grid.Column="0" Content="+" HorizontalAlignment="Stretch" Click="OnAddTheme" ToolTip.Tip="Create new singer theme"/>
+          <Button Grid.Column="2" Content="−" HorizontalAlignment="Stretch" Click="OnRemoveTheme" ToolTip.Tip="Delete selected singer theme" IsEnabled="{Binding HasSelectedTheme}"/>
+        </Grid>
+      </Grid>
+
+      <!-- Right: Editor -->
+      <Border Grid.Column="1" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="4,8,8,0" IsEnabled="{Binding HasSelectedTheme}">
+        <ScrollViewer Padding="8,0,0,0">
+          <StackPanel Spacing="4">
+            <Panel>
+              <TextBlock Text="Name" VerticalAlignment="Center"/>
+              <TextBox HorizontalAlignment="Right" Width="200" Text="{Binding SelectedTheme.Name, Mode=TwoWay}"/>
+            </Panel>
+            <Panel>
+              <TextBlock Text="Singers (comma separated)" VerticalAlignment="Center"/>
+              <TextBox HorizontalAlignment="Right" Width="200" Text="{Binding SelectedTheme.Singers, Mode=TwoWay}"/>
+            </Panel>
+            <Separator Margin="0"/>
+
+            <TextBlock Text="Track Colors" FontWeight="Bold"/>
+            <Panel>
+              <CheckBox Content="Accent" IsChecked="{Binding SelectedTheme.HasTrackAccentColor}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasTrackAccentColor}" Color="{Binding SelectedTheme.TrackAccentColor}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Accent Dark" IsChecked="{Binding SelectedTheme.HasTrackAccentColorDark}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasTrackAccentColorDark}" Color="{Binding SelectedTheme.TrackAccentColorDark}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Accent Light" IsChecked="{Binding SelectedTheme.HasTrackAccentColorLight}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasTrackAccentColorLight}" Color="{Binding SelectedTheme.TrackAccentColorLight}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Center Key" IsChecked="{Binding SelectedTheme.HasTrackCenterKeyColor}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasTrackCenterKeyColor}" Color="{Binding SelectedTheme.TrackCenterKeyColor}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Separator Margin="0"/>
+
+            <TextBlock Text="Phoneme Colors" FontWeight="Bold"/>
+            <Panel>
+              <CheckBox Content="Phoneme" IsChecked="{Binding SelectedTheme.HasPhonemeColor}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasPhonemeColor}" Color="{Binding SelectedTheme.PhonemeColor}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Phoneme 2" IsChecked="{Binding SelectedTheme.HasPhonemeColor2}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasPhonemeColor2}" Color="{Binding SelectedTheme.PhonemeColor2}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Accent Pen 2" IsChecked="{Binding SelectedTheme.HasAccentPen2Color}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasAccentPen2Color}" Color="{Binding SelectedTheme.AccentPen2Color}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Accent Semi" IsChecked="{Binding SelectedTheme.HasAccentColorSemi}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasAccentColorSemi}" Color="{Binding SelectedTheme.AccentColorSemi}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Separator Margin="0"/>
+
+            <TextBlock Text="Pitch Colors" FontWeight="Bold"/>
+            <Panel>
+              <CheckBox Content="Pitch" IsChecked="{Binding SelectedTheme.HasPitchColor}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasPitchColor}" Color="{Binding SelectedTheme.PitchColor}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Pitch Bend" IsChecked="{Binding SelectedTheme.HasPitchBendColor}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasPitchBendColor}" Color="{Binding SelectedTheme.PitchBendColor}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+            <Panel>
+              <CheckBox Content="Pitch Bend Brush" IsChecked="{Binding SelectedTheme.HasPitchBendBrushColor}" VerticalAlignment="Center"/>
+              <ColorPicker IsEnabled="{Binding SelectedTheme.HasPitchBendBrushColor}" Color="{Binding SelectedTheme.PitchBendBrushColor}" ColorSpectrumShape="Ring" HorizontalAlignment="Right"/>
+            </Panel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <!-- Bottom: Save/Close -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,10,*" Margin="8,6,8,0">
+      <Button Grid.Column="0" Content="{DynamicResource themeeditor.cancel}" HorizontalAlignment="Stretch" Click="OnClose"/>
+      <Button Grid.Column="2" Content="{DynamicResource themeeditor.save}" HorizontalAlignment="Stretch" Click="OnSaveAll"/>
+    </Grid>
+  </Grid>
+</Window>

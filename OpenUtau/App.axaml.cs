@@ -164,6 +164,7 @@ namespace OpenUtau.App {
                     break;
             }
             ThemeManager.LoadTheme();
+            CustomSingerTheme.ListThemes();
         }
 
         public static void SetUiCornerRadii() {

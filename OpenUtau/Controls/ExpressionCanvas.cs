@@ -8,7 +8,9 @@ using Avalonia.Media.Immutable;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 using OpenUtau.ViewModels;
+using OpenUtau.Colors;
 using ReactiveUI;
 using ReactiveUI.Primitives;
 
@@ -158,6 +160,15 @@ namespace OpenUtau.App.Controls {
             }
             var project = DocManager.Inst.Project;
             var track = project.tracks[Part.trackNo];
+            var singerName = track.Singer?.Name ?? string.Empty;
+            var singerTheme = Preferences.Default.UseCustomSingerTheme ? CustomSingerTheme.GetThemeForSinger(singerName) : null;
+            IBrush realCurveFillBrush = ThemeManager.RealCurveFillBrush;
+            IPen realCurvePen = ThemeManager.RealCurvePen;
+            if (singerTheme?.HasTrackAccentColorLight == true &&
+                Color.TryParse(singerTheme.TrackAccentColorLight, out var realCurveColor)) {
+                realCurveFillBrush = new SolidColorBrush(Color.FromArgb(56, realCurveColor.R, realCurveColor.G, realCurveColor.B));
+                realCurvePen = new Pen(new SolidColorBrush(Color.FromArgb(200, realCurveColor.R, realCurveColor.G, realCurveColor.B)), 2, DashStyle.Dash);
+            }
             if (!track.TryGetExpDescriptor(project, key, out var descriptor)) {
                 return;
             }
@@ -184,6 +195,16 @@ namespace OpenUtau.App.Controls {
                 var lPen2Selected = DisplayMode == ExpDisMode.Shadow ? new Pen(ThemeManager.NeutralAccentBrush, 3) : ThemeManager.AccentPen2Thickness3;
                 var lPen3 = new Pen(ThemeManager.NeutralAccentBrush, 1, new DashStyle(new double[] { 4, 4 }, 0));
                 var brush = DisplayMode == ExpDisMode.Shadow ? ThemeManager.NeutralAccentBrush : ThemeManager.AccentBrush1;
+                if (singerTheme != null) {
+                    if (singerTheme.HasTrackAccentColor) brush = singerTheme.GetBrush(singerTheme.TrackAccentColor);
+                    if (singerTheme.HasTrackAccentColorLight) {
+                        var light = singerTheme.GetBrush(singerTheme.TrackAccentColorLight);
+                        lPen2 = new Pen(light, 3);
+                        lPen2Selected = new Pen(light, 3);
+                    }
+                    if (singerTheme.HasTrackAccentColor) lPen = singerTheme.GetPen(singerTheme.TrackAccentColor);
+                    if (singerTheme.HasTrackAccentColorLight) lPenSelected = singerTheme.GetPen(singerTheme.TrackAccentColorLight);
+                }
                 
                 double x3 = Math.Round(viewModel.TickToneToPoint(leftTick, 0).X);
                 double x4 = Math.Round(viewModel.TickToneToPoint(rightTick, 0).X);
@@ -314,7 +335,7 @@ namespace OpenUtau.App.Controls {
                             }
                         }
                         geometry.Figures!.Add(figure);
-                        context.DrawGeometry(ThemeManager.RealCurveFillBrush, ThemeManager.RealCurvePen, geometry);
+                        context.DrawGeometry(realCurveFillBrush, realCurvePen, geometry);
                         offset = end;
                     }
                 }
@@ -344,6 +365,20 @@ namespace OpenUtau.App.Controls {
                 var hPen = DisplayMode == ExpDisMode.Shadow ? shadowHPen : (selectedNotes.Contains(note) ? ThemeManager.AccentPen2Thickness3 : ThemeManager.AccentPen1Thickness3);
                 var vPen = DisplayMode == ExpDisMode.Shadow ? shadowVPen : (selectedNotes.Contains(note) ? ThemeManager.AccentPen2Thickness3 : ThemeManager.AccentPen1Thickness3);
                 var brush = DisplayMode == ExpDisMode.Shadow ? ThemeManager.NeutralAccentBrush : (selectedNotes.Contains(note) ? ThemeManager.AccentBrush2 : ThemeManager.AccentBrush1);
+                if (DisplayMode != ExpDisMode.Shadow && singerTheme != null) {
+                    bool selected = selectedNotes.Contains(note);
+                    if (selected && singerTheme.HasTrackAccentColorLight) {
+                        var color = singerTheme.GetBrush(singerTheme.TrackAccentColorLight);
+                        hPen = new Pen(color, 3);
+                        vPen = new Pen(color, 3);
+                        brush = color;
+                    } else if (!selected && singerTheme.HasTrackAccentColor) {
+                        var color = singerTheme.GetBrush(singerTheme.TrackAccentColor);
+                        hPen = new Pen(color, 3);
+                        vPen = new Pen(color, 3);
+                        brush = color;
+                    }
+                }
                 
                 var (value, overriden) = phoneme.GetExpression(project, track, Key);
                 double x1 = Math.Round(viewModel.TickToneToPoint(phoneme.position, 0).X);

@@ -5,6 +5,7 @@ using OpenUtau.Core;
 using OpenUtau.Core.DiffSinger;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
+using OpenUtau.Colors;
 
 namespace OpenUtau.App.Controls {
     static class PhonemeUIRender {
@@ -40,7 +41,15 @@ namespace OpenUtau.App.Controls {
             }
             var x = viewModel.TickToneToPoint(phoneme.position, 0).X;
             var bold = phoneme.phoneme != phoneme.rawPhoneme;
-            var textLayout = TextLayoutCache.Get(phonemeText, ThemeManager.ForegroundBrush!, 12, bold,
+            var textBrush = ThemeManager.ForegroundBrush!;
+            if (Preferences.Default.UseCustomSingerTheme && viewModel.Part != null) {
+                var singerName = viewModel.Project.tracks[viewModel.Part.trackNo].Singer?.Name ?? string.Empty;
+                var theme = CustomSingerTheme.GetThemeForSinger(singerName);
+                if (theme?.HasPhonemeColor == true) {
+                    textBrush = theme.GetBrush(theme.PhonemeColor);
+                }
+            }
+            var textLayout = TextLayoutCache.Get(phonemeText, textBrush, 12, bold,
                 useUiFont: Preferences.Default.UseUiFontForNotes);
             if (x < lastTextEndX) {
                 raiseText = !raiseText;

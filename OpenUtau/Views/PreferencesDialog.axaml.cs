@@ -244,5 +244,9 @@ namespace OpenUtau.App.Views {
                 await MessageBox.ShowError(this, ex, ThemeManager.GetString("prefs.appearance.customtheme.import.failed"));
             }
         }
+
+        void OpenSingerThemeEditor(object? sender, RoutedEventArgs e) {
+            SingerThemeEditorWindow.Open();
+        }
     }
 }

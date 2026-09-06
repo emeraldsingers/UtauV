@@ -9,6 +9,8 @@ using OpenUtau.App.ViewModels;
 using OpenUtau.App.Roflofic;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
+using OpenUtau.Colors;
 using ReactiveUI;
 using ReactiveUI.Primitives;
 
@@ -146,6 +148,10 @@ namespace OpenUtau.App.Controls {
             double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
             bool raiseText = false;
             double lastTextEndX = double.NegativeInfinity;
+            string singerName = viewModel.Project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
+            var customTheme = Preferences.Default.UseCustomSingerTheme
+                ? CustomSingerTheme.GetThemeForSinger(singerName)
+                : null;
 
             const double y = 35.5;
             const double height = 24;
@@ -163,6 +169,12 @@ namespace OpenUtau.App.Controls {
                     if (diffSinger) {
                         double xRight = Math.Round(viewModel.TickToneToPoint(phoneme.End, 0).X) + 0.5;
                         var brushBar = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                        if (customTheme?.HasTrackAccentColorLight == true &&
+                            Color.TryParse(customTheme.TrackAccentColorLight, out var color)) {
+                            brushBar = selectedNotes.Contains(phoneme.Parent) && customTheme.HasAccentColorSemi
+                                ? customTheme.GetBrush(customTheme.AccentColorSemi)
+                                : new SolidColorBrush(color) { Opacity = 0.5 };
+                        }
                         context.DrawRectangle(brushBar, null, new Rect(x, y, xRight - x, height));
                         goto DrawPosition;
                     }
@@ -183,6 +195,16 @@ namespace OpenUtau.App.Controls {
                     var brush = RofloficEffects.RainbowEnabled
                         ? RofloficEffects.Brush(phoneme.position * 0.002, 110)
                         : selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                    if (customTheme != null) {
+                        pen = selectedNotes.Contains(phoneme.Parent) && customTheme.HasPhonemeColor2
+                            ? customTheme.GetPen(customTheme.PhonemeColor2)
+                            : customTheme.HasPhonemeColor ? customTheme.GetPen(customTheme.PhonemeColor) : pen;
+                        if (customTheme.HasTrackAccentColorLight && Color.TryParse(customTheme.TrackAccentColorLight, out var color)) {
+                            brush = selectedNotes.Contains(phoneme.Parent) && customTheme.HasAccentColorSemi
+                                ? customTheme.GetBrush(customTheme.AccentColorSemi)
+                                : new SolidColorBrush(color) { Opacity = 0.5 };
+                        }
+                    }
 
                     var point0 = new Point(x0, y + y0);
                     var point1 = new Point(x1, y + y1);
@@ -201,10 +223,12 @@ namespace OpenUtau.App.Controls {
                 }
 
             DrawPosition:
-                var penPos = ThemeManager.AccentPen2;
-                if (phoneme.rawPosition != phoneme.position) {
-                    penPos = ThemeManager.AccentPen2Thickness3;
-                }
+                var penPos = customTheme?.HasAccentPen2Color == true
+                    ? customTheme.GetPen(customTheme.AccentPen2Color,
+                        phoneme.rawPosition != phoneme.position ? 3 : 1)
+                    : phoneme.rawPosition != phoneme.position
+                        ? ThemeManager.AccentPen2Thickness3
+                        : ThemeManager.AccentPen2;
                 context.DrawLine(penPos, new Point(x, y), new Point(x, y + height));
 
                 // FIXME: Changing code below may break `HitTestAlias`.

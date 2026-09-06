@@ -904,4 +904,6 @@ The voicebank may not work on another OS.</system:String>-->
   <system:String x:Key="packages.themes.status.installing">Установка темы {0}...</system:String>
   <system:String x:Key="packages.themes.status.installfinished">Тема установлена</system:String>
   <system:String x:Key="packages.themes.status.installfailed">Ошибка установки темы</system:String>
+  <system:String x:Key="prefs.appearance.singerthemes.enabled">Использовать цвета тем исполнителей</system:String>
+  <system:String x:Key="prefs.appearance.singerthemes.manage">Управление темами исполнителей</system:String>
 </ResourceDictionary>

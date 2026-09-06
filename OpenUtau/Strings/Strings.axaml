@@ -1105,4 +1105,6 @@ General
   <system:String x:Key="voicebanks.status.uninstalling">Uninstalling voicebank {0}...</system:String>
   <system:String x:Key="voicebanks.status.uninstallfinished">Voicebank uninstall finished</system:String>
   <system:String x:Key="voicebanks.status.uninstallfailed">Voicebank uninstall failed</system:String>
+  <system:String x:Key="prefs.appearance.singerthemes.enabled">Use custom singer theme colors</system:String>
+  <system:String x:Key="prefs.appearance.singerthemes.manage">Manage Singer Themes</system:String>
 </ResourceDictionary>

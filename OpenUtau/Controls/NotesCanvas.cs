@@ -15,6 +15,7 @@ using OpenUtau.Core;
 using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
+using OpenUtau.Colors;
 using ReactiveUI;
 
 namespace OpenUtau.App.Controls {
@@ -577,6 +578,16 @@ namespace OpenUtau.App.Controls {
                     : 0;
                 brush = BlendBrush(brush, hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2, highlight);
             }
+            if (Preferences.Default.UseCustomSingerTheme && Part != null) {
+                var singer = viewModel.Project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
+                var theme = CustomSingerTheme.GetThemeForSinger(singer);
+                if (theme != null) {
+                    bool selected = selectedNotes.Contains(note);
+                    if (selected ? theme.HasTrackAccentColorLight : theme.HasTrackAccentColor) {
+                        brush = theme.GetBrush(selected ? theme.TrackAccentColorLight : theme.TrackAccentColor);
+                    }
+                }
+            }
             brush = ApplyNoteOpacity(brush);
             double radius = GetNoteCornerRadius(size);
             context.DrawRectangle(brush, null, new Rect(leftTop, rightBottom), radius, radius);
@@ -1110,6 +1121,11 @@ namespace OpenUtau.App.Controls {
 
         private void RenderFinalPitch(double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context, bool bright = false) {
             var pen = bright ? pitchEditPen : ThemeManager.FinalPitchPen!;
+            if (!bright && Preferences.Default.UseCustomSingerTheme && Part != null) {
+                var singer = viewModel.Project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
+                var theme = CustomSingerTheme.GetThemeForSinger(singer);
+                if (theme?.HasPitchColor == true) pen = theme.GetPen(theme.PitchColor);
+            }
             lock (Part!) {
                 foreach (var phrase in Part!.renderPhrases) {
                     if (phrase.position - Part.position > rightTick || phrase.end - Part.position < leftTick) {
