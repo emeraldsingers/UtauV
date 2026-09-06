@@ -120,6 +120,10 @@ namespace OpenUtau.Core {
     }
 
     public class PhonemizedNotification : UNotification {
+        public readonly UVoicePart part;
+        public PhonemizedNotification(UVoicePart part) {
+            this.part = part;
+        }
         public override string ToString() => "Phonemized";
     }
 

@@ -542,19 +542,38 @@ namespace OpenUtau.Core.DiffSinger {
         }
 
         public RenderPitchResult LoadRenderedPitch(RenderPhrase phrase) {
+            return LoadRenderedPitch(phrase, pitchSteps: null);
+        }
+
+        public RenderPitchResult LoadRenderedPitch(RenderPhrase phrase, double? pitchSteps, bool fastRealtime = false) {
             DiffSingerSinger singer = (DiffSingerSinger) phrase.singer;
             if (!singer.HasPitchPredictor) {
                 throw new Exception("This singer has no pitch predictor.");
             }
             var pitchPredictor = singer.getPitchPredictor()!;
             lock (singer.SessionLock) {
-                return pitchPredictor.Process(phrase);
+                return pitchPredictor.Process(phrase, pitchSteps, fastRealtime);
             }
         }
 
         public RenderPitchResult LoadRenderedPitch(RenderPhrase phrase, HashSet<int> selectedNotePositions) {
-            if (!Preferences.Default.DiffSingerLocalRetaking) {
-                return LoadRenderedPitch(phrase);
+            return LoadRenderedPitch(phrase, selectedNotePositions, pitchSteps: null, fastRealtime: false, forceLocalRetake: false);
+        }
+
+        /// <summary>Live pitch: partial retake for changed notes with fast sampling settings.</summary>
+        internal RenderPitchResult LoadRenderedPitchLive(
+            RenderPhrase phrase, HashSet<int> selectedNotePositions, double pitchSteps, bool fastRealtime) {
+            return LoadRenderedPitch(phrase, selectedNotePositions, pitchSteps, fastRealtime, forceLocalRetake: true);
+        }
+
+        RenderPitchResult LoadRenderedPitch(
+            RenderPhrase phrase,
+            HashSet<int> selectedNotePositions,
+            double? pitchSteps,
+            bool fastRealtime,
+            bool forceLocalRetake) {
+            if (!forceLocalRetake && !Preferences.Default.DiffSingerLocalRetaking) {
+                return LoadRenderedPitch(phrase, pitchSteps, fastRealtime);
             }
             DiffSingerSinger singer = (DiffSingerSinger) phrase.singer;
             if (!singer.HasPitchPredictor) {
@@ -569,7 +588,7 @@ namespace OpenUtau.Core.DiffSinger {
                 phrase.position, noteRelativePositions, selectedNotePositions);
             if (retakeNoteIndexes.Count == 0 || retakeNoteIndexes.Count == phrase.notes.Length) {
                 lock (singer.SessionLock) {
-                    return pitchPredictor.Process(phrase);
+                    return pitchPredictor.Process(phrase, pitchSteps, fastRealtime);
                 }
             }
             var frameMs = pitchPredictor.FrameMs;
@@ -580,7 +599,7 @@ namespace OpenUtau.Core.DiffSinger {
             var existingPitch = DiffSingerUtils.SampleCurve(phrase, phrase.pitches, 0, frameMs, totalFrames, headFrames, tailFrames,
                 x => x * 0.01).Select(f => (float)f).ToArray();
             lock (singer.SessionLock) {
-                return pitchPredictor.Process(phrase, retakeNoteIndexes, existingPitch);
+                return pitchPredictor.Process(phrase, pitchSteps, fastRealtime, retakeNoteIndexes, existingPitch);
             }
         }
 
