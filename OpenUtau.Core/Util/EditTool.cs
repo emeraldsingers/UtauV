@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -10,12 +10,13 @@ namespace OpenUtau.Core.Util {
         PenPlusTool = 11,
         EraserTool = 20,
         KnifeTool = 30,
-        DrawPitchTool = 40,
-        DrawPitchPlusTool = 45,
-        PitchLineTool = 50,
-        PitchSCurveTool = 60,
-        PitchSineWaveTool = 70,
-        PitchSmoothenTool = 80
+        PitchPointTool = 40,
+        DrawPitchTool = 50,
+        DrawPitchPlusTool = 55,
+        PitchLineTool = 60,
+        PitchSCurveTool = 70,
+        PitchSineWaveTool = 80,
+        PitchSmoothenTool = 90
     }
 
     public class EditTool {
@@ -30,23 +31,25 @@ namespace OpenUtau.Core.Util {
                     case 1:
                         return PenToolVariation == 1 ? EditTools.PenPlusTool : EditTools.PenTool;
                     case 4:
-                        return EditTools.DrawPitchTool;
+                        return EditTools.PitchPointTool;
                     case 5:
-                        return EditTools.DrawPitchPlusTool;
+                        return EditTools.DrawPitchTool;
                     case 6:
-                        return EditTools.PitchLineTool;
+                        return EditTools.DrawPitchPlusTool;
                     case 7:
-                        return EditTools.PitchSCurveTool;
+                        return EditTools.PitchLineTool;
                     case 8:
-                        return EditTools.PitchSineWaveTool;
+                        return EditTools.PitchSCurveTool;
                     case 9:
+                        return EditTools.PitchSineWaveTool;
+                    case 10:
                         return EditTools.PitchSmoothenTool;
                     default:
                         return (EditTools)(BaseTool * 10);
                 }
             }
         }
-        [JsonIgnore] public bool IsPitchTool => BaseTool >= 4 && BaseTool <= 9;
+        [JsonIgnore] public bool IsPitchTool => BaseTool >= 5 && BaseTool <= 10;
         public bool IsMatch(IEnumerable<EditTools> tools) => tools.Contains(CurrentTool);
     }
 }
