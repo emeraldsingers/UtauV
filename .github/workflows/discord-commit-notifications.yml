@@ -26,22 +26,28 @@ jobs:
 
             const pushedCommits = context.payload.commits ?? [];
             const before = context.payload.before;
-            const firstParentCommits = new Set();
-            let sha = context.payload.after;
-
-            // A merge push includes commits from its second parent. Only announce
-            // commits that become part of master's first-parent history.
-            while (sha && sha !== before) {
-              firstParentCommits.add(sha);
-              const { data: commit } = await github.rest.repos.getCommit({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: sha,
-              });
-              sha = commit.parents[0]?.sha;
+            let commits;
+            if (context.payload.forced) {
+              // After a force-push, `before` may no longer be an ancestor of
+              // `after`. Do not walk the repository history in that case: the
+              // push payload already contains the commits GitHub wants announced.
+              commits = pushedCommits;
+            } else {
+              const firstParentCommits = new Set();
+              let sha = context.payload.after;
+              // A merge push includes commits from its second parent. Only announce
+              // commits that become part of master's first-parent history.
+              while (sha && sha !== before) {
+                firstParentCommits.add(sha);
+                const { data: commit } = await github.rest.repos.getCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: sha,
+                });
+                sha = commit.parents[0]?.sha;
+              }
+              commits = pushedCommits.filter(commit => firstParentCommits.has(commit.id));
             }
-
-            const commits = pushedCommits.filter(commit => firstParentCommits.has(commit.id));
             if (commits.length === 0) {
               core.notice('This push has no first-parent commits to announce.');
               return;
