@@ -10,6 +10,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
 using OpenUtau.App.Views;
 using OpenUtau.Core;
@@ -48,6 +50,8 @@ namespace OpenUtau.App.Controls {
         private ReactiveCommand<RxVoid, RxVoid>? lyricsDialogCommand;
         private ReactiveCommand<RxVoid, RxVoid>? noteDefaultsCommand;
         private ReactiveCommand<BatchEdit, RxVoid>? noteBatchEditCommand;
+        private readonly DispatcherTimer portraitSpinTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 30.0) };
+        private double portraitSpinAngle;
 
         private Window RootWindow => (Window)TopLevel.GetTopLevel(this)!;
 
@@ -58,6 +62,8 @@ namespace OpenUtau.App.Controls {
             SetPenToolIcon();
             penTool.AddHandler(PointerPressedEvent, OnToolButtonPointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
             this.LayoutUpdated += PianoRollLayoutUpdated;
+            portraitSpinTimer.Tick += (_, _) => UpdatePortraitSpin();
+            portraitSpinTimer.Start();
         }
 
         private void PianoRollLayoutUpdated(object? sender, EventArgs e) {
@@ -69,6 +75,23 @@ namespace OpenUtau.App.Controls {
             // Position at top-right of row 3, with 100px margin from right
             Canvas.SetTop(PortraitImage, 0);
             Canvas.SetLeft(PortraitImage, PortraitCanvas.Bounds.Width - PortraitImage.DesiredSize.Width - 100);
+        }
+
+        private void UpdatePortraitSpin() {
+            var notes = ViewModel?.NotesViewModel;
+            bool active = notes?.ShowPlaybackPortraitSpin == true && PlaybackManager.Inst.PlayingMaster;
+            if (active) {
+                var note = ViewModel?.PlaybackViewModel == null
+                    ? null
+                    : notes?.FindVoiceNoteAtTick(ViewModel.PlaybackViewModel.PlayPosTick);
+                portraitSpinAngle += note == null ? 1.5 : 2.5;
+                if (portraitSpinAngle >= 360) portraitSpinAngle -= 360;
+            } else {
+                portraitSpinAngle = 0;
+            }
+            if (PortraitImage.RenderTransform is RotateTransform rotate) {
+                rotate.Angle = active ? portraitSpinAngle : 0;
+            }
         }
 
         public void InitializePianoRollWindowAsync() {
@@ -338,6 +361,10 @@ namespace OpenUtau.App.Controls {
         void OnMenuPlaybackNoteOrbit(object sender, RoutedEventArgs args) {
             ViewModel.NotesViewModel.ShowPlaybackNoteOrbit =
                 !ViewModel.NotesViewModel.ShowPlaybackNoteOrbit;
+        }
+        void OnMenuPlaybackPortraitSpin(object sender, RoutedEventArgs args) {
+            ViewModel.NotesViewModel.ShowPlaybackPortraitSpin =
+                !ViewModel.NotesViewModel.ShowPlaybackPortraitSpin;
         }
 
         void OnMenuRainbowEffect(object sender, RoutedEventArgs args) {

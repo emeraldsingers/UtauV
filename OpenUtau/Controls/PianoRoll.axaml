@@ -152,7 +152,11 @@
                         ShowBar="False"/>
       <!-- Expression backgrounds end -->
       <Canvas Name="PortraitCanvas" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" IsHitTestVisible="False">
-        <Image Name="PortraitImage" Source="{Binding NotesViewModel.Portrait}" OpacityMask="{Binding NotesViewModel.PortraitMask}" Stretch="None"/>
+        <Image Name="PortraitImage" Source="{Binding NotesViewModel.Portrait}" OpacityMask="{Binding NotesViewModel.PortraitMask}" Stretch="None" RenderTransformOrigin="50%,50%">
+          <Image.RenderTransform>
+            <RotateTransform Angle="0" />
+          </Image.RenderTransform>
+        </Image>
       </Canvas>
       <Border Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
               Margin="0,0,0,60" Height="60" IsHitTestVisible="False">
@@ -322,6 +326,11 @@
                 <MenuItem Header="{DynamicResource pianoroll.menu.view.playbacknoteorbit}" Click="OnMenuPlaybackNoteOrbit">
                   <MenuItem.Icon>
                     <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackNoteOrbit}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{DynamicResource pianoroll.menu.view.playbackportraitspin}" Click="OnMenuPlaybackPortraitSpin">
+                  <MenuItem.Icon>
+                    <CheckBox IsChecked="{Binding NotesViewModel.ShowPlaybackPortraitSpin}" />
                   </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="{DynamicResource pianoroll.menu.view.rainboweffect}" Click="OnMenuRainbowEffect">
