@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using OpenUtau.Core.Ustx;
 
@@ -20,14 +20,48 @@ namespace OpenUtau.Core.Neutrino {
         const string V27DirName = "NEUTRINO_v27";
         const string V3DirName = "NEUTRINO_v3";
 
-        public static NeutrinoVersion DetectVersion(string singerVersion) {
+        // Supported ranges, lower bound inclusive and upper bound exclusive.
+        static readonly Version V27Min = new Version(2, 7, 0, 0);
+        static readonly Version V27Max = new Version(2, 7, 1, 0);
+        static readonly Version V3Min = new Version(3, 2, 0, 0);
+        static readonly Version V3Max = new Version(4, 0, 0, 0);
+
+        /// <summary>
+        /// Parses a singer version such as "v3.2.2" or "3.2" into a comparable value.
+        /// Missing components are treated as 0 so that "v3.2" equals 3.2.0.
+        /// </summary>
+        public static bool TryParseVersion(string singerVersion, out Version version) {
+            version = null;
             if (string.IsNullOrEmpty(singerVersion)) {
+                return false;
+            }
+            string text = singerVersion.Trim();
+            if (text.StartsWith("v", StringComparison.OrdinalIgnoreCase)) {
+                text = text.Substring(1);
+            }
+            int suffix = text.IndexOfAny(new[] { '-', '+', ' ', '_' });
+            if (suffix >= 0) {
+                text = text.Substring(0, suffix);
+            }
+            if (!Version.TryParse(text, out var parsed)) {
+                return false;
+            }
+            version = new Version(
+                parsed.Major,
+                parsed.Minor,
+                Math.Max(parsed.Build, 0),
+                Math.Max(parsed.Revision, 0));
+            return true;
+        }
+
+        public static NeutrinoVersion DetectVersion(string singerVersion) {
+            if (!TryParseVersion(singerVersion, out var version)) {
                 return NeutrinoVersion.Unsupported;
             }
-            if (singerVersion.StartsWith("v2.7")) {
+            if (version >= V27Min && version < V27Max) {
                 return NeutrinoVersion.V27;
             }
-            if (singerVersion.StartsWith("v3") && !singerVersion.StartsWith("v3.1")) {
+            if (version >= V3Min && version < V3Max) {
                 return NeutrinoVersion.V3;
             }
             return NeutrinoVersion.Unsupported;

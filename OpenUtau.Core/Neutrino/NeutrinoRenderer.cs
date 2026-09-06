@@ -76,6 +76,8 @@ namespace OpenUtau.Core.Neutrino {
         string VocoderServerExe = string.Empty;
         bool existNeutrinoClient = false;
         int sampleRate = 48000;
+        // NEUTRINO version the executable paths and dictionary were resolved for.
+        NeutrinoVersion setUpVersion = NeutrinoVersion.Unsupported;
 
         NeutrinoVersion Version => NeutrinoUtils.DetectVersion(this.singer.singerVersion);
 
@@ -116,6 +118,7 @@ namespace OpenUtau.Core.Neutrino {
             Log.Debug(String.IsNullOrEmpty(WorldExe) ? $"No WorldExe" : $"WorldExe: {WorldExe}");
             NeutrinoServerLauncher.EnsureStarted(NeutrinoServerExe);
             NeutrinoServerLauncher.EnsureStarted(VocoderServerExe, 23456);
+            setUpVersion = Version;
         }
 
         protected override HTSPhoneme[] CustomHTSPhonemeContext(HTSPhoneme[] htsPhonemes, RenderNote notes) {
@@ -178,7 +181,9 @@ namespace OpenUtau.Core.Neutrino {
                     string progressInfo = $"Track {trackNo + 1}: {this} \"{string.Join(" ", phrase.phones.Select(p => p.phoneme))}\"";
                     progress.Complete(0, progressInfo);
                     this.singer = phrase.singer as NeutrinoSinger;
-                    if (g2p == null || string.IsNullOrEmpty(NeutrinoExe)) {
+                    // The renderer instance is reused for the whole track, so switching the
+                    // singer to another NEUTRINO version must re-resolve the paths and dictionary.
+                    if (g2p == null || string.IsNullOrEmpty(NeutrinoExe) || setUpVersion != Version) {
                         SetUp();
                     }
                     var result = Layout(phrase);
@@ -187,12 +192,14 @@ namespace OpenUtau.Core.Neutrino {
                     if (!Directory.Exists(tmpPath)) {
                         Directory.CreateDirectory(tmpPath);
                     }
-                    string wavPath = Path.Join(tmpPath, $"ne-{phrase.hash}.wav");
-                    string f0Path = Path.Join(tmpPath, $"ne-{phrase.hash}.f0");
-                    string editorf0Path = Path.Join(tmpPath, $"ne-edit.f0");
-                    string melspecPath = Path.Join(tmpPath, $"ne-{phrase.hash}.melspec");
-                    string mgcPath = Path.Join(tmpPath, $"ne-{phrase.hash}.mgc");
-                    string bapPath = Path.Join(tmpPath, $"ne-{phrase.hash}.bap");
+                    int toneShift = phrase.phones[0] != null ? phrase.phones[0].toneShift : 0;
+                    ulong frameHash = HashPhraseFrames(phrase);
+                    string wavPath = Path.Join(tmpPath, $"ne-{frameHash}.wav");
+                    string f0Path = Path.Join(tmpPath, $"ne-{frameHash}.f0");
+                    string editorf0Path = Path.Join(tmpPath, $"ne-{frameHash}-edit.f0");
+                    string melspecPath = Path.Join(tmpPath, $"ne-{frameHash}.melspec");
+                    string mgcPath = Path.Join(tmpPath, $"ne-{frameHash}.mgc");
+                    string bapPath = Path.Join(tmpPath, $"ne-{frameHash}.bap");
                     fullScorePath = Path.Join(tmpPath, $"ne-{hash}_full_score.lab");
                     monoTimingPath = Path.Join(tmpPath, $"ne-{hash}_mono_timing.lab");
                     string modelDir = NeutrinoUtils.ModelDir(this.singer);
@@ -236,7 +243,7 @@ namespace OpenUtau.Core.Neutrino {
                             }
                             if (!File.Exists(wavPath) && File.Exists(f0Path) && File.Exists(melspecPath)) {
                                 if (phrase.phones[0].direct) {
-                                    ArgParam = $"\"{f0Path}\" \"{melspecPath}\" \"{modelDir}{nsf}.bin\" \"{wavPath}\" -l \"{monoTimingPath}\" -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -f {toneShift} -m -t";
+                                    ArgParam = $"\"{f0Path}\" \"{melspecPath}\" \"{modelDir}{nsf}.bin\" \"{wavPath}\" -l \"{monoTimingPath}\" -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -m -t";
                                 } else {
                                     double[] f0 = LoadFile(f0Path);
                                     double[] melspec = LoadFile(melspecPath);
@@ -245,12 +252,17 @@ namespace OpenUtau.Core.Neutrino {
                                     int tailFrames = (int)Math.Round(tailMs / framePeriod);
                                     double[] editorF0 = SampleCurve(phrase, phrase.pitches, 0, framePeriod, totalFrames, headFrames, tailFrames, x => MusicMath.ToneToFreq(x * 0.01));
                                     SaveFile(editorf0Path, editorF0);
-                                    ArgParam = $"\"{editorf0Path}\" \"{melspecPath}\" \"{modelDir}{nsf}.bin\" \"{wavPath}\" -l \"{monoTimingPath}\" -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -f {toneShift} -m -t";
+                                    ArgParam = $"\"{editorf0Path}\" \"{melspecPath}\" \"{modelDir}{nsf}.bin\" \"{wavPath}\" -l \"{monoTimingPath}\" -n 1 -p {numThreads} -s{(int)sampleRate / 1000} -m -t";
                                 }
                                 if (File.Exists(VocoderClientExe)) {
                                     ProcessRunner.Run(VocoderClientExe, ArgParam, Log.Logger);
                                 } else {
                                     ProcessRunner.Run(NsfExe, ArgParam, Log.Logger);
+                                }
+                                if (!File.Exists(wavPath)) {
+                                    Log.Error($"NEUTRINO produced no wav at {wavPath}. args: {ArgParam}");
+                                    result.samples = new float[0];
+                                    return result;
                                 }
                                 using (var waveStream = new WaveFileReader(wavPath)) {
                                     result.samples = Wave.GetSamples(waveStream.ToSampleProvider());
@@ -276,13 +288,16 @@ namespace OpenUtau.Core.Neutrino {
                             }
                             if (!File.Exists(wavPath) && File.Exists(f0Path) && File.Exists(mgcPath) && File.Exists(bapPath)) {
                                 if (phrase.phones[0].direct) {
-                                    float gender = 1f + (phrase.phones[0].flags.FirstOrDefault(f => f.Item3.Equals(Format.Ustx.GEN)).Item2 / 100) ?? 1f;
+                                    float gender = 1f + (phrase.phones[0].flags.FirstOrDefault(f => f.Item3.Equals(Format.Ustx.GEN)).Item2 / 100f) ?? 1f;
                                     float breathiness = phrase.phones[0].flags.FirstOrDefault(f => f.Item3.Equals(Format.Ustx.BRE)).Item2 ?? 0f;
                                     ArgParam = $"\"{f0Path}\" \"{mgcPath}\" \"{bapPath}\" \"{wavPath}\" -n 1 -m {gender} -b {breathiness} -t";
-                                    if (File.Exists(VocoderClientExe)) {
-                                        ProcessRunner.Run(VocoderClientExe, ArgParam, Log.Logger);
-                                    } else {
-                                        ProcessRunner.Run(WorldExe, ArgParam, Log.Logger);
+                                    // vocoder_server only speaks NSF. Handing it the WORLD
+                                    // arguments kills the server, so always run WORLD directly.
+                                    ProcessRunner.Run(WorldExe, ArgParam, Log.Logger);
+                                    if (!File.Exists(wavPath)) {
+                                        Log.Error($"NEUTRINO produced no wav at {wavPath}. args: {ArgParam}");
+                                        result.samples = new float[0];
+                                        return result;
                                     }
                                     using (var waveStream = new WaveFileReader(wavPath)) {
                                         result.samples = Wave.GetSamples(waveStream.ToSampleProvider());
@@ -378,6 +393,11 @@ namespace OpenUtau.Core.Neutrino {
                                 ProcessRunner.Run(NeutrinoClientExe, ArgParam, Log.Logger);
                             } else {
                                 ProcessRunner.Run(NeutrinoExe, ArgParam, Log.Logger);
+                            }
+                            if (!File.Exists(wavPath)) {
+                                Log.Error($"NEUTRINO produced no wav at {wavPath}. args: {ArgParam}");
+                                result.samples = new float[0];
+                                return result;
                             }
                             using (var waveStream = new WaveFileReader(wavPath)) {
                                 result.samples = Wave.GetSamples(waveStream.ToSampleProvider());
@@ -481,10 +501,14 @@ namespace OpenUtau.Core.Neutrino {
         public override string ToString() => Renderers.NEUTRINO;
 
         public override RenderPitchResult LoadRenderedPitch(RenderPhrase phrase) {
+            if (this.singer == null) {
+                // Nothing rendered yet, so Version cannot be resolved.
+                return null;
+            }
             var result = new RenderPitchResult();
             try {
                 string tmpPath = Path.Join(PathManager.Inst.CachePath, $"ne-{phrase.preEffectHash:x16}_temp");
-                string f0Path = Path.Join(tmpPath, $"ne-{phrase.hash}.f0");
+                string f0Path = Path.Join(tmpPath, $"ne-{HashPhraseFrames(phrase)}.f0");
                 if (!File.Exists(f0Path)) {
                     return null;
                 }
@@ -524,23 +548,33 @@ namespace OpenUtau.Core.Neutrino {
                     }
                     result.ticks[i] = phrase.timeAxis.MsPosToTickPos(t) - phrase.position;
                 }
-            } catch {
+            } catch (Exception e) {
+                Log.Error(e, "Failed to load rendered pitch.");
+                return null;
             }
             return result;
         }
 
 
-        ulong HashPhraseGroups(RenderPhrase phrase) {
+        // toneShift (SHFT / NEUTRINO StyleShift) is not written by RenderPhone.Hash(), so it
+        // never reaches phrase.preEffectHash or phrase.hash. Mix it into the cache keys here,
+        // otherwise changing it reuses the cached files and -k never takes effect.
+        ulong HashWithToneShift(ulong baseHash, RenderPhrase phrase) {
             using (var stream = new MemoryStream()) {
                 using (var writer = new BinaryWriter(stream)) {
-                    writer.Write(phrase.preEffectHash);
-                    writer.Write(phrase.phones[0].toneShift);
-                    foreach (var phone in phrase.phones) {
-                        writer.Write(phone.tone);
-                    }
+                    writer.Write(baseHash);
+                    writer.Write(phrase.phones[0] != null ? phrase.phones[0].toneShift : 0);
                     return XXH64.DigestOf(stream.ToArray());
                 }
             }
         }
+
+        // Score level key. The label files depend on the notes and StyleShift only,
+        // so curve edits must not force the timing estimation to run again.
+        ulong HashPhraseGroups(RenderPhrase phrase) => HashWithToneShift(phrase.preEffectHash, phrase);
+
+        // Frame level key. f0/melspec/mgc/bap/wav additionally depend on the edited curves,
+        // which phrase.hash covers.
+        ulong HashPhraseFrames(RenderPhrase phrase) => HashWithToneShift(phrase.hash, phrase);
     }
 }
