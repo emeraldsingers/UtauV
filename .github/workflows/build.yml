@@ -253,7 +253,7 @@ jobs:
           mkdir Microsoft.AI.DirectML
           tar -xf Microsoft.AI.DirectML.nupkg -C Microsoft.AI.DirectML
           copy /y Microsoft.AI.DirectML\bin\${{ matrix.arch.arch }}-${{ matrix.arch.os }}\DirectML.dll bin\${{ matrix.arch.name }}\
-        if: ${{ matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
+        if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
 
       - name: Set executable permission
         if: ${{ matrix.arch.os == 'win' || matrix.arch.os == 'linux' }}
@@ -305,7 +305,7 @@ jobs:
         with:
           script-file: OpenUtau.nsi
           arguments: "-DPRODUCT_VERSION=${{ needs.next-version.outputs.version }} -DARCH=${{ matrix.arch.arch }} -DBUILD_DIR=bin/${{ matrix.arch.name }} -DOUTPUT_NAME=UtauV-${{ matrix.arch.name }}.exe"
-        if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+        if: ${{ matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
 
       # Create Dmg
       - name: Create Dmg
