@@ -68,15 +68,15 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial int ConnectedCount { get; set; }
 
         public bool ConnectEnabled => !IsBusy
-            && SelectedServer != null
-            && !SelectedServer.IsConnected
-            && SelectedServer.Server.IsCompatible;
+            && SelectedServer is { } connectable
+            && connectable.ConnectionState == DawConnectionState.Disconnected
+            && connectable.Server.IsCompatible;
         public bool DisconnectEnabled => !IsBusy
-            && (SelectedServer != null
-                ? SelectedServer.IsConnected
-                // Nothing selected (e.g. the plugin vanished from discovery): still allow
-                // tearing down whatever connections remain, one by one.
-                : ConnectedCount > 0);
+            // Judged from the manager, not the discovery list: a reconnecting connection is
+            // still teardown-able, and a selected-but-unconnected entry must not block
+            // tearing down other live connections.
+            && DawManager.Inst.Connections.Any(
+                info => info.State != DawConnectionState.Disconnected);
 
         public DawIntegrationViewModel() {
             DawManager.Inst.StateChanged += OnStateChanged;
@@ -141,8 +141,10 @@ namespace OpenUtau.App.ViewModels {
             }
             IsBusy = true;
             try {
-                if (target != null) {
-                    await DawManager.Inst.DisconnectAsync(target.Port);
+                // Only target a port that actually has a manager connection; the discovery
+                // entry may have lost it (or never had one), in which case tear down all.
+                if (target is { } connected && connected.ConnectionState != DawConnectionState.Disconnected) {
+                    await DawManager.Inst.DisconnectAsync(connected.Port);
                 } else {
                     await DawManager.Inst.DisconnectAsync();
                 }
