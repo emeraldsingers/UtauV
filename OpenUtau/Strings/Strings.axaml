@@ -630,6 +630,10 @@ Warning: this option removes custom presets.</system:String>
 
   <system:String x:Key="prefs.advanced">Advanced</system:String>
   <system:String x:Key="prefs.advanced.beta">Beta</system:String>
+  <system:String x:Key="prefs.channel">Release Channel</system:String>
+  <system:String x:Key="prefs.channel.stable">Stable</system:String>
+  <system:String x:Key="prefs.channel.beta">Beta</system:String>
+  <system:String x:Key="prefs.channel.alpha">Alpha</system:String>
   <system:String x:Key="prefs.advanced.lyricshelper">Lyrics Helper</system:String>
   <system:String x:Key="prefs.advanced.lyricshelper.brackets">Lyrics Helper Adds Brackets</system:String>
   <system:String x:Key="prefs.advanced.rememberfiletypes">Remember these file types in "Open Recent"</system:String>
@@ -640,6 +644,7 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.advanced.winepath">Wine Path (set to enable wine for compatibility)</system:String>
   <system:String x:Key="prefs.advanced.wayland">Use Wayland</system:String>
   <system:String x:Key="prefs.appearance">Appearance</system:String>
+  <system:String x:Key="prefs.appearance.detachpianoroll">Show piano roll in separate window</system:String>
   <system:String x:Key="prefs.appearance.degree">Scale degree display style</system:String>
   <system:String x:Key="prefs.appearance.degree.numbered">Numbered (1 2 3 4 5 6 7)</system:String>
   <system:String x:Key="prefs.appearance.degree.off">Off</system:String>
@@ -702,6 +707,7 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.playback.backend">Audio Backend</system:String>
   <system:String x:Key="prefs.playback.backend.auto">Automatic</system:String>
   <system:String x:Key="prefs.playback.backend.mini">MiniAudio</system:String>
+  <system:String x:Key="prefs.playback.backend.sdl3">SDL 3</system:String>
   <system:String x:Key="prefs.playback.cursorposition">Auto-Scroll Margin</system:String>
   <system:String x:Key="prefs.playback.device">Playback Device</system:String>
   <system:String x:Key="prefs.playback.lockstarttime">On Pausing</system:String>
@@ -808,6 +814,7 @@ The voicebank may not work on another OS.</system:String>
   <system:String x:Key="singerconfig.web">Website</system:String>
 
   <system:String x:Key="singers.caption">Singers</system:String>
+  <system:String x:Key="singers.usefilename">Use filename as alias</system:String>
   <system:String x:Key="singers.editoto.editinsetparam">Edit In setParam</system:String>
   <system:String x:Key="singers.editoto.editinvlabeler">Edit In vLabeler</system:String>
   <system:String x:Key="singers.editoto.gotosource">Goto Source File</system:String>
