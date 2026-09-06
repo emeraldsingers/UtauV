@@ -56,7 +56,10 @@ namespace OpenUtau.Core {
                 // dotnet test, unlike Process.MainModule which points to testhost.exe
                 // during tests.
                 string appDir = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
-                IsInstalled = File.Exists(Path.Combine(appDir, "installed.txt"));
+                // Installed builds use the portable launcher in the bin folder,
+                // while the installer marker is placed in the package root.
+                IsInstalled = File.Exists(Path.Combine(appDir, "installed.txt"))
+                    || File.Exists(Path.Combine(RootPath, "installed.txt"));
                 if (!IsInstalled) {
                     DataPath = appDir;
                 } else {
