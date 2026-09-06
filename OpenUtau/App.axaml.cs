@@ -18,6 +18,9 @@ namespace OpenUtau.App {
             Log.Information("Initializing application.");
             AvaloniaXamlLoader.Load(this);
             SetUiCornerRadii();
+#if DEBUG
+            this.AttachDeveloperTools();
+#endif
             InitializeCulture();
             InitializeTheme();
             Log.Information("Initialized application.");
