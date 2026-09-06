@@ -34,10 +34,6 @@ on:
         type: boolean
         default: false
         description: "Windows ARM64 DirectML"
-      osx_x64:
-        type: boolean
-        default: false
-        description: "macOS x64"
       osx_arm64:
         type: boolean
         default: false
@@ -66,7 +62,6 @@ jobs:
           WIN_X64_CUDA: ${{ inputs.win_x64_cuda }}
           WIN_X86: ${{ inputs.win_x86 }}
           WIN_ARM64: ${{ inputs.win_arm64 }}
-          OSX_X64: ${{ inputs.osx_x64 }}
           OSX_ARM64: ${{ inputs.osx_arm64 }}
           LINUX_X64: ${{ inputs.linux_x64 }}
           LINUX_ARM64: ${{ inputs.linux_arm64 }}
@@ -77,7 +72,6 @@ jobs:
           [[ "$WIN_X64_CUDA" == true ]] && add '{"name":"win-x64-cuda","rid":"win-x64","arch":"x64","os":"win","runs-on":"windows-latest","onnx_provider":"CUDA"}'
           [[ "$WIN_X86" == true ]] && add '{"name":"win-x86","rid":"win-x86","arch":"x86","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
           [[ "$WIN_ARM64" == true ]] && add '{"name":"win-arm64","rid":"win-arm64","arch":"arm64","os":"win","runs-on":"windows-latest","onnx_provider":"DirectML"}'
-          [[ "$OSX_X64" == true ]] && add '{"name":"osx-x64","rid":"osx-x64","arch":"x64","os":"osx","runs-on":"macos-15-intel","onnx_provider":"Default"}'
           [[ "$OSX_ARM64" == true ]] && add '{"name":"osx-arm64","rid":"osx-arm64","arch":"arm64","os":"osx","runs-on":"macos-15-intel","onnx_provider":"Default"}'
           [[ "$LINUX_X64" == true ]] && add '{"name":"linux-x64","rid":"linux-x64","arch":"x64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"x86_64","onnx_provider":"Default"}'
           [[ "$LINUX_ARM64" == true ]] && add '{"name":"linux-arm64","rid":"linux-arm64","arch":"arm64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"aarch64","onnx_provider":"Default"}'
