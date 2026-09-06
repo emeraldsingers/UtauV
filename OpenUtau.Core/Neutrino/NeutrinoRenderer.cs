@@ -203,7 +203,6 @@ namespace OpenUtau.Core.Neutrino {
                     fullScorePath = Path.Join(tmpPath, $"ne-{hash}_full_score.lab");
                     monoTimingPath = Path.Join(tmpPath, $"ne-{hash}_mono_timing.lab");
                     string modelDir = NeutrinoUtils.ModelDir(this.singer);
-                    int toneShift = phrase.phones[0] != null ? phrase.phones[0].toneShift : 0;
                     int numThreads = Preferences.Default.NumRenderThreads;
                     if (!File.Exists(fullScorePath) && !File.Exists(monoTimingPath)) {
                         ProcessPart(phrase);
