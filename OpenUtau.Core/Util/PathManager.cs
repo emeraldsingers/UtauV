@@ -51,9 +51,14 @@ namespace OpenUtau.Core {
                     CachePath = Path.Combine(DataPath, "Cache");
                 }
             } else {
-                IsInstalled = File.Exists(Path.Combine(RootPath, "installed.txt"));
+                // AppContext.BaseDirectory correctly resolves to the application's output
+                // directory in both normal execution (portable/installed mode) and during
+                // dotnet test, unlike Process.MainModule which points to testhost.exe
+                // during tests.
+                string appDir = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
+                IsInstalled = File.Exists(Path.Combine(appDir, "installed.txt"));
                 if (!IsInstalled) {
-                    DataPath = Path.Combine(RootPath, "Data");
+                    DataPath = appDir;
                 } else {
                     string dataHome = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
                     DataPath = Path.Combine(dataHome, "UtauV");
