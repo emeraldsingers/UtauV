@@ -253,7 +253,7 @@ jobs:
           mkdir Microsoft.AI.DirectML
           tar -xf Microsoft.AI.DirectML.nupkg -C Microsoft.AI.DirectML
           copy /y Microsoft.AI.DirectML\bin\${{ matrix.arch.arch }}-${{ matrix.arch.os }}\DirectML.dll bin\${{ matrix.arch.name }}\
-        if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+        if: ${{ matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
 
       - name: Set executable permission
         if: ${{ matrix.arch.os == 'win' || matrix.arch.os == 'linux' }}
@@ -298,7 +298,7 @@ jobs:
       - name: Get VC Redist
         run: |
           curl https://aka.ms/vs/17/release/vc_redist.${{ matrix.arch.arch }}.exe -o vc_redist.${{ matrix.arch.arch }}.exe
-        if: ${{ matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+        if: ${{ matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
 
       - name: Create Installer
         uses: joncloud/makensis-action@v4.1
@@ -380,7 +380,7 @@ jobs:
         with:
           name: UtauV-${{ matrix.arch.name }}.exe
           path: UtauV-${{ matrix.arch.name }}.exe
-        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
       
       - uses: actions/upload-artifact@v4
         with:
@@ -404,7 +404,7 @@ jobs:
       - name: Appcast Windows installer
         shell: cmd
         run: python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
-        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' && matrix.arch.onnx_provider == 'DirectML' }}
+        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
 
       - name: Appcast MacOS
         run: |
@@ -441,6 +441,7 @@ jobs:
             - [Portable ZIP (ARM64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-arm64.zip)
 
             **CUDA builds** (NVIDIA GPUs only - requires CUDA 12.x + cuDNN 9.x):
+            - [Installer (64-bit CUDA)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64-cuda.exe)
             - [Portable ZIP (64-bit CUDA)](https://github.com/${{ github.repository }}/releases/download/${{ needs.next-version.outputs.tag }}/UtauV-win-x64-cuda.zip)
 
             ### macOS
