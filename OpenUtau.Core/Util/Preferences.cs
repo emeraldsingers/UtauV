@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -210,6 +210,7 @@ namespace OpenUtau.Core.Util {
             public int DiffSingerAutoSPMs = 40;
             public bool DiffSingerLocalRetaking = false;
             public bool DiffSingerShowRenderPhraseBoundaries = false;
+            public bool Metronome = false;
             public bool SkipRenderingMutedTracks = false;
             public string Language = string.Empty;
             public string? SortingOrder = null;
@@ -228,6 +229,9 @@ namespace OpenUtau.Core.Util {
             public uint AudioBackEnd = 0; // 0 = Automatic, 1 = MiniAudio, 2 = SDL
             public bool UseSystemDefaultAudioDevice = true;
             public double PlayPosMarkerMargin = 0.9;
+            public int MetronomeVolume = 60;
+            public int MetronomeHighFrequency = 2200;
+            public int MetronomeLowFrequency = 1320;
             public int LockStartTime = 0;
             public int PlaybackAutoScroll = 2;
             public double PlaybackVerticalFollowMargin = 1.5;

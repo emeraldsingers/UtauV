@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -242,7 +242,7 @@
                 </TextBlock>
               </Grid>
             </Border>
-            <Border Classes="playback" Width="109" HorizontalAlignment="Center">
+            <Border Classes="playback" Width="127" HorizontalAlignment="Center">
               <StackPanel Orientation="Horizontal">
                 <Button Command="{Binding PlaybackViewModel.SeekStart}">
                   <Path Fill="{Binding $parent.Foreground}" VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -264,6 +264,11 @@
                               ToolTip.Tip="{DynamicResource tip.playback.loop}">
                   <Path Fill="{Binding $parent.Foreground}" VerticalAlignment="Center" HorizontalAlignment="Center"
                         Data="M 1 2 L 8 2 L 8 0 L 11 3 L 8 6 L 8 4 L 2 4 L 2 6 L 0 6 L 0 4 C 0 2.9 0.4 2 1 2 Z M 10 10 L 3 10 L 3 12 L 0 9 L 3 6 L 3 8 L 9 8 L 9 6 L 11 6 L 11 8 C 11 9.1 10.6 10 10 10 Z"/>
+                </ToggleButton>
+                <ToggleButton IsChecked="{Binding PlaybackViewModel.Metronome}"
+                              ToolTip.Tip="{DynamicResource prefs.playback.metronome}">
+                  <Path Fill="{Binding $parent.Foreground}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Data="M 5 1 C 6 1 7 1 8 1 L 11 5 L 11 13 L 2 13 L 2 5 Z Z M 6.5 4 A 1.5 1.5 0 1 1 6.5 7 A 1.5 1.5 0 1 1 6.5 4 Z M 6.5 5 L 12.5 0 L 12.5 1 L 6.5 6 Z"/>
                 </ToggleButton>
               </StackPanel>
             </Border>
