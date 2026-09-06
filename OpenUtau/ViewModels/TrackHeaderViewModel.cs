@@ -430,6 +430,7 @@ namespace OpenUtau.App.ViewModels {
 
             if (SingerManager.Inst.Singers.Count > 0) {
                 var recent = Preferences.Default.RecentSingers
+                .Where(id => !string.IsNullOrWhiteSpace(id))
                 .Select(id => SingerManager.Inst.Singers.Values.FirstOrDefault(singer => singer.Id == id))
                 .OfType<USinger>()
                 .Select(CreateSingerMenuItem).ToArray();
@@ -440,6 +441,7 @@ namespace OpenUtau.App.ViewModels {
                     Header = ThemeManager.GetString("tracks.favorite") + " ...",
                     HeaderObj = ThemeManager.GetString("tracks.favorite") + " ...",
                     Items = Preferences.Default.FavoriteSingers
+                        .Where(id => !string.IsNullOrWhiteSpace(id))
                         .Select(id => SingerManager.Inst.Singers.Values.FirstOrDefault(singer => singer.Id == id))
                         .OfType<USinger>()
                         .LocalizedOrderBy(singer => singer.LocalizedName)
