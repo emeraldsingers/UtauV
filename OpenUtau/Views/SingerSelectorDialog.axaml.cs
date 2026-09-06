@@ -4,6 +4,7 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
@@ -11,9 +12,15 @@ using OpenUtau.Core.Ustx;
 namespace OpenUtau.App.Views {
     public partial class SingerSelectorDialog : Window {
         public USinger? SelectedSinger { get; private set; }
+        private bool acceptDialogKeys;
 
         public SingerSelectorDialog() {
             InitializeComponent();
+            Opened += (_, _) => Dispatcher.UIThread.Post(
+                () => {
+                    acceptDialogKeys = true;
+                    SearchTextBox.Focus();
+                }, DispatcherPriority.Background);
         }
 
         void OnConfirm(object? sender, RoutedEventArgs e) {
@@ -26,6 +33,12 @@ namespace OpenUtau.App.Views {
         }
 
         void OnKeyDown(object? sender, KeyEventArgs e) {
+            // Do not let the Enter/Escape used to open the dialog be handled by
+            // the newly-created window (Avalonia 12 can route that key event).
+            if (!acceptDialogKeys) {
+                e.Handled = true;
+                return;
+            }
             if (e.Key == Key.Escape) {
                 e.Handled = true;
                 OnCancel(sender, e);

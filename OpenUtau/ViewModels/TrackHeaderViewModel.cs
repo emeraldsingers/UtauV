@@ -357,6 +357,14 @@ namespace OpenUtau.App.ViewModels {
                 Margin = new Thickness(6, 2, 6, 2),
                 PlaceholderText = ThemeManager.TryGetString("singers.searchname", out var text) ? text : "Search singer...",
             };
+            searchBox.PointerPressed += (_, e) => {
+                searchBox.Focus();
+                e.Handled = true;
+            };
+            searchBox.PointerReleased += (_, e) => {
+                searchBox.Focus();
+                e.Handled = true;
+            };
             searchBox.GetObservable(TextBox.TextProperty).Subscribe(text => SingerSearch = text ?? string.Empty);
             return new MenuItemViewModel { HeaderObj = searchBox, Height = 30, StaysOpenOnClick = true };
         }
@@ -507,6 +515,9 @@ namespace OpenUtau.App.ViewModels {
                     var dialog = new SingerSelectorDialog() {
                         DataContext = new SingerSelectorViewModel(track.Singer),
                     };
+                    // Let the menu's opening key event finish before the modal
+                    // window starts receiving keyboard input.
+                    await Task.Delay(50);
                     await dialog.ShowDialog(mainWindow);
                     if (dialog.SelectedSinger != null) {
                         SelectSingerCommand.Execute(dialog.SelectedSinger).Subscribe();

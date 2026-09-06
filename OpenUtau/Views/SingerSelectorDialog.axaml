@@ -95,7 +95,7 @@
               </Path.RenderTransform>
             </Path>
           </ToggleButton>
-          <TextBox Grid.Column="1" Text="{Binding SearchText}"
+          <TextBox Grid.Column="1" Name="SearchTextBox" Text="{Binding SearchText}"
                    PlaceholderText="Search singer name, localized name, or ID"/>
         </Grid>
         <Grid Grid.Row="3">
