@@ -489,7 +489,8 @@
                 <Thumb
                     Name="thumb"
                     Width="{DynamicResource SliderHorizontalThumbWidth}"
-                    Height="{DynamicResource SliderHorizontalThumbHeight}"
+                    Height="{TemplateBinding Height}"
+                    MinHeight="17"
                     Margin="0"
                     Padding="0"
                     Background="{TemplateBinding Foreground}"

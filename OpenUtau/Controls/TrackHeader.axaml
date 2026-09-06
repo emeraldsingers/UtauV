@@ -144,7 +144,7 @@
             </Style>
           </Grid.Styles>
           <Slider Grid.Column="1" Name="VolumeSlider" HorizontalAlignment="Stretch" Classes="fader" Minimum="-24" Maximum="12" Value="{Binding Volume}"
-                  Foreground="{Binding TrackAccentColor}"
+                  Foreground="{Binding TrackAccentColor}" PointerMoved="FaderPointerMoved" PointerReleased="FaderPointerReleased"
                   PointerPressed="VolumeFaderPointerPressed" ValueChanged="VolumeOrPanSliderValueChanged"
                   ContextRequested="VolumeFaderContextRequested" IsEnabled="{Binding !Muted}"/>
           <TextBlock Grid.Column="3" HorizontalAlignment="Left" Background="Transparent"
@@ -160,7 +160,7 @@
                   TextAlignment="Right" FontSize="9" FontFamily="monospace"
                   KeyDown="VolumeOrPanTextBoxKeyDown" LostFocus="VolumeOrPanTextBoxLostFocus"/>
           <Slider Grid.Column="5" Name="PanSlider" HorizontalAlignment="Stretch"
-                  Classes="fader" Minimum="-100" Maximum="100" Value="{Binding Pan}" Foreground="{Binding TrackAccentColor}"
+                  Classes="fader" Minimum="-100" Maximum="100" Value="{Binding Pan}" Foreground="{Binding TrackAccentColor}" PointerMoved="FaderPointerMoved" PointerReleased="FaderPointerReleased"
                   PointerPressed="PanFaderPointerPressed" ValueChanged="VolumeOrPanSliderValueChanged"
                   ContextRequested="PanFaderContextRequested" IsEnabled="{Binding !Muted}"/>
           <TextBlock Grid.Column="7" HorizontalAlignment="Stretch" Background="Transparent"

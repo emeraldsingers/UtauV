@@ -145,15 +145,49 @@ namespace OpenUtau.App.Controls {
         }
 
         void VolumeFaderPointerPressed(object sender, PointerPressedEventArgs args) {
-            if (args.GetCurrentPoint((Visual?)sender).Properties.IsRightButtonPressed && ViewModel != null) {
+            if (sender is Slider slider && args.GetCurrentPoint(slider).Properties.IsLeftButtonPressed) {
+                SetFaderValueFromPointer(slider, args.GetPosition(slider).X);
+                args.Pointer.Capture(slider);
+                args.Handled = true;
+            } else if (args.GetCurrentPoint((Visual?)sender).Properties.IsRightButtonPressed && ViewModel != null) {
                 ViewModel.Volume = 0;
                 args.Handled = true;
             }
         }
 
         void PanFaderPointerPressed(object sender, PointerPressedEventArgs args) {
-            if (args.GetCurrentPoint((Visual?)sender).Properties.IsRightButtonPressed && ViewModel != null) {
+            if (sender is Slider slider && args.GetCurrentPoint(slider).Properties.IsLeftButtonPressed) {
+                SetFaderValueFromPointer(slider, args.GetPosition(slider).X);
+                args.Pointer.Capture(slider);
+                args.Handled = true;
+            } else if (args.GetCurrentPoint((Visual?)sender).Properties.IsRightButtonPressed && ViewModel != null) {
                 ViewModel.Pan = 0;
+                args.Handled = true;
+            }
+        }
+
+        static void SetFaderValueFromPointer(Slider slider, double x) {
+            if (slider.Bounds.Width <= 0) {
+                return;
+            }
+            var ratio = Math.Clamp(x / slider.Bounds.Width, 0, 1);
+            if (slider.IsDirectionReversed) {
+                ratio = 1 - ratio;
+            }
+            slider.Value = slider.Minimum + ratio * (slider.Maximum - slider.Minimum);
+        }
+
+        void FaderPointerMoved(object sender, PointerEventArgs args) {
+            if (sender is Slider slider && args.Pointer.Captured == slider &&
+                args.GetCurrentPoint(slider).Properties.IsLeftButtonPressed) {
+                SetFaderValueFromPointer(slider, args.GetPosition(slider).X);
+                args.Handled = true;
+            }
+        }
+
+        void FaderPointerReleased(object sender, PointerReleasedEventArgs args) {
+            if (sender is Slider slider && args.Pointer.Captured == slider) {
+                args.Pointer.Capture(null);
                 args.Handled = true;
             }
         }
