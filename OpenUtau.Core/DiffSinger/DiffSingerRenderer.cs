@@ -89,6 +89,15 @@ namespace OpenUtau.Core.DiffSinger {
             };
         }
 
+        public (double HeadMs, double TailMs) PhrasePadding(USinger singer, IEnumerable<UPhoneme> phonemes) {
+            var dsSinger = singer as DiffSingerSinger;
+            if (dsSinger == null) {
+                return (0, 0);
+            }
+            double frameMs = dsSinger.dsConfig.frameMs();
+            return (DiffSingerUtils.GetHeadMs(frameMs), DiffSingerUtils.GetTailMs(frameMs));
+        }
+
         public Task<RenderResult> Render(RenderPhrase phrase, Progress progress, int trackNo, CancellationTokenSource cancellation, bool isPreRender, RenderPhraseEvents? renderEvents = null) {
             var task = Task.Run(() => {
                 lock (lockObj) {
