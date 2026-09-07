@@ -194,6 +194,7 @@ namespace OpenUtau.App.Controls {
         private Points points = new Points();
 
         private HashSet<UNote> selectedNotes = new HashSet<UNote>();
+        private TrackColor? renderTrackColor;
         private Geometry pointGeometry;
 
         private bool showGhostNotes = true;
@@ -414,6 +415,9 @@ namespace OpenUtau.App.Controls {
                 playbackSeekPending = false;
                 UpdatePlaybackHighlight(seek);
                 PrepareNoteRenderState();
+                renderTrackColor = Preferences.Default.UseTrackColorInPianoRoll
+                    ? ThemeManager.GetTrackColor(viewModel.Project.tracks[Part.trackNo].TrackColor)
+                    : null;
 
                 if (showGhostNotes) {
                     foreach (UPart otherPart in otherPartsInView) {
@@ -569,9 +573,7 @@ namespace OpenUtau.App.Controls {
             var brush = selectedNotes.Contains(note)
                 ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
                 : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
-            var trackColor = Preferences.Default.UseTrackColorInPianoRoll && Part != null
-                ? ThemeManager.GetTrackColor(viewModel.Project.tracks[Part.trackNo].TrackColor)
-                : null;
+            var trackColor = renderTrackColor;
             if (RofloficEffects.RainbowEnabled) {
                 brush = RofloficEffects.Gradient(note.position * 0.002, 230);
             }
@@ -610,6 +612,11 @@ namespace OpenUtau.App.Controls {
             }
             if (Preferences.Default.NoteHoverGlow) {
                 DrawHoverGlow(context, leftTop, size, 2, brush, GetHoverGlow(note));
+            }
+            // At dense zoom levels there is no room for labels or badges. Avoid
+            // text layout and phonemizer metadata work for these tiny notes.
+            if (size.Width < 8 || size.Height < 8) {
+                return;
             }
             if (TrackHeight < 10 || note.lyric.Length == 0) {
                 return;

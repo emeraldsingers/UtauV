@@ -155,6 +155,8 @@ namespace OpenUtau.App.Controls {
             var trackColor = Preferences.Default.UseTrackColorInPianoRoll
                 ? ThemeManager.GetTrackColor(viewModel.Project.tracks[Part.trackNo].TrackColor)
                 : null;
+            var trackPen = trackColor == null ? null : new Pen(trackColor.AccentColor, 1);
+            var trackSelectedPen = trackColor == null ? null : new Pen(trackColor.AccentColorDark, 1);
 
             const double y = 35.5;
             const double height = 24;
@@ -208,9 +210,7 @@ namespace OpenUtau.App.Controls {
                         }
                     }
                     if (trackColor != null) {
-                        pen = selectedNotes.Contains(phoneme.Parent)
-                            ? new Pen(trackColor.AccentColorDark, 1)
-                            : new Pen(trackColor.AccentColor, 1);
+                        pen = selectedNotes.Contains(phoneme.Parent) ? trackSelectedPen! : trackPen!;
                         brush = trackColor.AccentColorLightSemi;
                     }
                     if (RofloficEffects.RainbowEnabled) {

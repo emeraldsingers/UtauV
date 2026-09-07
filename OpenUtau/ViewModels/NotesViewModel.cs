@@ -854,8 +854,9 @@ namespace OpenUtau.App.ViewModels {
                 .Where(note => note.End > x0 && note.position < x1 && note.tone > y0 && note.tone <= y1)
                 .ToList();
 
-            Selection.SetTemporarySelection(tempNotes);
-            MessageBus.Current.SendMessage(new NotesSelectionEvent(Selection));
+            if (Selection.SetTemporarySelection(tempNotes)) {
+                MessageBus.Current.SendMessage(new NotesSelectionEvent(Selection));
+            }
         }
 
         public void CommitTempSelectNotes() {

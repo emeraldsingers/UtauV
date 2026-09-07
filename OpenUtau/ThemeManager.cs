@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -94,6 +95,8 @@ namespace OpenUtau.App {
                 new TrackColor("Lime", "#9CCC65", "#7CB342", "#C5E1A5", "#DCEDC8"),
                 new TrackColor("Deep Orange", "#FF7043", "#F4511E", "#FFAB91", "#FFCCBC"),
             };
+        private static readonly Dictionary<string, TrackColor> trackColorsByName =
+            TrackColors.ToDictionary(c => c.Name, StringComparer.Ordinal);
 
         public static List<string> GetAvailableThemes() {
             Colors.CustomTheme.ListThemes();
@@ -349,10 +352,9 @@ namespace OpenUtau.App {
         }
 
         public static TrackColor GetTrackColor(string name) {
-            if (TrackColors.Any(c => c.Name == name)) {
-                return TrackColors.First(c => c.Name == name);
-            }
-            return TrackColors.First(c => c.Name == "Blue");
+            return trackColorsByName.TryGetValue(name ?? string.Empty, out var color)
+                ? color
+                : trackColorsByName["Blue"];
         }
     }
 

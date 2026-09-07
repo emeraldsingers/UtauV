@@ -308,13 +308,18 @@ namespace OpenUtau.App.ViewModels {
                     return true;
             }
         }
-        public void SetTemporarySelection(IEnumerable<UNote> notes) {
-            TempSelectedNotes.Clear();
+        public bool SetTemporarySelection(IEnumerable<UNote> notes) {
+            // Pointer move events can arrive much faster than the UI can render.
+            // Avoid rebuilding and publishing an identical temporary selection.
+            var next = notes as HashSet<UNote> ?? notes.ToHashSet();
             lock (TempSelectedNotes) {
-                foreach (var note in notes) {
-                    TempSelectedNotes.Add(note);
+                if (TempSelectedNotes.SetEquals(next)) {
+                    return false;
                 }
+                TempSelectedNotes.Clear();
+                TempSelectedNotes.UnionWith(next);
             }
+            return true;
         }
         public void CommitTemporarySelection() {
             Add(TempSelectedNotes);

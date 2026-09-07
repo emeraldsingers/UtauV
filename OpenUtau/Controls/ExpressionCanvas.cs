@@ -163,6 +163,8 @@ namespace OpenUtau.App.Controls {
             var singerName = track.Singer?.Name ?? string.Empty;
             var singerTheme = Preferences.Default.UseCustomSingerTheme ? CustomSingerTheme.GetThemeForSinger(singerName) : null;
             var trackColor = Preferences.Default.UseTrackColorInPianoRoll ? ThemeManager.GetTrackColor(track.TrackColor) : null;
+            var trackPen = trackColor == null ? null : new Pen(trackColor.AccentColor, 3);
+            var trackSelectedPen = trackColor == null ? null : new Pen(trackColor.AccentColorDark, 3);
             IBrush realCurveFillBrush = ThemeManager.RealCurveFillBrush;
             IPen realCurvePen = ThemeManager.RealCurvePen;
             if (singerTheme?.HasTrackAccentColorLight == true &&
@@ -392,10 +394,10 @@ namespace OpenUtau.App.Controls {
                     }
                 }
                 if (DisplayMode != ExpDisMode.Shadow && trackColor != null) {
-                    var color = selectedNotes.Contains(note) ? trackColor.AccentColorDark : trackColor.AccentColor;
-                    hPen = new Pen(color, 3);
-                    vPen = new Pen(color, 3);
-                    brush = color;
+                    bool selected = selectedNotes.Contains(note);
+                    hPen = selected ? trackSelectedPen! : trackPen!;
+                    vPen = selected ? trackSelectedPen! : trackPen!;
+                    brush = selected ? trackColor.AccentColorDark : trackColor.AccentColor;
                 }
                 
                 var (value, overriden) = phoneme.GetExpression(project, track, Key);
