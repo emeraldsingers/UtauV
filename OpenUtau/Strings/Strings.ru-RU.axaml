@@ -612,6 +612,7 @@ Syntax: prefix,suffix</system:String>-->
   <system:String x:Key="prefs.appearance.theme.dark">Темная</system:String>
   <system:String x:Key="prefs.appearance.theme.light">Светлая</system:String>
   <system:String x:Key="prefs.appearance.trackcolor">Использовать цвет дорожки в интерфейсе</system:String>
+  <system:String x:Key="prefs.appearance.trackcolor.opacity">Прозрачность цветного фона дорожки</system:String>
   <system:String x:Key="prefs.appearance.trackcolor.pianoroll">Использовать цвет дорожки для нот, фонем и параметров</system:String>
   <system:String x:Key="prefs.cache">Кэш</system:String>
   <system:String x:Key="prefs.cache.clearonquit">Очищать кэш при выходе</system:String>

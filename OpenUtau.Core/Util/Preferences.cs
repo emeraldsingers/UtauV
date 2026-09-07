@@ -196,6 +196,7 @@ namespace OpenUtau.Core.Util {
             public int DegreeStyle;
             public bool UseTrackColor = false;
             public bool UseTrackColorInPianoRoll = false;
+            public double TrackColorOpacity = 1;
             public bool UseCustomSingerTheme = true;
             public bool ClearCacheOnQuit = false;
             public bool PreRender = true;

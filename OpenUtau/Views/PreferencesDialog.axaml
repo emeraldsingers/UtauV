@@ -356,6 +356,9 @@
             <TextBlock Text="{DynamicResource prefs.appearance.trackcolor}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding UseTrackColor}"/>
           </Grid>
+          <c:NumberSlider Label="{DynamicResource prefs.appearance.trackcolor.opacity}" Margin="0,5,0,0"
+                          Value="{Binding TrackColorOpacity}" Default="100" Minimum="0" Maximum="100"
+                          TickFrequency="10" IsSnapToTickEnabled="False" Format="{}{0:#0}%"/>
           <Grid Margin="0,5,0,0">
             <TextBlock Text="{DynamicResource prefs.appearance.trackcolor.pianoroll}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding UseTrackColorInPianoRoll}"/>

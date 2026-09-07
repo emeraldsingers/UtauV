@@ -716,6 +716,7 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.appearance.customtheme.import.title">Import Theme File</system:String>
   <system:String x:Key="prefs.appearance.customtheme.import.failed">Failed to import theme.</system:String>
   <system:String x:Key="prefs.appearance.trackcolor">Use track color in UI</system:String>
+  <system:String x:Key="prefs.appearance.trackcolor.opacity">Track color background opacity</system:String>
   <system:String x:Key="prefs.appearance.trackcolor.pianoroll">Use track color for notes, phonemes and expressions</system:String>
   <system:String x:Key="prefs.cache">Cache</system:String>
   <system:String x:Key="prefs.cache.clearonquit">Clear cache on quit</system:String>

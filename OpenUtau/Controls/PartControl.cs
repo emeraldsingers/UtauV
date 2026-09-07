@@ -247,7 +247,10 @@ namespace OpenUtau.App.Controls {
             if (Preferences.Default.UseTrackColor &&
                 0 <= part.trackNo && part.trackNo < DocManager.Inst.Project.tracks.Count) {
                 var color = ThemeManager.GetTrackColor(DocManager.Inst.Project.tracks[part.trackNo].TrackColor);
-                return Selected ? color.AccentColorLight : color.AccentColor;
+                var brush = Selected ? color.AccentColorLight : color.AccentColor;
+                return new SolidColorBrush(brush.Color) {
+                    Opacity = Preferences.Default.TrackColorOpacity,
+                };
             }
             return Selected ? ThemeManager.AccentBrush2 : ThemeManager.AccentBrush1;
         }
