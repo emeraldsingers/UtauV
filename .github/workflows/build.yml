@@ -212,6 +212,7 @@ jobs:
             mv "$OUT" "$TMP"
             mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
             cp -R "$TMP/"* "$APP/Contents/MacOS/"
+            cp OpenUtau/Assets/OpenUtau.icns "$APP/Contents/Resources/OpenUtau.icns"
             chmod +x "$APP/Contents/MacOS/UtauV"
             cat > "$APP/Contents/Info.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
@@ -221,6 +222,7 @@ jobs:
             <key>CFBundleDisplayName</key><string>UtauV</string>
             <key>CFBundleIdentifier</key><string>asoqwer.UtauV</string>
             <key>CFBundleExecutable</key><string>UtauV</string>
+            <key>CFBundleIconFile</key><string>OpenUtau.icns</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>CFBundleVersion</key><string>0.0.0</string>
             <key>CFBundleShortVersionString</key><string>0.0.0</string>
@@ -316,6 +318,7 @@ jobs:
             APP=bin/${{ matrix.arch.name }}/publish/UtauV.app
             mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
             cp -R bin/${{ matrix.arch.name }}/publish/* "$APP/Contents/MacOS/"
+            cp OpenUtau/Assets/OpenUtau.icns "$APP/Contents/Resources/OpenUtau.icns"
             cat > "$APP/Contents/Info.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
