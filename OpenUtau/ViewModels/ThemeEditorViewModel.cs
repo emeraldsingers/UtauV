@@ -20,6 +20,7 @@ namespace OpenUtau.App.ViewModels {
         private readonly string customThemePath;
 
         private readonly string Name;
+        private bool initialized;
         [Reactive] public partial bool IsDarkMode { get; set; }
         [Reactive] public partial Color BackgroundColor { get; set; }
         [Reactive] public partial Color BackgroundColorPointerOver { get; set; }
@@ -137,7 +138,9 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.IsDarkModeEasy)
                 .Subscribe(v => {
                     Application.Current!.Resources["IsDarkModeEasy"] = v;
-                    UpdateColorsByMain();
+                    if (initialized) {
+                        UpdateColorsByMain();
+                    }
                 });
 
             this.WhenAnyValue(vm => vm.BackgroundColor)
@@ -244,14 +247,20 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.MainColorA)
                 .Subscribe(v => {
                     Application.Current!.Resources["MainColorA"] = v;
-                    UpdateColorsByMain();
+                    if (initialized) {
+                        UpdateColorsByMain();
+                    }
                 });
 
             this.WhenAnyValue(vm => vm.MainColorB)
                 .Subscribe(v => {
                     Application.Current!.Resources["MainColorB"] = v;
-                    UpdateColorsByMain();
+                    if (initialized) {
+                        UpdateColorsByMain();
+                    }
                 });
+
+            initialized = true;
         }
 
         public void Save() {
