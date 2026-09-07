@@ -11,6 +11,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using OpenUtau.Api;
 using OpenUtau.App.Views;
 using OpenUtau.App.Util;
@@ -362,7 +363,7 @@ namespace OpenUtau.App.ViewModels {
                 e.Handled = true;
             };
             searchBox.PointerReleased += (_, e) => {
-                searchBox.Focus();
+                Dispatcher.UIThread.Post(() => searchBox.Focus(), DispatcherPriority.Background);
                 e.Handled = true;
             };
             searchBox.GetObservable(TextBox.TextProperty).Subscribe(text => SingerSearch = text ?? string.Empty);
