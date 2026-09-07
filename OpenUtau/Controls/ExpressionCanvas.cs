@@ -162,12 +162,17 @@ namespace OpenUtau.App.Controls {
             var track = project.tracks[Part.trackNo];
             var singerName = track.Singer?.Name ?? string.Empty;
             var singerTheme = Preferences.Default.UseCustomSingerTheme ? CustomSingerTheme.GetThemeForSinger(singerName) : null;
+            var trackColor = Preferences.Default.UseTrackColorInPianoRoll ? ThemeManager.GetTrackColor(track.TrackColor) : null;
             IBrush realCurveFillBrush = ThemeManager.RealCurveFillBrush;
             IPen realCurvePen = ThemeManager.RealCurvePen;
             if (singerTheme?.HasTrackAccentColorLight == true &&
                 Color.TryParse(singerTheme.TrackAccentColorLight, out var realCurveColor)) {
                 realCurveFillBrush = new SolidColorBrush(Color.FromArgb(56, realCurveColor.R, realCurveColor.G, realCurveColor.B));
                 realCurvePen = new Pen(new SolidColorBrush(Color.FromArgb(200, realCurveColor.R, realCurveColor.G, realCurveColor.B)), 2, DashStyle.Dash);
+            }
+            if (trackColor != null) {
+                realCurveFillBrush = new SolidColorBrush(Color.FromArgb(56, trackColor.AccentColor.Color.R, trackColor.AccentColor.Color.G, trackColor.AccentColor.Color.B));
+                realCurvePen = new Pen(new SolidColorBrush(Color.FromArgb(200, trackColor.AccentColor.Color.R, trackColor.AccentColor.Color.G, trackColor.AccentColor.Color.B)), 2, DashStyle.Dash);
             }
             if (!track.TryGetExpDescriptor(project, key, out var descriptor)) {
                 return;
@@ -204,6 +209,13 @@ namespace OpenUtau.App.Controls {
                     }
                     if (singerTheme.HasTrackAccentColor) lPen = singerTheme.GetPen(singerTheme.TrackAccentColor);
                     if (singerTheme.HasTrackAccentColorLight) lPenSelected = singerTheme.GetPen(singerTheme.TrackAccentColorLight);
+                }
+                if (trackColor != null && DisplayMode != ExpDisMode.Shadow) {
+                    brush = trackColor.AccentColor;
+                    lPen = new Pen(trackColor.AccentColor, 1);
+                    lPen2 = new Pen(trackColor.AccentColor, 3);
+                    lPenSelected = new Pen(trackColor.AccentColorLight, 1);
+                    lPen2Selected = new Pen(trackColor.AccentColorLight, 3);
                 }
                 
                 double x3 = Math.Round(viewModel.TickToneToPoint(leftTick, 0).X);
@@ -378,6 +390,12 @@ namespace OpenUtau.App.Controls {
                         vPen = new Pen(color, 3);
                         brush = color;
                     }
+                }
+                if (DisplayMode != ExpDisMode.Shadow && trackColor != null) {
+                    var color = selectedNotes.Contains(note) ? trackColor.AccentColorDark : trackColor.AccentColor;
+                    hPen = new Pen(color, 3);
+                    vPen = new Pen(color, 3);
+                    brush = color;
                 }
                 
                 var (value, overriden) = phoneme.GetExpression(project, track, Key);

@@ -125,6 +125,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial double UiCornerRadius { get; set; }
         [Reactive] public partial int DegreeStyle { get; set; }
         [Reactive] public partial bool UseTrackColor { get; set; }
+        [Reactive] public partial bool UseTrackColorInPianoRoll { get; set; }
         [Reactive] public partial bool UseCustomSingerTheme { get; set; }
         [Reactive] public partial bool ShowPortrait { get; set; }
         [Reactive] public partial bool ShowIcon { get; set; }
@@ -271,6 +272,7 @@ namespace OpenUtau.App.ViewModels {
             UiCornerRadius = Preferences.Default.UiCornerRadius;
             DegreeStyle = Preferences.Default.DegreeStyle;
             UseTrackColor = Preferences.Default.UseTrackColor;
+            UseTrackColorInPianoRoll = Preferences.Default.UseTrackColorInPianoRoll;
             UseCustomSingerTheme = Preferences.Default.UseCustomSingerTheme;
             ShowPortrait = Preferences.Default.ShowPortrait;
             ShowIcon = Preferences.Default.ShowIcon;
@@ -477,6 +479,12 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new PianorollRefreshEvent("TrackColor"));
                     MessageBus.Current.SendMessage(new TracksRefreshEvent());
+                });
+            this.WhenAnyValue(vm => vm.UseTrackColorInPianoRoll)
+                .Subscribe(trackColor => {
+                    Preferences.Default.UseTrackColorInPianoRoll = trackColor;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 });
             this.WhenAnyValue(vm => vm.UseCustomSingerTheme)
                 .Subscribe(value => {

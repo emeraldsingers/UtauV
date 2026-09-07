@@ -152,6 +152,9 @@ namespace OpenUtau.App.Controls {
             var customTheme = Preferences.Default.UseCustomSingerTheme
                 ? CustomSingerTheme.GetThemeForSinger(singerName)
                 : null;
+            var trackColor = Preferences.Default.UseTrackColorInPianoRoll
+                ? ThemeManager.GetTrackColor(viewModel.Project.tracks[Part.trackNo].TrackColor)
+                : null;
 
             const double y = 35.5;
             const double height = 24;
@@ -174,6 +177,9 @@ namespace OpenUtau.App.Controls {
                             brushBar = selectedNotes.Contains(phoneme.Parent) && customTheme.HasAccentColorSemi
                                 ? customTheme.GetBrush(customTheme.AccentColorSemi)
                                 : new SolidColorBrush(color) { Opacity = 0.5 };
+                        }
+                        if (trackColor != null) {
+                            brushBar = trackColor.AccentColorLightSemi;
                         }
                         context.DrawRectangle(brushBar, null, new Rect(x, y, xRight - x, height));
                         goto DrawPosition;
@@ -200,6 +206,12 @@ namespace OpenUtau.App.Controls {
                                 ? customTheme.GetBrush(customTheme.AccentColorSemi)
                                 : new SolidColorBrush(color) { Opacity = 0.5 };
                         }
+                    }
+                    if (trackColor != null) {
+                        pen = selectedNotes.Contains(phoneme.Parent)
+                            ? new Pen(trackColor.AccentColorDark, 1)
+                            : new Pen(trackColor.AccentColor, 1);
+                        brush = trackColor.AccentColorLightSemi;
                     }
                     if (RofloficEffects.RainbowEnabled) {
                         pen = RofloficEffects.Pen(phoneme.position * 0.002, 1.5);
@@ -229,6 +241,9 @@ namespace OpenUtau.App.Controls {
                     : phoneme.rawPosition != phoneme.position
                         ? ThemeManager.AccentPen2Thickness3
                         : ThemeManager.AccentPen2;
+                if (trackColor != null) {
+                    penPos = new Pen(trackColor.AccentColorDark, phoneme.rawPosition != phoneme.position ? 3 : 1);
+                }
                 if (RofloficEffects.RainbowEnabled) {
                     penPos = RofloficEffects.Pen(phoneme.position * 0.002, 2);
                 }

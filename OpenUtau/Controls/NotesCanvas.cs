@@ -569,14 +569,11 @@ namespace OpenUtau.App.Controls {
             var brush = selectedNotes.Contains(note)
                 ? (hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2)
                 : (hasError ? ThemeManager.NeutralAccentBrushSemi : ThemeManager.AccentBrush1);
+            var trackColor = Preferences.Default.UseTrackColorInPianoRoll && Part != null
+                ? ThemeManager.GetTrackColor(viewModel.Project.tracks[Part.trackNo].TrackColor)
+                : null;
             if (RofloficEffects.RainbowEnabled) {
                 brush = RofloficEffects.Gradient(note.position * 0.002, 230);
-            }
-            if (!selectedNotes.Contains(note)) {
-                float highlight = ShowPlaybackNoteHighlight
-                    ? (note == activePlaybackNote ? activeHighlight : note == fadingPlaybackNote ? fadingHighlight : 0)
-                    : 0;
-                brush = BlendBrush(brush, hasError ? ThemeManager.AccentBrush3Semi : ThemeManager.AccentBrush2, highlight);
             }
             if (Preferences.Default.UseCustomSingerTheme && Part != null) {
                 var singer = viewModel.Project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
@@ -588,8 +585,20 @@ namespace OpenUtau.App.Controls {
                     }
                 }
             }
-            // Rainbow is an explicit playback/view effect and must take
-            // precedence over singer-theme accent colors.
+            if (trackColor != null) {
+                brush = selectedNotes.Contains(note)
+                    ? trackColor.AccentColorDark
+                    : hasError ? trackColor.AccentColorLightSemi : trackColor.AccentColor;
+            }
+            if (!selectedNotes.Contains(note)) {
+                float highlight = ShowPlaybackNoteHighlight
+                    ? (note == activePlaybackNote ? activeHighlight : note == fadingPlaybackNote ? fadingHighlight : 0)
+                    : 0;
+                var highlightBrush = hasError
+                    ? ThemeManager.AccentBrush3Semi
+                    : trackColor?.AccentColorLight ?? ThemeManager.AccentBrush2;
+                brush = BlendBrush(brush, highlightBrush, highlight);
+            }
             if (RofloficEffects.RainbowEnabled) {
                 brush = RofloficEffects.Gradient(note.position * 0.002, 230);
             }
