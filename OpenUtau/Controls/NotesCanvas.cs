@@ -596,7 +596,7 @@ namespace OpenUtau.App.Controls {
                     : 0;
                 var highlightBrush = hasError
                     ? ThemeManager.AccentBrush3Semi
-                    : trackColor?.AccentColorLight ?? ThemeManager.AccentBrush2;
+                    : trackColor?.AccentColorDark ?? ThemeManager.AccentBrush2;
                 brush = BlendBrush(brush, highlightBrush, highlight);
             }
             if (RofloficEffects.RainbowEnabled) {
