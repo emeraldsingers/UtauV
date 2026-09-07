@@ -244,8 +244,7 @@ namespace OpenUtau.App.Controls {
         }
 
         private IBrush GetBackgroundBrush() {
-            if (Preferences.Default.UseTrackColor &&
-                0 <= part.trackNo && part.trackNo < DocManager.Inst.Project.tracks.Count) {
+            if (0 <= part.trackNo && part.trackNo < DocManager.Inst.Project.tracks.Count) {
                 var color = ThemeManager.GetTrackColor(DocManager.Inst.Project.tracks[part.trackNo].TrackColor);
                 var brush = Selected ? color.AccentColorLight : color.AccentColor;
                 return new SolidColorBrush(brush.Color) {
