@@ -82,6 +82,17 @@ namespace OpenUtau.App {
                 new TrackColor("Light Blue2", "#1976D2", "#0D47A1", "#2196F3", "#90CBF9"),
                 new TrackColor("Blue2", "#3949AB", "#283593", "#5C6BC0", "#AEB5E0"),
                 new TrackColor("Purple2", "#7B1FA2", "#4A148C", "#AB47BC", "#D5A3DE"),
+                new TrackColor("Cyan", "#26C6DA", "#00ACC1", "#80DEEA", "#B2EBF2"),
+                new TrackColor("Teal", "#26A69A", "#00897B", "#80CBC4", "#B2DFDB"),
+                new TrackColor("Rose", "#F06292", "#C34278", "#F8BBD0", "#FCE4EC"),
+                new TrackColor("Amber", "#FFC107", "#E8950B", "#FFD54F", "#FFE082"),
+                new TrackColor("Mint", "#80CBC4", "#42A79D", "#B2DFDB", "#E0F2F1"),
+                new TrackColor("Indigo", "#5C6BC0", "#3643A6", "#9FA8DA", "#C5CAE9"),
+                new TrackColor("Deep Purple", "#7E57C2", "#5E35B1", "#B39DDB", "#D1C4E9"),
+                new TrackColor("Brown", "#8D6E63", "#6D4C41", "#BCAAA4", "#D7CCC8"),
+                new TrackColor("Blue Grey", "#78909C", "#546E7A", "#B0BEC5", "#CFD8DC"),
+                new TrackColor("Lime", "#9CCC65", "#7CB342", "#C5E1A5", "#DCEDC8"),
+                new TrackColor("Deep Orange", "#FF7043", "#F4511E", "#FFAB91", "#FFCCBC"),
             };
 
         public static List<string> GetAvailableThemes() {
