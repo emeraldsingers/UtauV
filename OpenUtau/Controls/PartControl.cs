@@ -244,14 +244,18 @@ namespace OpenUtau.App.Controls {
         }
 
         private IBrush GetBackgroundBrush() {
-            if (0 <= part.trackNo && part.trackNo < DocManager.Inst.Project.tracks.Count) {
+            var background = Selected ? ThemeManager.AccentBrush2 : ThemeManager.AccentBrush1;
+            if (Preferences.Default.UseTrackColor &&
+                0 <= part.trackNo && part.trackNo < DocManager.Inst.Project.tracks.Count) {
                 var color = ThemeManager.GetTrackColor(DocManager.Inst.Project.tracks[part.trackNo].TrackColor);
-                var brush = Selected ? color.AccentColorLight : color.AccentColor;
-                return new SolidColorBrush(brush.Color) {
-                    Opacity = Preferences.Default.TrackColorOpacity,
+                background = Selected ? color.AccentColorLight : color.AccentColor;
+            }
+            if (background is SolidColorBrush solidColor) {
+                return new SolidColorBrush(solidColor.Color) {
+                    Opacity = Math.Clamp(Preferences.Default.TrackColorOpacity, 0, 1),
                 };
             }
-            return Selected ? ThemeManager.AccentBrush2 : ThemeManager.AccentBrush1;
+            return background;
         }
 
         private WriteableBitmap GetBitmap(double width) {
