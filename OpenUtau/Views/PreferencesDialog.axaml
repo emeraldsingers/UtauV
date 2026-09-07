@@ -434,6 +434,19 @@
             <TextBlock Text="{DynamicResource prefs.extendendingphonemes}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding ExtendEndingPhonemes}"/>
           </Grid>
+          <TextBlock Text="{DynamicResource prefs.utau.crosspitchblend}" Margin="0,16,0,0" FontWeight="Bold"/>
+          <TextBlock Text="{DynamicResource prefs.utau.crosspitchblend.desc}" TextWrapping="Wrap" FontSize="11" Opacity="0.7"/>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.utau.crosspitchblend.enable}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding ExperimentalCrossPitchBlend}"/>
+          </Grid>
+          <TextBlock Text="{DynamicResource prefs.utau.crosspitchblend.mode}" Margin="0,5,0,0"
+                     IsEnabled="{Binding ExperimentalCrossPitchBlend}"/>
+          <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding CrossPitchBlendMode}"
+                    IsEnabled="{Binding ExperimentalCrossPitchBlend}">
+            <ComboBoxItem Content="{DynamicResource prefs.utau.crosspitchblend.mode.finalpitch}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.utau.crosspitchblend.mode.notetone}"/>
+          </ComboBox>
         </StackPanel>
 
         <!-- DiffSinger -->

@@ -225,6 +225,10 @@ namespace OpenUtau.Core.Util {
             public bool ShowWaveformPhraseBoundaries = false;
             public bool Metronome = false;
             public bool SkipRenderingMutedTracks = false;
+            // Experimental Cross-Pitch Blend (XPB).
+            public bool ExperimentalCrossPitchBlend = false;
+            // 0 = final pitch curve, 1 = static note tone.
+            public int CrossPitchBlendMode = 0;
             public string Language = string.Empty;
             public string? SortingOrder = null;
             public List<string> RecentFiles = new List<string>();

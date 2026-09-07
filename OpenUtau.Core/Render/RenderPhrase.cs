@@ -6,6 +6,7 @@ using System.Numerics;
 using K4os.Hash.xxHash;
 using OpenUtau.Classic;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 using Serilog;
 
 namespace OpenUtau.Core.Render {
@@ -215,6 +216,9 @@ namespace OpenUtau.Core.Render {
         public float[] tension;
         public float[] voicing;
         public float[] xsy;
+        public USubbank[] xpbBanks;
+        public int[] xpbLowerBank;
+        public float[] xpbRatio;
         public Tuple<string, float[]>[] curves;//custom curves defined by renderer
         public readonly ulong preEffectHash;
         public readonly ulong hash;
@@ -565,6 +569,34 @@ namespace OpenUtau.Core.Render {
                 }
             }
             this.curves = curves.ToArray();
+            var xpbSinger = singer as ClassicSinger;
+            if (Preferences.Default.ExperimentalCrossPitchBlend && xpbSinger != null) {
+                string xpbColor = phonemes.First().GetVoiceColor(project, track) ?? string.Empty;
+                var ladder = xpbSinger.GetPitchLadder(xpbColor);
+                if (ladder.Count >= 2) {
+                    xpbBanks = ladder.Select(l => l.subbank).ToArray();
+                    var centers = ladder.Select(l => l.center).ToArray();
+                    xpbLowerBank = new int[pitches.Length];
+                    xpbRatio = new float[pitches.Length];
+                    bool byNoteTone = Preferences.Default.CrossPitchBlendMode == 1;
+                    for (int i = 0; i < pitches.Length; i++) {
+                        double tone = pitches[i] / 100.0;
+                        if (byNoteTone) {
+                            int tick = pitchStart + i * pitchInterval;
+                            var note = uNotes.FirstOrDefault(n => tick >= n.position && tick < n.End) ?? uNotes.Last();
+                            tone = note.AdjustedTone;
+                        }
+                        if (tone <= centers[0]) continue;
+                        int lower = 0;
+                        while (lower < centers.Length - 1 && centers[lower + 1] <= tone) lower++;
+                        xpbLowerBank[i] = lower;
+                        if (lower < centers.Length - 1) {
+                            double span = centers[lower + 1] - centers[lower];
+                            xpbRatio[i] = span > 1e-6 ? Math.Clamp((float)((tone - centers[lower]) / span), 0f, 1f) : 0f;
+                        }
+                    }
+                }
+            }
         }
 
         private static float[] SampleCurve(UCurve curve, int start, int length, Func<float, UCurve, float> convert) {
@@ -606,6 +638,11 @@ namespace OpenUtau.Core.Render {
                                     writer.Write(v);
                                 }
                             }
+                        }
+                        if (xpbRatio != null) {
+                            foreach (var value in xpbRatio) writer.Write(value);
+                            foreach (var value in xpbLowerBank) writer.Write(value);
+                            foreach (var bank in xpbBanks) writer.Write($"{bank.Prefix}|{bank.Suffix}");
                         }
                         foreach(var curve in curves) {
                             writer.Write(curve.Item1);

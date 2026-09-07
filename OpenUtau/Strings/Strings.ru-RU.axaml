@@ -759,6 +759,12 @@ The voicebank may not work on another OS.</system:String>-->
   <system:String x:Key="singers.subbanks.color.add">Добавить цвет</system:String>
   <system:String x:Key="singers.subbanks.color.remove">Убрать цвет</system:String>
   <system:String x:Key="singers.subbanks.color.rename">Переименовать</system:String>
+  <system:String x:Key="prefs.utau.crosspitchblend">Кросс-питч смешение (экспериментально)</system:String>
+  <system:String x:Key="prefs.utau.crosspitchblend.desc">Смешивает соседние питч-саббанки одного цвета голоса по высоте. Замедляет рендер. Не зависит от XSY.</system:String>
+  <system:String x:Key="prefs.utau.crosspitchblend.enable">Включить кросс-питч смешение</system:String>
+  <system:String x:Key="prefs.utau.crosspitchblend.mode">Опорная кривая смешения</system:String>
+  <system:String x:Key="prefs.utau.crosspitchblend.mode.finalpitch">По кривой Final Pitch</system:String>
+  <system:String x:Key="prefs.utau.crosspitchblend.mode.notetone">По тону ноты</system:String>
   <system:String x:Key="singers.subbanks.edit">Редактировать суббанки</system:String>
   <system:String x:Key="singers.subbanks.export">Экспортировать prefix.map</system:String>
   <system:String x:Key="singers.subbanks.import">Импортировать prefix.map</system:String>

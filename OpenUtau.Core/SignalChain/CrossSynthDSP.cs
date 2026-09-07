@@ -147,17 +147,263 @@ namespace OpenUtau.Core.SignalChain {
                     fft.Inverse(reA, imA);
                     for (int i = 0; i < fftSize; i++) {
                         float w = win[i];
-                        output[posA + i] += reA[i] * invN * w * w;
+                        output[posA + i] += reA[i] * invN * w;
                         wsum  [posA + i] += w * w;
                     }
                 }
 
             }
+            const float WSUM_FLOOR = 0.02f;
             for (int i = 0; i < length; i++) {
-                output[i] = wsum[i] > EPS ? output[i] / wsum[i] : 0f;
+                output[i] /= MathF.Max(wsum[i], WSUM_FLOOR);
             }
 
             return output;
+        }
+
+        public static float[] StftBlendLadder(
+            float[][] banks, int[] lowerBankPerFrame, float[] ratioPerFrame,
+            float[] fundamentalHzPerFrame = null) {
+            if (banks == null || banks.Length == 0) return new float[0];
+            int bankCount = banks.Length;
+            int length = banks.Where(x => x != null).Select(x => x.Length).DefaultIfEmpty().Max();
+            if (length == 0) return new float[0];
+            if (bankCount == 1) return banks[0] == null ? new float[length] : (float[])banks[0].Clone();
+
+            const int frameSize = 2048;
+            const int hopSize = 512;
+            const int half = frameSize / 2 + 1;
+            float invN = NWAVES_INVERSE_NORMALIZES ? 1f : 1f / frameSize;
+            var fft = new Fft(frameSize);
+            var window = MakeHann(frameSize);
+            var output = new float[length];
+            var windowSum = new float[length];
+            var carrierRe = new float[frameSize];
+            var carrierIm = new float[frameSize];
+            var lowerRe = new float[frameSize];
+            var lowerIm = new float[frameSize];
+            var upperRe = new float[frameSize];
+            var upperIm = new float[frameSize];
+            var carrierMag = new float[half];
+            var lowerMag = new float[half];
+            var upperMag = new float[half];
+            var carrierEnv = new float[half];
+            var lowerEnv = new float[half];
+            var upperEnv = new float[half];
+            var scratch = new float[half];
+
+            var bankRms = banks.Select(ActiveRms).ToArray();
+            var voicedRms = bankRms.Where(x => x > EPS).OrderBy(x => x).ToArray();
+            float referenceRms = voicedRms.Length > 0 ? voicedRms[voicedRms.Length / 2] : 0f;
+            var bankGain = bankRms.Select(x => referenceRms > EPS && x > EPS
+                ? Math.Clamp(referenceRms / x, 0.5f, 2f) : 1f).ToArray();
+
+            int carrierBank = 0;
+            if (lowerBankPerFrame != null && lowerBankPerFrame.Length > 0) {
+                var positions = new float[lowerBankPerFrame.Length];
+                for (int i = 0; i < positions.Length; i++) {
+                    int lower = Math.Clamp(lowerBankPerFrame[i], 0, bankCount - 1);
+                    float ratio = ratioPerFrame != null && i < ratioPerFrame.Length
+                        ? Math.Clamp(ratioPerFrame[i], 0f, 1f) : 0f;
+                    positions[i] = lower + ratio;
+                }
+                Array.Sort(positions);
+                carrierBank = Math.Clamp((int)MathF.Round(positions[positions.Length / 2]), 0, bankCount - 1);
+            }
+
+            // External resamplers can place the same phoneme a few milliseconds apart
+            // when rendered through different pitch subbanks. Worldline is close enough
+            // to hide this, while tips exposes it as a click when the target envelope is
+            // copied at the carrier's uncorrected time. Align each bank's broad energy
+            // envelope once before the STFT pass; phase still comes exclusively from the
+            // carrier, so this cannot create a second pitch.
+            var bankOffsets = new int[bankCount];
+            for (int bank = 0; bank < bankCount; bank++) {
+                if (bank != carrierBank) {
+                    bankOffsets[bank] = EstimateEnvelopeOffset(banks[carrierBank], banks[bank]);
+                }
+            }
+
+            int totalFrames = length <= frameSize ? 1 : (length - frameSize + hopSize - 1) / hopSize + 1;
+            float smoothedGain = 0f;
+            float previousTargetRms = 0f;
+            for (int f = 0; f < totalFrames; f++) {
+                int position = f * hopSize;
+                int lower = Math.Clamp(lowerBankPerFrame != null && lowerBankPerFrame.Length > 0
+                    ? lowerBankPerFrame[Math.Min(f, lowerBankPerFrame.Length - 1)] : 0, 0, bankCount - 1);
+                int upper = Math.Min(lower + 1, bankCount - 1);
+                float ratio = ratioPerFrame != null && ratioPerFrame.Length > 0
+                    ? Math.Clamp(ratioPerFrame[Math.Min(f, ratioPerFrame.Length - 1)], 0f, 1f) : 0f;
+                if (upper == lower) ratio = 0f;
+                float fundamental = fundamentalHzPerFrame != null && fundamentalHzPerFrame.Length > 0
+                    ? fundamentalHzPerFrame[Math.Min(f, fundamentalHzPerFrame.Length - 1)] : 250f;
+                if (!float.IsFinite(fundamental) || fundamental <= 0f) fundamental = 250f;
+
+                FillAnalysisFrame(banks[carrierBank], position, window, carrierRe, carrierIm);
+                FillAnalysisFrame(banks[lower], position + bankOffsets[lower], window, lowerRe, lowerIm);
+                FillAnalysisFrame(banks[upper], position + bankOffsets[upper], window, upperRe, upperIm);
+                fft.Direct(carrierRe, carrierIm);
+                fft.Direct(lowerRe, lowerIm);
+                fft.Direct(upperRe, upperIm);
+                FillMagnitude(carrierRe, carrierIm, bankGain[carrierBank], carrierMag);
+                FillMagnitude(lowerRe, lowerIm, bankGain[lower], lowerMag);
+                FillMagnitude(upperRe, upperIm, bankGain[upper], upperMag);
+                int radius = Math.Clamp((int)Math.Round(0.5f * fundamental / (SAMPLE_RATE / (float)frameSize)), 2, 16);
+                SmoothLogMagnitude(carrierMag, radius, carrierEnv, scratch);
+                SmoothLogMagnitude(lowerMag, radius, lowerEnv, scratch);
+                SmoothLogMagnitude(upperMag, radius, upperEnv, scratch);
+                for (int k = 0; k < half; k++) {
+                    float target = Lerp(lowerEnv[k], upperEnv[k], ratio);
+                    float transfer = Math.Clamp(MathF.Exp(target - carrierEnv[k]), 0.125f, 8f);
+                    float magnitude = carrierMag[k] * transfer;
+                    float phase = MathF.Atan2(carrierIm[k], carrierRe[k]);
+                    carrierRe[k] = magnitude * MathF.Cos(phase);
+                    carrierIm[k] = k == 0 || k == half - 1 ? 0f : magnitude * MathF.Sin(phase);
+                    if (k > 0 && k < frameSize - k) {
+                        carrierRe[frameSize - k] = carrierRe[k];
+                        carrierIm[frameSize - k] = -carrierIm[k];
+                    }
+                }
+                fft.Inverse(carrierRe, carrierIm);
+                float targetRms = Lerp(WindowedRms(banks[lower], position + bankOffsets[lower], window, bankGain[lower]),
+                    WindowedRms(banks[upper], position + bankOffsets[upper], window, bankGain[upper]), ratio);
+                float synthesizedRms = InverseFrameRms(carrierRe, invN);
+                float frameGain = synthesizedRms > EPS ? Math.Clamp(targetRms / synthesizedRms, 0.5f, 2f) : 1f;
+                if (f > 0 && smoothedGain > EPS && targetRms > EPS && previousTargetRms > EPS
+                    && targetRms / previousTargetRms < 4f) {
+                    frameGain = smoothedGain + (frameGain - smoothedGain) * 0.35f;
+                }
+                smoothedGain = frameGain;
+                previousTargetRms = targetRms;
+                for (int i = 0; i < frameSize; i++) {
+                    int sample = position + i;
+                    if (sample >= length) break;
+                    float weight = window[i];
+                    output[sample] += carrierRe[i] * invN * frameGain * weight;
+                    windowSum[sample] += weight * weight;
+                }
+            }
+            for (int i = 0; i < length; i++) output[i] /= MathF.Max(windowSum[i], 0.02f);
+            return output;
+        }
+
+        static float Lerp(float a, float b, float t) => a + (b - a) * t;
+
+        static void FillAnalysisFrame(float[] samples, int position, float[] window, float[] real, float[] imaginary) {
+            for (int i = 0; i < real.Length; i++) {
+                int index = position + i;
+                real[i] = samples != null && index >= 0 && index < samples.Length ? samples[index] * window[i] : 0f;
+                imaginary[i] = 0f;
+            }
+        }
+
+        static void FillMagnitude(float[] real, float[] imaginary, float gain, float[] magnitude) {
+            for (int i = 0; i < magnitude.Length; i++) magnitude[i] = MathF.Sqrt(real[i] * real[i] + imaginary[i] * imaginary[i]) * gain;
+        }
+
+        static void SmoothLogMagnitude(float[] magnitude, int radius, float[] envelope, float[] scratch) {
+            for (int i = 0; i < magnitude.Length; i++) scratch[i] = MathF.Log(magnitude[i] + EPS);
+            BoxSmooth(scratch, radius, envelope);
+            BoxSmooth(envelope, radius, scratch);
+            Array.Copy(scratch, envelope, envelope.Length);
+        }
+
+        static void BoxSmooth(float[] input, int radius, float[] output) {
+            double sum = 0;
+            int start = 0, end = -1;
+            for (int i = 0; i < input.Length; i++) {
+                int wantedStart = Math.Max(0, i - radius), wantedEnd = Math.Min(input.Length - 1, i + radius);
+                while (end < wantedEnd) sum += input[++end];
+                while (start < wantedStart) sum -= input[start++];
+                output[i] = (float)(sum / (end - start + 1));
+            }
+        }
+
+        static float ActiveRms(float[] samples) {
+            if (samples == null || samples.Length == 0) return 0f;
+            double sum = 0; long count = 0;
+            foreach (float sample in samples) {
+                if (MathF.Abs(sample) <= 1e-4f) continue;
+                sum += (double)sample * sample; count++;
+            }
+            return count > 0 ? (float)Math.Sqrt(sum / count) : 0f;
+        }
+
+        static float WindowedRms(float[] samples, int position, float[] window, float gain) {
+            if (samples == null || samples.Length == 0) return 0f;
+            double sum = 0;
+            for (int i = 0; i < window.Length; i++) {
+                int index = position + i;
+                float sample = index >= 0 && index < samples.Length ? samples[index] * gain * window[i] : 0f;
+                sum += (double)sample * sample;
+            }
+            return (float)Math.Sqrt(sum / window.Length);
+        }
+
+        static int EstimateEnvelopeOffset(float[] carrier, float[] target) {
+            if (carrier == null || target == null || carrier.Length < 512 || target.Length < 512) return 0;
+            const int envelopeWindow = 256;
+            const int envelopeHop = 128;
+            const int maxOffset = SAMPLE_RATE / 1000 * 15;
+            int frameCount = Math.Min(carrier.Length, target.Length) / envelopeHop - 1;
+            if (frameCount < 8) return 0;
+            var carrierEnvelope = new float[frameCount];
+            var targetEnvelope = new float[frameCount];
+            for (int frame = 0; frame < frameCount; frame++) {
+                int position = frame * envelopeHop;
+                carrierEnvelope[frame] = EnvelopeRms(carrier, position, envelopeWindow);
+                targetEnvelope[frame] = EnvelopeRms(target, position, envelopeWindow);
+            }
+            for (int frame = 1; frame < frameCount; frame++) {
+                carrierEnvelope[frame - 1] = carrierEnvelope[frame] - carrierEnvelope[frame - 1];
+                targetEnvelope[frame - 1] = targetEnvelope[frame] - targetEnvelope[frame - 1];
+            }
+            carrierEnvelope[frameCount - 1] = 0f;
+            targetEnvelope[frameCount - 1] = 0f;
+            if (carrierEnvelope.Select(value => value * value).Sum() <= EPS
+                || targetEnvelope.Select(value => value * value).Sum() <= EPS) {
+                return 0;
+            }
+            int maxFrameOffset = Math.Min(maxOffset / envelopeHop, frameCount / 3);
+            double bestScore = double.NegativeInfinity;
+            int bestFrameOffset = 0;
+            for (int frameOffset = -maxFrameOffset; frameOffset <= maxFrameOffset; frameOffset++) {
+                int start = Math.Max(0, -frameOffset);
+                int end = Math.Min(frameCount, frameCount - frameOffset);
+                if (end - start < 8) continue;
+                double dot = 0, carrierEnergy = 0, targetEnergy = 0;
+                for (int frame = start; frame < end; frame++) {
+                    float a = carrierEnvelope[frame];
+                    float b = targetEnvelope[frame + frameOffset];
+                    dot += a * b;
+                    carrierEnergy += a * a;
+                    targetEnergy += b * b;
+                }
+                double score = dot / Math.Sqrt(Math.Max(carrierEnergy * targetEnergy, EPS));
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestFrameOffset = frameOffset;
+                }
+            }
+            return bestFrameOffset * envelopeHop;
+        }
+
+        static float EnvelopeRms(float[] samples, int position, int length) {
+            double sum = 0;
+            int count = 0;
+            for (int i = 0; i < length; i++) {
+                int index = position + i;
+                if (index < 0 || index >= samples.Length) continue;
+                sum += (double)samples[index] * samples[index];
+                count++;
+            }
+            return count > 0 ? (float)Math.Sqrt(sum / count) : 0f;
+        }
+
+        static float InverseFrameRms(float[] frame, float inverseScale) {
+            double sum = 0;
+            for (int i = 0; i < frame.Length; i++) { float sample = frame[i] * inverseScale; sum += (double)sample * sample; }
+            return (float)Math.Sqrt(sum / frame.Length);
         }
 
         static float WrapPi(float x) {

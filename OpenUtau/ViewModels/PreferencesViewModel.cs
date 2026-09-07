@@ -146,6 +146,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial int OtoEditor { get; set; }
         public string VLabelerPath => Preferences.Default.VLabelerPath;
         public string SetParamPath => Preferences.Default.SetParamPath;
+        [Reactive] public partial bool ExperimentalCrossPitchBlend { get; set; }
+        [Reactive] public partial int CrossPitchBlendMode { get; set; }
 
         // Diffsinger
         public List<int> DiffSingerStepsOptions { get; } = new List<int> { 2, 5, 10, 20, 50, 100, 200, 500, 1000 };
@@ -291,6 +293,8 @@ namespace OpenUtau.App.ViewModels {
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
             OtoEditor = Preferences.Default.OtoEditor;
+            ExperimentalCrossPitchBlend = Preferences.Default.ExperimentalCrossPitchBlend;
+            CrossPitchBlendMode = Preferences.Default.CrossPitchBlendMode;
             RememberMid = Preferences.Default.RememberMid;
             RememberUst = Preferences.Default.RememberUst;
             RememberVsqx = Preferences.Default.RememberVsqx;
@@ -565,6 +569,18 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.OtoEditor)
                 .Subscribe(index => {
                     Preferences.Default.OtoEditor = index;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.ExperimentalCrossPitchBlend)
+                .Skip(1)
+                .Subscribe(value => {
+                    Preferences.Default.ExperimentalCrossPitchBlend = value;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.CrossPitchBlendMode)
+                .Skip(1)
+                .Subscribe(value => {
+                    Preferences.Default.CrossPitchBlendMode = value;
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.NumRenderThreads)

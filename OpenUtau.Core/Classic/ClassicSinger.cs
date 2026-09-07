@@ -187,6 +187,42 @@ namespace OpenUtau.Classic {
             return TryGetMappedOto(phoneme, tone, out oto);
         }
 
+        private static readonly Regex XpbNoteSuffixRegex =
+            new Regex("(?<![A-Za-z0-9])([A-G]#?-?[0-9]+)(?![0-9])", RegexOptions.Compiled);
+
+        /// <summary>Returns the ordered pitch-subbank ladder used by XPB.</summary>
+        public List<(USubbank subbank, double center)> GetPitchLadder(string color) {
+            var ladder = new List<(USubbank, double)>();
+            foreach (var subbank in subbanks) {
+                if ((subbank.Color ?? string.Empty) != (color ?? string.Empty)
+                    || subbank.toneSet == null || subbank.toneSet.Count == 0) {
+                    continue;
+                }
+                int parsed = ParseXpbAnchorTone(subbank.Suffix);
+                double anchor = parsed > 0 ? parsed : subbank.toneSet.Min;
+                ladder.Add((subbank, anchor));
+            }
+            ladder.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+            return ladder;
+        }
+
+        private static int ParseXpbAnchorTone(string suffix) {
+            if (string.IsNullOrEmpty(suffix)) return -1;
+            foreach (Match match in XpbNoteSuffixRegex.Matches(suffix)) {
+                int tone = OpenUtau.Core.MusicMath.NameToTone(match.Groups[1].Value);
+                if (tone > 0) return tone;
+            }
+            return -1;
+        }
+
+        public bool TryGetOtoForSubbank(string phoneme, USubbank subbank, out UOto oto) {
+            oto = default;
+            if (subbank != null && otoMap.TryGetValue($"{subbank.Prefix}{phoneme}{subbank.Suffix}", out oto)) {
+                return true;
+            }
+            return TryGetOto(phoneme, out oto);
+        }
+
         public override Dictionary<string, UOto> GetSuggestions(string text, bool isAlias) {
             if (text != null) {
                 text = text.ToLowerInvariant().Replace(" ", "");

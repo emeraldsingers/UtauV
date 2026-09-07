@@ -268,7 +268,7 @@ namespace OpenUtau.Core.Render {
             } else if (focusPart != null || focusTick >= 0) {
                 tuples = OrderForPreRender(tuples);
             }
-            var progress = new Progress(tuples.Sum(t => t.Item1.phones.Length));
+            var progress = new Progress(tuples.Sum(t => t.Item1.phones.Length * XpbRenderPasses(t.Item1)));
             // Only full-project passes (pre-render / export) maintain the real-curve coverage
             // invariant. Partial playback passes must not trim curves outside their tick window.
             bool maintainCoverage = startTick == 0 && endTick == -1;
@@ -287,7 +287,23 @@ namespace OpenUtau.Core.Render {
                     : null;
                 RenderResult result;
                 bool useXsy = phrase.xsy != null && phrase.xsy.Any(x => x > 0);
-                if (!useXsy) {
+                bool useXpb = phrase.xpbBanks != null && phrase.xpbBanks.Length >= 2
+                    && phrase.xpbLowerBank != null && phrase.xpbRatio != null
+                    && phrase.xpbLowerBank.Length == phrase.xpbRatio.Length;
+                if (useXpb && !useXsy) {
+                    var xpbSamples = RenderXpb(phrase, progress, request.trackNo, cancellation);
+                    if (cancellation.IsCancellationRequested) break;
+                    if (xpbSamples != null) {
+                        source.SetSamples(xpbSamples);
+                        result = phrase.renderer.Layout(phrase);
+                    } else {
+                        var task = phrase.renderer.Render(phrase, progress, request.trackNo, cancellation, true, renderEvents);
+                        task.Wait();
+                        if (cancellation.IsCancellationRequested) break;
+                        result = task.Result;
+                        source.SetSamples(result.samples);
+                    }
+                } else if (!useXsy) {
                     var task = phrase.renderer.Render(phrase, progress, request.trackNo, cancellation, true, renderEvents);
                     task.Wait();
                     if (cancellation.IsCancellationRequested) {
@@ -382,6 +398,99 @@ namespace OpenUtau.Core.Render {
                 }
             }
             progress.Clear();
+        }
+
+        private float[] RenderXpb(RenderPhrase phrase, Progress progress, int trackNo, CancellationTokenSource cancellation) {
+            var singer = phrase.singer as ClassicSinger;
+            if (singer == null || phrase.xpbBanks == null) return null;
+            int bankCount = phrase.xpbBanks.Length;
+            var used = new SortedSet<int>();
+            for (int i = 0; i < phrase.xpbLowerBank.Length; i++) {
+                int lower = Math.Clamp(phrase.xpbLowerBank[i], 0, bankCount - 1);
+                used.Add(lower);
+                if (phrase.xpbRatio[i] > 0f && lower + 1 < bankCount) used.Add(lower + 1);
+            }
+            if (used.Count == 0) return null;
+            int minBank = used.Min;
+            int maxBank = used.Max;
+            string cacheKey = $"XPB|{phrase.hash:x16}|{minBank}-{maxBank}";
+            if (XsyBlendCache.TryGetValue(cacheKey, out var cached)) return cached;
+            var banks = new float[bankCount][];
+            for (int bank = minBank; bank <= maxBank; bank++) {
+                if (cancellation.IsCancellationRequested) return null;
+                banks[bank] = RenderXpbBank(phrase, bank, progress, trackNo, cancellation);
+            }
+            if (banks.Skip(minBank).Take(maxBank - minBank + 1).Any(samples => samples == null)) {
+                return null;
+            }
+            int maxLength = banks.Where(x => x != null).Select(x => x.Length).DefaultIfEmpty().Max();
+            const int fftSize = 2048;
+            const int hopSize = 512;
+            int frameCount = maxLength <= fftSize ? 1 : (maxLength - fftSize + hopSize - 1) / hopSize + 1;
+            var lowerPerFrame = new int[frameCount];
+            var ratioPerFrame = new float[frameCount];
+            var fundamentals = new float[frameCount];
+            int pitchStart = phrase.position - phrase.leading;
+            for (int frame = 0; frame < frameCount; frame++) {
+                double timeMs = phrase.positionMs - phrase.leadingMs
+                    + (double)(frame * hopSize + fftSize / 2) / 44100.0 * 1000.0;
+                double tick = project.timeAxis.MsPosToTickPos(timeMs);
+                int index = Math.Clamp((int)Math.Round(Math.Max(0, (tick - pitchStart) / 5)), 0, phrase.pitches.Length - 1);
+                lowerPerFrame[frame] = phrase.xpbLowerBank[Math.Min(index, phrase.xpbLowerBank.Length - 1)];
+                ratioPerFrame[frame] = phrase.xpbRatio[Math.Min(index, phrase.xpbRatio.Length - 1)];
+                fundamentals[frame] = 440f * MathF.Pow(2f, (phrase.pitches[index] / 100f - 69f) / 12f);
+            }
+            var blended = CrossSynthDSP.StftBlendLadder(banks, lowerPerFrame, ratioPerFrame, fundamentals);
+            if (XsyBlendCache.Count > 1024) XsyBlendCache.Clear();
+            XsyBlendCache[cacheKey] = blended;
+            return blended;
+        }
+
+        private static int XpbRenderPasses(RenderPhrase phrase) {
+            bool active = phrase.xpbBanks != null && phrase.xpbBanks.Length >= 2
+                && phrase.xpbLowerBank != null && phrase.xpbRatio != null
+                && phrase.xpbLowerBank.Length == phrase.xpbRatio.Length;
+            if (!active || (phrase.xsy != null && phrase.xsy.Any(x => x > 0))) return 1;
+            int min = phrase.xpbBanks.Length, max = -1;
+            for (int i = 0; i < phrase.xpbLowerBank.Length; i++) {
+                int lower = Math.Clamp(phrase.xpbLowerBank[i], 0, phrase.xpbBanks.Length - 1);
+                min = Math.Min(min, lower);
+                max = Math.Max(max, lower + (phrase.xpbRatio[i] > 0f ? 1 : 0));
+            }
+            return max >= min ? max - min + 1 : 1;
+        }
+
+        private float[] RenderXpbBank(RenderPhrase phrase, int bankIndex, Progress progress, int trackNo, CancellationTokenSource cancellation) {
+            var singer = phrase.singer as ClassicSinger;
+            if (singer == null) return null;
+            var otoField = typeof(RenderPhone).GetField("oto");
+            var hashField = typeof(RenderPhone).GetField("hash");
+            var phraseHashField = typeof(RenderPhrase).GetField("hash");
+            var originalOtos = phrase.phones.Select(p => p.oto).ToArray();
+            var originalHashes = phrase.phones.Select(p => p.hash).ToArray();
+            ulong originalPhraseHash = phrase.hash;
+            ulong salt = 0x5042000000000000UL ^ (ulong)(bankIndex + 1) * 0x9E3779B97F4A7C15UL;
+            try {
+                var bank = phrase.xpbBanks[bankIndex];
+                for (int i = 0; i < phrase.phones.Length; i++) {
+                    var phone = phrase.phones[i];
+                    string phoneme = phone.oto?.Phonetic ?? phone.phoneme;
+                    if (phone.oto != null && singer.TryGetOtoForSubbank(phoneme, bank, out var oto)) {
+                        otoField.SetValue(phone, oto);
+                        hashField.SetValue(phone, phone.hash ^ salt);
+                    }
+                }
+                phraseHashField.SetValue(phrase, phrase.hash ^ salt);
+                var task = phrase.renderer.Render(phrase, progress, trackNo, cancellation, true);
+                task.Wait();
+                return cancellation.IsCancellationRequested ? null : task.Result?.samples;
+            } finally {
+                for (int i = 0; i < phrase.phones.Length; i++) {
+                    otoField.SetValue(phrase.phones[i], originalOtos[i]);
+                    hashField.SetValue(phrase.phones[i], originalHashes[i]);
+                }
+                phraseHashField.SetValue(phrase, originalPhraseHash);
+            }
         }
 
         private RealCurveUpdate[]? PublishRealCurveUpdates(UVoicePart part, RenderPhrase phrase) {
