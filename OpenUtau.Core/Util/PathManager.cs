@@ -64,7 +64,7 @@ namespace OpenUtau.Core {
                     DataPath = appDir;
                 } else {
                     string dataHome = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                    DataPath = Path.Combine(dataHome, "UtauV");
+                    DataPath = Path.Combine(dataHome, "UtauV", "Data");
                 }
                 CachePath = Path.Combine(DataPath, "Cache");
                 HomePathIsAscii = true;
@@ -103,10 +103,17 @@ namespace OpenUtau.Core {
         public string TemplatesPath => Path.Combine(DataPath, "Templates");
         public string LogsPath => Path.Combine(DataPath, "Logs");
         public string LogFilePath => Path.Combine(DataPath, "Logs", "log.txt");
-        public string PrefsFilePath => IsInstalled ? Path.Combine(DataPath, "prefs.json") : Path.Combine(RootPath, "prefs.json");
+        // Keep small user-editable files at Documents\UtauV while all content,
+        // cache and logs for an installed build live under Documents\UtauV\Data.
+        // Portable builds retain their existing layout.
+        public string PrefsFilePath => IsInstalled
+            ? Path.Combine(Directory.GetParent(DataPath)!.FullName, "prefs.json")
+            : Path.Combine(RootPath, "prefs.json");
         public string ThemesPath => Path.Combine(DataPath, "Themes");
         public string SingerThemesPath => Path.Combine(DataPath, "SingerThemes");
-        public string NotePresetsFilePath => IsInstalled ? Path.Combine(DataPath, "note-defaults.json") : Path.Combine(RootPath, "note-defaults.json");
+        public string NotePresetsFilePath => IsInstalled
+            ? Path.Combine(Directory.GetParent(DataPath)!.FullName, "note-defaults.json")
+            : Path.Combine(RootPath, "note-defaults.json");
         public string LegacyNotePresetsFilePath => Path.Combine(DataPath, "notepresets.json");
         public string BackupsPath => Path.Combine(DataPath, "Backups");
 

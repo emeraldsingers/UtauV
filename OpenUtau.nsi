@@ -66,8 +66,12 @@ Function .onInit
 FunctionEnd
 
 Section "MainSection" SEC01
+  ; The self-contained runtime lives under bin. Delete it before copying so an
+  ; in-place update cannot retain assemblies from a previous .NET runtime or
+  ; an earlier package layout. Do not touch Data: it can hold portable user data.
+  RMDir /r "$INSTDIR\bin"
   SetOutPath "$INSTDIR"
-  SetOverwrite ifnewer
+  SetOverwrite on
   File /r "${BUILD_DIR}\*"
 SectionEnd
 
@@ -77,7 +81,14 @@ Section -AdditionalIcons
 SectionEnd
 
 Section -Post
-  ;leave a mark that the program was installed
+  ; Leave the marker next to the managed executable. The application runs from
+  ; bin, so this is the authoritative marker used to distinguish an installed
+  ; build from a portable build. Keep the root marker for older releases.
+  FileOpen $9 "$INSTDIR\bin\installed.txt" w
+  FileWrite $9 "yes"
+  FileClose $9
+
+  ; Legacy marker for releases that checked only the package root.
   FileOpen $9 "$INSTDIR\installed.txt" w
   FileWrite $9 "yes"
   FileClose $9
