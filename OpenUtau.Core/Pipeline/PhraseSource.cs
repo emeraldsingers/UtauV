@@ -378,6 +378,11 @@ namespace OpenUtau.Core.Pipeline {
         public readonly UExpressionDescriptor[] CurveDescriptors;
         public readonly bool XsyAvailable;
         public readonly bool SineFallback;
+        public readonly int Resolution;
+        /// <summary>The default value of every curve expression, for curves the part doesn't have.</summary>
+        public readonly IReadOnlyDictionary<string, int> CurveDefaults;
+        /// <summary>The track's expression graph; null when it has none.</summary>
+        public readonly ExpressionGraph.ExpressionGraphProgram? ExpressionGraph;
         public readonly PhonemeSource[] Phonemes;
         /// <summary>Half-open [start, end) index ranges into <see cref="Phonemes"/>.</summary>
         public readonly (int Start, int End)[] PhraseGroups;
@@ -432,6 +437,11 @@ namespace OpenUtau.Core.Pipeline {
             CurveDescriptors = project.expressions.Values
                 .Where(d => d.type == UExpressionType.Curve && Renderer.SupportsExpression(d))
                 .ToArray();
+            Resolution = project.resolution;
+            CurveDefaults = project.expressions.Values
+                .Where(d => d.type == UExpressionType.Curve)
+                .ToDictionary(d => d.abbr, d => (int)d.defaultValue);
+            ExpressionGraph = OpenUtau.Core.ExpressionGraph.ExpressionGraphProgram.ForTrack(project, track);
 
             if (SineFallback) {
                 var sineGroups = BuildSineGroups(Notes);
