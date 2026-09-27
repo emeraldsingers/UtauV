@@ -101,7 +101,7 @@ jobs:
             git ls-remote --tags origin > tags.txt
             version=$(python .github/scripts/next-version.py < tags.txt)
             tag="$version-alpha"
-            name="${version%.*} Alpha"
+            name="$version Alpha"
           else
             if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+([.][0-9]+){2,3}$'; then
               echo "::error::version must be X.Y.Z or X.Y.Z.N for the $CHANNEL channel (got '$VERSION')"
@@ -154,8 +154,6 @@ jobs:
     needs: [next-version, select-targets]
     if: needs.next-version.outputs.skip != 'true'
     runs-on: ${{ matrix.arch.runs-on }}
-    permissions:
-      contents: write
 
     strategy:
       fail-fast: false
@@ -366,61 +364,70 @@ jobs:
           linuxdeploy --appdir bin/${{ matrix.arch.name }} --output appimage
         if: ${{ matrix.arch.os == 'linux' }}
 
+      # Always upload so successful legs keep their artifacts even when the
+      # release job is skipped (draft/no-release dispatches) or gated off
+      # by a failed leg.
       # Upload Artifacts
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.tar.gz
           path: UtauV-${{ matrix.arch.name }}.tar.gz
-        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'linux' }}
+        if: ${{ matrix.arch.os == 'linux' }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.zip
           path: UtauV-${{ matrix.arch.name }}.zip
-        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'win' }}
+        if: ${{ matrix.arch.os == 'win' }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.exe
           path: UtauV-${{ matrix.arch.name }}.exe
-        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
+        if: ${{ matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
       
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.AppImage
           path: UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
-        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'linux' }}
+        if: ${{ matrix.arch.os == 'linux' }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: UtauV-${{ matrix.arch.name }}.dmg
           path: UtauV-${{ matrix.arch.name }}.dmg
-        if: ${{ needs.next-version.outputs.release != 'true' && matrix.arch.os == 'osx' }}
+        if: ${{ matrix.arch.os == 'osx' }}
 
-      # Appcast
-      - name: Appcast Windows
-        shell: cmd
+  release:
+    # needs: build means this job runs only after every selected matrix leg succeeds.
+    needs: [next-version, build]
+    if: needs.next-version.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: UtauV-*
+          merge-multiple: true
+
+      - name: Appcast
+        shell: bash
         run: |
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=windows -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.zip
-        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' }}
+          set -euo pipefail
+          for file in UtauV-*.zip UtauV-*.exe UtauV-*.dmg UtauV-*.tar.gz UtauV-*.AppImage; do
+            [ -f "$file" ] || continue
+            case "$file" in
+              *.zip) os=windows; rid="${file#UtauV-}"; rid="${rid%.zip}" ;;
+              *.exe) os=windows; rid="${file#UtauV-}"; rid="${rid%.exe}"-installer ;;
+              *.dmg) os=macos; rid="${file#UtauV-}"; rid="${rid%.dmg}" ;;
+              *.tar.gz) os=linux; rid="${file#UtauV-}"; rid="${rid%.tar.gz}" ;;
+              *.AppImage) os=linux; rid="${file#UtauV-}"; rid="${rid%.AppImage}"-appimage ;;
+            esac
+            python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o="$os" -r="$rid" -f="$file"
+          done
 
-      - name: Appcast Windows installer
-        shell: cmd
-        run: python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=windows -r=${{ matrix.arch.name }}-installer -f=UtauV-${{ matrix.arch.name }}.exe
-        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'win' && (matrix.arch.onnx_provider == 'DirectML' || matrix.arch.onnx_provider == 'CUDA') }}
-
-      - name: Appcast MacOS
-        run: |
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=macos -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.dmg
-        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'osx' }}
-
-      - name: Appcast Linux
-        run: |
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=linux -r=${{ matrix.arch.name }} -f=UtauV-${{ matrix.arch.name }}.tar.gz
-          python appcast.py -v=${{ needs.next-version.outputs.version }} --tag=${{ needs.next-version.outputs.tag }} --repo=${{ github.repository }} -o=linux -r=${{ matrix.arch.name }}-appimage -f=UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
-        if: ${{ needs.next-version.outputs.release == 'true' && matrix.arch.os == 'linux' }}
-
-      # Release
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
@@ -429,9 +436,12 @@ jobs:
           prerelease: ${{ needs.next-version.outputs.channel != 'stable' }}
           draft: ${{ needs.next-version.outputs.draft }}
           files: |
-            appcast.${{ matrix.arch.name }}*.xml
-            UtauV-linux-${{ matrix.arch.linuxarch }}.AppImage
-            UtauV-${{ matrix.arch.name }}.*
+            appcast.*.xml
+            UtauV-*.zip
+            UtauV-*.exe
+            UtauV-*.dmg
+            UtauV-*.tar.gz
+            UtauV-*.AppImage
           body: |
             ## Downloads
 
@@ -477,7 +487,6 @@ jobs:
             - **ARM devices:** Download `linux-arm64`
 
             See [Getting Started](https://github.com/openutau/OpenUtau/wiki/Getting-Started) for setup instructions and the [FAQ](https://github.com/openutau/OpenUtau/wiki/FAQ) for troubleshooting.
-        if: ${{ needs.next-version.outputs.release == 'true' }}
 
   notify-discord-release:
     needs: [next-version, build]
