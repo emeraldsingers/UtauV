@@ -79,9 +79,24 @@ namespace OpenUtau.Core.Render {
         // voicevox & enunu & neutrino args
         public readonly int toneShift;
 
-        public readonly UOto oto;
+        public UOto oto { get; private set; }
         public readonly UOto oto2;
-        public readonly ulong hash;
+        public ulong hash { get; private set; }
+
+        // Masks the hashes of an xsy secondary-variant render so its cache
+        // files stay distinct from the primary render's.
+        internal const ulong Oto2HashMask = 0x5858585858585858;
+
+        /// <summary>
+        /// A copy of this phone carrying a different oto (the secondary oto of an
+        /// xsy render) with the matching hash mask.
+        /// </summary>
+        internal RenderPhone WithOto(UOto oto) {
+            var copy = (RenderPhone)MemberwiseClone();
+            copy.oto = oto;
+            copy.hash = hash ^ Oto2HashMask;
+            return copy;
+        }
 
         internal RenderPhone(UProject project, UTrack track, UVoicePart part, UNote note, UPhoneme phoneme, int phrasePosition, int noteIndex) {
             position = part.position + phoneme.position - phrasePosition;
@@ -204,7 +219,7 @@ namespace OpenUtau.Core.Render {
         public readonly double leadingMs;
 
         public readonly RenderNote[] notes;
-        public readonly RenderPhone[] phones;
+        public RenderPhone[] phones { get; private set; }
         internal readonly UNote[] sourceNotes;
 
         public float[] pitches;
@@ -221,7 +236,7 @@ namespace OpenUtau.Core.Render {
         public float[] xpbRatio;
         public Tuple<string, float[]>[] curves;//custom curves defined by renderer
         public readonly ulong preEffectHash;
-        public readonly ulong hash;
+        public ulong hash { get; private set; }
 
         internal readonly IRenderer renderer;
         public readonly string wavtool;
@@ -654,6 +669,25 @@ namespace OpenUtau.Core.Render {
                     return XXH64.DigestOf(stream.ToArray());
                 }
             }
+        }
+
+        /// <summary>
+        /// The secondary variant of an xsy cross-synthesis render: a separate phrase
+        /// in which every phone that has an oto2 carries the oto2 instead of the oto,
+        /// with the xsy hash mask applied. The live phrase is never mutated. The copy
+        /// shares the cache-file list, so both variants' cache files are cleaned up
+        /// together.
+        /// </summary>
+        internal static RenderPhrase BuildXsyVariant(RenderPhrase src) {
+            var variant = (RenderPhrase)src.MemberwiseClone();
+            var phones = new RenderPhone[src.phones.Length];
+            for (int i = 0; i < src.phones.Length; ++i) {
+                var phone = src.phones[i];
+                phones[i] = phone.oto2 != null ? phone.WithOto(phone.oto2) : phone;
+            }
+            variant.phones = phones;
+            variant.hash = src.hash ^ RenderPhone.Oto2HashMask;
+            return variant;
         }
 
         public static List<RenderPhrase> FromPart(UProject project, UTrack track, UVoicePart part) {

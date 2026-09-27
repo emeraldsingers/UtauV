@@ -130,9 +130,6 @@ namespace OpenUtau.Core.DiffSinger {
                     }
                     if (result.samples != null) {
                         Renderers.ApplyDynamics(phrase, result);
-                        Task.Factory.StartNew(() => {
-                            DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
-                        }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                     }
                     progress.Complete(phrase.phones.Length, progressInfo);
                     return result;

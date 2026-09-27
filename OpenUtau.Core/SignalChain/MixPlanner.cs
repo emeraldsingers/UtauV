@@ -298,36 +298,46 @@ namespace OpenUtau.Core {
         // ==================== readers (UI / DAW) ====================
 
         /// <summary>
-        /// The part's pcm placements: the active session's Ready slots, or the cache
-        /// when no session covers the part. For the waveform canvas and DAW extraction.
+        /// Content lookup: the rendered pcm for one (part, phrase) pair, or the
+        /// wave part's whole placement under hash 0. The store is
+        /// content-addressed; callers decide which entries are current by asking
+        /// about their own phrases — stale entries are simply never asked about.
         /// </summary>
-        public bool TryGetPartPcm(UPart part,
-                out List<(double posMs, double durMs, int channels, Frozen<float> pcm)> pcmList) {
+        public bool TryGetPhrasePcm(UPart part, ulong phraseHash,
+                out (double posMs, double durMs, int channels, Frozen<float> pcm) placement) {
             lock (lockObj) {
-                pcmList = new List<(double, double, int, Frozen<float>)>();
-                if (sessionParts != null) {
-                    for (int p = 0; p < sessionParts.Count; ++p) {
-                        var ps = sessionParts[p];
-                        if (!ReferenceEquals(ps.part, part)) {
-                            continue;
-                        }
-                        for (int i = 0; i < ps.samples.Count; ++i) {
-                            var s = ps.samples[i];
-                            if (s.State == SlotState.Ready && s.Data != null) {
-                                pcmList.Add((ps.specs[i].offsetMs, ps.specs[i].estimatedLengthMs, s.Channels, s.Data));
-                            }
-                        }
-                        return pcmList.Count > 0;
-                    }
+                if (cache.TryGetValue(part, out var partCache) &&
+                    partCache.TryGetValue(phraseHash, out var c)) {
+                    placement = (c.posMs, c.durMs, c.channels, c.pcm);
+                    return true;
                 }
-                if (cache.TryGetValue(part, out var partCache)) {
-                    foreach (var c in partCache.Values) {
-                        pcmList.Add((c.posMs, c.durMs, c.channels, c.pcm));
-                    }
-                    return pcmList.Count > 0;
-                }
+                placement = default;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// One placement per phrase the caller currently has, when its pcm has
+        /// rendered. Geometry comes from the caller's live phrase ranges, never
+        /// from the store, and the playback session is not involved: display and
+        /// extraction follow the document, not the playback that happens to run.
+        /// </summary>
+        public static bool TryGetPartPlacements(MixPlanner planner, UPart part,
+                IEnumerable<(ulong hash, double startMs, double endMs)> phrases,
+                out List<(double posMs, double durMs, int channels, Frozen<float> pcm)> pcmList) {
+            pcmList = new List<(double, double, int, Frozen<float>)>();
+            if (part is UWavePart) {
+                if (planner.TryGetPhrasePcm(part, 0, out var wave)) {
+                    pcmList.Add(wave);
+                }
+                return pcmList.Count > 0;
+            }
+            foreach (var (hash, startMs, endMs) in phrases) {
+                if (planner.TryGetPhrasePcm(part, hash, out var c)) {
+                    pcmList.Add((startMs, endMs - startMs, c.channels, c.pcm));
+                }
+            }
+            return pcmList.Count > 0;
         }
 
         // ==================== internals ====================

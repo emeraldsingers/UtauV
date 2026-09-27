@@ -90,9 +90,6 @@ namespace OpenUtau.Classic {
                 result.samples = wavtool.Concatenate(resamplerItems, string.Empty, cancellation);
                 if (result.samples != null) {
                     Renderers.ApplyDynamics(phrase, result);
-                    Task.Factory.StartNew(() => {
-                        DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
-                    }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                 }
                 return result;
             });
@@ -132,9 +129,6 @@ namespace OpenUtau.Classic {
                 progress.Complete(phrase.phones.Length, progressInfo);
                 if (result.samples != null) {
                     Renderers.ApplyDynamics(phrase, result);
-                    Task.Factory.StartNew(() => {
-                        DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
-                    }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                 }
                 return result;
             });

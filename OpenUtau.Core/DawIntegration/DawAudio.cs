@@ -56,26 +56,35 @@ namespace OpenUtau.Core.DawIntegration {
         /// would be wrong for the finished audio.
         /// </returns>
         public static bool TryExtractPart(UProject project, UVoicePart part, out float[] samples) {
-            return TryExtractPart(project, part, PlaybackManager.Inst.MixPlanner, out samples);
-        }
-
-        internal static bool TryExtractPart(UProject project, UVoicePart part, MixPlanner planner, out float[] samples) {
             samples = Array.Empty<float>();
-            // Completeness gate: a part is extractable only once every current phrase
-            // has rendered pcm — the planner's IsPartReady carries that invariant.
-            IEnumerable<ulong> currentHashes = null;
+            OpenUtau.Core.Render.RenderPartRequest? request;
             try {
-                var request = part.GetRenderRequest();
-                if (request != null) {
-                    currentHashes = request.phrases.Select(p => p.hash);
-                }
+                request = part.GetRenderRequest();
             } catch {
                 // An invalid part simply cannot be extracted.
-            }
-            if (!planner.IsPartReady(part, currentHashes)) {
                 return false;
             }
-            if (!planner.TryGetPartPcm(part, out var pcmList)) {
+            if (request == null) {
+                return false;
+            }
+            var placements = new (ulong hash, double startMs, double endMs)[request.phrases.Length];
+            for (int i = 0; i < request.phrases.Length; ++i) {
+                (placements[i].startMs, placements[i].endMs) = request.phrases[i].AudioRange;
+                placements[i].hash = request.phrases[i].hash;
+            }
+            return TryExtractPart(project, part, PlaybackManager.Inst.MixPlanner, placements, out samples);
+        }
+
+        internal static bool TryExtractPart(UProject project, UVoicePart part, MixPlanner planner,
+                IEnumerable<(ulong hash, double startMs, double endMs)> placements, out float[] samples) {
+            samples = Array.Empty<float>();
+            placements = placements.ToArray();
+            // Completeness gate: a part is extractable only once every current phrase
+            // has rendered pcm — the planner's IsPartReady carries that invariant.
+            if (!planner.IsPartReady(part, placements.Select(p => p.hash))) {
+                return false;
+            }
+            if (!MixPlanner.TryGetPartPlacements(planner, part, placements, out var pcmList)) {
                 return false;
             }
             int start = MsToInterleavedIndex(project.timeAxis.TickPosToMsPos(part.position));

@@ -50,8 +50,6 @@ namespace OpenUtau.App.Controls {
         private float[] sampleData = new float[0];
         private int sampleCount;
         private int[] bitmapData = new int[0];
-        private DateTime mixUnlockTime = DateTime.MinValue;
-        private bool wasRendering = false;
 
         public WaveformImage() {
             MessageBus.Current.Listen<WaveformRefreshEvent>()
@@ -92,54 +90,43 @@ namespace OpenUtau.App.Controls {
                             Array.Resize(ref sampleData, sampleCount);
                         }
                         
-                        bool needsAnotherFrame = false;
                         Array.Clear(sampleData, 0, sampleData.Length);
-                        
-                        if (OpenUtau.Core.PlaybackManager.Inst.IsWaveformBlanked) {
-                            // sampleData is already empty, so the screen draws a perfect flat line.
-                        } else {
-                            // The part's rendered placements, mixed through the same slot
-                            // arithmetic the transport uses. TryGetPartPcm only returns Ready
-                            // placements, so a part still rendering draws only what has
-                            // finished (empty while nothing is rendered).
-                            var planner = OpenUtau.Core.PlaybackManager.Inst.MixPlanner;
-                            if (planner.TryGetPartPcm(part, out var pcmList)) {
-                                var slots = new OpenUtau.Core.SignalChain.SampleSlot[pcmList.Count];
-                                for (int i = 0; i < pcmList.Count; ++i) {
-                                    var p = pcmList[i];
-                                    slots[i] = new OpenUtau.Core.SignalChain.SampleSlot(
-                                        p.posMs, p.durMs, 0, p.channels, p.pcm,
-                                        OpenUtau.Core.SignalChain.SlotState.Ready);
-                                }
-                                var source = new OpenUtau.Core.SignalChain.SlotMixSource();
-                                source.SetSlots(slots);
-                                source.Mix(samplePos, sampleData, 0, sampleCount);
+
+                        // Current phrases: live geometry and content hashes, shared by
+                        // the placement list below and the draw coverage further down.
+                        int phraseCount = part.renderPhrases.Count;
+                        var phraseView = new (ulong hash, double startMs, double endMs)[phraseCount];
+                        for (int p = 0; p < phraseCount; ++p) {
+                            (double startMs, double endMs) = part.renderPhrases[p].AudioRange;
+                            phraseView[p] = (part.renderPhrases[p].hash, startMs, endMs);
+                        }
+
+                        // Only phrases whose pcm has rendered appear, so a part still
+                        // rendering draws only what has finished.
+                        var planner = OpenUtau.Core.PlaybackManager.Inst.MixPlanner;
+                        if (MixPlanner.TryGetPartPlacements(planner, part, phraseView, out var pcmList)) {
+                            var slots = new OpenUtau.Core.SignalChain.SampleSlot[pcmList.Count];
+                            for (int i = 0; i < pcmList.Count; ++i) {
+                                var p = pcmList[i];
+                                slots[i] = new OpenUtau.Core.SignalChain.SampleSlot(
+                                    p.posMs, p.durMs, 0, p.channels, p.pcm,
+                                    OpenUtau.Core.SignalChain.SlotState.Ready);
                             }
+                            var source = new OpenUtau.Core.SignalChain.SlotMixSource();
+                            source.SetSlots(slots);
+                            source.Mix(samplePos, sampleData, 0, sampleCount);
                         }
-
-                        bool isRendering = PlaybackManager.Inst.StartingToPlay;
-                        if (wasRendering && !isRendering) {
-                            mixUnlockTime = DateTime.Now;
-                        }
-                        wasRendering = isRendering;
-                        
-                        double snapAgeMs = (DateTime.Now - mixUnlockTime).TotalMilliseconds;
-                        double snapProgress = Math.Clamp(snapAgeMs / 300.0, 0.0, 1.0);
-                        float snapEase = 1.0f - (float)Math.Pow(1.0 - snapProgress, 3);
-
-                        if (snapProgress < 1.0) needsAnotherFrame = true;
 
                         // Phrase audio ranges as [startMs, endMs] pairs, matching
                         // the slot layout of the mix, so that time ranges
                         // without any phrase are left blank instead of drawing a
                         // zero-volume line. Silence inside a phrase still draws.
                         double[]? phraseRanges = null;
-                        if (part.renderPhrases.Count > 0) {
-                            phraseRanges = new double[part.renderPhrases.Count * 2];
-                            for (int p = 0; p < part.renderPhrases.Count; ++p) {
-                                (double rangeStartMs, double rangeEndMs) = part.renderPhrases[p].AudioRange;
-                                phraseRanges[p * 2] = rangeStartMs;
-                                phraseRanges[p * 2 + 1] = rangeEndMs;
+                        if (phraseCount > 0) {
+                            phraseRanges = new double[phraseCount * 2];
+                            for (int p = 0; p < phraseCount; ++p) {
+                                phraseRanges[p * 2] = phraseView[p].startMs;
+                                phraseRanges[p * 2 + 1] = phraseView[p].endMs;
                             }
                         }
 
@@ -176,8 +163,6 @@ namespace OpenUtau.App.Controls {
                                 }
                                 if (rawMin == float.MaxValue) rawMin = 0;
                                 if (rawMax == float.MinValue) rawMax = 0;
-                                rawMin *= snapEase;
-                                rawMax *= snapEase;
                                 float min = 0.5f + rawMin * 0.5f;
                                 float max = 0.5f + rawMax * 0.5f;
                                 float yMax = Math.Clamp(max * bitmap.PixelSize.Height, 0, bitmap.PixelSize.Height - 1);
@@ -186,10 +171,6 @@ namespace OpenUtau.App.Controls {
                             }
                             startSample = endSample;
                             columnStartMs = endMs;
-                        }
-
-                        if (needsAnotherFrame) {
-                            Avalonia.Threading.Dispatcher.UIThread.Post(InvalidateVisual, Avalonia.Threading.DispatcherPriority.Background);
                         }
                     }
                 }

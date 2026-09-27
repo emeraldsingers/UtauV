@@ -13,6 +13,15 @@ namespace OpenUtau.Core.Render {
     public class Progress {
         readonly int total;
         int completed = 0;
+
+        // Coalesced dispatch: at most one UI post is in flight; pings that
+        // arrive while it is running only update the pending values.
+        Task pending = null;
+        double pendingProgress;
+        string pendingInfo = string.Empty;
+
+        internal bool DispatchInFlight => pending != null && !pending.IsCompleted;
+
         public Progress(int total) {
             this.total = total;
         }
@@ -27,9 +36,39 @@ namespace OpenUtau.Core.Render {
         }
 
         private void Notify(double progress, string info) {
-            var notif = new ProgressBarNotification(progress, info);
-            var task = new Task(() => DocManager.Inst.ExecuteCmd(notif));
-            task.Start(DocManager.Inst.MainScheduler);
+            lock (this) {
+                pendingProgress = progress;
+                pendingInfo = info;
+                if (pending == null || pending.IsCompleted) {
+                    StartPending();
+                }
+            }
+        }
+
+        // Under lock.
+        private void StartPending() {
+            pending = new Task(Dispatch);
+            // MainScheduler is null only in test hosts without a UI thread.
+            pending.Start(DocManager.Inst.MainScheduler ?? TaskScheduler.Default);
+        }
+
+        private void Dispatch() {
+            double progress;
+            string info;
+            lock (this) {
+                progress = pendingProgress;
+                info = pendingInfo;
+            }
+            DocManager.Inst.ExecuteCmd(new ProgressBarNotification(progress, info));
+            lock (this) {
+                // A newer update piled up while dispatching: this task's work is
+                // done, hand the slot to a follow-up. The restart decision lives
+                // here — inside the task — so no update can be lost in the
+                // window between task completion and the next notify.
+                if (progress != pendingProgress || info != pendingInfo) {
+                    StartPending();
+                }
+            }
         }
     }
 
@@ -245,7 +284,6 @@ namespace OpenUtau.Core.Render {
 
         private RenderPartRequest[] PrepareRequests() {
             RenderPartRequest[] requests;
-            SingerManager.Inst.ReleaseSingersNotInUse(project);
             lock (project) {
                 requests = project.parts
                     .Where(part => part is UVoicePart && (trackNo == -1 || part.trackNo == trackNo))
@@ -332,36 +370,15 @@ namespace OpenUtau.Core.Render {
                             break;
                         }
                         float[] samplesA = taskA.Result.samples;
-
-                        var otoField = typeof(RenderPhone).GetField("oto");
-                        var hashField = typeof(RenderPhone).GetField("hash");
-                        var phraseHashField = typeof(RenderPhrase).GetField("hash");
-                        var originalOtos = phrase.phones.Select(p => p.oto).ToArray();
-                        var originalHashes = phrase.phones.Select(p => p.hash).ToArray();
-                        ulong originalPhraseHash = phrase.hash;
-                        float[] samplesB;
-                        try {
-                            for (int i = 0; i < phrase.phones.Length; i++) {
-                                var phone = phrase.phones[i];
-                                if (phone.oto2 != null) {
-                                    otoField.SetValue(phone, phone.oto2);
-                                    hashField.SetValue(phone, phone.hash ^ 0x5858585858585858);
-                                }
-                            }
-                            phraseHashField.SetValue(phrase, phrase.hash ^ 0x5858585858585858);
-                            var taskB = phrase.renderer.Render(phrase, progress, request.trackNo, cancellation, true);
-                            taskB.Wait();
-                            samplesB = taskB.Result.samples;
-                        } finally {
-                            for (int i = 0; i < phrase.phones.Length; i++) {
-                                otoField.SetValue(phrase.phones[i], originalOtos[i]);
-                                hashField.SetValue(phrase.phones[i], originalHashes[i]);
-                            }
-                            phraseHashField.SetValue(phrase, originalPhraseHash);
-                        }
+                        // The secondary render runs on a separate phrase with oto2
+                        // substituted, so the live phrase is never mutated.
+                        var variant = RenderPhrase.BuildXsyVariant(phrase);
+                        var taskB = phrase.renderer.Render(variant, progress, request.trackNo, cancellation, true);
+                        taskB.Wait();
                         if (cancellation.IsCancellationRequested) {
                             break;
                         }
+                        float[] samplesB = taskB.Result.samples;
 
                         const int fftSize = 2048;
                         const int hopSize = 512;
@@ -388,6 +405,8 @@ namespace OpenUtau.Core.Render {
                     }
                     planner.RegisterPcm(request.part, phrase.hash, tuple.offsetMs, tuple.estimatedLengthMs, 1, blended);
                 }
+                // Progressive waveform: coalesced to a ~10 Hz repaint rate.
+                WaveformRefresh.Request();
                 if (publishedUpdates == null) {
                     publishedUpdates = PublishRealCurveUpdates(request.part, phrase);
                 }
@@ -406,6 +425,8 @@ namespace OpenUtau.Core.Render {
                 }
             }
             progress.Clear();
+            // Immediate final refresh once the pass is done.
+            DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
         }
 
         private RealCurveUpdate[]? PublishRealCurveUpdates(UVoicePart part, RenderPhrase phrase) {

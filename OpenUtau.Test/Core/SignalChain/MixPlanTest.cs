@@ -220,21 +220,67 @@ namespace OpenUtau.Core.SignalChain {
         }
 
         [Fact]
-        public void TryGetPartPcmReadsCacheAndSession() {
+        public void PhrasePcmStoreIsContentAddressed() {
             var planner = new MixPlanner();
             var part = new UVoicePart { trackNo = 0 };
-            Assert.False(planner.TryGetPartPcm(part, out _));
+            Assert.False(planner.TryGetPhrasePcm(part, 7, out _));
 
             planner.RegisterPcm(part, 7, 100, 200, 1, new float[] { 0.1f, 0.2f });
-            Assert.True(planner.TryGetPartPcm(part, out var list));
-            Assert.Single(list);
-            Assert.Equal(100, list[0].posMs);
-            Assert.Equal(200, list[0].durMs);
-            Assert.Equal(1, list[0].channels);
-            Assert.Equal(new float[] { 0.1f, 0.2f }, list[0].pcm.Buffer);
+            Assert.True(planner.TryGetPhrasePcm(part, 7, out var p));
+            Assert.Equal(100, p.posMs);
+            Assert.Equal(200, p.durMs);
+            Assert.Equal(1, p.channels);
+            Assert.Equal(new float[] { 0.1f, 0.2f }, p.pcm.Buffer);
 
             planner.Clear();
-            Assert.False(planner.TryGetPartPcm(part, out _));
+            Assert.False(planner.TryGetPhrasePcm(part, 7, out _));
+        }
+
+        [Fact]
+        public void PlacementsFollowCurrentPhrasesOnly() {
+            var planner = new MixPlanner();
+            var part = new UVoicePart { trackNo = 0 };
+
+            // The store holds a current phrase (1), plus stale entries from earlier
+            // edits (2, 4). The current phrase set is 1 and an unrendered 3.
+            planner.RegisterPcm(part, 1, 0, 100, 1, new float[] { 0.5f });
+            planner.RegisterPcm(part, 2, 500, 100, 1, new float[] { 0.25f });
+            planner.RegisterPcm(part, 4, 1500, 100, 1, new float[] { 0.5f });
+            var phrases = new (ulong hash, double startMs, double endMs)[] {
+                (1, 10, 110),
+                (3, 900, 1000),
+            };
+
+            // Only the current, rendered phrase appears, at the caller's live
+            // range (10..110), not the store's (0..100).
+            Assert.True(MixPlanner.TryGetPartPlacements(planner, part, phrases, out var list));
+            Assert.Single(list);
+            Assert.Equal(10, list[0].posMs);
+            Assert.Equal(100, list[0].durMs);
+            Assert.Equal(1, list[0].channels);
+            Assert.Equal(new float[] { 0.5f }, list[0].pcm.Buffer);
+
+            // A playback session running on top changes nothing for display.
+            planner.BeginSession(new[] { new MixPlanner.SlotSpec(part, 0, 1, 0, 100, 1) });
+            Assert.True(MixPlanner.TryGetPartPlacements(planner, part, phrases, out list));
+            Assert.Single(list);
+            Assert.Equal(10, list[0].posMs);
+
+            // Nothing rendered: blank, whatever the store holds.
+            var empty = new UVoicePart { trackNo = 1 };
+            Assert.False(MixPlanner.TryGetPartPlacements(planner, empty, Array.Empty<(ulong, double, double)>(), out _));
+        }
+
+        [Fact]
+        public void PlacementsServeWavePartsFromHashZero() {
+            var planner = new MixPlanner();
+            var wave = new UWavePart { trackNo = 0 };
+            planner.RegisterWavePcm(wave, 300, 800, 2, new float[] { 0.1f, 0.2f, 0.3f, 0.4f });
+            Assert.True(MixPlanner.TryGetPartPlacements(planner, wave, null, out var list));
+            Assert.Single(list);
+            Assert.Equal(300, list[0].posMs);
+            Assert.Equal(800, list[0].durMs);
+            Assert.Equal(2, list[0].channels);
         }
     }
 }

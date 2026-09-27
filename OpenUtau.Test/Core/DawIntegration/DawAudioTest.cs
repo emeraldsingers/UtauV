@@ -32,6 +32,11 @@ namespace OpenUtau.Core.DawIntegration {
             return planner;
         }
 
+        static (ulong hash, double startMs, double endMs)[] Placements() {
+            // The fake part's one phrase, matching the hash NewPlanner registers under.
+            return new[] { (1UL, 0.0, (double)RampDurationMs) };
+        }
+
         private static UProject NewProject() {
             // Defaults are 4/4 at 120 bpm with 480 ticks per beat, so 480 ticks is exactly 500 ms.
             var project = new UProject();
@@ -176,7 +181,7 @@ namespace OpenUtau.Core.DawIntegration {
             var project = NewProject();
             var part = new UVoicePart { trackNo = 0, position = 480, duration = 480 };
 
-            Assert.True(DawAudio.TryExtractPart(project, part, NewPlanner(part), out float[] samples));
+            Assert.True(DawAudio.TryExtractPart(project, part, NewPlanner(part), Placements(), out float[] samples));
 
             // 480 ticks in, 480 ticks long: 500 ms to 1000 ms of the project timeline.
             // §6.1: extraction applies the pre-fader output trim (√0.5), so the ramp values
@@ -195,8 +200,8 @@ namespace OpenUtau.Core.DawIntegration {
             var part = new UVoicePart { trackNo = 0, position = 0, duration = 480 };
             var planner = NewPlanner(part);
 
-            Assert.True(DawAudio.TryExtractPart(project, part, planner, out float[] first));
-            Assert.True(DawAudio.TryExtractPart(project, part, planner, out float[] second));
+            Assert.True(DawAudio.TryExtractPart(project, part, planner, Placements(), out float[] first));
+            Assert.True(DawAudio.TryExtractPart(project, part, planner, Placements(), out float[] second));
 
             Assert.Equal(first, second);
         }
@@ -208,9 +213,9 @@ namespace OpenUtau.Core.DawIntegration {
             var unfinished = new UVoicePart { trackNo = 0, position = 0, duration = 480 };
             var zeroLength = new UVoicePart { trackNo = 0, position = 0, duration = 0 };
 
-            Assert.False(DawAudio.TryExtractPart(project, empty, new MixPlanner(), out _));
-            Assert.False(DawAudio.TryExtractPart(project, unfinished, NewPlanner(unfinished, ready: false), out _));
-            Assert.False(DawAudio.TryExtractPart(project, zeroLength, NewPlanner(zeroLength), out _));
+            Assert.False(DawAudio.TryExtractPart(project, empty, new MixPlanner(), Placements(), out _));
+            Assert.False(DawAudio.TryExtractPart(project, unfinished, NewPlanner(unfinished, ready: false), Placements(), out _));
+            Assert.False(DawAudio.TryExtractPart(project, zeroLength, NewPlanner(zeroLength), Placements(), out _));
         }
 
         [Fact]
@@ -223,7 +228,7 @@ namespace OpenUtau.Core.DawIntegration {
             planner.BeginSession(new[] { new MixPlanner.SlotSpec(part, 0, 1, 0, 500, 2) });
             planner.RegisterPcm(part, 1, 0, 500, 2, samples);
 
-            Assert.True(DawAudio.TryExtractPart(project, part, planner, out float[] extracted));
+            Assert.True(DawAudio.TryExtractPart(project, part, planner, new[] { (1UL, 0.0, 500.0) }, out float[] extracted));
 
             Assert.Equal(DawAudio.MsToInterleavedIndex(500), extracted.Length);
             // §6.1: extraction applies the pre-fader output trim (√0.5), so what is served
