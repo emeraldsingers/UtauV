@@ -40,6 +40,16 @@ namespace OpenUtau.Core {
         public Action<Action> PostOnUIThread { get; set; }
 
         /// <summary>
+        /// Monotonic revision of the mutable document; bumped by every
+        /// committed write on the UI thread.
+        /// </summary>
+        public Pipeline.DocRevision Revision { get; private set; } = new Pipeline.DocRevision(0);
+        private void BumpRevision() {
+            Revision = new Pipeline.DocRevision(Revision.Value + 1);
+            Pipeline.DocumentSnapshotStore.Inst.SetRevision(Revision);
+        }
+
+        /// <summary>
         /// Test seam: when set, commands are routed here instead of the normal
         /// main-thread post/execute path.
         /// </summary>
@@ -81,6 +91,9 @@ namespace OpenUtau.Core {
             this.mainScheduler = mainScheduler;
             Util.ThreadGuard.SetUiThread(mainThread);
             PhonemizerRunner = new PhonemizerRunner(mainScheduler);
+            // The phrase source builder installs itself as the current worker;
+            // without one, parts build their phrases inline.
+            new Pipeline.PhraseSourceBuilder(mainScheduler);
             RealTimePitchGenerationService.Inst.Initialize();
         }
 
@@ -281,7 +294,13 @@ namespace OpenUtau.Core {
                     rangeEndTick = 0;
                     SingerManager.Inst.ReleaseSingersNotInUse(Project);
                     RenderView.Inst.ForgetAll();
+                    Pipeline.DocumentSnapshotStore.Inst.ForgetAll();
+                    BumpRevision();
                     DiffSingerRealCurveScheduler.CancelAll();
+                } else if (cmd is PhonemizedNotification) {
+                    // Phonemized output is document content (UPhoneme list);
+                    // stamp a new revision for the snapshots taken from it.
+                    BumpRevision();
                 } else if (cmd is SetPlayPosTickNotification setPlayPosTickNotif) {
                     playPosTick = setPlayPosTickNotif.playPosTick;
                 } else if (cmd is SetRangeSelectionNotification setRange) {
@@ -332,8 +351,15 @@ namespace OpenUtau.Core {
             }
             Publish(cmd);
             if (!undoGroup.DeferValidate) {
+                Pipeline.DocumentSnapshotStore.Inst.Invalidate(cmd.Impact);
                 Project.Validate(cmd.ValidateOptions);
                 ScheduleRealCurveRefresh(cmd);
+            }
+        }
+
+        void InvalidateGroup(IEnumerable<UCommand> commands) {
+            foreach (var cmd in commands) {
+                Pipeline.DocumentSnapshotStore.Inst.Invalidate(cmd.Impact);
             }
         }
 
@@ -372,6 +398,10 @@ namespace OpenUtau.Core {
                 return;
             }
             if (undoGroup.Commands.Count > 0) {
+                // The group is committed: bump the document revision. Regular
+                // groups already invalidated per command before their
+                // validates; deferred groups invalidate once below.
+                BumpRevision();
                 undoQueue.AddToBack(undoGroup);
                 redoQueue.Clear();
             }
@@ -379,6 +409,9 @@ namespace OpenUtau.Core {
                 undoQueue.RemoveFromFront();
             }
             if (undoGroup.DeferValidate) {
+                // Deferred groups validated nothing per command: invalidate
+                // once, right before the single validate that follows.
+                InvalidateGroup(undoGroup.Commands);
                 ValidateAndRefresh();
             }
             undoGroup.Merge();
@@ -396,9 +429,12 @@ namespace OpenUtau.Core {
                 PostOnUIThread(() => ApplyTransient(commands, validateOptions, preRender));
                 return;
             }
+            var commandList = commands.ToList();
+            BumpRevision();
+            InvalidateGroup(commandList);
             RealTimePitchGenerationService.SuppressCallbacks = true;
             try {
-                foreach (var cmd in commands) {
+                foreach (var cmd in commandList) {
                     lock (Project) {
                         cmd.Execute();
                     }
@@ -420,6 +456,8 @@ namespace OpenUtau.Core {
                 Log.Error("No active undoGroup to rollback.");
                 return;
             }
+            BumpRevision();
+            InvalidateGroup(undoGroup.Commands);
             for (int i = undoGroup.Commands.Count - 1; i >= 0; i--) {
                 var cmd = undoGroup.Commands[i];
                 cmd.Unexecute();
@@ -438,6 +476,8 @@ namespace OpenUtau.Core {
                 return;
             }
             var group = undoQueue.RemoveFromBack();
+            BumpRevision();
+            InvalidateGroup(group.Commands);
             for (int i = group.Commands.Count - 1; i >= 0; i--) {
                 var cmd = group.Commands[i];
                 cmd.Unexecute();
@@ -456,6 +496,8 @@ namespace OpenUtau.Core {
                 return;
             }
             var group = redoQueue.RemoveFromBack();
+            BumpRevision();
+            InvalidateGroup(group.Commands);
             for (var i = 0; i < group.Commands.Count; i++) {
                 var cmd = group.Commands[i];
                 cmd.Execute();

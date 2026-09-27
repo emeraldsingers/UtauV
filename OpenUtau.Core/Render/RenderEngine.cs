@@ -283,12 +283,22 @@ namespace OpenUtau.Core.Render {
         }
 
         private RenderPartRequest[] PrepareRequests() {
-            RenderPartRequest[] requests;
+            UVoicePart[] parts;
             lock (project) {
-                requests = project.parts
+                parts = project.parts
                     .Where(part => part is UVoicePart && (trackNo == -1 || part.trackNo == trackNo))
                     .Where(part => !Preferences.Default.SkipRenderingMutedTracks || !project.tracks[part.trackNo].Muted)
                     .Select(part => part as UVoicePart)
+                    .ToArray();
+            }
+            // Wait for each part's latest phrase build, outside the project
+            // lock, so the pass renders the newest phrases.
+            foreach (var part in parts) {
+                part.WaitPhraseSource(TimeSpan.FromSeconds(10));
+            }
+            RenderPartRequest[] requests;
+            lock (project) {
+                requests = parts
                     .Select(part => part.GetRenderRequest())
                     .Where(request => request != null)
                     .ToArray();

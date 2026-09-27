@@ -19,6 +19,11 @@ namespace OpenUtau.Core.Ustx {
         public int trackNo;
         public int position = 0;
 
+        /// <summary>
+        /// Stable identity that survives clone / cut-paste / reload.
+        /// </summary>
+        [YamlIgnore] public Pipeline.PartId Id { get; internal set; } = Pipeline.PartId.New();
+
         [YamlIgnore] public virtual string DisplayName { get; }
         [YamlIgnore] public virtual int Duration { set; get; }
         [YamlIgnore] public int End { get { return position + Duration; } }
@@ -91,6 +96,10 @@ namespace OpenUtau.Core.Ustx {
                 }
             }
         }
+
+        [YamlIgnore] internal long phraseGeneration;
+        [YamlIgnore] internal long phraseAppliedGeneration;
+        [YamlIgnore] internal readonly Pipeline.PhraseBuildGate phraseGate = new Pipeline.PhraseBuildGate();
 
         public override void Validate(ValidateOptions options, UProject project, UTrack track) {
             UNote lastNote = null;
@@ -278,16 +287,65 @@ namespace OpenUtau.Core.Ustx {
                     phoneme.Validate(options, project, track, this, note);
                 }
             }
-        // Under the part lock: GetRenderRequest snapshots the list under the same lock.
-        // Two phonemize responses validating concurrently (double push on load) used to
-        // race this Clear/AddRange and leave null holes in the snapshot, crashing the
-        // render pass with a NullReferenceException on phrase.phones.
+        // Snapshot on the UI thread; the heavy phrase build runs off-thread
+        // and fills renderPhrases when it lands.
+            if (!PhonemesUpToDate) {
+                lock (this) {
+                    renderPhrases.Clear();
+                }
+                return;
+            }
+            long generation = ++phraseGeneration;
+            var source = Pipeline.PhraseSource.FromPart(project, track, this, generation);
+            if (source == null) {
+                lock (this) {
+                    renderPhrases.Clear();
+                }
+                return;
+            }
+            Pipeline.DocumentSnapshotStore.Inst.SetPart(this, source);
+            phraseGate.MarkPending(generation);
+            var builder = Pipeline.PhraseSourceBuilder.Current;
+            if (builder != null && builder.Push(source, this)) {
+                return;
+            }
+            // No worker (test hosts): build inline.
+            try {
+                ApplyPhraseSourceResult(source, source.BuildPhrases());
+            } catch (Exception e) {
+                Log.Error(e, "Failed to build phrase source {part}", Id);
+                lock (this) {
+                    renderPhrases.Clear();
+                }
+                phraseGate.MarkCompleted(generation);
+            }
+        }
+
+        internal void ApplyPhraseSourceResult(Pipeline.PhraseSource source, RenderPhrase[] phrases) {
+            bool applied;
             lock (this) {
-                renderPhrases.Clear();
-                if (PhonemesUpToDate) {
-                    renderPhrases.AddRange(RenderPhrase.FromPart(project, track, this));
+                applied = source.Generation > phraseAppliedGeneration;
+                if (applied) {
+                    phraseAppliedGeneration = source.Generation;
+                    renderPhrases.Clear();
+                    renderPhrases.AddRange(phrases);
                 }
             }
+            if (!applied) {
+                return;
+            }
+            phraseGate.MarkCompleted(source.Generation);
+            if (DocManager.Inst.MainScheduler != null) {
+                RenderView.Inst.InvalidateAll();
+            }
+        }
+
+        /// <summary>
+        /// Bounded wait for the latest phrase-source build to land. Must not
+        /// be called while holding the project lock.
+        /// </summary>
+        internal bool WaitPhraseSource(TimeSpan timeout) {
+            return phraseGate.WaitFor(phraseGeneration, timeout);
         }
 
         internal void SetPhonemizerResponse(PhonemizerResponse response) {
@@ -309,6 +367,7 @@ namespace OpenUtau.Core.Ustx {
 
         public override UPart Clone() {
             return new UVoicePart() {
+                Id = Id,
                 name = name,
                 comment = comment,
                 trackNo = trackNo,
@@ -374,6 +433,7 @@ namespace OpenUtau.Core.Ustx {
 
         public override UPart Clone() {
             var part = new UWavePart() {
+                Id = Id,
                 _filePath = _filePath,
                 relativePath = relativePath,
                 skip = skip,

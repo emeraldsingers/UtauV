@@ -18,7 +18,11 @@ namespace OpenUtau.Core.Util {
 
         [Conditional("DEBUG")]
         public static void AssertUi() {
-            Debug.Assert(uiThread != null, "ThreadGuard: UI thread not registered");
+            // Test hosts without a UI thread run the UI-affine code inline;
+            // with a registered UI thread (the app), the affinity is asserted.
+            if (uiThread == null) {
+                return;
+            }
             Debug.Assert(uiThread == Thread.CurrentThread, "ThreadGuard: expected the UI thread");
         }
     }

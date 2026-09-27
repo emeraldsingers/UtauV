@@ -59,6 +59,9 @@ namespace OpenUtau.Core.DawIntegration {
             samples = Array.Empty<float>();
             OpenUtau.Core.Render.RenderPartRequest? request;
             try {
+                // Wait for the latest phrase build so the extraction targets
+                // the current phrases.
+                part.WaitPhraseSource(TimeSpan.FromSeconds(10));
                 request = part.GetRenderRequest();
             } catch {
                 // An invalid part simply cannot be extracted.
