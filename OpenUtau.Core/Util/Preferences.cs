@@ -218,7 +218,6 @@ namespace OpenUtau.Core.Util {
             public bool DiffSingerTensorCache = true;
             public bool DiffSingerVarianceLocalPitchPatch = false;
             public bool DiffSingerLangCodeHide = false;
-<<<<<<< ours
             public bool DiffSingerAutoSP = false;
             public int DiffSingerAutoSPMs = 40;
             public bool DiffSingerLocalRetaking = false;
