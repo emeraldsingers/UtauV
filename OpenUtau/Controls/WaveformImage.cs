@@ -52,10 +52,8 @@ namespace OpenUtau.App.Controls {
         private int[] bitmapData = new int[0];
 
         public WaveformImage() {
-            MessageBus.Current.Listen<WaveformRefreshEvent>()
-                .Subscribe(e => {
-                    InvalidateVisual();
-                });
+            // The projection payload is not read here; deliveries are repaint signals.
+            OpenUtau.Core.Render.RenderView.Inst.Observe(_ => InvalidateVisual());
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
@@ -92,13 +90,14 @@ namespace OpenUtau.App.Controls {
                         
                         Array.Clear(sampleData, 0, sampleData.Length);
 
-                        // Current phrases: live geometry and content hashes, shared by
-                        // the placement list below and the draw coverage further down.
-                        int phraseCount = part.renderPhrases.Count;
-                        var phraseView = new (ulong hash, double startMs, double endMs)[phraseCount];
-                        for (int p = 0; p < phraseCount; ++p) {
-                            (double startMs, double endMs) = part.renderPhrases[p].AudioRange;
-                            phraseView[p] = (part.renderPhrases[p].hash, startMs, endMs);
+                        // The part's current projection: phrase hashes and
+                        // precomputed layouts, shared by the placement list below
+                        // and the draw coverage further down.
+                        var projection = OpenUtau.Core.Render.RenderView.Inst.Current(part);
+                        var phraseView = new (ulong hash, double startMs, double endMs)[projection.Phrases.Count];
+                        for (int p = 0; p < projection.Phrases.Count; ++p) {
+                            var view = projection.Phrases[p];
+                            phraseView[p] = (view.Hash, view.Layout.StartMs, view.Layout.EndMs);
                         }
 
                         // Only phrases whose pcm has rendered appear, so a part still
@@ -122,9 +121,9 @@ namespace OpenUtau.App.Controls {
                         // without any phrase are left blank instead of drawing a
                         // zero-volume line. Silence inside a phrase still draws.
                         double[]? phraseRanges = null;
-                        if (phraseCount > 0) {
-                            phraseRanges = new double[phraseCount * 2];
-                            for (int p = 0; p < phraseCount; ++p) {
+                        if (phraseView.Length > 0) {
+                            phraseRanges = new double[phraseView.Length * 2];
+                            for (int p = 0; p < phraseView.Length; ++p) {
                                 phraseRanges[p * 2] = phraseView[p].startMs;
                                 phraseRanges[p * 2 + 1] = phraseView[p].endMs;
                             }

@@ -69,7 +69,7 @@ namespace OpenUtau.Core.DawIntegration {
             }
             var placements = new (ulong hash, double startMs, double endMs)[request.phrases.Length];
             for (int i = 0; i < request.phrases.Length; ++i) {
-                (placements[i].startMs, placements[i].endMs) = request.phrases[i].AudioRange;
+                (placements[i].startMs, placements[i].endMs) = request.phrases[i].Layout.Range;
                 placements[i].hash = request.phrases[i].hash;
             }
             return TryExtractPart(project, part, PlaybackManager.Inst.MixPlanner, placements, out samples);
