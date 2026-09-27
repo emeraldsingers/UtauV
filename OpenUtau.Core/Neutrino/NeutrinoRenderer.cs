@@ -269,9 +269,8 @@ namespace OpenUtau.Core.Neutrino {
                                 Wave.CorrectSampleScale(result.samples);
                                 var signal = new DiscreteSignal(sampleRate, result.samples);
                                 signal = Operation.Resample(signal, 44100);
-                                var source = new WaveSource(0, 0, 0, 1);
-                                source.SetSamples(result.samples);
-                                WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
+                                result.samples = signal.Samples;
+                                Wave.WriteMono16Wav(wavPath, result.samples);
                             }
                         } else {
                             if (!File.Exists(f0Path) || !File.Exists(mgcPath) || !File.Exists(bapPath)) {
@@ -304,9 +303,8 @@ namespace OpenUtau.Core.Neutrino {
                                     Wave.CorrectSampleScale(result.samples);
                                     var signal = new DiscreteSignal(sampleRate, result.samples);
                                     signal = Operation.Resample(signal, 44100);
-                                    var source = new WaveSource(0, 0, 0, 1);
-                                    source.SetSamples(result.samples);
-                                    WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
+                                    result.samples = signal.Samples;
+                                    Wave.WriteMono16Wav(wavPath, result.samples);
                                 } else {
                                     double[] f0 = LoadFile(f0Path);
                                     double[] mgc = LoadFile(mgcPath);
@@ -338,9 +336,8 @@ namespace OpenUtau.Core.Neutrino {
                                     var signal = new DiscreteSignal(sampleRate, result.samples);
                                     signal = Operation.Resample(signal, 44100);
                                     result.samples = signal.Samples;
-                                    var source = new WaveSource(0, 0, 0, 1);
-                                    source.SetSamples(result.samples);
-                                    WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
+                                    result.samples = signal.Samples;
+                                    Wave.WriteMono16Wav(wavPath, result.samples);
                                 }
                             }
                         }
@@ -404,9 +401,8 @@ namespace OpenUtau.Core.Neutrino {
                             Wave.CorrectSampleScale(result.samples);
                             var signal = new DiscreteSignal(sampleRate, result.samples);
                             signal = Operation.Resample(signal, 44100);
-                            var source = new WaveSource(0, 0, 0, 1);
-                            source.SetSamples(result.samples);
-                            WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
+                            result.samples = signal.Samples;
+                            Wave.WriteMono16Wav(wavPath, result.samples);
                         }
                     } else {
                         Log.Error($"Unsupported NEUTRINO version: {this.singer.singerVersion}");

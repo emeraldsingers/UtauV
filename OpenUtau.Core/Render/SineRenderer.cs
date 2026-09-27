@@ -55,7 +55,6 @@ namespace OpenUtau.Core.Render {
                 result.samples = Synthesize(phrase, result, totalSamples);
                 progress.Complete(phrase.phones.Length, progressInfo);
                 Renderers.ApplyDynamics(phrase, result);
-                PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
                 DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
                 return result;
             });

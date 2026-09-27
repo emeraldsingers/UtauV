@@ -13,6 +13,7 @@ namespace OpenUtau.Core.Render {
         public readonly string lyric;
         public readonly int tone;
         public readonly int tuning;
+        public readonly int diffSingerRetake;
         public readonly float adjustedTone;
 
         public readonly int position;
@@ -27,6 +28,7 @@ namespace OpenUtau.Core.Render {
             lyric = note.Lyric;
             tone = note.Tone;
             tuning = note.Tuning;
+            diffSingerRetake = note.DiffSingerRetake;
             adjustedTone = note.AdjustedTone;
 
             position = partPosition + note.Position - phrasePosition;
@@ -89,9 +91,13 @@ namespace OpenUtau.Core.Render {
         /// xsy render) with the matching hash mask.
         /// </summary>
         internal RenderPhone WithOto(UOto oto) {
+            return WithOto(oto, Oto2HashMask);
+        }
+
+        internal RenderPhone WithOto(UOto oto, ulong hashMask) {
             var copy = (RenderPhone)MemberwiseClone();
             copy.oto = oto;
-            copy.hash = hash ^ Oto2HashMask;
+            copy.hash = hash ^ hashMask;
             return copy;
         }
 
@@ -190,6 +196,9 @@ namespace OpenUtau.Core.Render {
         public readonly float[] tension;
         public readonly float[] voicing;
         public readonly float[] xsy;
+        public readonly USubbank[] xpbBanks;
+        public readonly int[] xpbLowerBank;
+        public readonly float[] xpbRatio;
         public readonly Tuple<string, float[]>[] curves;//custom curves defined by renderer
         public readonly ulong preEffectHash;
         public ulong hash { get; private set; }
@@ -216,27 +225,32 @@ namespace OpenUtau.Core.Render {
                 .Take(phraseEnd - phraseStart)
                 .ToList();
             var notesOf = source.Notes;
-            var uNotes = new List<int> { phrasePhonemes.First().NoteIndex };
-            int endNote = phrasePhonemes.Last().NoteIndex;
-            while (notesOf[endNote].Next != -1 && notesOf[notesOf[endNote].Next].Extends != -1) {
-                endNote = notesOf[endNote].Next;
-            }
-            while (uNotes.Last() != endNote) {
-                uNotes.Add(notesOf[uNotes.Last()].Next);
-            }
-            int tail = uNotes.Last();
-            int next = notesOf[tail].Next;
-            while (next != -1 && notesOf[next].Extends == tail) {
-                uNotes.Add(next);
-                next = notesOf[next].Next;
-            }
-            if (notesOf[uNotes.First()].Prev != -1
-                && notesOf[notesOf[uNotes.First()].Prev].End == notesOf[uNotes.First()].Position) {
-                uNotes.Insert(0, notesOf[uNotes.First()].Prev);
-            }
-            if (notesOf[uNotes.Last()].Next != -1
-                && notesOf[uNotes.Last()].End == notesOf[notesOf[uNotes.Last()].Next].Position) {
-                uNotes.Add(notesOf[uNotes.Last()].Next);
+            List<int> uNotes;
+            if (source.SineFallback) {
+                uNotes = phrasePhonemes.Select(phoneme => phoneme.NoteIndex).Distinct().ToList();
+            } else {
+                uNotes = new List<int> { phrasePhonemes.First().NoteIndex };
+                int endNote = phrasePhonemes.Last().NoteIndex;
+                while (notesOf[endNote].Next != -1 && notesOf[notesOf[endNote].Next].Extends != -1) {
+                    endNote = notesOf[endNote].Next;
+                }
+                while (uNotes.Last() != endNote) {
+                    uNotes.Add(notesOf[uNotes.Last()].Next);
+                }
+                int tail = uNotes.Last();
+                int next = notesOf[tail].Next;
+                while (next != -1 && notesOf[next].Extends == tail) {
+                    uNotes.Add(next);
+                    next = notesOf[next].Next;
+                }
+                if (notesOf[uNotes.First()].Prev != -1
+                    && notesOf[notesOf[uNotes.First()].Prev].End == notesOf[uNotes.First()].Position) {
+                    uNotes.Insert(0, notesOf[uNotes.First()].Prev);
+                }
+                if (notesOf[uNotes.Last()].Next != -1
+                    && notesOf[uNotes.Last()].End == notesOf[notesOf[uNotes.Last()].Next].Position) {
+                    uNotes.Add(notesOf[uNotes.Last()].Next);
+                }
             }
 
             singer = source.Singer;
@@ -493,6 +507,38 @@ namespace OpenUtau.Core.Render {
                 }
             }
             this.curves = curves.ToArray();
+            if (source.XpbBanks != null && source.XpbCenters != null) {
+                xpbBanks = source.XpbBanks;
+                xpbLowerBank = new int[pitches.Length];
+                xpbRatio = new float[pitches.Length];
+                bool byNoteTone = source.XpbMode == 1;
+                for (int i = 0; i < pitches.Length; i++) {
+                    double tone = pitches[i] / 100.0;
+                    if (byNoteTone) {
+                        int tick = pitchStart + i * pitchInterval;
+                        int noteIndex = uNotes.FirstOrDefault(n => {
+                            var note = notesOf[n];
+                            return tick >= note.Position && tick < note.End;
+                        }, uNotes.Last());
+                        tone = notesOf[noteIndex].AdjustedTone;
+                    }
+                    if (tone <= source.XpbCenters[0]) {
+                        continue;
+                    }
+                    int lower = 0;
+                    while (lower < source.XpbCenters.Length - 1
+                        && source.XpbCenters[lower + 1] <= tone) {
+                        lower++;
+                    }
+                    xpbLowerBank[i] = lower;
+                    if (lower < source.XpbCenters.Length - 1) {
+                        double span = source.XpbCenters[lower + 1] - source.XpbCenters[lower];
+                        xpbRatio[i] = span > 1e-6
+                            ? Math.Clamp((float)((tone - source.XpbCenters[lower]) / span), 0f, 1f)
+                            : 0f;
+                    }
+                }
+            }
             preEffectHash = Hash(false);
             hash = Hash(true);
 
@@ -519,7 +565,7 @@ namespace OpenUtau.Core.Render {
         private ulong Hash(bool postEffect) {
             using (var stream = new MemoryStream()) {
                 using (var writer = new BinaryWriter(stream)) {
-                    writer.Write(singer.Id);
+                    writer.Write(singer?.Id ?? string.Empty);
                     writer.Write(renderer?.ToString() ?? "");
                     writer.Write(wavtool ?? "");
                     writer.Write(timeAxis.Timestamp);
@@ -541,6 +587,11 @@ namespace OpenUtau.Core.Render {
                             foreach(var v in curve.Item2) {
                                 writer.Write(v);
                             }
+                        }
+                        if (xpbRatio != null) {
+                            foreach (var value in xpbRatio) writer.Write(value);
+                            foreach (var value in xpbLowerBank) writer.Write(value);
+                            foreach (var bank in xpbBanks) writer.Write($"{bank.Prefix}|{bank.Suffix}");
                         }
                     }
                     return XXH64.DigestOf(stream.ToArray());
@@ -564,6 +615,26 @@ namespace OpenUtau.Core.Render {
             }
             variant.phones = phones;
             variant.hash = src.hash ^ RenderPhone.Oto2HashMask;
+            return variant;
+        }
+
+        internal static RenderPhrase BuildXpbVariant(RenderPhrase src,
+                ClassicSinger singer, USubbank bank, int bankIndex) {
+            var variant = (RenderPhrase)src.MemberwiseClone();
+            var phones = new RenderPhone[src.phones.Length];
+            ulong salt = 0x5042000000000000UL
+                ^ (ulong)(bankIndex + 1) * 0x9E3779B97F4A7C15UL;
+            for (int i = 0; i < src.phones.Length; ++i) {
+                var phone = src.phones[i];
+                if (phone.oto != null
+                    && singer.TryGetOtoForSubbank(phone.oto.Phonetic ?? phone.phoneme, bank, out var oto)) {
+                    phones[i] = phone.WithOto(oto, salt);
+                } else {
+                    phones[i] = phone;
+                }
+            }
+            variant.phones = phones;
+            variant.hash = src.hash ^ salt;
             return variant;
         }
 

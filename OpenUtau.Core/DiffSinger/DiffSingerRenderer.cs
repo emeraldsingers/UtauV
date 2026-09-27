@@ -47,6 +47,16 @@ namespace OpenUtau.Core.DiffSinger {
 
         public bool SupportsRealCurve => true;
 
+        internal static string GetRenderCacheFileName(
+            ulong phraseHash,
+            double depth,
+            int acousticSteps,
+            int varianceSteps,
+            bool localVariancePatch = false) {
+            var patchSuffix = localVariancePatch ? "-vpatch1" : "";
+            return $"ds-{phraseHash:x16}-depth{depth:f2}-steps{acousticSteps}-vsteps{varianceSteps}{patchSuffix}.wav";
+        }
+
         public bool IsVoiceColorCurve(string abbr, out int subBankId) {
             subBankId = 0;
             if (abbr.StartsWith(VoiceColorHeader) && int.TryParse(abbr.Substring(2), out subBankId)) {;
@@ -109,7 +119,12 @@ namespace OpenUtau.Core.DiffSinger {
                     } else {
                         depth = 1.0;
                     }
-                    var wavName = $"ds-{phrase.hash:x16}-depth{depth:f2}-steps{steps}.wav";
+                    var wavName = GetRenderCacheFileName(
+                        phrase.hash,
+                        depth,
+                        steps,
+                        Preferences.Default.DiffSingerStepsVariance,
+                        Preferences.Default.DiffSingerVarianceLocalPitchPatch);
                     var wavPath = Path.Join(PathManager.Inst.CachePath, wavName);
                     phrase.AddCacheFile(wavPath);
                     string progressInfo = $"Track {trackNo + 1}: {this} depth={depth:f2} steps={steps} \"{string.Join(" ", phrase.phones.Select(p => p.phoneme))}\"";

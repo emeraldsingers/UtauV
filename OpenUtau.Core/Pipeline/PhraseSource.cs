@@ -5,6 +5,7 @@ using System.Numerics;
 using OpenUtau.Classic;
 using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 
 namespace OpenUtau.Core.Pipeline {
     /// <summary>
@@ -19,8 +20,10 @@ namespace OpenUtau.Core.Pipeline {
         public readonly string Lyric;
         public readonly int Tone;
         public readonly int Tuning;
+        public readonly int DiffSingerRetake;
         public readonly float AdjustedTone;
         public readonly double DurationMs;
+        public readonly bool OverlapError;
         // Index into PhraseSource.Notes, or -1.
         public readonly int Prev;
         public readonly int Next;
@@ -39,8 +42,10 @@ namespace OpenUtau.Core.Pipeline {
             Lyric = note.lyric;
             Tone = note.tone;
             Tuning = note.tuning;
+            DiffSingerRetake = note.diffSingerRetake;
             AdjustedTone = note.AdjustedTone;
             DurationMs = axis.MsBetweenTickPos(partPosition + note.position, partPosition + note.End);
+            OverlapError = note.OverlapError;
             Prev = prev;
             Next = next;
             Extends = extends;
@@ -298,6 +303,45 @@ namespace OpenUtau.Core.Pipeline {
                 }
             }
         }
+
+        internal PhonemeSource(NoteSource note, TimeAxis axis, int partPosition, string phoneme) {
+            Position = note.Position;
+            Duration = note.Duration;
+            End = note.End;
+            PositionMs = axis.TickPosToMsPos(partPosition + note.Position);
+            EndMs = axis.TickPosToMsPos(partPosition + note.End);
+            DurationMs = EndMs - PositionMs;
+            Preutter = 0;
+            Overlap = 0;
+            TailIntrude = 0;
+            TailOverlap = 0;
+            Leading = 0;
+            PrevAdjacent = false;
+            NextAdjacent = false;
+
+            Phoneme = phoneme;
+            Tone = note.Tone;
+            NoteIndex = note.Index;
+            Tempos = axis.TemposBetweenTicks(partPosition + note.Position, partPosition + note.End);
+            NoteTempos = Tempos;
+            Tempo = Tempos.Length > 0 ? Tempos[0].bpm : 120;
+            AdjustedTempo = Tempo;
+
+            Resampler = null;
+            Flags = Array.Empty<Tuple<string, int?, string>>();
+            Suffix = string.Empty;
+            Suffix2 = null;
+            Volume = 1;
+            Velocity = 1;
+            Modulation = 0;
+            Direct = false;
+            ToneShift = 0;
+            Envelope = Array.Empty<Vector2>();
+            VelRaw = 100;
+            ModpRaw = 0;
+            Oto = null;
+            Oto2 = null;
+        }
     }
 
     /// <summary>
@@ -324,12 +368,16 @@ namespace OpenUtau.Core.Pipeline {
         public readonly string Wavtool;
         public readonly ClassicSinger ClassicSinger;
         public readonly bool ModpSupported;
+        public readonly USubbank[] XpbBanks;
+        public readonly double[] XpbCenters;
+        public readonly int XpbMode;
 
         public readonly NoteSource[] Notes;
         public readonly CurveSource[] Curves;
         /// <summary>The supported curve descriptors in document order.</summary>
         public readonly UExpressionDescriptor[] CurveDescriptors;
         public readonly bool XsyAvailable;
+        public readonly bool SineFallback;
         public readonly PhonemeSource[] Phonemes;
         /// <summary>Half-open [start, end) index ranges into <see cref="Phonemes"/>.</summary>
         public readonly (int Start, int End)[] PhraseGroups;
@@ -345,13 +393,24 @@ namespace OpenUtau.Core.Pipeline {
             Axis = project.timeAxis.Clone();
             DefaultBpm = project.tempos.Count > 0 ? project.tempos[0].bpm : 120;
             Singer = track.Singer;
-            Renderer = track.RendererSettings.Renderer;
+            SineFallback = SineRenderer.IsFallbackActive(track);
+            Renderer = SineFallback ? SineRenderer.Instance : track.RendererSettings.Renderer;
             Resampler = track.RendererSettings.resampler;
             Wavtool = track.RendererSettings.wavtool;
             ClassicSinger = Singer as ClassicSinger;
             ModpSupported = track.TryGetExpDescriptor(project, Format.Ustx.MODP, out var modp)
                 && Renderer.SupportsExpression(modp);
             XsyAvailable = part.curves.Any(c => c.abbr == Format.Ustx.XSY);
+            XpbMode = Preferences.Default.CrossPitchBlendMode;
+            if (!SineFallback && Preferences.Default.ExperimentalCrossPitchBlend && ClassicSinger != null
+                && phonemes.Count > 0) {
+                string xpbColor = phonemes[0].GetVoiceColor(project, track) ?? string.Empty;
+                var ladder = ClassicSinger.GetPitchLadder(xpbColor);
+                if (ladder.Count >= 2) {
+                    XpbBanks = ladder.Select(l => l.subbank).ToArray();
+                    XpbCenters = ladder.Select(l => l.center).ToArray();
+                }
+            }
 
             var noteIndexByNote = new Dictionary<UNote, int>();
             var notes = part.notes.ToList();
@@ -374,14 +433,65 @@ namespace OpenUtau.Core.Pipeline {
                 .Where(d => d.type == UExpressionType.Curve && Renderer.SupportsExpression(d))
                 .ToArray();
 
-            Phonemes = new PhonemeSource[phonemes.Count];
-            for (int i = 0; i < phonemes.Count; i++) {
-                var p = phonemes[i];
-                Phonemes[i] = new PhonemeSource(p,
-                    p.Parent != null ? noteIndexByNote[p.Parent] : -1,
-                    Axis, part.position, track, project, Resampler, XsyAvailable);
+            if (SineFallback) {
+                var sineGroups = BuildSineGroups(Notes);
+                var sinePhonemes = new List<PhonemeSource>();
+                var phraseGroups = new List<(int Start, int End)>();
+                foreach (var group in sineGroups) {
+                    int start = sinePhonemes.Count;
+                    foreach (int noteIndex in group) {
+                        char? vowel = SineVowels.GetVowel(Notes[noteIndex].Lyric);
+                        sinePhonemes.Add(new PhonemeSource(
+                            Notes[noteIndex], Axis, part.position, vowel?.ToString() ?? "sine"));
+                    }
+                    phraseGroups.Add((start, sinePhonemes.Count));
+                }
+                Phonemes = sinePhonemes.ToArray();
+                PhraseGroups = phraseGroups.ToArray();
+            } else {
+                Phonemes = new PhonemeSource[phonemes.Count];
+                for (int i = 0; i < phonemes.Count; i++) {
+                    var p = phonemes[i];
+                    Phonemes[i] = new PhonemeSource(p,
+                        p.Parent != null ? noteIndexByNote[p.Parent] : -1,
+                        Axis, part.position, track, project, Resampler, XsyAvailable);
+                }
+                PhraseGroups = groups;
             }
-            PhraseGroups = groups;
+        }
+
+        private static List<int[]> BuildSineGroups(NoteSource[] notes) {
+            var headNotes = notes
+                .Where(note => note.Extends == -1 && !note.OverlapError)
+                .ToArray();
+            int totalNotes = headNotes.Length;
+            int moraNotes = headNotes.Count(note => SineVowels.GetVowel(note.Lyric) != null);
+            bool japaneseLyrics = totalNotes > 0 && moraNotes * 10 >= totalNotes * 3;
+            var phrases = new List<int[]>();
+            var group = new List<int>();
+            foreach (var note in headNotes) {
+                var chain = new List<int> { note.Index };
+                int tail = note.Index;
+                int next = notes[tail].Next;
+                while (next != -1 && notes[next].Extends == tail) {
+                    chain.Add(next);
+                    tail = next;
+                    next = notes[next].Next;
+                }
+                bool mergeable = japaneseLyrics
+                    && SineVowels.IsBareVowel(notes[chain[0]].Lyric)
+                    && group.Count > 0
+                    && notes[group[group.Count - 1]].End == notes[chain[0]].Position;
+                if (!mergeable && group.Count > 0) {
+                    phrases.Add(group.ToArray());
+                    group.Clear();
+                }
+                group.AddRange(chain);
+            }
+            if (group.Count > 0) {
+                phrases.Add(group.ToArray());
+            }
+            return phrases;
         }
 
         /// <summary>
@@ -394,23 +504,26 @@ namespace OpenUtau.Core.Pipeline {
             var phonemes = part.phonemes
                 .Where(phoneme => !phoneme.Error)
                 .ToList();
-            if (phonemes.Count == 0) {
+            bool sineFallback = SineRenderer.IsFallbackActive(track);
+            if (phonemes.Count == 0 && !sineFallback) {
                 return null;
             }
-            var renderer = track.RendererSettings.Renderer;
+            var renderer = sineFallback ? SineRenderer.Instance : track.RendererSettings.Renderer;
             var groups = new List<(int, int)>();
-            int start = 0;
-            for (int i = 1; i < phonemes.Count; ++i) {
-                // A gap normally starts a new phrase, but the renderer may ask
-                // to keep adjacent phrases together when their padded audio
-                // would overlap (e.g. DiffSinger input padding).
-                if (phonemes[i - 1].End != phonemes[i].position
-                    && !renderer.ShouldMergePhrases(project, track, phonemes[i - 1], phonemes[i])) {
-                    groups.Add((start, i));
-                    start = i;
+            if (!sineFallback) {
+                int start = 0;
+                for (int i = 1; i < phonemes.Count; ++i) {
+                    // A gap normally starts a new phrase, but the renderer may ask
+                    // to keep adjacent phrases together when their padded audio
+                    // would overlap (e.g. DiffSinger input padding).
+                    if (phonemes[i - 1].End != phonemes[i].position
+                        && !renderer.ShouldMergePhrases(project, track, phonemes[i - 1], phonemes[i])) {
+                        groups.Add((start, i));
+                        start = i;
+                    }
                 }
+                groups.Add((start, phonemes.Count));
             }
-            groups.Add((start, phonemes.Count));
             return new PhraseSource(
                 part.Id,
                 DocManager.Inst.Revision,

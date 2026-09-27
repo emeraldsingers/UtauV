@@ -663,20 +663,21 @@ namespace OpenUtau.Core.Editing {
             }
             var positions = notes.Select(note => note.position + part.position).ToHashSet();
             var phrases = part.renderPhrases
-                .Where(phrase => phrase.sourceNotes.Any(note => positions.Contains(part.position + note.position)))
+                .Where(phrase => phrase.notes.Any(note => positions.Contains(part.position + phrase.position + note.position)))
                 .ToArray();
             if (phrases.Length == 0) {
                 return;
             }
 
             var phraseNotes = phrases
-                .SelectMany(phrase => phrase.sourceNotes)
+                .SelectMany(phrase => part.notes.Where(note =>
+                    phrase.notes.Any(renderNote => part.position + phrase.position + renderNote.position == part.position + note.position)))
                 .Distinct()
                 .ToArray();
             foreach (var phrase in phrases) {
                 phrase.DeleteCacheFiles();
-                PlaybackManager.Inst.LiveWaveformCache.TryRemove(phrase.hash.ToString(), out _);
             }
+            PlaybackManager.Inst.MixPlanner.EvictPart(part);
 
             docManager.StartUndoGroup("command.batch.note");
             docManager.ExecuteCmd(new DiffSingerRetakeCommand(
