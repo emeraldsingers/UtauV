@@ -18,7 +18,7 @@ namespace OpenUtau.Classic {
             Ustx.DYN,
             Ustx.PITD,
             Ustx.CLR,
-            Ustx.XSYC,
+            Ustx.CLRY,
             Ustx.XSY,
             Ustx.ENG,
             Ustx.VEL,
@@ -90,8 +90,9 @@ namespace OpenUtau.Classic {
                 result.samples = wavtool.Concatenate(resamplerItems, string.Empty, cancellation);
                 if (result.samples != null) {
                     Renderers.ApplyDynamics(phrase, result);
-                    PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
-                    Task.Factory.StartNew(() => DocManager.Inst.ExecuteCmd(new WaveformReadyNotification()), CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
+                    Task.Factory.StartNew(() => {
+                        DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
+                    }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                 }
                 return result;
             });
@@ -131,8 +132,9 @@ namespace OpenUtau.Classic {
                 progress.Complete(phrase.phones.Length, progressInfo);
                 if (result.samples != null) {
                     Renderers.ApplyDynamics(phrase, result);
-                    PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
-                    Task.Factory.StartNew(() => DocManager.Inst.ExecuteCmd(new WaveformReadyNotification()), CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
+                    Task.Factory.StartNew(() => {
+                        DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
+                    }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                 }
                 return result;
             });

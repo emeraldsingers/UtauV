@@ -48,18 +48,6 @@ namespace OpenUtau.Core.DawIntegration {
             }
         }
 
-        /// <summary>Writes each slot's absolute sample index, so a pulled window describes itself.</summary>
-        private sealed class RampSource : ISignalSource {
-            public bool IsReady(int position, int count) => true;
-
-            public int Mix(int position, float[] buffer, int index, int count) {
-                for (int i = 0; i < count; i++) {
-                    buffer[index + i] += position + i;
-                }
-                return position + count;
-            }
-        }
-
         /// <summary>An edit that is not a notification, i.e. something that changed the document.</summary>
         private sealed class FakeEdit : UCommand {
             public override void Execute() { }
@@ -87,12 +75,27 @@ namespace OpenUtau.Core.DawIntegration {
             // second track has no singer, so the empty-string defaults are exercised too.
             built.tracks.Add(new UTrack("Harmony") { TrackNo = 1, Volume = 0, Pan = 15, Muted = true });
             var lead = new UVoicePart { name = "Lead A", trackNo = 0, position = 0, duration = 480 };
-            lead.SetMix(new RampSource());
             built.parts.Add(lead);
             var harmony = new UVoicePart { name = "Harmony A", trackNo = 1, position = 480, duration = 960 };
-            harmony.SetMix(new RampSource());
             built.parts.Add(harmony);
             built.timeAxis.BuildSegments(built);
+            // The parts' "rendered" audio: one stereo slot per part at 0 ms whose pcm is the
+            // absolute sample index, so a pulled window describes itself (the old RampSource,
+            // re-expressed as rendered pcm in the transport's slot registry). Both the
+            // manager's response path and the test's expected bytes read this planner.
+            var planner = PlaybackManager.Inst.MixPlanner;
+            planner.BeginSession(new[] {
+                new MixPlanner.SlotSpec(lead, 0, 1, 0, 2000, 2),
+                new MixPlanner.SlotSpec(harmony, 1, 1, 0, 2000, 2),
+            });
+            foreach (var part in new[] { lead, harmony }) {
+                int length = 2000 * DawAudio.SampleRate / 1000 * DawAudio.Channels;
+                var ramp = new float[length];
+                for (int i = 0; i < length; i++) {
+                    ramp[i] = i;
+                }
+                planner.RegisterPcm(part, 1, 0, 2000, 2, ramp);
+            }
             return built;
         }
 

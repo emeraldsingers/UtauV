@@ -229,7 +229,7 @@ namespace OpenUtau.Core.Render {
         /// <summary>
         /// The [startMs, endMs) range (absolute ms) of the rendered phrase
         /// audio, including the leading pre-utter and the release tail,
-        /// matching the WaveSource layout used by the mix.
+        /// matching the slot layout used by the mix.
         /// </summary>
         public (double StartMs, double EndMs) AudioRange {
             get {

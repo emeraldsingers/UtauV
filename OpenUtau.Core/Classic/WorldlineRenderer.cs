@@ -34,7 +34,7 @@ namespace OpenUtau.Classic {
             Ustx.DYN,
             Ustx.PITD,
             Ustx.CLR,
-            Ustx.XSYC,
+            Ustx.CLRY,
             Ustx.XSY,
             Ustx.SHFT,
             Ustx.VEL,
@@ -178,15 +178,23 @@ namespace OpenUtau.Classic {
                         }
                     }
                     AddDirects(phrase, resamplerItems, result);
-                    var source = new WaveSource(0, 0, 0, 1);
-                    source.SetSamples(result.samples);
-                    WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
+                    if (result.samples != null) {
+                        var samplesCopy = (float[])result.samples.Clone();
+                        Task.Run(() => {
+                            try {
+                                Wave.WriteMono16Wav(wavPath, samplesCopy);
+                            } catch (Exception e) {
+                                Serilog.Log.Error(e, $"Failed to write cache file: {wavPath}");
+                            }
+                        });
+                    }
                 }
                 progress.Complete(phrase.phones.Length, progressInfo);
                 if (result.samples != null) {
                     Renderers.ApplyDynamics(phrase, result);
-                    PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
-                    Task.Factory.StartNew(() => DocManager.Inst.ExecuteCmd(new WaveformReadyNotification()), CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
+                    Task.Factory.StartNew(() => {
+                        DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
+                    }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                 }
                 return result;
             });
@@ -246,3 +254,4 @@ namespace OpenUtau.Classic {
         public override string ToString() => version == 1 ? Renderers.WORLDLINE_R : Renderers.WORLDLINE_R2;
     }
 }
+

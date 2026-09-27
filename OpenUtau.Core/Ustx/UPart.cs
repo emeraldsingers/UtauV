@@ -8,7 +8,6 @@ using NWaves.Operations;
 using NWaves.Signals;
 using OpenUtau.Api;
 using OpenUtau.Core.Render;
-using OpenUtau.Core.SignalChain;
 using Serilog;
 using SharpCompress;
 using YamlDotNet.Serialization;
@@ -54,10 +53,7 @@ namespace OpenUtau.Core.Ustx {
         [YamlIgnore] private long notesTimestamp;
         [YamlIgnore] private long phonemesTimestamp;
 
-        [YamlIgnore] private ISignalSource? mix;
-
         [YamlIgnore] public bool PhonemesUpToDate => notesTimestamp == phonemesTimestamp;
-        [YamlIgnore] public ISignalSource? Mix { get => mix; set => mix = value; }
 
         public override string DisplayName => name;
         public override int Duration { get => duration; set => duration = value; }
@@ -282,14 +278,14 @@ namespace OpenUtau.Core.Ustx {
                     phoneme.Validate(options, project, track, this, note);
                 }
             }
-            var previousHashes = Mix == null
-                ? null
-                : new HashSet<ulong>(renderPhrases.Select(phrase => phrase.hash));
-            renderPhrases.Clear();
-            if (PhonemesUpToDate) {
-                renderPhrases.AddRange(RenderPhrase.FromPart(project, track, this));
-                if (previousHashes != null && !previousHashes.SetEquals(renderPhrases.Select(phrase => phrase.hash))) {
-                    Mix = null;
+        // Under the part lock: GetRenderRequest snapshots the list under the same lock.
+        // Two phonemize responses validating concurrently (double push on load) used to
+        // race this Clear/AddRange and leave null holes in the snapshot, crashing the
+        // render pass with a NullReferenceException on phrase.phones.
+            lock (this) {
+                renderPhrases.Clear();
+                if (PhonemesUpToDate) {
+                    renderPhrases.AddRange(RenderPhrase.FromPart(project, track, this));
                 }
             }
         }
@@ -308,12 +304,6 @@ namespace OpenUtau.Core.Ustx {
                     trackNo = trackNo,
                     phrases = renderPhrases.ToArray(),
                 };
-            }
-        }
-
-        internal void SetMix(ISignalSource mix) {
-            lock (this) {
-                this.mix = mix;
             }
         }
 
@@ -479,19 +469,19 @@ namespace OpenUtau.Core.Ustx {
             Load(project);
         }
 
-        public ISignalSource TrimSamples(UProject project) {
+        /// <summary>
+        /// The wave part's placement and trimmed pcm (fades applied to a copy; the
+        /// document's <see cref="Samples"/> is never mutated). Used by the slot-based
+        /// transport (playback and export).
+        /// </summary>
+        public (double offsetMs, double estimatedLengthMs, int channels, float[] pcm) GetTrimmedSamples(UProject project) {
             double offsetMs = project.timeAxis.TickPosToMsPos(position);
             double estimatedLengthMs = project.timeAxis.TickPosToMsPos(End) - offsetMs;
-            var waveSource = new WaveSource(
-                offsetMs,
-                estimatedLengthMs,
-                0, channels);
             int skipCount = (int)(GetSkipMs(project) * sampleRate / 1000) * channels;
             int trimCount = (int)(GetTrimMs(project) * sampleRate / 1000) * channels;
             int remainingCount = Samples.Length - skipCount - trimCount;
             if (remainingCount <= 0) {
-                waveSource.SetSamples(new float[0]);
-                return waveSource;
+                return (offsetMs, estimatedLengthMs, channels, new float[0]);
             }
             float[] trimmedSamples = new float[remainingCount];
             Array.Copy(Samples, skipCount, trimmedSamples, 0, remainingCount);
@@ -513,8 +503,8 @@ namespace OpenUtau.Core.Ustx {
                     }
                 }
             }
-            waveSource.SetSamples(trimmedSamples);
-            return waveSource;
+            return (offsetMs, estimatedLengthMs, channels, trimmedSamples);
         }
+
     }
 }

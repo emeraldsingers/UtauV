@@ -47,16 +47,6 @@ namespace OpenUtau.Core.DiffSinger {
 
         public bool SupportsRealCurve => true;
 
-        internal static string GetRenderCacheFileName(
-            ulong phraseHash,
-            double depth,
-            int acousticSteps,
-            int varianceSteps,
-            bool localVariancePatch = false) {
-            var patchSuffix = localVariancePatch ? "-vpatch1" : "";
-            return $"ds-{phraseHash:x16}-depth{depth:f2}-steps{acousticSteps}-vsteps{varianceSteps}{patchSuffix}.wav";
-        }
-
         public bool IsVoiceColorCurve(string abbr, out int subBankId) {
             subBankId = 0;
             if (abbr.StartsWith(VoiceColorHeader) && int.TryParse(abbr.Substring(2), out subBankId)) {;
@@ -119,12 +109,7 @@ namespace OpenUtau.Core.DiffSinger {
                     } else {
                         depth = 1.0;
                     }
-                    var wavName = GetRenderCacheFileName(
-                        phrase.hash,
-                        depth,
-                        steps,
-                        Preferences.Default.DiffSingerStepsVariance,
-                        Preferences.Default.DiffSingerVarianceLocalPitchPatch);
+                    var wavName = $"ds-{phrase.hash:x16}-depth{depth:f2}-steps{steps}.wav";
                     var wavPath = Path.Join(PathManager.Inst.CachePath, wavName);
                     phrase.AddCacheFile(wavPath);
                     string progressInfo = $"Track {trackNo + 1}: {this} depth={depth:f2} steps={steps} \"{string.Join(" ", phrase.phones.Select(p => p.phoneme))}\"";
@@ -140,15 +125,14 @@ namespace OpenUtau.Core.DiffSinger {
                     if (result.samples == null) {
                         result.samples = InvokeDiffsinger(phrase, depth, steps, cancellation, renderEvents);
                         if (result.samples != null) {
-                            var source = new WaveSource(0, 0, 0, 1);
-                            source.SetSamples(result.samples);
-                            WaveFileWriter.CreateWaveFile16(wavPath, new ExportAdapter(source).ToMono(1, 0));
+                            Wave.WriteMono16Wav(wavPath, result.samples);
                         }
                     }
                     if (result.samples != null) {
                         Renderers.ApplyDynamics(phrase, result);
-                        PlaybackManager.Inst.LiveWaveformCache[phrase.hash.ToString()] = (trackNo, result.positionMs - result.leadingMs, result.samples, DateTime.Now);
-                        Task.Factory.StartNew(() => DocManager.Inst.ExecuteCmd(new WaveformReadyNotification()), CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
+                        Task.Factory.StartNew(() => {
+                            DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
+                        }, CancellationToken.None, TaskCreationOptions.None, DocManager.Inst.MainScheduler);
                     }
                     progress.Complete(phrase.phones.Length, progressInfo);
                     return result;

@@ -1,8 +1,11 @@
 using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using K4os.Hash.xxHash;
+using OpenUtau.Core.SignalChain;
 using OpenUtau.Core.Ustx;
 
 namespace OpenUtau.Core.DawIntegration {
@@ -29,7 +32,7 @@ namespace OpenUtau.Core.DawIntegration {
         /// <summary>
         /// Converts project time to an index into OpenUtau's interleaved stereo sample space.
         /// The signal chain is addressed in absolute project samples, two floats per frame
-        /// (see <c>WaveSource.offset</c>).
+        /// (see <c>SampleSlot.Offset</c>).
         /// </summary>
         public static int MsToInterleavedIndex(double ms) {
             if (ms <= 0) {
@@ -39,23 +42,40 @@ namespace OpenUtau.Core.DawIntegration {
         }
 
         /// <summary>
-        /// Extracts the rendered audio covering a part's own tick range.
+        /// Extracts the rendered audio covering a part's own tick range, from the
+        /// transport's per-phrase slot registry (<see cref="PlaybackManager.MixPlanner")).
         /// </summary>
         /// <remarks>
         /// Voice parts only. <see cref="UWavePart"/> audio is out of v1 scope: it is user-supplied
-        /// material the DAW can import directly, and its source is produced by
-        /// <c>UWavePart.TrimSamples</c> rather than the render pipeline.
+        /// material the DAW can import directly, and its source is user WAV data rather
+        /// than the render pipeline.
         /// </remarks>
         /// <returns>
-        /// False when the part carries no mix yet, or when the renderer has not finished the
-        /// window. Callers must skip such parts rather than shipping partial audio, because
-        /// <see cref="SignalChain.ISignalSource.Mix"/> would leave the gap silent and the
-        /// resulting hash would be wrong for the finished audio.
+        /// False when the part is unrendered or the render has not finished it. Callers must
+        /// skip such parts rather than shipping partial audio, because the resulting hash
+        /// would be wrong for the finished audio.
         /// </returns>
         public static bool TryExtractPart(UProject project, UVoicePart part, out float[] samples) {
+            return TryExtractPart(project, part, PlaybackManager.Inst.MixPlanner, out samples);
+        }
+
+        internal static bool TryExtractPart(UProject project, UVoicePart part, MixPlanner planner, out float[] samples) {
             samples = Array.Empty<float>();
-            var mix = part.Mix;
-            if (mix == null) {
+            // Completeness gate: a part is extractable only once every current phrase
+            // has rendered pcm — the planner's IsPartReady carries that invariant.
+            IEnumerable<ulong> currentHashes = null;
+            try {
+                var request = part.GetRenderRequest();
+                if (request != null) {
+                    currentHashes = request.phrases.Select(p => p.hash);
+                }
+            } catch {
+                // An invalid part simply cannot be extracted.
+            }
+            if (!planner.IsPartReady(part, currentHashes)) {
+                return false;
+            }
+            if (!planner.TryGetPartPcm(part, out var pcmList)) {
                 return false;
             }
             int start = MsToInterleavedIndex(project.timeAxis.TickPosToMsPos(part.position));
@@ -64,12 +84,18 @@ namespace OpenUtau.Core.DawIntegration {
             if (count <= 0) {
                 return false;
             }
-            if (!mix.IsReady(start, count)) {
-                return false;
+            // TryGetPartPcm returns only Ready placements, so this transient slot set
+            // mixes like the finished part.
+            var slots = new SampleSlot[pcmList.Count];
+            for (int i = 0; i < pcmList.Count; i++) {
+                var p = pcmList[i];
+                slots[i] = new SampleSlot(p.posMs, p.durMs, 0, p.channels, p.pcm, SlotState.Ready);
             }
+            var source = new SlotMixSource();
+            source.SetSlots(slots);
             // ISignalSource.Mix adds into the buffer, so it must start zeroed.
             var buffer = new float[count];
-            mix.Mix(start, buffer, 0, count);
+            source.Mix(start, buffer, 0, count);
             // §6.1 pre-fader output trim: OpenUtau pans constant-power, so a mix that
             // bypasses panning sits a systematic 3 dB above what the performance was tuned
             // against. Scale by cos(π/4) before hashing and serving; the trim is not mixer
