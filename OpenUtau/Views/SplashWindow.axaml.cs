@@ -28,6 +28,7 @@ namespace OpenUtau.App.Views {
         }
 
         private readonly MultipleDisposable disposable = new();
+        private bool started;
 
         private void UpdateLogo() {
             LogoTypeDark.IsVisible = ThemeManager.IsDarkMode;
@@ -39,9 +40,10 @@ namespace OpenUtau.App.Views {
         }
 
         private void SplashWindow_Opened(object? sender, EventArgs e) {
-            if (Screens.Primary == null && Screens.ScreenCount == 0) {
+            if (started || (Screens.Primary == null && Screens.ScreenCount == 0)) {
                 return;
             }
+            started = true;
             CenterOnPrimaryScreen();
             Start();
         }
