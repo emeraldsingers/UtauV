@@ -218,11 +218,18 @@ namespace OpenUtau.Core.Util {
             public bool DiffSingerTensorCache = true;
             public bool DiffSingerVarianceLocalPitchPatch = false;
             public bool DiffSingerLangCodeHide = false;
+<<<<<<< ours
             public bool DiffSingerAutoSP = false;
             public int DiffSingerAutoSPMs = 40;
             public bool DiffSingerLocalRetaking = false;
             public bool DiffSingerShowRenderPhraseBoundaries = false;
             public bool ShowWaveformPhraseBoundaries = false;
+            /// <summary>
+            /// Auto-merge nearby DiffSinger phrases (piano roll toggle). Off by
+            /// default: it changes how the model segments a passage and is still
+            /// being tuned.
+            /// </summary>
+            public bool DiffSingerMergeNearbyPhrases = false;
             public bool Metronome = false;
             public bool SkipRenderingMutedTracks = false;
             // Experimental Cross-Pitch Blend (XPB).

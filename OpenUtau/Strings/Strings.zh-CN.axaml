@@ -385,6 +385,7 @@ Syntax: prefix,suffix</system:String>-->
   <!--<system:String x:Key="pianoroll.menu.searchnote.searchalias">Search Alias</system:String>-->
   <system:String x:Key="pianoroll.snapdiv">网格精度</system:String>
   <system:String x:Key="pianoroll.toggle.finalpitch">显示最终音高线 (R)</system:String>
+  <system:String x:Key="pianoroll.toggle.mergephrases">自动合并临近段落（DiffSinger）</system:String>
   <system:String x:Key="pianoroll.toggle.noteparams">显示参数面板 (\)</system:String>
   <system:String x:Key="pianoroll.toggle.phoneme">显示音素 (O)</system:String>
   <system:String x:Key="pianoroll.toggle.pitch">显示弯音 (I)</system:String>
