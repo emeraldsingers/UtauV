@@ -415,6 +415,14 @@ namespace OpenUtau.Core.Render {
             public int p3;
             public int p4;
 
+            /// <summary>
+            /// The phrase frames in [p0, p4) the segment has analysis for. A preutterance lengthened
+            /// past the oto's skips a negative amount, leaving frames before the analysis; those stay
+            /// silent, as the wavtool leaves them.
+            /// </summary>
+            public int FirstFrame => Math.Max(p0, p0 - skipFrames);
+            public int EndFrame => Math.Min(p4, p0 - skipFrames + f0.size);
+
             // Worldline-R1.1 only (null / unset otherwise): the harmonic part's spectral
             // envelope on the same frames as spEnv (ap then holds the separation's power
             // ratio), and output ms per source ms for each frame.
@@ -689,7 +697,7 @@ namespace OpenUtau.Core.Render {
 
                 for (int i = 0; i < segments.Count; ++i) {
                     var segment = segments[i];
-                    for (int j = segment.p0; j < segment.p4; ++j) {
+                    for (int j = segment.FirstFrame; j < segment.EndFrame; ++j) {
                         double weight = 1.0;
                         if (j < segment.p1) {
                             weight = (double)(j - segment.p0) / (segment.p1 - segment.p0);
@@ -782,7 +790,7 @@ namespace OpenUtau.Core.Render {
                     var segSp = segment.spEnv.ToArray<double>();
                     var segSpHarmonic = segment.spEnvHarmonic!.ToArray<double>();
                     var segAp = segment.ap.ToArray<double>();
-                    for (int j = segment.p0; j < segment.p4; ++j) {
+                    for (int j = segment.FirstFrame; j < segment.EndFrame; ++j) {
                         double weight = 1.0;
                         if (j < segment.p1) {
                             weight = (double)(j - segment.p0) / (segment.p1 - segment.p0);
