@@ -1,16 +1,23 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using NAudio.Wave;
 using NumSharp;
 using OpenUtau.Classic;
 using OpenUtau.Core.Format;
+using OpenUtau.Core.Util;
 using Serilog;
 
 namespace OpenUtau.Core.Render {
-    public class SynthRequestError : Exception { }
+    public class SynthRequestError : Exception {
+        /// <summary>The request that failed, when raised by <see cref="Worldline.PhraseSynthV2"/>.</summary>
+        public ResamplerItem? Item { get; internal set; }
+    }
 
     public class CutOffExceedDurationError : SynthRequestError { }
 
@@ -440,6 +447,8 @@ namespace OpenUtau.Core.Render {
         public class PhraseSynthV2 {
             readonly AnalysisConfig config;
             readonly List<SynthSegment> segments = new List<SynthSegment>();
+            readonly List<(ResamplerItem item, Func<SynthSegment> analyze)> pendingRequests =
+                new List<(ResamplerItem, Func<SynthSegment>)>();
 
             double[]? f0Curve;
             double[]? genderCurve;
@@ -451,11 +460,47 @@ namespace OpenUtau.Core.Render {
                 config = InitAnalysisConfig(fs, hopSize, fftSize);
             }
 
+            /// <summary>Queues a request; the analysis runs in <see cref="AnalyzeRequests"/>.</summary>
             public void AddRequest(ResamplerItem item,
                 double posMs, double skipMs, double lengthMs,
                 double fadeInMs, double fadeOutMs) {
-                segments.Add(new SynthSegment(config, item,
-                    posMs, skipMs, lengthMs, fadeInMs, fadeOutMs));
+                var cfg = config;
+                pendingRequests.Add((item, () => new SynthSegment(cfg, item,
+                    posMs, skipMs, lengthMs, fadeInMs, fadeOutMs)));
+            }
+
+            /// <summary>
+            /// Analyzes the queued requests in parallel, using up to NumRenderThreads threads.
+            /// Rethrows the failure of the earliest failing request; a <see cref="SynthRequestError"/>
+            /// carries that request as <see cref="SynthRequestError.Item"/>.
+            /// </summary>
+            public void AnalyzeRequests(CancellationToken cancellationToken = default) {
+                if (pendingRequests.Count == 0) {
+                    return;
+                }
+                var results = new SynthSegment[pendingRequests.Count];
+                var errors = new Exception?[pendingRequests.Count];
+                Parallel.For(0, pendingRequests.Count, new ParallelOptions {
+                    MaxDegreeOfParallelism = Math.Max(1, Preferences.Default.NumRenderThreads),
+                    CancellationToken = cancellationToken,
+                }, (i, state) => {
+                    try {
+                        results[i] = pendingRequests[i].analyze();
+                    } catch (Exception e) {
+                        if (e is SynthRequestError sre) {
+                            sre.Item = pendingRequests[i].item;
+                        }
+                        errors[i] = e;
+                        // Break still runs every lower index, so the earliest failure is found.
+                        state.Break();
+                    }
+                });
+                var error = errors.FirstOrDefault(e => e != null);
+                if (error != null) {
+                    ExceptionDispatchInfo.Capture(error).Throw();
+                }
+                segments.AddRange(results);
+                pendingRequests.Clear();
             }
 
             public void SetCurves(
@@ -470,6 +515,7 @@ namespace OpenUtau.Core.Render {
             }
 
             public (int, NDArray, NDArray, NDArray) SynthFeatures() {
+                AnalyzeRequests();
                 int spSize = config.fft_size / 2 + 1;
                 int totalFrames = segments.Max(s => s.p4) + 1;
                 NDArray f0Out = np.zeros<double>(totalFrames);
@@ -518,6 +564,7 @@ namespace OpenUtau.Core.Render {
             }
 
             public float[] Synth() {
+                AnalyzeRequests();
                 if (segments.Count == 0) {
                     return new float[0];
                 }

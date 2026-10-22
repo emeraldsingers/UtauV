@@ -85,31 +85,32 @@ namespace OpenUtau.Classic {
                     var phraseSynth = new Worldline.PhraseSynthV2(44100, version == 1 ? 441 : 512, 2048);
                     double posOffsetMs = phrase.positionMs - phrase.leadingMs;
                     foreach (var item in resamplerItems) {
-                        if (cancellation.IsCancellationRequested) {
-                            return result;
-                        }
                         double posMs = item.phone.positionMs - item.phone.leadingMs - (phrase.positionMs - phrase.leadingMs);
                         double skipMs = item.skipOver;
                         double lengthMs = item.phone.envelope[4].X - item.phone.envelope[0].X;
                         double fadeInMs = item.phone.envelope[1].X - item.phone.envelope[0].X;
                         double fadeOutMs = item.phone.envelope[4].X - item.phone.envelope[3].X;
-                        try {
-                            phraseSynth.AddRequest(item, posMs, skipMs, lengthMs, fadeInMs, fadeOutMs);
-                        } catch (SynthRequestError e) {
-                            if (e is CutOffExceedDurationError cee) {
-                                throw new MessageCustomizableException(
-                                    $"Failed to render\n Oto error: cutoff exceeds audio duration \n{item.phone.phoneme}",
-                                    $"<translate:errors.failed.synth.cutoffexceedduration>\n{item.phone.phoneme}",
-                                    e);
-                            }
-                            if (e is CutOffBeforeOffsetError cbe) {
-                                throw new MessageCustomizableException(
-                                    $"Failed to render\n Oto error: cutoff before offset \n{item.phone.phoneme}",
-                                    $"<translate:errors.failed.synth.cutoffbeforeoffset>\n{item.phone.phoneme}",
-                                    e);
-                            }
-                            throw e;
+                        phraseSynth.AddRequest(item, posMs, skipMs, lengthMs, fadeInMs, fadeOutMs);
+                    }
+                    try {
+                        phraseSynth.AnalyzeRequests(cancellation.Token);
+                    } catch (OperationCanceledException) {
+                        return result;
+                    } catch (SynthRequestError e) {
+                        string phoneme = e.Item?.phone.phoneme ?? string.Empty;
+                        if (e is CutOffExceedDurationError cee) {
+                            throw new MessageCustomizableException(
+                                $"Failed to render\n Oto error: cutoff exceeds audio duration \n{phoneme}",
+                                $"<translate:errors.failed.synth.cutoffexceedduration>\n{phoneme}",
+                                e);
                         }
+                        if (e is CutOffBeforeOffsetError cbe) {
+                            throw new MessageCustomizableException(
+                                $"Failed to render\n Oto error: cutoff before offset \n{phoneme}",
+                                $"<translate:errors.failed.synth.cutoffbeforeoffset>\n{phoneme}",
+                                e);
+                        }
+                        throw;
                     }
                     int frames = (int)Math.Ceiling(result.estimatedLengthMs / frameMs);
                     var f0 = SampleCurve(phrase, phrase.pitches, 0, frames, x => MusicMath.ToneToFreq(x * 0.01));
