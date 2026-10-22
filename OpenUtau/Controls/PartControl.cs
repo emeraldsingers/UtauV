@@ -137,6 +137,10 @@ namespace OpenUtau.App.Controls {
         public readonly UPart part;
         private readonly PartsCanvas partsCanvas;
         private readonly Pen notePen = new Pen(Brushes.White, 3);
+        private static readonly IBrush viewportFill = new SolidColorBrush(Color.FromArgb(28, 255, 255, 255));
+        private static readonly IPen viewportPen = new Pen(Brushes.White, 2);
+        private const double GripDot = 2;
+        private const double GripGap = 3;
         private readonly Pen fadePen = new Pen(Brushes.White);
         private List<IDisposable> unbinds = new List<IDisposable>();
         private WriteableBitmap? bitmap;
@@ -245,19 +249,18 @@ namespace OpenUtau.App.Controls {
                     }
                 }
                 // Highlight
-                if (voicePart == partsCanvas.PianoRollOpenPart && pianoRollViewViewportTicks > 0) {
-                    const double inset = 1;
-                    double innerWidth = Math.Max(0, Width - 2 * inset);
-                    double innerHeight = Math.Max(0, Height - 2 * inset);
-
-                    double vpLeft = Math.Max(0, pianoRollViewTickOffset * tickWidth);
-                    double vpRight = Math.Min(innerWidth, (pianoRollViewTickOffset + pianoRollViewViewportTicks) * tickWidth);
-
-                    if (vpRight > vpLeft + 1) {
-                        var vpRect = new Rect(inset + vpLeft, inset, vpRight - vpLeft, innerHeight);
-                        var vpFill = new SolidColorBrush(Color.FromArgb(28, 255, 255, 255));
-                        var vpPen = new Pen(Brushes.White, 2);
-                        context.DrawRectangle(vpFill, vpPen, new RoundedRect(vpRect, new CornerRadius(3)));
+                if (PianoRollViewportRect() is Rect vpRect) {
+                    context.DrawRectangle(viewportFill, viewportPen, new RoundedRect(vpRect, new CornerRadius(3)));
+                    if (GripRect(vpRect) is Rect grip) {
+                        // A 3 by 3 grid of dots.
+                        for (int column = 0; column < 3; ++column) {
+                            for (int row = 0; row < 3; ++row) {
+                                var center = new Point(
+                                    grip.X + GripDot / 2 + column * (GripDot + GripGap),
+                                    grip.Y + GripDot / 2 + row * (GripDot + GripGap));
+                                context.DrawEllipse(Brushes.White, null, center, GripDot / 2, GripDot / 2);
+                            }
+                        }
                     }
                 }
             } else if (part is UWavePart wavePart) {
@@ -290,7 +293,7 @@ namespace OpenUtau.App.Controls {
             }
         }
 
-        private IBrush GetBackgroundBrush() {
+private IBrush GetBackgroundBrush() {
             var background = Selected ? ThemeManager.AccentBrush2 : ThemeManager.AccentBrush1;
             if (Preferences.Default.UseTrackColor &&
                 0 <= part.trackNo && part.trackNo < DocManager.Inst.Project.tracks.Count) {
@@ -303,6 +306,48 @@ namespace OpenUtau.App.Controls {
                 };
             }
             return background;
+        }
+
+        /// <summary>
+        /// The piano roll's visible range inside this part, if the piano roll has
+        /// this part open.
+        /// </summary>
+        private Rect? PianoRollViewportRect() {
+            if (part is not UVoicePart || part != partsCanvas.PianoRollOpenPart || pianoRollViewViewportTicks <= 0) {
+                return null;
+            }
+            const double inset = 1;
+            double innerWidth = Math.Max(0, Width - 2 * inset);
+            double innerHeight = Math.Max(0, Height - 2 * inset);
+            double vpLeft = Math.Max(0, pianoRollViewTickOffset * tickWidth);
+            double vpRight = Math.Min(innerWidth, (pianoRollViewTickOffset + pianoRollViewViewportTicks) * tickWidth);
+            if (vpRight <= vpLeft + 1) {
+                return null;
+            }
+            return new Rect(inset + vpLeft, inset, vpRight - vpLeft, innerHeight);
+        }
+
+        /// <summary>The drag handle in the middle of the viewport indicator, if it fits.</summary>
+        private static Rect? GripRect(Rect viewport) {
+            const double width = 3 * GripDot + 2 * GripGap;
+            const double height = 3 * GripDot + 2 * GripGap;
+            if (viewport.Width < width + 6 || viewport.Height < height + 6) {
+                return null;
+            }
+            return new Rect(
+                Math.Round(viewport.Center.X - width / 2),
+                Math.Round(viewport.Center.Y - height / 2),
+                width, height);
+        }
+
+        /// <summary>
+        /// Whether a point, in this control's coordinates, is on the drag handle of
+        /// the piano roll viewport indicator.
+        /// </summary>
+        public bool HitPianoRollViewportHandle(Point point) {
+            return PianoRollViewportRect() is Rect vpRect
+                && GripRect(vpRect) is Rect grip
+                && grip.Inflate(new Thickness(6, 8)).Contains(point);
         }
 
         private WriteableBitmap GetBitmap(double width) {
