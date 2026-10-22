@@ -67,7 +67,7 @@ namespace OpenUtau.Classic {
                     MaxDegreeOfParallelism = Preferences.Default.NumRenderThreads
                 }, body: item => {
                     if (!cancellation.IsCancellationRequested && !File.Exists(item.outputFile)) {
-                        if (!(item.resampler is WorldlineResampler)) {
+                        if (!(item.resampler is WorldlineResampler or HifisamplerResampler)) {
                             VoicebankFiles.Inst.CopySourceTemp(item.inputFile, item.inputTemp);
                         }
                         if(!item.phone.direct){
@@ -79,7 +79,7 @@ namespace OpenUtau.Classic {
                                 throw new InvalidDataException($"{item.resampler} failed to resample \"{item.phone.phoneme}\" at {bar}:{beat}.{string.Format("{0:000}", tick)}");
                             }
                         }
-                        if (!(item.resampler is WorldlineResampler)) {
+                        if (!(item.resampler is WorldlineResampler or HifisamplerResampler)) {
                             VoicebankFiles.Inst.CopyBackMetaFiles(item.inputFile, item.inputTemp);
                         }
                     }

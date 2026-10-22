@@ -72,6 +72,7 @@ namespace OpenUtau.Classic {
             resamplers.Clear();
             resamplersMap.Clear();
             resamplers.Add(new WorldlineResampler());
+            resamplers.Add(new HifisamplerResampler());
             foreach (var basePath in PathManager.Inst.ResamplersPaths) {
                 try {
                     Directory.CreateDirectory(basePath);
