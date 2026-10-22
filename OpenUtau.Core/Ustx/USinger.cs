@@ -220,6 +220,7 @@ namespace OpenUtau.Core.Ustx {
         public virtual string Id { get; }
         public virtual string Name => name;
         public virtual Dictionary<string, string> LocalizedNames { get; }
+        public virtual IList<string> SearchTerms => Array.Empty<string>();
         public virtual USingerType SingerType { get; }
         public virtual string BasePath { get; }
         public virtual string Author { get; }

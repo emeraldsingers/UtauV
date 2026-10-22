@@ -267,6 +267,11 @@ namespace OpenUtau.Core.Util {
             public bool ShowGhostNotes = true;
             public bool NoteHoverGlow = true;
             public bool ShowPlaybackVerticalFollow = false;
+            /// <summary>
+            /// Off by default: the track header keeps the singer list menu.
+            /// When on, it opens upstream's singer flyout with search instead.
+            /// </summary>
+            public bool UseSingerFlyout = false;
             public bool ShowPlaybackNoteHighlight = true;
             public double PlaybackHighlightFadeInPerSecond = 8.0;
             public double PlaybackHighlightFadeOutPerSecond = 6.2;

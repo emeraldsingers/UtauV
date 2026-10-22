@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 using ReactiveUI;
 
 namespace OpenUtau.App.Controls {
@@ -114,7 +115,40 @@ namespace OpenUtau.App.Controls {
                 if (ViewModel != null) {
                     await ViewModel.RefreshSingersAsync();
                 }
-                SingersMenu.Open();
+                if (Preferences.Default.UseSingerFlyout) {
+                    ShowSingerFlyout(sender);
+                } else {
+                    SingersMenu.Open();
+                }
+            } catch (Exception e) {
+                DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(e));
+            }
+        }
+
+        void ShowSingerFlyout(object sender) {
+            if (ViewModel == null) {
+                return;
+            }
+            try {
+                Control anchor = SingerButton;
+                if (sender != SingerButton) {
+                    // Opened from the "⋯" flyout: close it and anchor to its button instead of stacking flyouts.
+                    MoreButton.Flyout?.Hide();
+                    anchor = MoreButton;
+                }
+                var flyoutViewModel = new SingerFlyoutViewModel(() => ViewModel.Singer, ViewModel.SelectSingerCommand);
+                var content = new SingerFlyout() { DataContext = flyoutViewModel };
+                var flyout = new Flyout() {
+                    Content = content,
+                    Placement = PlacementMode.BottomEdgeAlignedLeft,
+                    ShowMode = FlyoutShowMode.Standard,
+                };
+                flyout.FlyoutPresenterClasses.Add("singerFlyout");
+                flyoutViewModel.CloseRequested += flyout.Hide;
+                flyout.Opened += (_, _) => DocManager.Inst.AddSubscriber(flyoutViewModel);
+                flyout.Closed += (_, _) => DocManager.Inst.RemoveSubscriber(flyoutViewModel);
+                content.FitToScreen(anchor);
+                flyout.ShowAt(anchor);
             } catch (Exception e) {
                 DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(e));
             }

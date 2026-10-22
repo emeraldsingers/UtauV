@@ -89,6 +89,7 @@
             <MenuItem Header="{DynamicResource singers.visitwebsite}" Click="OnVisitWebsite" IsEnabled="{Binding HasWebsite}"/>
             <MenuItem Header="{DynamicResource singers.publish}" Click="OnPublish"/>
             <MenuItem Header="{DynamicResource singers.merge}" IsVisible="{Binding IsClassic}" Click="OnMerge"/>
+            <MenuItem Header="{DynamicResource tracks.searchterms.edit}" Click="OnEditSearchTerms"/>
             <MenuItem Header="{DynamicResource singers.errorreport}" Command="{Binding ErrorReport}"/>
             <MenuItem Header="{DynamicResource singers.refresh}" Command="{Binding Refresh}"/>
           </ContextMenu>

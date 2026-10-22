@@ -382,6 +382,10 @@
             <ToggleSwitch IsChecked="{Binding NoteHoverGlow}"/>
           </Grid>
           <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.usesingerflyout}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding UseSingerFlyout}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0">
             <TextBlock Text="{DynamicResource prefs.appearance.diffsingerbarstyle}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding DiffSingerBarStyle}"/>
           </Grid>

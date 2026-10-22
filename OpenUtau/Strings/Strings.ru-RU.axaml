@@ -869,6 +869,7 @@ OpenUtau стремится стать средой редактирования
     Правая кнопка для сбрасывания</system:String>
   <system:String x:Key="pianoroll.tool.knife">Нож (5)</system:String>
   <system:String x:Key="prefs.appearance.notehoverglow">Свечение ноты при наведении</system:String>
+  <system:String x:Key="prefs.appearance.usesingerflyout">Выбор сингера во всплывающем окне с поиском</system:String>
   <system:String x:Key="prefs.appearance.buttonradius">Скругление кнопок</system:String>
   <system:String x:Key="prefs.appearance.noteradius">Скругление нот</system:String>
   <system:String x:Key="prefs.appearance.noteopacity">Прозрачность нот</system:String>
