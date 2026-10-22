@@ -66,7 +66,7 @@
                      Text="{DynamicResource dialogs.transcribe.rmvpe}"
                      VerticalAlignment="Center"
                      IsVisible="{Binding !RmvpeAvailable}"
-                     Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                     Foreground="{DynamicResource ForegroundBrushSecondary}"/>
         </Grid>
       </Panel>
 
