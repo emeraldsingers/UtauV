@@ -36,6 +36,72 @@ namespace OpenUtau.Core.Render {
         static extern int F0(
             float[] samples, int length, int fs, double framePeriod, int method, double[] f0);
 
+        /// <summary>
+        /// A source's f0 on cfg's frames: its .frq file when there is one (averaged onto the
+        /// frames, voiced frames only), otherwise analyzed.
+        /// </summary>
+        public static double[] SourceF0(string sourceFile, float[] samples, AnalysisConfig cfg) {
+            var frq = new Frq();
+            bool hasFrq = frq.Load(sourceFile);
+            var f0Src = F0(samples, cfg.fs, cfg.frame_ms, hasFrq ? -1 : 2);
+            if (hasFrq) {
+                for (int i = 0; i < f0Src.Length; ++i) {
+                    double ratio = (double)cfg.hop_size / frq.hopSize;
+                    int index0 = (int)Math.Floor(i * ratio);
+                    int index1 = (int)Math.Ceiling((i + 1) * ratio);
+                    index0 = Math.Min(frq.f0.Length - 1, index0);
+                    index1 = Math.Min(frq.f0.Length - 1, index1);
+                    double sumF0 = 0.0;
+                    int count = 0;
+                    for (int j = index0; j <= index1; ++j) {
+                        if (frq.f0[j] > cfg.f0_floor) {
+                            sumF0 += frq.f0[j];
+                            count += 1;
+                        }
+                    }
+                    if (count > 0) {
+                        f0Src[i] = sumF0 / count;
+                    } else {
+                        f0Src[i] = 0.0;
+                    }
+                }
+            }
+            return f0Src;
+        }
+
+        /// <summary>
+        /// Rd per frame (<see cref="GlottalRd"/>) from a harmonic spectral envelope (power,
+        /// [frames, fft_size / 2 + 1]) sampled at the harmonics of f0, smoothed over 20 ms.
+        /// </summary>
+        static double[] RdTrack(NDArray spHarmonic, double[] f0, AnalysisConfig cfg) {
+            int frames = Math.Min(f0.Length, spHarmonic.shape[0]);
+            int spSize = spHarmonic.shape[1];
+            var sp = spHarmonic.ToArray<double>();
+            double binHz = (double)cfg.fs / cfg.fft_size;
+            var rd = new double[frames];
+            var voiced = new bool[frames];
+            for (int i = 0; i < frames; ++i) {
+                if (f0[i] <= cfg.f0_floor) {
+                    continue;
+                }
+                int n = (int)Math.Min(GlottalRd.MaxFitHz / f0[i], (spSize - 2) * binHz / f0[i]);
+                if (n < 2) {
+                    continue;
+                }
+                var amplitudes = new double[n];
+                for (int k = 0; k < n; ++k) {
+                    double bin = (k + 1) * f0[i] / binHz;
+                    int b = (int)bin;
+                    double t = bin - b;
+                    double power = sp[i * spSize + b] * (1 - t) + sp[i * spSize + b + 1] * t;
+                    amplitudes[k] = Math.Sqrt(Math.Max(power, 0));
+                }
+                rd[i] = GlottalRd.Fit(amplitudes, f0[i]);
+                voiced[i] = true;
+            }
+            return GlottalRd.Smooth(rd, voiced, Math.Max(1, (int)Math.Round(20 / cfg.frame_ms)));
+        }
+
         public static double[] F0(float[] samples, int fs, double framePeriod, int method) {
             try {
                 double[] buffer = new double[F0FrameCount(samples.Length, fs, framePeriod, method)];
@@ -354,6 +420,8 @@ namespace OpenUtau.Core.Render {
             // ratio), and output ms per source ms for each frame.
             public NDArray? spEnvHarmonic;
             public double[] stretch = Array.Empty<double>();
+            // Worldline-R1.1: the source's Rd per frame, for tension.
+            public double[] rd = Array.Empty<double>();
 
             /// <summary>Segment of a phrase, with the input gain applied before analysis.</summary>
             public SynthSegment(AnalysisConfig cfg, ResamplerItem item,
@@ -387,31 +455,7 @@ namespace OpenUtau.Core.Render {
                     throw new Exception($"Empty samples in {item.inputFile}.");
                 }
 
-                var frq = new Frq();
-                bool hasFrq = frq.Load(item.inputFile);
-                var f0Src = F0(samples, fs, cfg.frame_ms, hasFrq ? -1 : 2);
-                if (hasFrq) {
-                    for (int i = 0; i < f0Src.Length; ++i) {
-                        double ratio = (double)config.hop_size / frq.hopSize;
-                        int index0 = (int)Math.Floor(i * ratio);
-                        int index1 = (int)Math.Ceiling((i + 1) * ratio);
-                        index0 = Math.Min(frq.f0.Length - 1, index0);
-                        index1 = Math.Min(frq.f0.Length - 1, index1);
-                        double sumF0 = 0.0;
-                        int count = 0;
-                        for (int j = index0; j <= index1; ++j) {
-                            if (frq.f0[j] > config.f0_floor) {
-                                sumF0 += frq.f0[j];
-                                count += 1;
-                            }
-                        }
-                        if (count > 0) {
-                            f0Src[i] = sumF0 / count;
-                        } else {
-                            f0Src[i] = 0.0;
-                        }
-                    }
-                }
+                var f0Src = SourceF0(item.inputFile, samples, cfg);
 
                 int srcStartFrame = (int)(item.offset / cfg.frame_ms);
                 srcStartFrame = Math.Max(0, srcStartFrame);
@@ -467,11 +511,13 @@ namespace OpenUtau.Core.Render {
 
                 NDArray spEnvSrc, apSrc;
                 NDArray? spEnvHarmonicSrc = null;
+                double[]? rdSrc = null;
                 if (harmonic != null) {
                     // R1.1: ap from the separation's power ratio, and the harmonic half's own
                     // envelope (the input's envelope also carries its noise energy).
                     HnAnalysisF0In(ref cfg, samples, harmonic, f0Src, out spEnvSrc, out var spEnvHarmonicOut, out apSrc);
                     spEnvHarmonicSrc = spEnvHarmonicOut;
+                    rdSrc = RdTrack(spEnvHarmonicOut, f0Src, cfg);
                 } else {
                     WorldAnalysisF0In(ref cfg, samples, f0Src, out spEnvSrc, out apSrc);
                 }
@@ -512,6 +558,7 @@ namespace OpenUtau.Core.Render {
                 var apDst = np.ndarray(new Shape(tDst.Length, apSrc.shape[1]), typeof(double));
                 NDArray? spEnvHarmonicDst = spEnvHarmonicSrc is null ? null
                     : np.ndarray(new Shape(tDst.Length, spEnvHarmonicSrc.shape[1]), typeof(double));
+                var rdDst = rdSrc is null ? null : new double[tDst.Length];
                 for (int i = 0; i < tDst.Length; ++i) {
                     double pos = Math.Max(0, Math.Min(tDst[i], f0Src.Length - 1.0));
                     int index = (int)Math.Floor(pos);
@@ -523,12 +570,18 @@ namespace OpenUtau.Core.Render {
                         if (spEnvHarmonicDst is not null) {
                             spEnvHarmonicDst[i] = spEnvHarmonicSrc![index] * (1.0 - frac) + spEnvHarmonicSrc[index + 1] * frac;
                         }
+                        if (rdDst is not null) {
+                            rdDst[i] = rdSrc![Math.Min(index, rdSrc.Length - 1)] * (1.0 - frac) + rdSrc[Math.Min(index + 1, rdSrc.Length - 1)] * frac;
+                        }
                     } else {
                         f0Dst[i] = f0Src[index];
                         spEnvDst[i] = spEnvSrc[index];
                         apDst[i] = apSrc[index];
                         if (spEnvHarmonicDst is not null) {
                             spEnvHarmonicDst[i] = spEnvHarmonicSrc![index];
+                        }
+                        if (rdDst is not null) {
+                            rdDst[i] = rdSrc![Math.Min(index, rdSrc.Length - 1)];
                         }
                     }
                 }
@@ -537,6 +590,7 @@ namespace OpenUtau.Core.Render {
                 spEnv = spEnvDst;
                 ap = apDst;
                 spEnvHarmonic = spEnvHarmonicDst;
+                rd = rdDst ?? Array.Empty<double>();
             }
 
             float GetAutoGain(float[] samples, double[] f0, float wavMax, int peakComp) {
@@ -716,11 +770,13 @@ namespace OpenUtau.Core.Render {
                 var spHarmonic = new double[totalFrames * spSize];
                 var ap = new double[totalFrames * spSize];
                 var stretch = new double[totalFrames];
+                var rd = new double[totalFrames];
                 var dirty = new bool[totalFrames];
                 Array.Fill(sp, 1e-12);
                 Array.Fill(spHarmonic, 1e-12);
                 Array.Fill(ap, 1.0);
                 Array.Fill(stretch, 1.0);
+                Array.Fill(rd, 1.0);
 
                 foreach (var segment in segments) {
                     var segSp = segment.spEnv.ToArray<double>();
@@ -745,6 +801,7 @@ namespace OpenUtau.Core.Render {
                             ap[j * spSize + k] = ap[j * spSize + k] * wa + segAp[segIdx * spSize + k] * wb;
                         }
                         stretch[j] = stretch[j] * wa + segment.stretch[segIdx] * wb;
+                        rd[j] = rd[j] * wa + segment.rd[segIdx] * wb;
                         dirty[j] = true;
                     }
                 }
@@ -752,6 +809,7 @@ namespace OpenUtau.Core.Render {
                     int last = totalFrames - 1;
                     f0[last] = f0[last - 1];
                     stretch[last] = stretch[last - 1];
+                    rd[last] = rd[last - 1];
                     Array.Copy(sp, (last - 1) * spSize, sp, last * spSize, spSize);
                     Array.Copy(spHarmonic, (last - 1) * spSize, spHarmonic, last * spSize, spSize);
                     Array.Copy(ap, (last - 1) * spSize, ap, last * spSize, spSize);
@@ -766,14 +824,42 @@ namespace OpenUtau.Core.Render {
                     }
                 }
 
+                var gender = FitCurve(genderCurve, totalFrames, 0.5);
+                ApplyRdTension(config, f0, spHarmonic, rd, FitCurve(tensionCurve, totalFrames, 0.5), gender);
                 double[] samples = WorldSynthesisContinuousNoise(
                     f0, sp, spHarmonic, ap, stretch,
                     config.fft_size, config.hop_size, config.fs, seed,
-                    FitCurve(genderCurve, totalFrames, 0.5),
-                    FitCurve(tensionCurve, totalFrames, 0.5),
+                    gender,
+                    FitCurve(null, totalFrames, 0.5),  // tension is applied as Rd above
                     FitCurve(breathinessCurve, totalFrames, 0.5),
                     FitCurve(voicingCurve, totalFrames, 1.0));
                 return samples.Select(s => (float)s).ToArray();
+            }
+
+            /// <summary>
+            /// Tension (0.5 + 0.005 x, x in -100..100) as Rd: each voiced frame's harmonic
+            /// envelope gets the gains of moving the source's Rd to <see cref="GlottalRd.TenseRd"/>,
+            /// on the harmonics of the synthesized f0. The native synthesis then shifts the
+            /// envelope for gender, so the gains are placed where that shift brings them home.
+            /// </summary>
+            internal static void ApplyRdTension(AnalysisConfig config, double[] f0, double[] spHarmonic,
+                    double[] rd, double[] tension, double[] gender) {
+                int spSize = config.fft_size / 2 + 1;
+                double binHz = (double)config.fs / config.fft_size;
+                for (int j = 0; j < f0.Length; ++j) {
+                    double t = (tension[j] - 0.5) * 200;
+                    if (f0[j] <= config.f0_floor || Math.Abs(t) < 1e-9) {
+                        continue;
+                    }
+                    double rd2 = GlottalRd.TenseRd(rd[j], t);
+                    var gains = GlottalRd.Gains(rd[j], rd2, f0[j], (int)(config.fs / 2.0 / f0[j]));
+                    // As ShiftGender: bin b moves to b / ratio.
+                    double ratio = Math.Pow(2, Math.Round((gender[j] - 0.5) * 200, MidpointRounding.AwayFromZero) * 0.01);
+                    for (int b = 0; b < spSize; ++b) {
+                        double g = GlottalRd.GainAt(gains, f0[j], b * binHz / ratio);
+                        spHarmonic[j * spSize + b] *= g * g;
+                    }
+                }
             }
 
             /// <summary>Resizes a curve to length frames, padding with its last value.</summary>

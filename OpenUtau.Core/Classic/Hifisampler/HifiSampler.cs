@@ -59,9 +59,11 @@ namespace OpenUtau.Classic.Hifisampler {
             int melFrames = HifiMelSpectrogram.FrameCount(wave.Length, config.OriginHopSize);
             var timing = new HifiNoteTiming(config, melFrames, velocity, offset,
                 consonant, cutoff, length, flags.Has("e"));
-            var curves = timing.SourceCurves(tension, breathiness, voicing, gender, tempo, config.OriginHopSize);
+            var curves = timing.SourceCurves(tension, breathiness, voicing, gender, tone, pitches, tempo, config.OriginHopSize);
             var features = HifiFeatures.Generate(wave, curves, config,
-                x => HnsepCache.Harmonic(inputFile, x, Hnsep.Instance.Harmonic));
+                x => HnsepCache.Harmonic(inputFile, x, Hnsep.Instance.Harmonic),
+                () => Worldline.SourceF0(inputFile, wave, Worldline.InitAnalysisConfig(config.SampleRate, HifiRdTension.Hop, 2048))
+                    ?? throw new Exception($"Failed to analyze the f0 of {inputFile}."));
             var melRender = timing.RenderMel(features.Mel);
 
             var t = new double[melRender.Length];
@@ -251,7 +253,7 @@ namespace OpenUtau.Classic.Hifisampler {
         /// takes the average of its uses; frames the note doesn't use take the nearest values.
         /// </summary>
         public HifiSourceCurves SourceCurves(float[]? tension, float[]? breathiness, float[]? voicing,
-                float[]? gender, double tempo, int hop) {
+                float[]? gender, int tone, int[] pitches, double tempo, int hop) {
             double step = 60.0 / (tempo * 96);
             var times = SourceTimes();
             double[] Map(float[]? curve, double defaultValue) {
@@ -291,7 +293,12 @@ namespace OpenUtau.Classic.Hifisampler {
                     known.Select(m => (double)m).ToArray(),
                     known.Select(m => sum[m] / weight[m]).ToArray());
             }
-            return new HifiSourceCurves(Map(breathiness, 0), Map(voicing, 100), Map(tension, 0), Map(gender, 0), hop);
+            var pitch = new float[pitches.Length];
+            for (int i = 0; i < pitch.Length; i++) {
+                pitch[i] = tone + pitches[i] / 100f;
+            }
+            return new HifiSourceCurves(Map(breathiness, 0), Map(voicing, 100), Map(tension, 0), Map(gender, 0),
+                Map(pitch, tone), hop);
         }
     }
 

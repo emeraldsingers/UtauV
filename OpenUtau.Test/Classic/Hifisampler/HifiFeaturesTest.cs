@@ -14,6 +14,9 @@ namespace OpenUtau.Classic.Hifisampler {
             return mel;
         }
 
+        // A steady 220 Hz source, on HifiRdTension's frames.
+        static Func<double[]> F0(float[] x) => () => Enumerable.Repeat(220.0, x.Length / HifiRdTension.Hop + 2).ToArray();
+
         static HifiSourceCurves Constant(float[] x, double breathiness, double voicing, double tension, double gender = 0) =>
             HifiSourceCurves.Constant(HifiMelSpectrogram.FrameCount(x.Length, 128), breathiness, voicing, tension, 128, gender);
 
@@ -43,14 +46,14 @@ namespace OpenUtau.Classic.Hifisampler {
             HifiFeatures.Generate(x, curves, new HifiSamplerConfig(), s => {
                 called = true;
                 return s.Select(v => v * 0.5f).ToArray();
-            });
+            }, F0(x));
             Assert.Equal(expected, called);
         }
 
         [Fact]
         public void DefaultCurvesAnalyzeTheSource() {
             var x = Sine(44100, 0.3);
-            var f = HifiFeatures.Generate(x, Constant(x, 0, 100, 0), new HifiSamplerConfig(), _ => throw new Exception("not needed"));
+            var f = HifiFeatures.Generate(x, Constant(x, 0, 100, 0), new HifiSamplerConfig(), _ => throw new Exception("not needed"), F0(x));
             Assert.Equal(1.0, f.Scale);
             Assert.Equal(HifiMelSpectrogram.FrameCount(x.Length, 128), f.Mel.Length);
             AssertMelEqual(Mel(x), f.Mel);
@@ -62,12 +65,12 @@ namespace OpenUtau.Classic.Hifisampler {
             // Stand-in: the harmonic part is half the signal, so the noise part is the other half.
             Func<float[], float[]> half = s => s.Select(v => v * 0.5f).ToArray();
             // Breathiness -100 drops the noise, voicing 100 keeps the harmonic: 0.5 x.
-            var f = HifiFeatures.Generate(x, Constant(x, -100, 100, 0), new HifiSamplerConfig(), half);
+            var f = HifiFeatures.Generate(x, Constant(x, -100, 100, 0), new HifiSamplerConfig(), half, F0(x));
             AssertMelEqual(Mel(x.Select(v => v * 0.5f).ToArray()), f.Mel);
             // Breathiness 100 triples the noise (as Worldline-R), voicing 50 halves the harmonic: 1.75 x,
             // over 0.5 peak so rescaled.
             x = Sine(44100, 0.6);
-            f = HifiFeatures.Generate(x, Constant(x, 100, 50, 0), new HifiSamplerConfig(), half);
+            f = HifiFeatures.Generate(x, Constant(x, 100, 50, 0), new HifiSamplerConfig(), half, F0(x));
             Assert.Equal(0.5 / (0.6 * 1.75), f.Scale, 4);
         }
 
@@ -77,8 +80,9 @@ namespace OpenUtau.Classic.Hifisampler {
             var x = Sine(44100, 0.3);
             int frames = HifiMelSpectrogram.FrameCount(x.Length, 128);
             var breathiness = Enumerable.Range(0, frames).Select(m => m < frames / 2 ? -100.0 : 0).ToArray();
-            var curves = new HifiSourceCurves(breathiness, Enumerable.Repeat(100.0, frames).ToArray(), new double[frames], new double[frames], 128);
-            var f = HifiFeatures.Generate(x, curves, new HifiSamplerConfig(), s => s.Select(v => v * 0.5f).ToArray());
+            var curves = new HifiSourceCurves(breathiness, Enumerable.Repeat(100.0, frames).ToArray(), new double[frames], new double[frames],
+                Enumerable.Repeat(60.0, frames).ToArray(), 128);
+            var f = HifiFeatures.Generate(x, curves, new HifiSamplerConfig(), s => s.Select(v => v * 0.5f).ToArray(), F0(x));
             var quiet = Mel(x.Select(v => v * 0.5f).ToArray());
             var loud = Mel(x);
             int q = frames / 4, l = frames * 3 / 4;
@@ -89,7 +93,7 @@ namespace OpenUtau.Classic.Hifisampler {
         [Fact]
         public void LoudSourceIsScaledToHalfPeak() {
             var x = Sine(44100, 0.8);
-            var f = HifiFeatures.Generate(x, Constant(x, 0, 100, 0), new HifiSamplerConfig(), _ => throw new Exception());
+            var f = HifiFeatures.Generate(x, Constant(x, 0, 100, 0), new HifiSamplerConfig(), _ => throw new Exception(), F0(x));
             Assert.Equal(0.5 / 0.8, f.Scale, 4);
         }
 
@@ -119,7 +123,7 @@ namespace OpenUtau.Classic.Hifisampler {
         [InlineData(50, 707)]
         public void GenderCurveMovesFormantsAsWorldline(double gender, double expectedHz) {
             var x = Enumerable.Range(0, 44100).Select(i => (float)(0.3 * Math.Sin(2 * Math.PI * 1000 * i / 44100.0))).ToArray();
-            var f = HifiFeatures.Generate(x, Constant(x, 0, 100, 0, gender), new HifiSamplerConfig(), _ => throw new Exception());
+            var f = HifiFeatures.Generate(x, Constant(x, 0, 100, 0, gender), new HifiSamplerConfig(), _ => throw new Exception(), F0(x));
             var row = f.Mel[f.Mel.Length / 2];
             int peak = Array.IndexOf(row, row.Max());
             double peakHz = HifiMelBasis.MelFrequencies(130, 40, 16000)[peak + 1];
@@ -133,12 +137,5 @@ namespace OpenUtau.Classic.Hifisampler {
             Assert.Equal(x, HifiGrowl.Apply(x, 44100, 80, _ => 0.0));
         }
 
-        [Fact]
-        public void TensionCurveOfConstantValueIsTheFlag() {
-            var x = Sine(512 * 30 + 77, 0.3);
-            var constant = HifiTension.Apply(x, -1.2, 44100, 2048, 512, 2048);
-            var curve = HifiTension.Apply(x, _ => -1.2, 44100, 2048, 512, 2048);
-            Assert.Equal(constant, curve);
-        }
     }
 }

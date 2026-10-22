@@ -18,21 +18,25 @@ namespace OpenUtau.Classic.Hifisampler {
         public readonly double[] Voicing;
         public readonly double[] Tension;
         public readonly double[] Gender;
+        /// <summary>The note's pitch (MIDI) at each source frame, where tension places its gains.</summary>
+        public readonly double[] TargetPitch;
         readonly int hop;
 
-        public HifiSourceCurves(double[] breathiness, double[] voicing, double[] tension, double[] gender, int hop) {
+        public HifiSourceCurves(double[] breathiness, double[] voicing, double[] tension, double[] gender,
+                double[] targetPitch, int hop) {
             Breathiness = breathiness;
             Voicing = voicing;
             Tension = tension;
             Gender = gender;
+            TargetPitch = targetPitch;
             this.hop = hop;
         }
 
         public static HifiSourceCurves Constant(int frames, double breathiness, double voicing, double tension, int hop,
-                double gender = 0) {
+                double gender = 0, double targetPitch = 60) {
             return new HifiSourceCurves(Enumerable.Repeat(breathiness, frames).ToArray(),
                 Enumerable.Repeat(voicing, frames).ToArray(), Enumerable.Repeat(tension, frames).ToArray(),
-                Enumerable.Repeat(gender, frames).ToArray(), hop);
+                Enumerable.Repeat(gender, frames).ToArray(), Enumerable.Repeat(targetPitch, frames).ToArray(), hop);
         }
 
         public bool HasTension => Tension.Any(t => t != 0);
@@ -80,8 +84,12 @@ namespace OpenUtau.Classic.Hifisampler {
         }
 
         /// <param name="harmonic">The harmonic part of a signal (hnsep), only called when needed.</param>
+        /// <param name="sourceF0">
+        /// The source's f0 (Hz, 0 unvoiced) on frames of <see cref="HifiRdTension.Hop"/>, only
+        /// called for tension.
+        /// </param>
         public static HifiFeatures Generate(float[] wave, HifiSourceCurves curves,
-                HifiSamplerConfig config, Func<float[], float[]> harmonic) {
+                HifiSamplerConfig config, Func<float[], float[]> harmonic, Func<double[]> sourceF0) {
             var x = (float[])wave.Clone();
             if (curves.NeedsSeparation) {
                 var h = harmonic(wave);
@@ -91,8 +99,9 @@ namespace OpenUtau.Classic.Hifisampler {
                     voiced[i] = (float)(voicing * h[i]);
                 }
                 if (curves.HasTension) {
-                    voiced = HifiTension.Apply(voiced, s => -Math.Clamp(curves.At(curves.Tension, s), -100, 100) / 50,
-                        config.SampleRate, config.NFft, config.HopSize, config.WinSize);
+                    voiced = HifiRdTension.Apply(voiced, sourceF0(), config.SampleRate,
+                        s => Math.Clamp(curves.At(curves.Tension, s), -100, 100),
+                        s => 440 * Math.Pow(2, (curves.At(curves.TargetPitch, s) - 69) / 12));
                 }
                 for (int i = 0; i < x.Length; i++) {
                     double breath = HifiSourceCurves.NoiseGain(curves.At(curves.Breathiness, i));

@@ -69,7 +69,7 @@ namespace OpenUtau.Classic.Hifisampler {
             var t = Timing(loop: false);
             // A tension ramp over the note's pitch grid (120 bpm: 5.2 ms a point).
             var ramp = Enumerable.Range(0, 130).Select(i => (float)Math.Min(100, i)).ToArray();
-            var curves = t.SourceCurves(ramp, null, null, null, 120, 128);
+            var curves = t.SourceCurves(ramp, null, null, null, 60, new int[130], 120, 128);
             Assert.Equal(1000, curves.Tension.Length);
             Assert.All(curves.Breathiness, v => Assert.Equal(0, v));
             Assert.All(curves.Voicing, v => Assert.Equal(100, v));
@@ -79,8 +79,12 @@ namespace OpenUtau.Classic.Hifisampler {
             }
             Assert.Equal(0, curves.Tension[0], 6);  // before the offset: the first value
             Assert.True(curves.Tension[^1] > 50);  // after the cutoff: the last values
-            Assert.False(t.SourceCurves(Enumerable.Repeat(0f, 130).ToArray(), null, null, null, 120, 128).HasTension);
+            Assert.False(t.SourceCurves(Enumerable.Repeat(0f, 130).ToArray(), null, null, null, 60, new int[130], 120, 128).HasTension);
             Assert.All(curves.Gender, v => Assert.Equal(0, v));
+            Assert.All(curves.TargetPitch, v => Assert.Equal(60, v));
+            // A pitch bend of +200 cents reaches the source frames as MIDI 62.
+            var bent = t.SourceCurves(null, null, null, null, 60, Enumerable.Repeat(200, 130).ToArray(), 120, 128);
+            Assert.All(bent.TargetPitch, v => Assert.Equal(62, v, 6));
         }
 
         [Fact]
@@ -90,7 +94,7 @@ namespace OpenUtau.Classic.Hifisampler {
             // after the consonant, gets 90; the consonant frames keep 30.
             int conPoints = (int)((t.Con * t.Vel - t.Start * t.Vel) / (60.0 / (120 * 96)));
             var curve = Enumerable.Range(0, 130).Select(i => i < conPoints ? 30f : 90f).ToArray();
-            var curves = t.SourceCurves(null, curve, null, null, 120, 128);
+            var curves = t.SourceCurves(null, curve, null, null, 60, new int[130], 120, 128);
             Assert.Equal(30, curves.Breathiness[t.ConFrame - 10], 6);
             for (int m = t.ConFrame + 2; m < t.EndFrame; m++) {
                 Assert.Equal(90, curves.Breathiness[m], 6);

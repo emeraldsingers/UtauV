@@ -18,6 +18,39 @@ namespace OpenUtau.Classic {
         }
 
         [Fact]
+        public void TensionReshapesTheHarmonicEnvelopeByRd() {
+            var cfg = Worldline.InitAnalysisConfig(44100, 220, 2048);
+            int spSize = cfg.fft_size / 2 + 1;
+            double binHz = 44100.0 / cfg.fft_size;
+            double[] Flat() => Enumerable.Repeat(1.0, spSize).ToArray();
+            double[] Gain(double tension, double gender) {
+                var sp = Flat();
+                Worldline.PhraseSynthV2.ApplyRdTension(cfg, new[] { 200.0 }, sp, new[] { 1.0 },
+                    new[] { 0.5 + 0.005 * tension }, new[] { gender });
+                return sp;
+            }
+            // No tension: untouched.
+            Assert.All(Gain(0, 0.5), v => Assert.Equal(1.0, v));
+            // +100 halves Rd; the power gains are the squared Rd gains on the harmonics of f0.
+            var gains = Core.Analysis.GlottalRd.Gains(1.0, 0.5, 200, 110);
+            var power = Gain(100, 0.5);
+            foreach (int k in new[] { 1, 4, 20 }) {
+                int bin = (int)Math.Round(k * 200 / binHz);
+                double expected = Core.Analysis.GlottalRd.GainAt(gains, 200, bin * binHz);
+                Assert.Equal(expected * expected, power[bin], 9);
+            }
+            // With a gender shift (bins move to b / ratio), each gain is placed where the shift
+            // brings it home, at the harmonic it belongs to.
+            double ratio = Math.Pow(2, 50 * 0.01);
+            var shifted = Gain(100, 0.75);
+            foreach (int k in new[] { 4, 20 }) {
+                int bin = (int)Math.Round(k * 200 * ratio / binHz);
+                double expected = Core.Analysis.GlottalRd.GainAt(gains, 200, bin * binHz / ratio);
+                Assert.Equal(expected * expected, shifted[bin], 9);
+            }
+        }
+
+        [Fact]
         public void ContinuousNoiseMatchesWorldNoiseLevel() {
             // Unvoiced, flat and fully aperiodic: the output is the noise half alone, and
             // WORLD's noise with a flat spectrum S has per-sample variance S.

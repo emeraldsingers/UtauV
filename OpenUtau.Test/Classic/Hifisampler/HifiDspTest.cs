@@ -117,13 +117,5 @@ namespace OpenUtau.Classic.Hifisampler {
             Assert.NotEqual(x, y);
         }
 
-        [Fact]
-        public void TensionZeroKeepsTheSignal() {
-            var x = Noise(512 * 20 + 100, 4).Select(v => (float)(v * 0.3)).ToArray();
-            var y = HifiTension.Apply(x, 0, 44100, 2048, 512, 2048);
-            Assert.Equal(x.Length, y.Length);
-            double maxErr = x.Zip(y, (a, b) => Math.Abs(a - b)).Max();
-            Assert.True(maxErr < 1e-5, $"max error {maxErr}");
-        }
     }
 }
