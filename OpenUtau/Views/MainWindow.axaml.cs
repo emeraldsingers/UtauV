@@ -861,14 +861,14 @@ viewModel.NewProject();
             });
         }
 
-        void OnMenuDebugWindow(object sender, RoutedEventArgs args) {
+        void OnMenuDeveloperWindow(object sender, RoutedEventArgs args) {
             var desktop = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
             if (desktop == null) {
                 return;
             }
-            var window = desktop.Windows.FirstOrDefault(w => w is DebugWindow);
+            var window = desktop.Windows.FirstOrDefault(w => w is DeveloperWindow);
             if (window == null) {
-                window = new DebugWindow();
+                window = new DeveloperWindow();
             }
             ShowToolWindow(window);
         }
