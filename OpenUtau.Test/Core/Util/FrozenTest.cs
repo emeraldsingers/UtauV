@@ -29,6 +29,8 @@ namespace OpenUtau.Core.Util {
             Assert.Throws<ArgumentNullException>(() => new Frozen<float>(null, 0));
         }
 
+        // The hash and verification machinery only exists in DEBUG builds, like in Frozen.
+#if DEBUG
         [Fact]
         public void HashIsContentAddressed() {
             var a = new float[] { 1, 2, 3, 4 }.Freeze();
@@ -66,5 +68,6 @@ namespace OpenUtau.Core.Util {
             Assert.Equal(a.DebugHash, b.DebugHash);
             a.Verify();
         }
+#endif
     }
 }
