@@ -15,6 +15,7 @@ using ReactiveUI.SourceGenerators;
 using ReactiveUI.Primitives;
 using OpenUtau.Core.Render;
 using OpenUtau.Colors;
+using ReactiveUI.Primitives.Concurrency;
 using Serilog;
 
 namespace OpenUtau.App.ViewModels {

@@ -84,7 +84,7 @@ namespace OpenUtau.App {
                 .With(fontOptions);
             
             if (OS.IsLinux() && Core.Util.Preferences.Default.UseWayland) {
-                builder.UseWayland();
+                builder.UseWaylandWithFallback();
             }
             
             return builder.With(new X11PlatformOptions {
