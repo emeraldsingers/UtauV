@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
@@ -275,6 +276,60 @@ namespace OpenUtau.App.Controls {
                 PanTextBox.IsEnabled = false;
                 if (commit && double.TryParse(PanTextBox.Text, out var pan) && ViewModel != null) {
                     ViewModel.Pan = Math.Clamp(pan, PanSlider.Minimum, PanSlider.Maximum);
+                }
+            }
+        }
+
+        private void MoveHandleScrolled(object? sender, PointerWheelEventArgs e) {
+            Dispatcher.UIThread.Post(() => MoveHandleMoved(sender, e));
+        }
+
+        private void MoveHandlePressed(object? sender, PointerPressedEventArgs e) {
+            var control = sender as Control;
+            var pointer = e.GetCurrentPoint(control);
+            if (control != null && pointer.Properties.IsLeftButtonPressed) {
+                e.Pointer.Capture(control);
+            }
+        }
+
+        private void MoveHandleReleased(object? sender, PointerReleasedEventArgs e) {
+            if (e.InitialPressMouseButton == MouseButton.Left && canvas != null) {
+                Cursor = null;
+                Point point = e.GetPosition(canvas);
+                int tracksMaxIdx = DocManager.Inst.Project.tracks.Count - 1;
+                double sizeHidden = Math.Abs(Offset.Y);
+                if (track != null) {
+                    bool isAboveCenter = Canvas.GetTop(this) + TrackHeight / 2 > point.Y;
+                    int position = (int)Math.Round((sizeHidden + point.Y - (isAboveCenter ? 0 : TrackHeight)) / TrackHeight);
+                    int idx = Math.Clamp(position, 0, tracksMaxIdx);
+
+                    if (track.TrackNo != idx) {
+                        DocManager.Inst.StartUndoGroup("command.track.order");
+                        DocManager.Inst.ExecuteCmd(new SetTrackNoCommand(DocManager.Inst.Project, track, idx));
+                        DocManager.Inst.EndUndoGroup();
+                    }
+                }
+                if (canvas.TrackMover != null) {
+                    canvas.TrackMover.IsVisible = false;
+                }
+            }
+            e.Pointer.Capture(null);
+        }
+
+        private void MoveHandleMoved(object? sender, PointerEventArgs e) {
+            var control = sender as Control;
+            var pointer = e.GetCurrentPoint(control);
+            if (pointer.Properties.IsLeftButtonPressed && e.Pointer.Captured == control && canvas?.TrackMover != null) {
+                canvas.TrackMover.IsVisible = true;
+                Cursor = ViewConstants.cursorSizeNS;
+                double maxHeight = DocManager.Inst.Project.tracks.Count * TrackHeight;
+                Point point = e.GetPosition(canvas);
+                double offset = Math.Abs(Offset.Y);
+                double leftOver = offset % TrackHeight;
+                if (track != null) {
+                    double position = Math.Round((point.Y + leftOver) / TrackHeight) * TrackHeight;
+                    double finalPos = Math.Clamp(position - leftOver, -leftOver, maxHeight - offset);
+                    Canvas.SetTop(canvas.TrackMover, finalPos);
                 }
             }
         }
