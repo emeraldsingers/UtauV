@@ -103,7 +103,18 @@ namespace OpenUtau.Core {
                 }
             }
 
-            Singers = merged;
+Singers = merged;
+            // The id is the folder path relative to its singers root, so same-named
+            // folders under different roots collide and only the first one is used.
+            foreach (var duplicates in merged.Values.GroupBy(s => s.Id).Where(g => g.Count() > 1)) {
+                DocManager.Inst.ExecuteCmd(new WarningNotification(
+                    $"singers.duplicate:{duplicates.Key}",
+                    "warnings.singers.duplicate",
+                    "warnings.singers.duplicate.detail",
+                    duplicates.Key,
+                    duplicates.First().Location,
+                    string.Join("\n", duplicates.Skip(1).Select(s => s.Location))));
+            }
             SingerGroups = merged.Values
                 .GroupBy(s => s.SingerType)
                 .ToDictionary(s => s.Key, s => s.LocalizedOrderBy(singer => singer.LocalizedName).ToList());

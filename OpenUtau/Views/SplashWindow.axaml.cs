@@ -66,11 +66,12 @@ namespace OpenUtau.App.Views {
                 Log.Information("Initializing OpenUtau.");
                 SetStatus("Loading tools...");
                 ToolsManager.Inst.Initialize();
-                SetStatus("Loading singers...");
-                SingerManager.Inst.Initialize();
                 SetStatus("Initializing project manager...");
                 DocManager.Inst.Initialize(mainThread, mainScheduler);
                 DocManager.Inst.PostOnUIThread = action => Avalonia.Threading.Dispatcher.UIThread.Post(action);
+                // After the project manager, so the warnings the singer search raises can be published.
+                SetStatus("Loading singers...");
+                SingerManager.Inst.Initialize();
                 Log.Information("Initialized OpenUtau.");
                 SetStatus("Initializing audio engine...");
                 InitAudio();
