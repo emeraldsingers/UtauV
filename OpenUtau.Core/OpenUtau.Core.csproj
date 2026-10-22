@@ -24,6 +24,7 @@
     <PackageReference Include="csharp-pinyin" Version="1.0.0" />
     <PackageReference Include="FftFlat" Version="1.0.1" />
     <PackageReference Include="Ignore" Version="0.1.50" />
+    <PackageReference Include="Jint" Version="4.17.0" />
     <PackageReference Include="K4os.Hash.xxHash" Version="1.0.8" />
     <PackageReference Include="Melanchall.DryWetMidi" Version="7.2.0" />
     <PackageReference Include="NAudio.Core" Version="2.2.1" />
@@ -107,6 +108,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>VogenRes.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="Js\Template\*" LogicalName="Js.Template.%(Filename)%(Extension)" />
   </ItemGroup>
   <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>

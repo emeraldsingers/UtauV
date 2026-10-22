@@ -795,7 +795,7 @@ var token = JsonNode.Parse(body);
             return result;
         }
 
-        static RegistryVersion[] ParseVoicebankVersions(JsonObject voicebankObj) {
+static RegistryVersion[] ParseVoicebankVersions(JsonObject voicebankObj) {
             var map = new Dictionary<string, RegistryVersion>(StringComparer.OrdinalIgnoreCase);
             void AddVersion(RegistryVersion candidate) {
                 if (candidate == null || string.IsNullOrWhiteSpace(candidate.version)) {
@@ -1164,6 +1164,73 @@ var token = JsonNode.Parse(body);
                 .ToArray();
         }
 
+        public List<InstalledEntrypoint> GetInstalledEntrypoints() {
+            var list = new List<InstalledEntrypoint>();
+            var depPath = PathManager.Inst.DependencyPath;
+            if (!Directory.Exists(depPath)) {
+                return list;
+            }
+            foreach (var dir in Directory.GetDirectories(depPath)) {
+                list.AddRange(GetEntrypoints(dir));
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Reads the entry points of the package extracted in <paramref name="dir"/>.
+        /// </summary>
+        public static List<InstalledEntrypoint> GetEntrypoints(string dir) {
+            var list = new List<InstalledEntrypoint>();
+            OudepMetadata? metadata = null;
+            try {
+                var yamlPath = Path.Combine(dir, "oudep.yaml");
+                using var reader = new StreamReader(yamlPath, Encoding.UTF8);
+                metadata = Core.Yaml.DefaultDeserializer.Deserialize<OudepMetadata>(reader) ?? new OudepMetadata();
+                if (string.IsNullOrEmpty(metadata.id)) {
+                    metadata.id = Path.GetFileName(dir);
+                }
+                if (string.IsNullOrEmpty(metadata.version)) {
+                    metadata.version = string.Empty;
+                }
+            } catch (Exception e) {
+                Log.Error(e, "Failed to read oudep.yaml in {dir}", dir);
+                return list;
+            }
+
+            // Collect entry points from the entrypoints array
+            if (metadata.entrypoints != null) {
+                foreach (var ep in metadata.entrypoints) {
+                    try {
+                        if (string.IsNullOrEmpty(ep.loader) || string.IsNullOrEmpty(ep.path)) {
+                            Log.Warning("Skipping entrypoint in package {id} with empty loader or path", metadata.id);
+                            continue;
+                        }
+                        list.Add(new InstalledEntrypoint {
+                            Package = metadata,
+                            Entrypoint = ep,
+                            PackagePath = dir,
+                        });
+                    } catch (Exception e) {
+                        Log.Error(e, "Failed to load entrypoint '{path}' in package {id}", ep.path, metadata.id);
+                    }
+                }
+            }
+
+            // Fallback: if no entrypoints defined but @class is set, treat the package root as a single entry point
+            if ((metadata.entrypoints == null || metadata.entrypoints.Length == 0) && !string.IsNullOrEmpty(metadata.@class)) {
+                try {
+                    list.Add(new InstalledEntrypoint {
+                        Package = metadata,
+                        Entrypoint = new OudepEntrypoint { loader = metadata.@class, path = string.Empty },
+                        PackagePath = dir,
+                    });
+                } catch (Exception e) {
+                    Log.Error(e, "Failed to load fallback @class entrypoint in package {id}", metadata.id);
+                }
+            }
+            return list;
+        }
+
         public async Task<List<OudepMetadata>> GetInstalledAsync() {
             var list = new List<OudepMetadata>();
             var depPath = PathManager.Inst.DependencyPath;
@@ -1200,61 +1267,7 @@ var token = JsonNode.Parse(body);
             public string EntrypointPath => Path.Combine(PackagePath, Entrypoint.path);
         }
 
-        public async Task<List<InstalledEntrypoint>> GetInstalledEntrypointsAsync() {
-            var list = new List<InstalledEntrypoint>();
-            var depPath = PathManager.Inst.DependencyPath;
-            if (!Directory.Exists(depPath)) {
-                return list;
-            }
-            return await Task.Run(() => {
-                var dirs = Directory.GetDirectories(depPath);
-                foreach (var dir in dirs) {
-                    OudepMetadata? metadata = null;
-                    try {
-                        var yamlPath = Path.Combine(dir, "oudep.yaml");
-                        using var reader = new StreamReader(yamlPath, Encoding.UTF8);
-                        metadata = Core.Yaml.DefaultDeserializer.Deserialize<OudepMetadata>(reader) ?? new OudepMetadata();
-                        if (string.IsNullOrEmpty(metadata.id)) {
-                            metadata.id = Path.GetFileName(dir);
-                        }
-                    } catch (Exception e) {
-                        Log.Error(e, "Failed to read oudep.yaml in {dir}", dir);
-                        continue;
-                    }
-
-                    if (metadata.entrypoints != null) {
-                        foreach (var ep in metadata.entrypoints) {
-                            try {
-                                if (string.IsNullOrEmpty(ep.loader) || string.IsNullOrEmpty(ep.path)) {
-                                    Log.Warning("Skipping entrypoint in package {id} with empty loader or path", metadata.id);
-                                    continue;
-                                }
-                                list.Add(new InstalledEntrypoint {
-                                    Package = metadata,
-                                    Entrypoint = ep,
-                                    PackagePath = dir,
-                                });
-                            } catch (Exception e) {
-                                Log.Error(e, "Failed to load entrypoint '{path}' in package {id}", ep.path, metadata.id);
-                            }
-                        }
-                    }
-
-                    if ((metadata.entrypoints == null || metadata.entrypoints.Length == 0) && !string.IsNullOrEmpty(metadata.@class)) {
-                        try {
-                            list.Add(new InstalledEntrypoint {
-                                Package = metadata,
-                                Entrypoint = new OudepEntrypoint { loader = metadata.@class, path = string.Empty },
-                                PackagePath = dir,
-                            });
-                        } catch (Exception e) {
-                            Log.Error(e, "Failed to load fallback @class entrypoint in package {id}", metadata.id);
-                        }
-                    }
-                }
-                return list;
-            });
-        }
+        public Task<List<InstalledEntrypoint>> GetInstalledEntrypointsAsync() => Task.Run(GetInstalledEntrypoints);
 
         public async Task<List<OuvbMetadata>> GetInstalledVoicebanksAsync() {
             return await Task.Run(() => {
@@ -1340,6 +1353,17 @@ var token = JsonNode.Parse(body);
 
         private static readonly IComparer<string> VersionComparer = new VersionStringComparer();
 
+internal static bool IsValidPackageName(string id) {
+            if (id.Contains("..") || Path.IsPathRooted(id)) return false;
+            return !Path.GetInvalidFileNameChars().Any(c => id.Contains(c));
+        }
+
+        private static bool IsValidRelativePath(string path) {
+            if (string.IsNullOrEmpty(path)) return false;
+            if (path.Contains("..") || Path.IsPathRooted(path)) return false;
+            return !Path.GetInvalidPathChars().Any(c => path.Contains(c));
+        }
+
         public static string GetLatestVersionString(RegistryVersion[] versions) {
             if (versions == null || versions.Length == 0) return string.Empty;
             return versions.OrderByDescending(v => v.version, VersionComparer).First().version;
@@ -1385,6 +1409,8 @@ var token = JsonNode.Parse(body);
             } catch (Exception e) {
                 Log.Warning(e, "Failed to uninstall dependency {id}", id);
                 throw;
+            } finally {
+                DocManager.Inst.ExecuteCmd(new PackagesChangedNotification());
             }
         }
 
@@ -1435,6 +1461,7 @@ var token = JsonNode.Parse(body);
                 }
             });
             DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, $"Installed dependency \"{id}\""));
+            DocManager.Inst.ExecuteCmd(new PackagesChangedNotification());
         }
 
         public async Task InstallVoicebankAsync(RegistrySoftware software, IProgress<int>? progress = null) {

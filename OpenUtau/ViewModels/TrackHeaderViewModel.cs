@@ -109,15 +109,15 @@ namespace OpenUtau.App.ViewModels {
                 RefreshAvatar();
             });
             SelectPhonemizerCommand = ReactiveCommand.Create<PhonemizerFactory>(factory => {
-                if (track.Phonemizer.GetType() != factory.type) {
+                if (track.Phonemizer.Id != factory.Id) {
                     DocManager.Inst.StartUndoGroup("command.track.setting");
-                    if (tracksViewModel != null && tracksViewModel.SelectedTracks.Count > 1) {
+if (tracksViewModel != null && tracksViewModel.SelectedTracks.Count > 1) {
                         foreach (var selectedTrack in tracksViewModel.SelectedTracks) {
                             var phonemizer = factory.Create();
                             Log.Information($"Loading Phonemizer: {phonemizer.ToString()}");
                             DocManager.Inst.ExecuteCmd(new TrackChangePhonemizerCommand(DocManager.Inst.Project, selectedTrack, phonemizer));
                             if (!string.IsNullOrEmpty(selectedTrack.Singer?.Id) && phonemizer != null) {
-                                Preferences.Default.SingerPhonemizers[selectedTrack.Singer.Id] = phonemizer.GetType().FullName!;
+                                Preferences.Default.SingerPhonemizers[selectedTrack.Singer.Id] = phonemizer.Id!;
                             }
                         }
                     } else {
@@ -125,11 +125,11 @@ namespace OpenUtau.App.ViewModels {
                         Log.Information($"Loading Phonemizer: {phonemizer.ToString()}");
                         DocManager.Inst.ExecuteCmd(new TrackChangePhonemizerCommand(DocManager.Inst.Project, track, phonemizer));
                         if (!string.IsNullOrEmpty(Singer?.Id) && phonemizer != null) {
-                            Preferences.Default.SingerPhonemizers[Singer.Id] = phonemizer.GetType().FullName!;
+                            Preferences.Default.SingerPhonemizers[Singer.Id] = phonemizer.Id!;
                         }
                     }
                     DocManager.Inst.EndUndoGroup();
-                    var name = factory.type.FullName!;
+                    var name = factory.Id!;
                     Preferences.Default.RecentPhonemizers.Remove(name);
                     Preferences.Default.RecentPhonemizers.Insert(0, name);
                     while (Preferences.Default.RecentPhonemizers.Count > 8) {

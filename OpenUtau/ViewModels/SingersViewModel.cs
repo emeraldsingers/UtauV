@@ -137,7 +137,7 @@ namespace OpenUtau.App.ViewModels {
                             }
                         ).ToList();
                         setDefaultPhonemizerMenuItems = PhonemizerFactory.GetAll().Select(factory => 
-                            new MenuItemViewModel(singer.DefaultPhonemizer == factory.type.FullName) {
+                            new MenuItemViewModel(singer.DefaultPhonemizer == factory.Id) {
                                 Header = factory.ToString(),
                                 Command = setDefaultPhonemizerCommand,
                                 CommandParameter = factory,
@@ -216,7 +216,7 @@ namespace OpenUtau.App.ViewModels {
                 return;
             }
             try {
-                ModifyConfig(Singer, config => config.DefaultPhonemizer = factory.type.FullName ?? string.Empty);
+                ModifyConfig(Singer, config => config.DefaultPhonemizer = factory.Id ?? string.Empty);
             } catch (Exception e) {
                 var customEx = new MessageCustomizableException("Failed to save singer config", "<translate:errors.failed.savesingerconfig>", e);
                 DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(customEx));
