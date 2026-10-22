@@ -115,6 +115,8 @@ namespace OpenUtau.App {
             var graphite = (IResourceDictionary) Current.Resources["themes-graphite"]!;
             var ice = (IResourceDictionary) Current.Resources["themes-ice"]!;
             var silver = (IResourceDictionary) Current.Resources["themes-silver"]!;
+            var midnight = (IResourceDictionary) Current.Resources["themes-midnight"]!;
+            var daylight = (IResourceDictionary) Current.Resources["themes-daylight"]!;
             var custom = (IResourceDictionary) Current.Resources["themes-custom"]!;
             switch (Core.Util.Preferences.Default.ThemeName) { 
                 case "Light":
@@ -151,6 +153,14 @@ namespace OpenUtau.App {
                     break;
                 case "Silver":
                     ApplyTheme(silver);
+                    Current.RequestedThemeVariant = ThemeVariant.Light;
+                    break;
+                case "Midnight":
+                    ApplyTheme(midnight);
+                    Current.RequestedThemeVariant = ThemeVariant.Dark;
+                    break;
+                case "Daylight":
+                    ApplyTheme(daylight);
                     Current.RequestedThemeVariant = ThemeVariant.Light;
                     break;
                 default:
