@@ -1056,7 +1056,7 @@ namespace OpenUtau.App.Views {
         async void OnDrop(object? sender, DragEventArgs args) {
             string[] ProjectExts = { ".ustx", ".ust", ".vsqx", ".ufdata", ".musicxml", ".mid", ".midi", ".svp", ".tssln", ".ccs" };
             string[] ArchiveExts = { ".zip", ".rar", ".uar" };
-            string[] AudioExts = { ".mp3", ".wav", ".ogg", ".flac" };
+            string[] AudioExts = { ".mp3", ".wav", ".ogg", ".flac", ".m4a" };
             string[] SupportedExts = ProjectExts
                 .Concat(ArchiveExts)
                 .Concat(AudioExts)
