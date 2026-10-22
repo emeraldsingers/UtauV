@@ -6,6 +6,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenUtau.Classic.Hifisampler {
     /// <summary>
@@ -31,6 +33,12 @@ namespace OpenUtau.Classic.Hifisampler {
             this.fmax = fmax;
             this.nMels = nMels;
         }
+
+        /// <summary>
+        /// The frames <see cref="Compute"/> returns for n samples, whatever the key shift (the
+        /// window always equals the FFT length, and the padding is window minus hop).
+        /// </summary>
+        public static int FrameCount(int n, int hop) => n < hop ? 0 : 1 + (n - hop) / hop;
 
         /// <summary>The mel magnitudes (before log) of y, [frame][mel]. speed is always 1 in hifisampler.</summary>
         public float[][] Compute(float[] y, double keyShift) {
@@ -65,6 +73,76 @@ namespace OpenUtau.Classic.Hifisampler {
                 mel[m] = outRow;
             });
             return mel;
+        }
+
+        /// <summary>
+        /// <see cref="Compute(float[], double)"/> with a key shift per frame (a gender curve):
+        /// each frame takes its own FFT size and window, centered where every size centers it.
+        /// A constant shift is exactly the single-shift analysis.
+        /// </summary>
+        public float[][] Compute(float[] y, double[] keyShifts) {
+            int frames = FrameCount(y.Length, hopLength);
+            if (keyShifts.Length != frames) {
+                throw new ArgumentException($"{keyShifts.Length} key shifts for {frames} frames.");
+            }
+            if (frames == 0 || keyShifts.All(k => k == keyShifts[0])) {
+                return Compute(y, frames == 0 ? 0 : keyShifts[0]);
+            }
+            var x = new double[y.Length];
+            for (int i = 0; i < y.Length; i++) {
+                x[i] = y[i];
+            }
+            int hop = hopLength;
+            int size = nfft / 2 + 1;
+            var basis = HifiMelBasis.Get(sampleRate, nfft, nMels, fmin, fmax);
+            var mel = new float[frames][];
+            System.Threading.Tasks.Parallel.For(0, frames, () => new Dictionary<(int, int), FrameScratch>(), (m, _, scratches) => {
+                double keyShift = keyShifts[m];
+                double factor = Math.Pow(2, keyShift / 12);
+                int nfftNew = (int)Math.Round(nfft * factor, MidpointRounding.ToEven);
+                int winSizeNew = (int)Math.Round(winSize * factor, MidpointRounding.ToEven);
+                if (!scratches.TryGetValue((nfftNew, winSizeNew), out var s)) {
+                    s = new FrameScratch(nfftNew, winSizeNew);
+                    scratches[(nfftNew, winSizeNew)] = s;
+                }
+                // Frame m of the reflect-padded signal, in the unpadded signal's samples.
+                int start = m * hop - (winSizeNew - hop) / 2;
+                for (int i = 0; i < nfftNew; i++) {
+                    int j = start + i;
+                    s.frame[i] = (j >= 0 && j < x.Length ? x[j] : x[HifiArray.ReflectIndex(j, x.Length)]) * s.window[i];
+                }
+                s.dft.Forward(s.frame, s.bins);
+                int bins = Math.Min(size, s.bins.Length);  // missing bins are zero-padded
+                double binScale = keyShift != 0 ? (double)winSize / winSizeNew : 1.0;
+                var outRow = new float[nMels];
+                for (int b = 0; b < nMels; b++) {
+                    var weights = basis[b];
+                    double sum = 0;
+                    for (int k = 0; k < bins; k++) {
+                        sum += weights[k] * ((float)s.bins[k].Magnitude * binScale);
+                    }
+                    outRow[b] = (float)sum;
+                }
+                mel[m] = outRow;
+                return scratches;
+            }, _ => { });
+            return mel;
+        }
+
+        sealed class FrameScratch {
+            public readonly HifiRealDft dft;
+            public readonly double[] window;
+            public readonly double[] frame;
+            public readonly System.Numerics.Complex[] bins;
+
+            public FrameScratch(int nfft, int winSize) {
+                dft = new HifiRealDft(nfft);
+                // torch centers a shorter window in the frame.
+                window = new double[nfft];
+                Array.Copy(HifiStft.HannWindow(winSize), 0, window, (nfft - winSize) / 2, winSize);
+                frame = new double[nfft];
+                bins = new System.Numerics.Complex[nfft / 2 + 1];
+            }
         }
 
         /// <summary>util/audio.py dynamic_range_compression_torch, clip_val 1e-9 (the one resampler.py imports).</summary>

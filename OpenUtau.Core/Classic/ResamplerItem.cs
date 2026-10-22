@@ -35,6 +35,11 @@ namespace OpenUtau.Classic {
 
         public double tempo;
         public int[] pitches;
+        public float[]? tension;
+        public float[]? breathiness;
+        public float[]? voicing;
+        public float[]? gender;
+        public float[]? growl;
 
         public ulong hash;
 
@@ -78,6 +83,17 @@ namespace OpenUtau.Classic {
             var pitchIntervalMs = MusicMath.TempoTickToMs(tempo, 5);
             var pitchSampleStartMs = phone.positionMs - pitchLeadingMs;
 
+            bool usesCurves = resampler is WorldlineResampler or HifisamplerResampler;
+            float[]? phraseGrowl = resampler is HifisamplerResampler
+                ? phrase.curves.FirstOrDefault(c => c.Item1 == Core.Format.Ustx.GRWC)?.Item2
+                : null;
+            float[]? NewCurve(float[]? phraseCurve) => usesCurves && phraseCurve != null ? new float[pitchCount] : null;
+            tension = NewCurve(phrase.tension);
+            breathiness = NewCurve(phrase.breathiness);
+            voicing = NewCurve(phrase.voicing);
+            gender = NewCurve(phrase.gender);
+            growl = NewCurve(phraseGrowl);
+
             for (int i = 0; i < pitches.Length; i++) {
                 var samplePosMs = pitchSampleStartMs + pitchIntervalMs * i;
                 var samplePosTick = (int)Math.Floor(phrase.timeAxis.MsPosToNonExactTickPos(samplePosMs));
@@ -92,9 +108,14 @@ namespace OpenUtau.Classic {
                 var diffPitchMs = samplePosMs - phrase.timeAxis.TickPosToMsPos(phrasePitchStartTick + sampleStart * 5);
                 var sampleAlpha = diffPitchMs / sampleInterval;
 
-                var sampleLerped = phrase.pitches[sampleStart] + (phrase.pitches[sampleEnd] - phrase.pitches[sampleStart]) * sampleAlpha;
+                double Lerp(float[] curve) => curve[sampleStart] + (curve[sampleEnd] - curve[sampleStart]) * sampleAlpha;
 
-                pitches[i] = (int)Math.Round(sampleLerped - phone.tone * 100);
+                pitches[i] = (int)Math.Round(Lerp(phrase.pitches) - phone.tone * 100);
+                if (tension != null) tension[i] = (float)Lerp(phrase.tension!);
+                if (breathiness != null) breathiness[i] = (float)Lerp(phrase.breathiness!);
+                if (voicing != null) voicing[i] = (float)Lerp(phrase.voicing!);
+                if (gender != null) gender[i] = (float)Lerp(phrase.gender!);
+                if (growl != null) growl[i] = (float)Lerp(phraseGrowl!);
             }
 
             hash = Hash();
@@ -141,6 +162,13 @@ namespace OpenUtau.Classic {
                     writer.Write(tempo);
                     foreach (int pitch in pitches) {
                         writer.Write(pitch);
+                    }
+                    foreach (var curve in new[] { tension, breathiness, voicing, gender, growl }) {
+                        if (curve != null) {
+                            foreach (float v in curve) {
+                                writer.Write(v);
+                            }
+                        }
                     }
                     return XXH64.DigestOf(stream.ToArray());
                 }

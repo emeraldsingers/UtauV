@@ -29,7 +29,12 @@ namespace OpenUtau.Classic {
             Ustx.MODP,
             Ustx.ALT,
             Ustx.DIR,
-            Ustx.SHFT
+            Ustx.SHFT,
+            Ustx.GENC,
+            Ustx.TENC,
+            Ustx.BREC,
+            Ustx.VOIC,
+            Ustx.GRWC,
         };
 
         public USingerType SingerType => USingerType.Classic;

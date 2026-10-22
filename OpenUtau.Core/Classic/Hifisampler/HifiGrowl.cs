@@ -3,6 +3,7 @@
 // Modified for OpenUtau: translated to C#, reading OpenUtau's resampler arguments.
 
 using System;
+using System.Linq;
 
 namespace OpenUtau.Classic.Hifisampler {
     /// <summary>
@@ -16,7 +17,12 @@ namespace OpenUtau.Classic.Hifisampler {
         const double MinNyqFrac = 0.01;
 
         public static float[] Apply(float[] audio, int sampleRate, double frequency, double strength, double freqLow = 400.0) {
-            if (strength == 0 || frequency <= 0) {
+            return Apply(audio, sampleRate, frequency, _ => strength, freqLow);
+        }
+
+        /// <param name="strengthAt">The strength at each sample, for a growl curve; a constant is the HG flag.</param>
+        public static float[] Apply(float[] audio, int sampleRate, double frequency, Func<int, double> strengthAt, double freqLow = 400.0) {
+            if (frequency <= 0 || Enumerable.Range(0, audio.Length).All(i => strengthAt(i) == 0)) {
                 return (float[])audio.Clone();
             }
             int n = audio.Length;
@@ -31,7 +37,7 @@ namespace OpenUtau.Classic.Hifisampler {
             for (int i = 0; i < n; i++) {
                 complement[i] = x[i] - band[i];
             }
-            var modulated = ModulatePitch(band, sampleRate, SquareLfo(n, sampleRate, frequency), strength);
+            var modulated = ModulatePitch(band, sampleRate, SquareLfo(n, sampleRate, frequency), strengthAt);
             var result = new float[n];
             for (int i = 0; i < n; i++) {
                 result[i] = (float)(complement[i] + modulated[i]);
@@ -51,7 +57,7 @@ namespace OpenUtau.Classic.Hifisampler {
             return lfo;
         }
 
-        static double[] ModulatePitch(double[] band, int sampleRate, double[] lfo, double strength) {
+        static double[] ModulatePitch(double[] band, int sampleRate, double[] lfo, Func<int, double> strengthAt) {
             int n = band.Length;
             if (n == 0) {
                 return band;
@@ -59,7 +65,7 @@ namespace OpenUtau.Classic.Hifisampler {
             var ratio = new double[n];
             double ratioSum = 0;
             for (int i = 0; i < n; i++) {
-                ratio[i] = Math.Pow(2, lfo[i] * strength * MaxVibratoCents / 1200.0);
+                ratio[i] = Math.Pow(2, lfo[i] * strengthAt(i) * MaxVibratoCents / 1200.0);
                 ratioSum += ratio[i];
             }
             double ratioMean = ratioSum / n;

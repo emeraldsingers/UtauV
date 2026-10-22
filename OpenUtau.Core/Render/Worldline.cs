@@ -278,16 +278,32 @@ namespace OpenUtau.Core.Render {
                 f0[i] = MusicMath.ToneToFreq(item.tone + pitch * 0.01);
             }
 
+            // The flags plus the curves (on the pitch bend's grid), each relative to its default.
             int flagG = GetFlag(item, "g", 0);
             int flagMt = GetFlag(item, "Mt", 0);
             int flagMb = GetFlag(item, "Mb", 0);
             int flagMv = GetFlag(item, "Mv", 100);
+            double[] Curve(float[]? curve, double defaultValue, Func<double, double> convert) {
+                var values = new double[total];
+                for (int i = 0; i < total; ++i) {
+                    double v = defaultValue;
+                    if (curve != null && curve.Length > 0) {
+                        double pos = Math.Clamp((i * frameMs - startMs) / stepMs, 0, curve.Length - 1);
+                        int index = (int)Math.Floor(pos);
+                        double t = pos - index;
+                        v = index + 1 < curve.Length ? curve[index] * (1 - t) + curve[index + 1] * t : curve[index];
+                    }
+                    values[i] = convert(v);
+                }
+                return values;
+            }
+
             double[] samples = WorldSynthesis(
                 f0, sp, false, spSize, ap, false, config.fft_size, frameMs, fs,
-                Enumerable.Repeat(0.5 + flagG / 200.0, total).ToArray(),
-                Enumerable.Repeat(0.5 + flagMt / 200.0, total).ToArray(),
-                Enumerable.Repeat(0.5 + flagMb * 0.005, total).ToArray(),
-                Enumerable.Repeat(flagMv * 0.01, total).ToArray());
+                Curve(item.gender, 0, x => 0.5 + 0.005 * Math.Clamp(flagG + x, -100, 100)),
+                Curve(item.tension, 0, x => 0.5 + 0.005 * Math.Clamp(flagMt + x, -100, 100)),
+                Curve(item.breathiness, 0, x => 0.5 + 0.005 * Math.Clamp(flagMb + x, -100, 100)),
+                Curve(item.voicing, 100, x => 0.01 * Math.Clamp(flagMv + x - 100, 0, 100)));
 
             int startSample = Math.Min(samples.Length, (int)(startMs * fs / 1000));
             int lengthSamples = Math.Min(samples.Length - startSample, (int)(item.durRequired * fs / 1000));

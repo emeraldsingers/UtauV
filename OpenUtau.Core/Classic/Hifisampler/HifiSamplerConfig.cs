@@ -8,7 +8,7 @@ using OpenUtau.Core.DiffSinger;
 namespace OpenUtau.Classic.Hifisampler {
     /// <summary>
     /// config.py / config.default.yaml. The audio settings must match the vocoder; the
-    /// processing settings are config.default.yaml's. Loop mode is the He flag and loudness
+    /// processing settings are config.default.yaml's. Loop mode is the e flag and loudness
     /// normalization the P flag, per note, rather than global settings.
     /// </summary>
     public class HifiSamplerConfig {

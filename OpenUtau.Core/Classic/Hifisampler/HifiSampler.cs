@@ -30,13 +30,19 @@ namespace OpenUtau.Classic.Hifisampler {
             // item.modulation is unused, as in hifisampler.
             return Resample(item.inputFile, item.tone, item.velocity, item.flags, item.offset,
                 item.consonant, item.cutoff, item.durRequired, item.volume, item.tempo, item.pitches,
-                new HifiSamplerConfig());
+                item.tension, item.breathiness, item.voicing, item.gender, item.growl, new HifiSamplerConfig());
         }
 
-        /// <summary>The UTAU resampler arguments; pitches are cents relative to tone, every 5 ticks.</summary>
+        /// <summary>
+        /// The UTAU resampler arguments; pitches are cents relative to tone, every 5 ticks, and
+        /// the tension, breathiness, voicing, gender and growl curves (null for their defaults)
+        /// are on the same grid.
+        /// </summary>
         public static float[] Resample(string inputFile, int tone, int velocity,
                 IEnumerable<Tuple<string, int?, string>> flagList, double offset, double consonant,
-                double cutoff, double length, int volume, double tempo, int[] pitches, HifiSamplerConfig config) {
+                double cutoff, double length, int volume, double tempo, int[] pitches,
+                float[]? tension, float[]? breathiness, float[]? voicing, float[]? gender, float[]? growl,
+                HifiSamplerConfig config) {
             var vocoder = HifiVocoder.Instance;
             config.Validate(vocoder.Config);
 
@@ -50,20 +56,18 @@ namespace OpenUtau.Classic.Hifisampler {
             }
 
             var flags = new HifiFlags(flagList);
-            var features = HifiFeatures.Generate(wave,
-                flags.Get("Mb") ?? 0, flags.Get("Mv") ?? 100, flags.Get("Mt") ?? 0, flags.Get("g") ?? 0,
-                config, x => Hnsep.Instance.Harmonic(x));
-
-            var timing = new HifiNoteTiming(config, features.Mel.Length, velocity, offset,
-                consonant, cutoff, length, flags.Has("He"));
+            int melFrames = HifiMelSpectrogram.FrameCount(wave.Length, config.OriginHopSize);
+            var timing = new HifiNoteTiming(config, melFrames, velocity, offset,
+                consonant, cutoff, length, flags.Has("e"));
+            var curves = timing.SourceCurves(tension, breathiness, voicing, gender, tempo, config.OriginHopSize);
+            var features = HifiFeatures.Generate(wave, curves, config, x => Hnsep.Instance.Harmonic(x));
             var melRender = timing.RenderMel(features.Mel);
 
             var t = new double[melRender.Length];
             for (int i = 0; i < t.Length; i++) {
                 t[i] = i * timing.Thop;
             }
-            var pitchRender = HifiNotePitch.Render(pitches, tone, flags.Get("t") ?? 0,
-                tempo, timing.NewStart, t);
+            var pitchRender = HifiNotePitch.Render(pitches, tone, tempo, timing.NewStart, t);
             var f0 = pitchRender.Select(p => 440 * Math.Pow(2, (p - 69) / 12)).ToArray();
 
             var wavCon = vocoder.Synthesize(melRender, f0);
@@ -72,7 +76,7 @@ namespace OpenUtau.Classic.Hifisampler {
             var render = wavCon[cutStart..cutEnd];
 
             return HifiPostProcess.Apply(render, features.Scale, flags, config, pitchRender, t,
-                timing.NewStart, timing.NewEnd, volume);
+                timing.NewStart, timing.NewEnd, volume, growl, tempo);
         }
     }
 
@@ -108,6 +112,10 @@ namespace OpenUtau.Classic.Hifisampler {
         public readonly int ConFrame;
         public readonly int EndFrame;
         public readonly double PadLoopSize;
+        /// <summary>The source frames from the consonant end to the cutoff that the loop reflects.</summary>
+        public readonly int LoopFrames;
+        /// <summary>The source's analysis frames (before any loop).</summary>
+        public readonly int SourceFrameCount;
         public double StretchLength { get; private set; }
         public double TotalTime { get; private set; }
         public double ScalingRatio { get; private set; }
@@ -126,6 +134,7 @@ namespace OpenUtau.Classic.Hifisampler {
             Thop = config.HopSize / (double)config.SampleRate;
             fill = config.Fill;
             Loop = loop;
+            SourceFrameCount = melFrames;
             tAreaOrigin = FrameTimes(melFrames);
             TotalTime = tAreaOrigin[^1] + ThopOrigin / 2;
 
@@ -147,12 +156,12 @@ namespace OpenUtau.Classic.Hifisampler {
                 ConFrame = (int)Math.Floor((Con + ThopOrigin / 2) / ThopOrigin);
                 EndFrame = (int)Math.Floor((End + ThopOrigin / 2) / ThopOrigin);
                 PadLoopSize = Math.Floor(LengthReq / ThopOrigin) + 1;
-                int loopFrames = Math.Min(EndFrame, melFrames) - ConFrame;
-                if (loopFrames <= 0) {
+                LoopFrames = Math.Min(EndFrame, melFrames) - ConFrame;
+                if (LoopFrames <= 0) {
                     throw new ConsonantExceedsCutoffError();
                 }
                 StretchLength = PadLoopSize * ThopOrigin;
-                tAreaOrigin = FrameTimes(ConFrame + loopFrames + (int)PadLoopSize);
+                tAreaOrigin = FrameTimes(ConFrame + LoopFrames + (int)PadLoopSize);
                 TotalTime = tAreaOrigin[^1] + ThopOrigin / 2;
             }
 
@@ -216,36 +225,87 @@ namespace OpenUtau.Classic.Hifisampler {
 
         /// <summary>Frames before the consonant end, then the consonant-to-cutoff frames reflect-padded by PadLoopSize.</summary>
         float[][] LoopMel(float[][] mel) {
-            int loopFrames = Math.Min(EndFrame, mel.Length) - ConFrame;
-            int total = ConFrame + loopFrames + (int)PadLoopSize;
+            int total = ConFrame + LoopFrames + (int)PadLoopSize;
             var looped = new float[total][];
             for (int i = 0; i < ConFrame; i++) {
                 looped[i] = mel[i];
             }
-            for (int i = 0; i < loopFrames + (int)PadLoopSize; i++) {
-                looped[ConFrame + i] = mel[ConFrame + HifiArray.ReflectIndex(i, loopFrames)];
+            for (int i = ConFrame; i < total; i++) {
+                looped[i] = mel[SourceFrame(i)];
             }
             return looped;
+        }
+
+        /// <summary>The source frame of a frame of the (looped, when <see cref="Loop"/>) analysis timeline.</summary>
+        public int SourceFrame(int frame) {
+            if (!Loop || frame < ConFrame) {
+                return frame;
+            }
+            return ConFrame + HifiArray.ReflectIndex(frame - ConFrame, LoopFrames);
+        }
+
+        /// <summary>
+        /// The note's curves (on the pitch bend grid, from <see cref="NewStart"/>) carried back to
+        /// the source frames through the time map. A source frame the loop uses more than once
+        /// takes the average of its uses; frames the note doesn't use take the nearest values.
+        /// </summary>
+        public HifiSourceCurves SourceCurves(float[]? tension, float[]? breathiness, float[]? voicing,
+                float[]? gender, double tempo, int hop) {
+            double step = 60.0 / (tempo * 96);
+            var times = SourceTimes();
+            double[] Map(float[]? curve, double defaultValue) {
+                var result = new double[SourceFrameCount];
+                if (curve == null || curve.Length == 0 || curve.All(v => v == defaultValue)) {
+                    Array.Fill(result, defaultValue);
+                    return result;
+                }
+                var sum = new double[SourceFrameCount];
+                var weight = new double[SourceFrameCount];
+                int last = tAreaOrigin.Length - 1;
+                for (int k = 0; k < times.Length; k++) {
+                    // Vocoder frame k is at k * Thop; the curve starts at NewStart.
+                    double pos = Math.Clamp((k * Thop - NewStart) / step, 0, curve.Length - 1);
+                    int ci = (int)pos;
+                    double value = ci + 1 < curve.Length ? curve[ci] + (curve[ci + 1] - curve[ci]) * (pos - ci) : curve[ci];
+                    // The two analysis frames RenderMel interpolates for this vocoder frame.
+                    double p = Math.Clamp(times[k] / ThopOrigin - 0.5, 0, last);
+                    int f0 = Math.Min((int)p, last);
+                    int f1 = Math.Min(f0 + 1, last);
+                    double a = p - f0;
+                    foreach (var (f, w) in new[] { (f0, 1 - a), (f1, a) }) {
+                        int m = SourceFrame(f);
+                        if (m < SourceFrameCount) {
+                            sum[m] += w * value;
+                            weight[m] += w;
+                        }
+                    }
+                }
+                var known = Enumerable.Range(0, SourceFrameCount).Where(m => weight[m] > 1e-9).ToArray();
+                if (known.Length == 0) {
+                    Array.Fill(result, defaultValue);
+                    return result;
+                }
+                return HifiInterp.Linear(
+                    Enumerable.Range(0, SourceFrameCount).Select(m => (double)m).ToArray(),
+                    known.Select(m => (double)m).ToArray(),
+                    known.Select(m => sum[m] / weight[m]).ToArray());
+            }
+            return new HifiSourceCurves(Map(breathiness, 0), Map(voicing, 100), Map(tension, 0), Map(gender, 0), hop);
         }
     }
 
     /// <summary>
     /// The note's pitch curve: the pitchbend (cents per 5 ticks, from the note start minus the
     /// stretched preutterance) with the zero point hifisampler's decoder appends, plus the
-    /// tone and the t flag, Akima-interpolated at the vocoder frames.
+    /// tone, Akima-interpolated at the vocoder frames.
     /// </summary>
     internal static class HifiNotePitch {
-        public static double[] Render(int[] pitches, int tone, int tFlag, double tempo, double newStart, double[] t) {
+        public static double[] Render(int[] pitches, int tone, double tempo, double newStart, double[] t) {
             var pitch = new double[pitches.Length + 1];
             for (int i = 0; i < pitches.Length; i++) {
                 pitch[i] = pitches[i] / 100.0 + tone;
             }
             pitch[^1] = tone;
-            if (tFlag != 0) {
-                for (int i = 0; i < pitch.Length; i++) {
-                    pitch[i] += tFlag / 100.0;
-                }
-            }
             var tPitch = new double[pitch.Length];
             for (int i = 0; i < tPitch.Length; i++) {
                 tPitch[i] = 60.0 * i / (tempo * 96) + newStart;
@@ -329,12 +389,14 @@ namespace OpenUtau.Classic.Hifisampler {
     }
 
     /// <summary>
-    /// After the vocoder: A (pitch-slope amplitude modulation), undo the analysis scale, HG
-    /// (growl), P (loudness normalization), the peak limit, and volume.
+    /// After the vocoder: A (pitch-slope amplitude modulation), undo the analysis scale, growl
+    /// (the growl curve, hifisampler's HG flag), P (loudness normalization), the peak limit,
+    /// and volume.
     /// </summary>
     internal static class HifiPostProcess {
         public static float[] Apply(float[] render, double scale, HifiFlags flags, HifiSamplerConfig config,
-                double[] pitchRender, double[] t, double newStart, double newEnd, int volume) {
+                double[] pitchRender, double[] t, double newStart, double newEnd, int volume,
+                float[]? growl, double tempo) {
             int aFlag = flags.Get("A") ?? 0;
             if (aFlag != 0 && pitchRender.Length > 1 && t.Length > 1) {
                 double a = Math.Clamp(aFlag, -100, 100);
@@ -357,8 +419,15 @@ namespace OpenUtau.Classic.Hifisampler {
             // Measured here, applied after growl and normalization, as hifisampler does.
             double newMax = HifiArray.MaxAbs(render);
 
-            if (flags.Get("HG") is int hg) {
-                render = HifiGrowl.Apply(render, config.SampleRate, 80.0, hg / 100.0);
+            if (growl != null && growl.Length > 0) {
+                // The curve starts at the output start, a point every 5 ticks.
+                double pointsPerSample = 1.0 / (config.SampleRate * 60.0 / (tempo * 96));
+                render = HifiGrowl.Apply(render, config.SampleRate, 80.0, i => {
+                    double pos = Math.Clamp(i * pointsPerSample, 0, growl.Length - 1);
+                    int j = (int)pos;
+                    double v = j + 1 < growl.Length ? growl[j] + (growl[j + 1] - growl[j]) * (pos - j) : growl[j];
+                    return v / 100.0;
+                });
             }
 
             if (flags.Has("P")) {
