@@ -53,6 +53,13 @@ namespace OpenUtau.App.Views {
         protected virtual bool ShowValueTip => true;
         protected virtual bool DeferValidate => false;
         protected virtual string? commandNameKey => null;
+        /// <summary>
+        /// Whether Update should also see the pointer moves the system merged into
+        /// this one. Drawing states connect each point to the last, so a fast
+        /// stroke would otherwise turn into long straight segments whenever the
+        /// app falls behind the pointer.
+        /// </summary>
+        public virtual bool UsesIntermediatePoints => false;
         public bool ctrlShiftHeld = false;
         public bool altShiftHeld = false;
         public bool shiftHeld = false;
@@ -749,6 +756,7 @@ namespace OpenUtau.App.Views {
     }
 
     class ExpSetValueState : NoteEditState {
+        public override bool UsesIntermediatePoints => true;
         private Point firstPoint;
         private Point lastPoint;
         private UExpressionDescriptor? descriptor;
@@ -911,6 +919,7 @@ namespace OpenUtau.App.Views {
     }
 
     class ExpResetValueState : NoteEditState {
+        public override bool UsesIntermediatePoints => true;
         private Point lastPoint;
         private UExpressionDescriptor? descriptor;
         private UTrack track;
@@ -1417,6 +1426,7 @@ namespace OpenUtau.App.Views {
     }
 
     class DrawPitchState : NoteEditState {
+        public override bool UsesIntermediatePoints => true;
         protected override bool ShowValueTip => false;
         protected override string? commandNameKey => "command.pitch.draw";
         protected override bool DeferValidate => true;
@@ -2079,6 +2089,7 @@ namespace OpenUtau.App.Views {
     }
 
     class ResetPitchState : NoteEditState {
+        public override bool UsesIntermediatePoints => true;
         public override MouseButton MouseButton => MouseButton.Right;
         protected override bool ShowValueTip => false;
         protected override string? commandNameKey => "command.pitch.reset";

@@ -86,6 +86,9 @@ namespace OpenUtau.App.Views {
             };
 
 viewModel.NewProject();
+            // Edit commands validate once per frame instead of once per pointer move.
+            DocManager.Inst.RequestFrame = action => RequestAnimationFrame(_ => action());
+
             var smoothViewport = new SmoothViewport(this);
             hScroll = smoothViewport.Scroll(HScrollBar);
             vScroll = smoothViewport.Scroll(VScrollBar);
