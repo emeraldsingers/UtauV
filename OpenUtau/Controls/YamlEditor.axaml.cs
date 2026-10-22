@@ -99,6 +99,11 @@ namespace OpenUtau.App.Controls {
             Validate();
         }
 
+        /// <summary>Empties the editor, for a singer that has no such file, so there is nothing to save.</summary>
+        public void Clear() {
+            Load(string.Empty, typeof(object), null);
+        }
+
         string ReadFile() {
             if (!File.Exists(filePath)) {
                 hasBom = false;
@@ -387,6 +392,9 @@ namespace OpenUtau.App.Controls {
 
         // The app could not load a file with errors, so those block saving; warnings do not.
         public bool Save() {
+            if (string.IsNullOrEmpty(filePath)) {
+                return false;
+            }
             ValidateNow();
             if (HasErrors) {
                 var first = ProblemList.Items.OfType<ProblemItem>().First(item => item.Diagnostic.IsError);

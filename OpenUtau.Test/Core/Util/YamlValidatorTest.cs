@@ -109,7 +109,11 @@ subbanks:
 
             key = YamlValidator.DescribeKeyAt(CharacterYaml, typeof(VoicebankConfig), 7, 1)!;
             Assert.Equal("portrait_opacity", key.Key);
-            Assert.Equal(0.67f, key.DefaultValue);
+            // Optional here, so an absent key is left to the loader's own default.
+            Assert.Equal(typeof(float?), key.ValueType);
+            Assert.Null(key.DefaultValue);
+            key = YamlValidator.DescribeKeyAt("sample_rate: 44100\n", typeof(DsConfig), 1, 1)!;
+            Assert.Equal(44100, key.DefaultValue);
 
             // Nested keys, in a list item and in a section.
             key = YamlValidator.DescribeKeyAt(CharacterYaml, typeof(VoicebankConfig), 20, 5)!;
@@ -176,7 +180,7 @@ subbanks:
         public void SuggestsKnownValuesOfFreeTextKeys() {
             var suggestions = SuggestAt<VoicebankConfig>("singer_type: di|\n")!;
             Assert.Equal(14, suggestions.StartColumn);
-            Assert.Equal(new[] { "utau", "enunu", "diffsinger", "voicevox" }, suggestions.Values.Select(v => v.Text));
+            Assert.Equal(new[] { "utau", "enunu", "diffsinger", "voicevox", "neutrino" }, suggestions.Values.Select(v => v.Text));
             // The installed phonemizers come from the same kind of source.
             var key = YamlValidator.DescribeKeyAt("default_phonemizer: x\n", typeof(VoicebankConfig), 1, 1)!;
             Assert.Equal(typeof(OpenUtau.Api.PhonemizerTypeValues), key.ValueSource);
@@ -220,6 +224,12 @@ augmentation_args:
     range: [-5.0, 5.0]
 sample_rate: 44100
 mel_base: e
+fmin: 40
+fmax: 21000
+num_lang: 14
+dictionaries:
+  en: ../files/dictionary-en.txt
+  ja: ../files/dictionary-ja.txt
 ";
             Assert.Empty(YamlValidator.Validate<DsConfig>(dsconfig));
             var diagnostics = YamlValidator.Validate<DsConfig>(dsconfig + "_use_shallow_diffusion: true\nmax_depth_ms: 1\n");

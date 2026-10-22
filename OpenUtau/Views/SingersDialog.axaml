@@ -290,6 +290,15 @@
       <TabItem Name="DsConfigTab" Header="dsconfig.yaml" IsVisible="{Binding HasDsConfig}">
         <c:YamlEditor Name="DsConfigEditor" Margin="0,6,0,0"/>
       </TabItem>
+      <TabItem Name="DsDurTab" Header="dsdur/dsconfig.yaml" IsVisible="{Binding HasDsDurConfig}">
+        <c:YamlEditor Name="DsDurEditor" Margin="0,6,0,0"/>
+      </TabItem>
+      <TabItem Name="DsPitchTab" Header="dspitch/dsconfig.yaml" IsVisible="{Binding HasDsPitchConfig}">
+        <c:YamlEditor Name="DsPitchEditor" Margin="0,6,0,0"/>
+      </TabItem>
+      <TabItem Name="DsVarianceTab" Header="dsvariance/dsconfig.yaml" IsVisible="{Binding HasDsVarianceConfig}">
+        <c:YamlEditor Name="DsVarianceEditor" Margin="0,6,0,0"/>
+      </TabItem>
     </TabControl>
   </Grid>
 </Window>

@@ -30,7 +30,8 @@ namespace OpenUtau.App.Views {
             InitializeComponent();
             DocManager.Inst.AddSubscriber(this);
             foreach (var (editor, tab) in YamlTabs) {
-                editor.DirtyChanged += (s, e) => tab.Header = editor.IsDirty ? editor.FileName + " *" : editor.FileName;
+                var header = tab.Header as string ?? string.Empty;
+                editor.DirtyChanged += (s, e) => tab.Header = editor.IsDirty ? header + " *" : header;
             }
             DataContextChanged += (s, e) => {
                 if (DataContext is SingersViewModel viewModel) {
@@ -42,6 +43,9 @@ namespace OpenUtau.App.Views {
         (YamlEditor editor, TabItem tab)[] YamlTabs => new[] {
             (CharacterYamlEditor, CharacterYamlTab),
             (DsConfigEditor, DsConfigTab),
+            (DsDurEditor, DsDurTab),
+            (DsPitchEditor, DsPitchTab),
+            (DsVarianceEditor, DsVarianceTab),
         };
 
         USinger? yamlSinger;
@@ -69,9 +73,30 @@ namespace OpenUtau.App.Views {
             };
             if (viewModel.HasCharacterYaml) {
                 CharacterYamlEditor.Load(Path.Combine(singer.Location, "character.yaml"), typeof(VoicebankConfig), onSaved);
+            } else {
+                CharacterYamlEditor.Clear();
             }
+            // The DiffSinger configs: the voicebank's own, and the ones of its sub-models.
+            var dsConfigType = typeof(Core.DiffSinger.DsConfig);
             if (viewModel.HasDsConfig) {
-                DsConfigEditor.Load(Path.Combine(singer.Location, "dsconfig.yaml"), typeof(Core.DiffSinger.DsConfig), onSaved);
+                DsConfigEditor.Load(Path.Combine(singer.Location, "dsconfig.yaml"), dsConfigType, onSaved);
+            } else {
+                DsConfigEditor.Clear();
+            }
+            if (viewModel.HasDsDurConfig) {
+                DsDurEditor.Load(Path.Combine(singer.Location, "dsdur", "dsconfig.yaml"), dsConfigType, onSaved);
+            } else {
+                DsDurEditor.Clear();
+            }
+            if (viewModel.HasDsPitchConfig) {
+                DsPitchEditor.Load(Path.Combine(singer.Location, "dspitch", "dsconfig.yaml"), dsConfigType, onSaved);
+            } else {
+                DsPitchEditor.Clear();
+            }
+            if (viewModel.HasDsVarianceConfig) {
+                DsVarianceEditor.Load(Path.Combine(singer.Location, "dsvariance", "dsconfig.yaml"), dsConfigType, onSaved);
+            } else {
+                DsVarianceEditor.Clear();
             }
             if (Tabs.SelectedItem is TabItem { IsVisible: false }) {
                 Tabs.SelectedItem = OtoTab;

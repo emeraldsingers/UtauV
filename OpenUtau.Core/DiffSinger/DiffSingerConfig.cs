@@ -108,6 +108,14 @@ namespace OpenUtau.Core.DiffSinger {
         public string mel_base = "10";
         [Description("Mel scale: slaney or htk. Must match the vocoder.")]
         public string mel_scale = "slaney";
+        [Description("Lowest frequency in Hz of the pitch range the model was trained on.")]
+        public double fmin;
+        [Description("Highest frequency in Hz of the pitch range the model was trained on.")]
+        public double fmax;
+        [Description("Number of languages of a multi-language model.")]
+        public int num_lang;
+        [Description("G2P dictionaries of a multi-language model: language code to dictionary file, relative to this folder.")]
+        public Dictionary<string, string> dictionaries;
 
         public float frameMs() {
             return 1000f * hop_size / sample_rate;

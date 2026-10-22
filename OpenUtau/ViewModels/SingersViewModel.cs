@@ -29,6 +29,9 @@ namespace OpenUtau.App.ViewModels {
         // Singers loaded from a voicebank folder, which keep their settings in character.yaml.
         [Reactive] public partial bool HasCharacterYaml { get; set; }
         [Reactive] public partial bool HasDsConfig { get; set; }
+        [Reactive] public partial bool HasDsDurConfig { get; set; }
+        [Reactive] public partial bool HasDsPitchConfig { get; set; }
+        [Reactive] public partial bool HasDsVarianceConfig { get; set; }
         public bool IsClassic => Singer != null && Singer.SingerType == USingerType.Classic;
         public bool UseSearchAlias => Singer != null && (Singer.SingerType == USingerType.Classic || Singer.SingerType == USingerType.Enunu);
         public ObservableCollectionExtended<USubbank> Subbanks => subbanks;
@@ -96,6 +99,9 @@ namespace OpenUtau.App.ViewModels {
                         HasCharacterYaml = singer.SingerType is USingerType.Classic or USingerType.Enunu or USingerType.DiffSinger
                             && Directory.Exists(singer.Location);
                         HasDsConfig = HasCharacterYaml && File.Exists(Path.Combine(singer.Location, "dsconfig.yaml"));
+                        HasDsDurConfig = HasCharacterYaml && File.Exists(Path.Combine(singer.Location, "dsdur", "dsconfig.yaml"));
+                        HasDsPitchConfig = HasCharacterYaml && File.Exists(Path.Combine(singer.Location, "dspitch", "dsconfig.yaml"));
+                        HasDsVarianceConfig = HasCharacterYaml && File.Exists(Path.Combine(singer.Location, "dsvariance", "dsconfig.yaml"));
                         if (Singer is ClassicSinger cSinger) {
                             UseFilenameAsAlias = cSinger.UseFilenameAsAlias ?? false;
                         }
