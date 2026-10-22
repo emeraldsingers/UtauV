@@ -236,8 +236,8 @@ namespace OpenUtau.Classic {
                         continue;
                     }
                     float[] samples = Wave.GetSamples(waveStream!.ToSampleProvider().ToMono(1, 0));
-                    int offset = (int)(item.phone.oto.Offset / 1000 * 44100);
-                    int cutoff = (int)(item.phone.oto.Cutoff / 1000 * 44100);
+                    int offset = (int)(item.offset / 1000 * 44100);
+                    int cutoff = (int)(item.cutoff / 1000 * 44100);
                     int length = cutoff >= 0 ? (samples.Length - offset - cutoff) : -cutoff;
                     samples = samples.Skip(offset).Take(length).ToArray();
                     item.ApplyEnvelope(samples);
