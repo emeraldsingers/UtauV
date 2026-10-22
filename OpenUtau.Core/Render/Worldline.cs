@@ -292,7 +292,18 @@ namespace OpenUtau.Core.Render {
 
         const int ResamplerPadding = 2;
         // world::kFloorF0StoneMask, the voiced threshold of the resampler auto gain.
-        const double ResamplerVoicedF0 = 40.0;
+        internal const double ResamplerVoicedF0 = 40.0;
+
+        /// <summary>
+        /// The resampler auto gain, (0.5 / peak)^(P / 100): the peak is the output's blended with
+        /// the whole source file's by voiced ratio, so a mostly unvoiced note (a consonant, a
+        /// breath) takes the file's peak instead of being overamplified.
+        /// </summary>
+        internal static double ResamplerAutoGain(double outMax, double wavMax, double voicedRatio, int peakComp) {
+            double weight = 1.0 / (1.0 + Math.Exp(5.0 - 10.0 * voicedRatio));
+            double max = outMax * weight + wavMax * (1.0 - weight);
+            return max == 0 ? 1.0 : Math.Pow(0.5 / max, peakComp * 0.01);
+        }
 
         /// <summary>
         /// Worldline resampler: renders one note to exactly item.durRequired ms,
@@ -378,14 +389,10 @@ namespace OpenUtau.Core.Render {
                 output[i] = (float)samples[startSample + i];
             }
 
-            // Auto gain between the synthesized output and the whole source file,
-            // weighted by voiced ratio to avoid overamplifying consonants.
             double voicedRatio = f0.Count(f => f > ResamplerVoicedF0) / (double)f0.Length;
-            double weight = 1.0 / (1.0 + Math.Exp(5.0 - 10.0 * voicedRatio));
             double outMax = output.Length > 0 ? output.Max(s => Math.Abs(s)) : 0;
-            double max = outMax * weight + segment.wavMax * (1.0 - weight);
             double gain = (item.phone.direct ? 0 : item.volume) * 0.01;
-            double autoGain = max == 0 ? 1.0 : Math.Pow(0.5 / max, GetFlag(item, "P", 86) * 0.01);
+            double autoGain = ResamplerAutoGain(outMax, segment.wavMax, voicedRatio, GetFlag(item, "P", 86));
             if (autoGain * gain != 1) {
                 for (int i = 0; i < output.Length; ++i) {
                     output[i] = (float)(output[i] * autoGain * gain);
