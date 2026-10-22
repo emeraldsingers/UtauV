@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using OpenUtau.App.Views;
 using OpenUtau.Core;
 using OpenUtau.Core.ExpressionGraph;
 using OpenUtau.Core.Render;
@@ -65,7 +66,8 @@ namespace OpenUtau.App.Controls {
                 GraphList.SelectedItem = items.FirstOrDefault(i => i.Id == selectedId);
 
                 var graph = SelectedGraph;
-                GraphSettings.IsEnabled = DuplicateButton.IsEnabled = DeleteButton.IsEnabled = graph != null;
+                GraphSettings.IsEnabled = DuplicateButton.IsEnabled = DeleteButton.IsEnabled = ExportButton.IsEnabled
+                    = graph != null;
                 NameBox.Text = graph?.name ?? string.Empty;
                 RendererText.Text = graph == null ? string.Empty
                     : $"{ThemeManager.GetString("expressiongraph.renderer")}: {graph.renderer}";
@@ -156,6 +158,60 @@ namespace OpenUtau.App.Controls {
         void OnDelete(object? sender, RoutedEventArgs e) {
             if (selectedId is string id) {
                 ExpressionGraphEdits.Apply(Project, draft => draft.Remove(id));
+            }
+        }
+
+        /// <summary>Saves the selected graph with the definitions of the expressions it uses.</summary>
+        async void OnExport(object? sender, RoutedEventArgs e) {
+            var graph = SelectedGraph;
+            if (graph == null || TopLevel.GetTopLevel(this) is not Window window) {
+                return;
+            }
+            var path = await FilePicker.SaveFile(window, "expressiongraph.export", null,
+                $"{graph.name ?? graph.id}.ougraph", FilePicker.ExpressionGraph);
+            if (path == null) {
+                return;
+            }
+            try {
+                ExpressionGraphFile.Create(Project, graph).Save(path);
+            } catch (Exception ex) {
+                _ = MessageBox.ShowError(window, ex);
+            }
+        }
+
+        /// <summary>
+        /// Adds a graph from a file, with the expressions it brings that the project lacks, and says which
+        /// expressions it added and which the project already defines differently.
+        /// </summary>
+        async void OnImport(object? sender, RoutedEventArgs e) {
+            if (TopLevel.GetTopLevel(this) is not Window window) {
+                return;
+            }
+            var path = await FilePicker.OpenFile(window, "expressiongraph.import", FilePicker.ExpressionGraph);
+            if (path == null) {
+                return;
+            }
+            ExpressionGraphFile.ImportResult result;
+            try {
+                result = ExpressionGraphFile.Load(path).ImportInto(Project);
+            } catch (Exception ex) {
+                _ = MessageBox.ShowError(window, ex);
+                return;
+            }
+            selectedId = result.GraphId;
+            Refresh();
+            var lines = new List<string>();
+            if (result.AddedExpressions.Count > 0) {
+                lines.Add($"{ThemeManager.GetString("expressiongraph.import.added")}: "
+                    + string.Join(", ", result.AddedExpressions.Select(a => a.ToUpperInvariant())));
+            }
+            if (result.ConflictingExpressions.Count > 0) {
+                lines.Add($"{ThemeManager.GetString("expressiongraph.import.conflicts")}: "
+                    + string.Join(", ", result.ConflictingExpressions.Select(a => a.ToUpperInvariant())));
+            }
+            if (lines.Count > 0) {
+                _ = MessageBox.Show(window, string.Join("\n\n", lines),
+                    ThemeManager.GetString("expressiongraph.import"), MessageBox.MessageBoxButtons.Ok);
             }
         }
 
