@@ -896,7 +896,6 @@ General
   <system:String x:Key="welcome.start">Start</system:String>
   <system:String x:Key="welcome.template">Template</system:String>
 <system:String x:Key="button.close">Close</system:String>
-  <system:String x:Key="command.note.duplicate">Duplicate note(s)</system:String>
   <system:String x:Key="dialogs.projectimport.caption">Project Import</system:String>
   <system:String x:Key="dialogs.projectimport.message">Files to import:</system:String>
   <system:String x:Key="dialogs.projectimport.asproject">Import as Project</system:String>
