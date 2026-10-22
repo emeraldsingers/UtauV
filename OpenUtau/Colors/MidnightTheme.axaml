@@ -30,7 +30,7 @@
 
   <Color x:Key="TickLineColor">#504A5C</Color>
   <Color x:Key="BarNumberColor">#B0ABBC</Color>
-  <Color x:Key="FinalPitchColor">#938EA0</Color>
+  <Color x:Key="FinalPitchColor">#C0BACD</Color>
   <Color x:Key="TrackBackgroundAltColor">#282431</Color>
   
   <Color x:Key="WarningColor">#433519</Color>
