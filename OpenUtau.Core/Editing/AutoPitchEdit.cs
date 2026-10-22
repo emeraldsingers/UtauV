@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using Newtonsoft.Json;
+using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using Serilog;
@@ -260,7 +260,7 @@ namespace OpenUtau.Core.Editing {
                     Log.Information("[AutoPitch] loading config from sidecar file: {path}", configPath);
                     try {
                         var json = File.ReadAllText(configPath, Encoding.UTF8);
-                        config = JsonConvert.DeserializeObject<AutoPitchConfig>(json) ?? new AutoPitchConfig();
+                        config = Json.Deserialize<AutoPitchConfig>(json) ?? new AutoPitchConfig();
                     } catch (Exception ex) {
                         Log.Warning(ex, "Failed to parse AutoPitch config. Using defaults.");
                     }
@@ -269,7 +269,7 @@ namespace OpenUtau.Core.Editing {
                     try {
                         var meta = session.ModelMetadata.CustomMetadataMap;
                         if (meta != null && meta.TryGetValue("autopitch_config_json", out var metaJson)) {
-                            config = JsonConvert.DeserializeObject<AutoPitchConfig>(metaJson) ?? new AutoPitchConfig();
+                            config = Json.Deserialize<AutoPitchConfig>(metaJson) ?? new AutoPitchConfig();
                         }
                     } catch (Exception ex) {
                         Log.Warning(ex, "Failed to load AutoPitch config from model metadata.");
@@ -280,7 +280,7 @@ namespace OpenUtau.Core.Editing {
                 if (File.Exists(vocabPath)) {
                     try {
                         var json = File.ReadAllText(vocabPath, Encoding.UTF8);
-                        vocab = JsonConvert.DeserializeObject<Dictionary<string, int>>(json) ?? new Dictionary<string, int>();
+                        vocab = Json.Deserialize<Dictionary<string, int>>(json) ?? new Dictionary<string, int>();
                     } catch (Exception ex) {
                         Log.Warning(ex, "Failed to parse AutoPitch vocab.");
                     }
@@ -288,7 +288,7 @@ namespace OpenUtau.Core.Editing {
                     try {
                         var meta = session.ModelMetadata.CustomMetadataMap;
                         if (meta != null && meta.TryGetValue("lyric_vocab_json", out var vocabJson)) {
-                            vocab = JsonConvert.DeserializeObject<Dictionary<string, int>>(vocabJson) ?? new Dictionary<string, int>();
+                            vocab = Json.Deserialize<Dictionary<string, int>>(vocabJson) ?? new Dictionary<string, int>();
                         }
                     } catch (Exception ex) {
                         Log.Warning(ex, "Failed to load AutoPitch vocab from model metadata.");
@@ -321,7 +321,7 @@ namespace OpenUtau.Core.Editing {
             if (!string.IsNullOrEmpty(assets.ConfigPath) && File.Exists(assets.ConfigPath)) {
                 try {
                     var json = File.ReadAllText(assets.ConfigPath, Encoding.UTF8);
-                    assets.Config = JsonConvert.DeserializeObject<AutoPitchConfig>(json) ?? assets.Config;
+                    assets.Config = Json.Deserialize<AutoPitchConfig>(json) ?? assets.Config;
                 } catch (Exception ex) {
                     Log.Warning(ex, "Failed to reload AutoPitch config.");
                 }
@@ -329,7 +329,7 @@ namespace OpenUtau.Core.Editing {
             if (!string.IsNullOrEmpty(assets.VocabPath) && File.Exists(assets.VocabPath)) {
                 try {
                     var json = File.ReadAllText(assets.VocabPath, Encoding.UTF8);
-                    assets.Vocab = JsonConvert.DeserializeObject<Dictionary<string, int>>(json) ?? assets.Vocab;
+                    assets.Vocab = Json.Deserialize<Dictionary<string, int>>(json) ?? assets.Vocab;
                 } catch (Exception ex) {
                     Log.Warning(ex, "Failed to reload AutoPitch vocab.");
                 }

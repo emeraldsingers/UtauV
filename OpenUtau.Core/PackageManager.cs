@@ -8,8 +8,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Net;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Serilog;
 using SharpCompress.Archives;
 using SharpCompress.Readers;
@@ -591,14 +591,14 @@ namespace OpenUtau.Core {
 
         static List<RegistrySoftware> ParseRegistryBody(string body, string sourceUrl) {
             try {
-                var token = JToken.Parse(body);
-                if (token.Type == JTokenType.Array) {
-                    return token.ToObject<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
+var token = JsonNode.Parse(body);
+                if (token is JsonArray arr) {
+                    return arr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
                 }
-                if (token is JObject obj) {
+                if (token is JsonObject obj) {
                     var items = obj["items"];
-                    if (items != null && items.Type == JTokenType.Array) {
-                        return items.ToObject<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
+                    if (items is JsonArray itemsArr) {
+                        return itemsArr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
                     }
                     var singers = ParseSingerRegistryBody(obj);
                     if (singers.Count > 0) {
@@ -611,7 +611,7 @@ namespace OpenUtau.Core {
             return new List<RegistrySoftware>();
         }
 
-        static List<RegistrySoftware> ParseSingerRegistryBody(JObject root) {
+        static List<RegistrySoftware> ParseSingerRegistryBody(JsonObject root) {
             var singersToken = root["singers"];
             if (singersToken == null) {
                 return new List<RegistrySoftware>();
@@ -728,11 +728,11 @@ namespace OpenUtau.Core {
                     var gender = FirstNonEmpty(
                         AsString(voicebankObj["gender"]),
                         AsString(singerObj["gender"]),
-                        AsString(singerObj.SelectToken("characterData.Gender")));
+                        AsString(singerObj["characterData"]?["Gender"]));
                     var character = FirstNonEmpty(
                         AsString(voicebankObj["character"]),
                         AsString(singerObj["character"]),
-                        AsString(singerObj.SelectToken("characterData.Species")));
+                        AsString(singerObj["characterData"]?["Species"]));
 
                     var names = ParseLocalizedMap(voicebankObj["names"]);
                     if (names.Count == 0) {
@@ -795,7 +795,7 @@ namespace OpenUtau.Core {
             return result;
         }
 
-        static RegistryVersion[] ParseVoicebankVersions(JObject voicebankObj) {
+        static RegistryVersion[] ParseVoicebankVersions(JsonObject voicebankObj) {
             var map = new Dictionary<string, RegistryVersion>(StringComparer.OrdinalIgnoreCase);
             void AddVersion(RegistryVersion candidate) {
                 if (candidate == null || string.IsNullOrWhiteSpace(candidate.version)) {
@@ -817,8 +817,8 @@ namespace OpenUtau.Core {
                 }
             }
 
-            if (voicebankObj["versions"] is JArray explicitVersions) {
-                foreach (var token in explicitVersions.OfType<JObject>()) {
+            if (voicebankObj["versions"] is JsonArray explicitVersions) {
+                foreach (var token in explicitVersions.OfType<JsonObject>()) {
                     var version = FirstNonEmpty(
                         AsString(token["version"]),
                         AsString(token["name"]),
@@ -836,12 +836,12 @@ namespace OpenUtau.Core {
             }
 
             var historyToken = voicebankObj["history"];
-            if (historyToken is JObject historyObj) {
-                foreach (var prop in historyObj.Properties()) {
-                    if (prop.Value is JObject entryObj) {
+            if (historyToken is JsonObject historyObj) {
+                foreach (var prop in historyObj.ToList()) {
+                    if (prop.Value is JsonObject entryObj) {
                         var version = FirstNonEmpty(
                             AsString(entryObj["version"]),
-                            prop.Name);
+                            prop.Key);
                         var mirrors = ParseMirrors(entryObj["mirrors"], AsString(entryObj["url"]), AsString(entryObj["hash"]));
                         if (string.IsNullOrWhiteSpace(version) || mirrors.Length == 0) {
                             continue;
@@ -857,7 +857,7 @@ namespace OpenUtau.Core {
                             continue;
                         }
                         AddVersion(new RegistryVersion {
-                            version = prop.Name,
+                            version = prop.Key,
                             description = "Archived release",
                             mirrors = ParseMirrors(null, url, null),
                         });
@@ -885,11 +885,11 @@ namespace OpenUtau.Core {
             return map.Values.ToArray();
         }
 
-        static RegistryMirror[] ParseMirrors(JToken? mirrorsToken, string? fallbackUrl, string? fallbackHash) {
+        static RegistryMirror[] ParseMirrors(JsonNode? mirrorsToken, string? fallbackUrl, string? fallbackHash) {
             var mirrors = new List<RegistryMirror>();
-            if (mirrorsToken is JArray mirrorsArray) {
+            if (mirrorsToken is JsonArray mirrorsArray) {
                 foreach (var token in mirrorsArray) {
-                    if (token is JObject mirrorObj) {
+                    if (token is JsonObject mirrorObj) {
                         var url = AsString(mirrorObj["url"]);
                         if (string.IsNullOrWhiteSpace(url)) {
                             continue;
@@ -919,60 +919,60 @@ namespace OpenUtau.Core {
                 .ToArray();
         }
 
-        static IEnumerable<(string Key, JObject Obj)> EnumerateNamedObjects(JToken token, string fallbackPrefix) {
-            if (token is JObject obj) {
-                foreach (var prop in obj.Properties()) {
-                    if (prop.Value is JObject childObj) {
-                        yield return (prop.Name, childObj);
-                    } else if (prop.Value is JValue value && value.Type == JTokenType.String) {
-                        yield return (prop.Name, new JObject {
-                            ["name"] = prop.Name,
-                            ["url"] = value.Value<string>() ?? string.Empty,
-                        });
+        static IEnumerable<(string Key, JsonObject Obj)> EnumerateNamedObjects(JsonNode? token, string fallbackPrefix) {
+            if (token is JsonObject obj) {
+                foreach (var prop in obj.ToList()) {
+                    if (prop.Value is JsonObject childObj) {
+                        yield return (prop.Key, childObj);
+                    } else if (prop.Value is JsonValue value && value.TryGetValue<string>(out var text)) {
+                        var child = new JsonObject();
+                        child["name"] = prop.Key;
+                        child["url"] = text ?? string.Empty;
+                        yield return (prop.Key, child);
                     }
                 }
                 yield break;
             }
-            if (token is JArray array) {
+            if (token is JsonArray array) {
                 int index = 0;
                 foreach (var item in array) {
                     index++;
-                    if (item is JObject itemObj) {
+                    if (item is JsonObject itemObj) {
                         var key = FirstNonEmpty(
                             AsString(itemObj["id"]),
                             AsString(itemObj["name"]),
                             $"{fallbackPrefix}-{index}") ?? $"{fallbackPrefix}-{index}";
                         yield return (key, itemObj);
-                    } else if (item is JValue value && value.Type == JTokenType.String) {
+                    } else if (item is JsonValue value && value.TryGetValue<string>(out var text)) {
                         var key = $"{fallbackPrefix}-{index}";
-                        yield return (key, new JObject {
-                            ["name"] = key,
-                            ["url"] = value.Value<string>() ?? string.Empty,
-                        });
+                        var child = new JsonObject();
+                        child["name"] = key;
+                        child["url"] = text ?? string.Empty;
+                        yield return (key, child);
                     }
                 }
             }
         }
 
-        static Dictionary<string, string> ParseLocalizedMap(JToken? token) {
+        static Dictionary<string, string> ParseLocalizedMap(JsonNode? token) {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (token is not JObject obj) {
+            if (token is not JsonObject obj) {
                 return map;
             }
-            foreach (var prop in obj.Properties()) {
+            foreach (var prop in obj.ToList()) {
                 var value = AsString(prop.Value);
-                if (!string.IsNullOrWhiteSpace(prop.Name) && !string.IsNullOrWhiteSpace(value)) {
-                    map[prop.Name] = value;
+                if (!string.IsNullOrWhiteSpace(prop.Key) && !string.IsNullOrWhiteSpace(value)) {
+                    map[prop.Key] = value;
                 }
             }
             return map;
         }
 
-        static string[] ParseStringArray(JToken? token) {
+        static string[] ParseStringArray(JsonNode? token) {
             if (token == null) {
                 return [];
             }
-            if (token is JArray array) {
+            if (token is JsonArray array) {
                 return array
                     .Select(AsString)
                     .Where(s => !string.IsNullOrWhiteSpace(s))
@@ -1001,12 +1001,12 @@ namespace OpenUtau.Core {
             return string.IsNullOrWhiteSpace(normalized) ? "voicebank" : normalized;
         }
 
-        static string? AsString(JToken? token) {
-            if (token == null || token.Type == JTokenType.Null || token.Type == JTokenType.Undefined) {
+        static string? AsString(JsonNode? token) {
+            if (token == null) {
                 return null;
             }
-            if (token.Type == JTokenType.String) {
-                var value = token.Value<string>();
+            if (token.GetValueKind() == JsonValueKind.String) {
+                var value = token.GetValue<string>();
                 return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
             }
             var str = token.ToString();
@@ -1994,10 +1994,10 @@ namespace OpenUtau.Core {
                     return new List<string>();
                 }
                 var body = await response.Content.ReadAsStringAsync();
-                var files = JArray.Parse(body);
+                var files = JsonNode.Parse(body) as JsonArray;
 
-                string FilenameOf(JToken f) => AsString(f["filename"]) ?? string.Empty;
-                string StatusOf(JToken f) => AsString(f["status"]) ?? string.Empty;
+                string FilenameOf(JsonNode f) => AsString(f["filename"]) ?? string.Empty;
+                string StatusOf(JsonNode f) => AsString(f["status"]) ?? string.Empty;
 
                 bool IsYaml(string path) =>
                     path.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) ||
@@ -2005,7 +2005,7 @@ namespace OpenUtau.Core {
                 bool IsRelevantStatus(string status) =>
                     !string.Equals(status, "removed", StringComparison.OrdinalIgnoreCase);
 
-                var allCandidates = files.OfType<JObject>()
+                var allCandidates = (files ?? new JsonArray()).OfType<JsonObject>()
                     .Where(f => IsYaml(FilenameOf(f)) && IsRelevantStatus(StatusOf(f)))
                     .Select(FilenameOf)
                     .ToList();
@@ -2023,17 +2023,17 @@ namespace OpenUtau.Core {
 
         static async Task<List<RegistrySoftware>> ParseThemePullRequestsAsync(HttpClient client, string json) {
             var result = new List<RegistrySoftware>();
-            JArray prs;
+            JsonArray prs;
             try {
-                prs = JArray.Parse(json);
+                prs = JsonNode.Parse(json) as JsonArray ?? new JsonArray();
             } catch (Exception ex) {
                 Log.Warning(ex, "Failed to parse GitHub PR JSON response.");
                 return result;
             }
 
-            foreach (var pr in prs.OfType<JObject>()) {
-                var labels = pr["labels"] is JArray labelsArr
-                    ? labelsArr.OfType<JObject>()
+            foreach (var pr in prs.OfType<JsonObject>()) {
+                var labels = pr["labels"] is JsonArray labelsArr
+                    ? labelsArr.OfType<JsonObject>()
                         .Select(l => AsString(l["name"]) ?? string.Empty)
                         .Where(n => !string.IsNullOrWhiteSpace(n))
                         .ToArray()
@@ -2047,12 +2047,12 @@ namespace OpenUtau.Core {
                     continue;
                 }
 
-                var head = pr["head"] as JObject;
-                var headRepo = head?["repo"] as JObject;
+                var head = pr["head"] as JsonObject;
+                var headRepo = head?["repo"] as JsonObject;
                 var headRef = AsString(head?["ref"]) ?? string.Empty;
                 var fullName = AsString(headRepo?["full_name"]) ?? string.Empty;
 
-                var prNumber = pr["number"]?.Value<int>() ?? 0;
+                var prNumber = pr["number"]?.GetValue<int>() ?? 0;
                 var prTitle = AsString(pr["title"]) ?? $"PR #{prNumber}";
                 var prBody = AsString(pr["body"]) ?? string.Empty;
                 var prUrl = AsString(pr["html_url"]) ?? string.Empty;
@@ -2345,7 +2345,7 @@ namespace OpenUtau.Core {
                     return false;
                 }
                 var json = File.ReadAllText(cacheFile, Encoding.UTF8);
-                entries = JsonConvert.DeserializeObject<List<RegistrySoftware>>(json)
+                entries = Json.Deserialize<List<RegistrySoftware>>(json)
                           ?? new List<RegistrySoftware>();
                 return true;
             } catch (Exception ex) {
@@ -2356,7 +2356,7 @@ namespace OpenUtau.Core {
 
         static void WriteThemeRegistryCache(string cacheFile, List<RegistrySoftware> entries) {
             try {
-                var json = JsonConvert.SerializeObject(entries, Formatting.Indented);
+                var json = Json.Serialize(entries, Json.WriteIndentedOptions);
                 File.WriteAllText(cacheFile, json, Encoding.UTF8);
             } catch (Exception ex) {
                 Log.Warning(ex, "Failed to write theme registry cache to {cacheFile}.", cacheFile);

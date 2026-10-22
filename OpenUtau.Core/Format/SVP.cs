@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core;
 
@@ -12,19 +12,21 @@ namespace OpenUtau.Core.Format {
     public static class SVP {
         public static UProject Load(string svpFilePath) {
             try {
-                var json = File.ReadAllText(svpFilePath);
-                var svpProject = JsonConvert.DeserializeObject<SVPProject>(json);
-                if (svpProject == null) throw new FileFormatException("Failed to parse SVP file");
+var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
+                var svpProject = Json.Deserialize<SVPProject>(json);
+                if (svpProject == null) {
+                    throw new FileFormatException("Failed to parse SVP file");
+                }
                 return ConvertToUstx(svpProject, svpFilePath);
             } catch (Exception ex) {
                 throw new FileFormatException($"Error loading SVP file: {ex.Message}", ex);
             }
         }
 
-        private static double ParseVocalModeParam(JToken token) {
+        private static double ParseVocalModeParam(JsonNode token) {
             if (token == null) return 0;
-            if (token.Type == JTokenType.Object) return token["timbre"]?.Value<double>() ?? 0;
-            if (token.Type == JTokenType.Float || token.Type == JTokenType.Integer) return token.Value<double>();
+            if (token.GetValueKind() == JsonValueKind.Object) return token["timbre"]?.GetValue<double>() ?? 0;
+            if (token.GetValueKind() == JsonValueKind.Number) return token.GetValue<double>();
             return 0;
         }
 
@@ -224,9 +226,10 @@ namespace OpenUtau.Core.Format {
                         foreach (var kvp in group.vocalModes) {
                             string modeName = kvp.Key;
                             if (!grpModes.ContainsKey(modeName)) grpModes[modeName] = new List<(double x, double y)>();
-                            if (kvp.Value.Type == JTokenType.Object) ParseFlatCurve(kvp.Value.ToObject<SVPCurve>()?.points, grpModes[modeName], 0, blicksPerTick, 1f);
-                            else if (kvp.Value.Type == JTokenType.Float || kvp.Value.Type == JTokenType.Integer) {
-                                double val = kvp.Value.Value<double>();
+if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
+                                ParseFlatCurve(Json.Deserialize<SVPCurve>(kvp.Value)?.points, grpModes[modeName], 0, blicksPerTick, 1f);
+                            } else if (kvp.Value.GetValueKind() == JsonValueKind.Number) {
+                                double val = kvp.Value.GetValue<double>();
                                 grpModes[modeName].Add((0, val));
                                 grpModes[modeName].Add((part.Duration, val));
                             }
@@ -428,7 +431,7 @@ namespace OpenUtau.Core.Format {
             public string name { get; set; }
             public List<SVPNote> notes { get; set; }
             public SVPParameters parameters { get; set; }
-            public Dictionary<string, JToken> vocalModes { get; set; } 
+            public Dictionary<string, JsonNode> vocalModes { get; set; } 
         }
         private class SVPDatabase { public string name { get; set; } }
         private class SVPParameters {
@@ -460,7 +463,7 @@ namespace OpenUtau.Core.Format {
             public SVPVoice voice { get; set; } 
         }
         private class SVPVoice {
-            public Dictionary<string, JToken> vocalModeParams { get; set; }
+            public Dictionary<string, JsonNode> vocalModeParams { get; set; }
             public double? tF0Offset, tF0Left, tF0Right, dF0Left, dF0Right, dF0Vbr, fF0Vbr, tF0VbrStart;
             public double? tension, breathiness, gender, voicing, toneShift;
             public double? paramTension, paramBreathiness, paramGender, paramVoicing, paramToneShift;
@@ -478,7 +481,7 @@ namespace OpenUtau.Core.Format {
             public SVPAttributes systemAttributes { get; set; }
         }
         private class SVPAttributes {
-            public Dictionary<string, JToken> vocalModeParams { get; set; }
+            public Dictionary<string, JsonNode> vocalModeParams { get; set; }
             public double? tF0Offset, tF0Left, tF0Right, dF0Left, dF0Right, dF0Vbr, fF0Vbr, tF0VbrStart;
         }
     }
@@ -488,8 +491,8 @@ namespace OpenUtau.Core.Format {
     public static class SVP2 {
         public static UProject Load(string svpFilePath) {
             try {
-                var json = File.ReadAllText(svpFilePath);
-                var svpProject = JsonConvert.DeserializeObject<SVPProject>(json);
+                var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
+                var svpProject = Json.Deserialize<SVPProject>(json);
                 if (svpProject == null) throw new FileFormatException("Failed to parse SV2 file");
                 return ConvertToUstx(svpProject, svpFilePath);
             } catch (Exception ex) {
@@ -497,10 +500,10 @@ namespace OpenUtau.Core.Format {
             }
         }
 
-        private static double ParseVocalModeParam(JToken token) {
+        private static double ParseVocalModeParam(JsonNode token) {
             if (token == null) return 0;
-            if (token.Type == JTokenType.Object) return token["timbre"]?.Value<double>() ?? 0;
-            if (token.Type == JTokenType.Float || token.Type == JTokenType.Integer) return token.Value<double>();
+            if (token.GetValueKind() == JsonValueKind.Object) return token["timbre"]?.GetValue<double>() ?? 0;
+            if (token.GetValueKind() == JsonValueKind.Number) return token.GetValue<double>();
             return 0;
         }
 
@@ -720,9 +723,9 @@ namespace OpenUtau.Core.Format {
                         foreach (var kvp in group.vocalModes) {
                             string modeName = kvp.Key;
                             if (!grpModes.ContainsKey(modeName)) grpModes[modeName] = new List<(double x, double y)>();
-                            if (kvp.Value.Type == JTokenType.Object) ParseFlatCurve(kvp.Value.ToObject<SVPCurve>()?.points, grpModes[modeName], 0, blicksPerTick, 1f);
-                            else if (kvp.Value.Type == JTokenType.Float || kvp.Value.Type == JTokenType.Integer) {
-                                double val = kvp.Value.Value<double>();
+                            if (kvp.Value.GetValueKind() == JsonValueKind.Object) ParseFlatCurve(Json.Deserialize<SVPCurve>(kvp.Value)?.points, grpModes[modeName], 0, blicksPerTick, 1f);
+                            else if (kvp.Value.GetValueKind() == JsonValueKind.Number) {
+                                double val = kvp.Value.GetValue<double>();
                                 grpModes[modeName].Add((0, val));
                                 grpModes[modeName].Add((part.Duration, val));
                             }
@@ -949,7 +952,7 @@ namespace OpenUtau.Core.Format {
             public string name { get; set; }
             public List<SVPNote> notes { get; set; }
             public SVPParameters parameters { get; set; }
-            public Dictionary<string, JToken> vocalModes { get; set; }
+            public Dictionary<string, JsonNode> vocalModes { get; set; }
             public List<SVPPitchControl> pitchControls { get; set; }
         }
         private class SVPPitchControl {
@@ -981,7 +984,7 @@ namespace OpenUtau.Core.Format {
             public SVPVoice voice { get; set; }
         }
         private class SVPVoice {
-            public Dictionary<string, JToken> vocalModeParams { get; set; }
+            public Dictionary<string, JsonNode> vocalModeParams { get; set; }
             public double? tF0Offset, tF0Left, tF0Right, dF0Left, dF0Right, dF0Vbr, fF0Vbr, tF0VbrStart;
             public double? tension, breathiness, gender, voicing, toneShift, mouthOpening;
         }
@@ -998,7 +1001,7 @@ namespace OpenUtau.Core.Format {
             public SVPAttributes systemAttributes { get; set; }
         }
         private class SVPAttributes {
-            public Dictionary<string, JToken> vocalModeParams { get; set; }
+            public Dictionary<string, JsonNode> vocalModeParams { get; set; }
             public double? tF0Offset, tF0Left, tF0Right, dF0Left, dF0Right, dF0Vbr, fF0Vbr, tF0VbrStart;
             public double? tension, breathiness, gender, voicing, toneShift, mouthOpening;
         }

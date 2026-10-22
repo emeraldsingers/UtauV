@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
 using OpenUtau.Core.Ustx;
 using Serilog;
 
@@ -18,7 +17,7 @@ namespace OpenUtau.Core.Util {
         public static void Save() {
             try {
                 File.WriteAllText(PathManager.Inst.NotePresetsFilePath,
-                    JsonConvert.SerializeObject(Default, Formatting.Indented),
+                    Json.Serialize(Default),
                     Encoding.UTF8);
             } catch (Exception e) {
                 Log.Error(e, "Failed to save note presets.");
@@ -27,11 +26,11 @@ namespace OpenUtau.Core.Util {
 
         private static void Load() {
             try {
-                string path = File.Exists(PathManager.Inst.NotePresetsFilePath)
+string path = File.Exists(PathManager.Inst.NotePresetsFilePath)
                     ? PathManager.Inst.NotePresetsFilePath
                     : PathManager.Inst.LegacyNotePresetsFilePath;
                 if (File.Exists(path)) {
-                    Default = JsonConvert.DeserializeObject<SerializableNotePresets>(
+                    Default = Json.Deserialize<SerializableNotePresets>(
                         File.ReadAllText(path, Encoding.UTF8));
                 } else {
                     Reset();
