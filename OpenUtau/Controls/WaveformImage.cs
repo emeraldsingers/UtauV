@@ -118,7 +118,9 @@ namespace OpenUtau.App.Controls {
             }
             if (geometry != null) {
                 // Shift by whole device pixels, then map device pixels to the control's units.
+                // The cached margins lie outside the control, so clip them.
                 var transform = Matrix.CreateTranslation(Math.Round(cacheStart - offsetPx), 0) * Matrix.CreateScale(1 / scale, 1 / scale);
+                using (context.PushClip(new Rect(Bounds.Size)))
                 using (context.PushTransform(transform)) {
                     context.DrawGeometry(Fill, null, geometry);
                 }
