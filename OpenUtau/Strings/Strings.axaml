@@ -282,6 +282,18 @@ Do you want to continue by splitting at the nearest position after current playh
   <system:String x:Key="expressiongraph.category.math">Math</system:String>
   <system:String x:Key="expressiongraph.category.output">Outputs</system:String>
   <system:String x:Key="expressiongraph.category.time">Time</system:String>
+  <system:String x:Key="expressiongraph.category.logic">Logic</system:String>
+  <system:String x:Key="expressiongraph.node.time">Project Time</system:String>
+  <system:String x:Key="expressiongraph.node.smooth">Smooth (Attack / Release)</system:String>
+  <system:String x:Key="expressiongraph.node.random_range">Random Range</system:String>
+  <system:String x:Key="expressiongraph.node.slew">Rate Limiter</system:String>
+  <system:String x:Key="expressiongraph.param.speed">Speed (units/s)</system:String>
+  <system:String x:Key="expressiongraph.param.easing">Easing</system:String>
+  <system:String x:Key="expressiongraph.node.compare">Compare</system:String>
+  <system:String x:Key="expressiongraph.node.and">AND</system:String>
+  <system:String x:Key="expressiongraph.node.or">OR</system:String>
+  <system:String x:Key="expressiongraph.node.not">NOT</system:String>
+  <system:String x:Key="expressiongraph.node.if_else">If / Else</system:String>
   <system:String x:Key="expressiongraph.copy">copy</system:String>
   <system:String x:Key="expressiongraph.cycle">That link would make a loop.</system:String>
   <system:String x:Key="expressiongraph.default">Default for this renderer</system:String>
@@ -318,6 +330,7 @@ Do you want to continue by splitting at the nearest position after current playh
   <system:String x:Key="expressiongraph.node.multiply">Multiply</system:String>
   <system:String x:Key="expressiongraph.node.note_envelope">Note Envelope</system:String>
   <system:String x:Key="expressiongraph.node.note_position">Position in Note</system:String>
+  <system:String x:Key="expressiongraph.node.phrase_notes">Phrase Note Counter</system:String>
   <system:String x:Key="expressiongraph.node.phoneme_input">Phoneme Expression</system:String>
   <system:String x:Key="expressiongraph.node.phoneme_output">Phoneme Expression Output</system:String>
   <system:String x:Key="expressiongraph.node.pitch_input">Pitch</system:String>

@@ -165,6 +165,56 @@ namespace OpenUtau.UiTest {
         });
 
         [Fact]
+        public void RateSliderCommitsAndUndoes() => HeadlessUi.Run(() => {
+            MainWindowTest.InitCore();
+            HeadlessUi.Errors.Clear();
+            var original = DocManager.Inst.Project;
+            var project = Core.Format.Ustx.Create();
+            DocManager.Inst.ExecuteCmd(new LoadProjectNotification(project));
+            var window = new ExpressionsDialog { Width = 1100, Height = 640 };
+            try {
+                window.Show();
+                window.FindControl<TabStrip>("Tabs")!.SelectedIndex = 2;
+                ExpressionGraphEdits.Apply(project, draft => {
+                    var graph = new UExpressionGraph { id = "g", name = "Rate", renderer = Renderers.WORLDLINE_R2 };
+                    var node = new UGraphNode { id = 1, type = GraphNodeTypes.Slew };
+                    node.Set("speed", "100");
+                    graph.nodes.Add(node);
+                    draft.Graphs.Add(graph);
+                });
+                HeadlessUi.Flush();
+                var canvas = window.FindControl<ExpressionGraphEditor>("GraphEditor")!
+                    .FindControl<ExpressionGraphCanvas>("Canvas")!;
+                var slider = Assert.Single(canvas.GetVisualDescendants().OfType<Slider>());
+                Assert.Equal(100, slider.Value);
+                slider.Value = 125;
+                // While dragging, keep the control alive until the gesture commits.
+                Assert.Equal("100", project.expressionGraphs.Single().nodes.Single().GetString("speed"));
+                slider.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyUpEvent, Key = Key.Right });
+                HeadlessUi.Flush();
+                Assert.Equal("125", project.expressionGraphs.Single().nodes.Single().GetString("speed"));
+                DocManager.Inst.Undo();
+                HeadlessUi.Flush();
+                Assert.Equal("100", project.expressionGraphs.Single().nodes.Single().GetString("speed"));
+                Assert.Equal(100, Assert.Single(canvas.GetVisualDescendants().OfType<Slider>()).Value);
+                ExpressionGraphEdits.Apply(project, draft => {
+                    var graph = draft.Graphs.Single();
+                    graph.nodes.Add(new UGraphNode { id = 2, type = GraphNodeTypes.Constant });
+                    graph.links.Add(new UGraphLink { from = 2, to = 1, toPort = "speed" });
+                });
+                HeadlessUi.Flush();
+                Assert.Empty(canvas.GetVisualDescendants().OfType<Slider>());
+                DocManager.Inst.Undo();
+                HeadlessUi.Flush();
+                Assert.Equal(100, Assert.Single(canvas.GetVisualDescendants().OfType<Slider>()).Value);
+                Assert.Empty(HeadlessUi.Errors.Snapshot());
+            } finally {
+                window.Close();
+                DocManager.Inst.ExecuteCmd(new LoadProjectNotification(original));
+            }
+        });
+
+        [Fact]
         public void TrackSettingsPickTheTracksGraph() => HeadlessUi.Run(() => {
             MainWindowTest.InitCore();
             HeadlessUi.Errors.Clear();
