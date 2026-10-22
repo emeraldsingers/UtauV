@@ -272,6 +272,7 @@ namespace OpenUtau.Core.Util {
             /// When on, it opens upstream's singer flyout with search instead.
             /// </summary>
             public bool UseSingerFlyout = false;
+            public bool ReduceAnimations = false;
             public bool ShowPlaybackNoteHighlight = true;
             public double PlaybackHighlightFadeInPerSecond = 8.0;
             public double PlaybackHighlightFadeOutPerSecond = 6.2;

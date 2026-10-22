@@ -271,6 +271,10 @@
 
         <!-- Appearance -->
         <StackPanel>
+          <Grid>
+            <TextBlock Text="{DynamicResource prefs.appearance.reduceanimations}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding ReduceAnimations}"/>
+          </Grid>
           <TextBlock Text="{DynamicResource prefs.appearance.theme}" Margin="0,10,0,0"/>
           <Grid HorizontalAlignment="Stretch" ColumnDefinitions="*,auto,auto,auto,auto">
             <ComboBox Grid.Column="0" IsEnabled="{Binding !IsThemeEditorOpen}" ItemsSource="{Binding ThemeItems}" SelectedItem="{Binding ThemeName}"/>

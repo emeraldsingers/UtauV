@@ -55,9 +55,25 @@ namespace OpenUtau.App.Controls {
 
         private Window RootWindow => (Window)TopLevel.GetTopLevel(this)!;
 
+        private readonly ValueGlide hScroll;
+        private readonly ValueGlide vScroll;
+        private readonly ZoomGlide xZoom;
+        private readonly ZoomGlide yZoom;
+        
+        public static readonly StyledProperty<Thickness> OffScreenMarginProperty = AvaloniaProperty.Register<PianoRoll, Thickness>(nameof(OffScreenMargin));
+        public Thickness OffScreenMargin {
+            get => GetValue(OffScreenMarginProperty);
+            set => SetValue(OffScreenMarginProperty, value);
+        }
+
         public PianoRoll(PianoRollViewModel model) {
             InitializeComponent();
             DataContext = ViewModel = model;
+            var smoothViewport = new SmoothViewport(this);
+            hScroll = smoothViewport.Scroll(HScrollBar);
+            vScroll = smoothViewport.Scroll(VScrollBar);
+            xZoom = smoothViewport.Zoom((position, delta) => ViewModel.NotesViewModel.OnXZoomed(position, delta));
+            yZoom = smoothViewport.Zoom((position, delta) => ViewModel.NotesViewModel.OnYZoomed(position, delta));
             ValueTip.IsVisible = false;
             SetPenToolIcon();
             penTool.AddHandler(PointerPressedEvent, OnToolButtonPointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
@@ -733,14 +749,12 @@ namespace OpenUtau.App.Controls {
         }
 
         public void HScrollPointerWheelChanged(object sender, PointerWheelEventArgs args) {
-            var scrollbar = (ScrollBar)sender;
-            scrollbar.Value = Math.Max(scrollbar.Minimum, Math.Min(scrollbar.Maximum, scrollbar.Value - scrollbar.SmallChange * args.Delta.Y));
+            hScroll.By(-HScrollBar.SmallChange * args.Delta.Y, SmoothViewport.IsWheelStep(args.Delta.Y));
             LyricBox?.EndEdit();
         }
 
         public void VScrollPointerWheelChanged(object sender, PointerWheelEventArgs args) {
-            var scrollbar = (ScrollBar)sender;
-            scrollbar.Value = Math.Max(scrollbar.Minimum, Math.Min(scrollbar.Maximum, scrollbar.Value - scrollbar.SmallChange * args.Delta.Y));
+            vScroll.By(-VScrollBar.SmallChange * args.Delta.Y, SmoothViewport.IsWheelStep(args.Delta.Y));
             LyricBox?.EndEdit();
         }
 
@@ -749,12 +763,12 @@ namespace OpenUtau.App.Controls {
             var position = args.GetCurrentPoint((Visual)sender).Position;
             var size = control.Bounds.Size;
             position = position.WithX(position.X / size.Width).WithY(position.Y / size.Height);
-            ViewModel.NotesViewModel.OnXZoomed(position, 0.1 * args.Delta.Y);
+            xZoom.By(position, 0.1 * args.Delta.Y, SmoothViewport.IsWheelStep(args.Delta.Y));
             LyricBox?.EndEdit();
         }
 
         public void ViewScalerPointerWheelChanged(object sender, PointerWheelEventArgs args) {
-            ViewModel.NotesViewModel.OnYZoomed(new Point(0, 0.5), 0.1 * args.Delta.Y);
+            yZoom.By(new Point(0, 0.5), 0.1 * args.Delta.Y, SmoothViewport.IsWheelStep(args.Delta.Y));
             LyricBox?.EndEdit();
         }
 
@@ -1270,16 +1284,14 @@ namespace OpenUtau.App.Controls {
                     delta = new Vector(delta.Y, delta.X);
                 }
                 if (delta.X != 0) {
-                    HScrollBar.Value = Math.Max(HScrollBar.Minimum,
-                        Math.Min(HScrollBar.Maximum, HScrollBar.Value - HScrollBar.SmallChange * delta.X));
+                    hScroll.By(-HScrollBar.SmallChange * delta.X, SmoothViewport.IsWheelStep(delta.X));
                 }
                 if (delta.Y != 0) {
-                    VScrollBar.Value = Math.Max(VScrollBar.Minimum,
-                        Math.Min(VScrollBar.Maximum, VScrollBar.Value - VScrollBar.SmallChange * delta.Y));
+                    vScroll.By(-VScrollBar.SmallChange * delta.Y, SmoothViewport.IsWheelStep(delta.Y));
                 }
             } else if (args.KeyModifiers == KeyModifiers.Alt) {
                 position = position.WithX(position.X / size.Width).WithY(position.Y / size.Height);
-                ViewModel.NotesViewModel.OnYZoomed(position, 0.1 * args.Delta.Y);
+                yZoom.By(position, 0.1 * args.Delta.Y, SmoothViewport.IsWheelStep(args.Delta.Y));
             } else if (args.KeyModifiers == cmdKey) {
                 TimelinePointerWheelChanged(TimelineCanvas, args);
             }

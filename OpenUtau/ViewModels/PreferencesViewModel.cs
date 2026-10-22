@@ -136,10 +136,14 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial bool ShowIcon { get; set; }
         [Reactive] public partial bool ShowGhostNotes { get; set; }
         [Reactive] public partial bool NoteHoverGlow { get; set; }
-        [Reactive] public partial bool UseSingerFlyout { get; set; }
+[Reactive] public partial bool UseSingerFlyout { get; set; }
         [Reactive] public partial bool DiffSingerBarStyle { get; set; }
         [Reactive] public partial bool PitchEditMode { get; set; }
         [Reactive] public partial double PitchEditDim { get; set; }
+        [Reactive] public partial bool ReduceAnimations { get; set; }
+        [Reactive] public partial bool ShowPlaybackNoteHighlight { get; set; }
+        [Reactive] public partial bool ShowPlaybackNoteBounce { get; set; }
+        [Reactive] public partial bool DetachPianoRoll { get; set; }
         [Reactive] public partial bool ThemeEditable { get; set; }
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
         public bool IsThemeEditorOpen => Views.ThemeEditorWindow.IsOpen;
@@ -295,6 +299,10 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerBarStyle = Preferences.Default.DiffSingerBarStyle;
             PitchEditMode = Preferences.Default.PitchEditMode;
             PitchEditDim = Preferences.Default.PitchEditDim;
+            ReduceAnimations = Preferences.Default.ReduceAnimations;
+            ShowPlaybackNoteHighlight = Preferences.Default.ShowPlaybackNoteHighlight;
+            ShowPlaybackNoteBounce = Preferences.Default.ShowPlaybackNoteBounce;
+            DetachPianoRoll = Preferences.Default.DetachPianoRoll;
             Channel = Preferences.Default.Channel switch {
                 "beta" => 1,
                 "alpha" => 2,
@@ -333,7 +341,7 @@ namespace OpenUtau.App.ViewModels {
                         }
                     }
                 });
-            this.WhenAnyValue(vm => vm.PreferPortAudio)
+this.WhenAnyValue(vm => vm.PreferPortAudio)
                 .Subscribe(index => {
                     Preferences.Default.PreferPortAudio = index > 0;
                     Preferences.Save();
@@ -411,6 +419,26 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.PreRender)
                 .Subscribe(preRender => {
                     Preferences.Default.PreRender = preRender;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.ReduceAnimations)
+                .Subscribe(reduceAnimations => {
+                    Preferences.Default.ReduceAnimations = reduceAnimations;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.ShowPlaybackNoteHighlight)
+                .Subscribe(value => {
+                    Preferences.Default.ShowPlaybackNoteHighlight = value;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.ShowPlaybackNoteBounce)
+                .Subscribe(value => {
+                    Preferences.Default.ShowPlaybackNoteBounce = value;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.DetachPianoRoll)
+                .Subscribe(value => {
+                    Preferences.Default.DetachPianoRoll = value;
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.Language)
