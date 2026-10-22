@@ -2255,6 +2255,12 @@ viewModel.NewProject();
         }
 
         public void OnNext(UCommand cmd, bool isUndo) {
+            // Errors from missing packages become an offer to install them.
+            var missingPackages = MissingPackageException.Collect((cmd as ErrorMessageNotification)?.e ?? (cmd as ToastNotification)?.e);
+            if (missingPackages.Count > 0) {
+                _ = PackageInstallPrompt.EnsureInstalledAsync(this, missingPackages, afterFailure: true);
+                return;
+            }
             if (cmd is ErrorMessageNotification notif) {
                 switch (notif.e) {
                     case Core.Render.NoResamplerException:
@@ -2269,6 +2275,8 @@ viewModel.NewProject();
                         MessageBox.ShowError(this, notif.e, notif.message, true);
                         break;
                 }
+            } else if (cmd is TrackChangeRenderSettingCommand renderSettingCmd && !isUndo) {
+                _ = PackageInstallPrompt.EnsureInstalledAsync(this, PackageRequirements.For(renderSettingCmd.track.RendererSettings), afterFailure: false);
             } else if (cmd is ToastNotification toast) {
                 if (toast.windowType == "Pianoroll" && pianoRollWindow != null) {
                     if (pianoRollWindow.Toast(toast)) return;
