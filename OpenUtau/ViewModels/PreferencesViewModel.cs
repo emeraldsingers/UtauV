@@ -76,8 +76,8 @@ namespace OpenUtau.App.ViewModels {
 
         // Paths
         public string SingerPath => PathManager.Inst.SingersPath;
-        public string AdditionalSingersPath => !string.IsNullOrWhiteSpace(PathManager.Inst.AdditionalSingersPath) ? PathManager.Inst.AdditionalSingersPath : "(None)";
-        public string AdditionalResamplersPath => !string.IsNullOrWhiteSpace(PathManager.Inst.AdditionalResamplersPath) ? PathManager.Inst.AdditionalResamplersPath : "(None)";
+public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
+        public string AdditionalResamplersPath => PathManager.Inst.AdditionalResamplersPath;
         [Reactive] public partial bool InstallToAdditionalSingersPath { get; set; }
         [Reactive] public partial bool LoadDeepFolders { get; set; }
 
