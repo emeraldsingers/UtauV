@@ -81,20 +81,21 @@ var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
                             audioFile = string.IsNullOrEmpty(dir) ? Path.GetFullPath(audioFile) : Path.GetFullPath(Path.Combine(dir, audioFile));
                         }
 
-                        if (!File.Exists(audioFile)) continue;
-
+                        // A file that is absent or unreadable still becomes a part, so the
+                        // track keeps its place and shows as missing instead of vanishing.
                         long startBlickAudio = reference.blickAbsoluteBegin > 0 ? reference.blickAbsoluteBegin : reference.blickOffset;
-                        double audioDurationMs = reference.audio.duration * 1000.0;
-                        int durTick = timeAxis.MsPosToTickPos(audioDurationMs);
-                        if (durTick <= 0) durTick = project.resolution * 4;
+                        int startTick = Math.Max(0, (int)Math.Round(startBlickAudio / blicksPerTick));
 
                         var wavePart = new UWavePart {
                             name = Path.GetFileName(audioFile),
                             FilePath = audioFile,
-                            position = Math.Max(0, (int)Math.Round(startBlickAudio / blicksPerTick)),
-                            Duration = durTick,
+                            position = startTick,
+                            // The SVP records the audio length itself, so the part keeps its
+                            // length when the wave file can't be opened to measure it.
+                            fileDurationMs = reference.audio.duration * 1000.0,
                             trackNo = track.TrackNo
                         };
+                        wavePart.Load(project);
 
                         project.parts.Add(wavePart);
                         trackHasContent = true;
