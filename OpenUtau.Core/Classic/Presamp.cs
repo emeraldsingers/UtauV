@@ -124,7 +124,10 @@ namespace Classic {
                         currentBlock = line.ToUpper();
                         
                         // Clear lists upon entering block to prepare for custom data overriding defaults
-                        if (currentBlock == "[NUM]") Nums.Clear();
+                        if (currentBlock == "[VOWEL]") Vowels.Clear();
+                        else if (currentBlock == "[CONSONANT]") Consonants.Clear();
+                        else if (currentBlock == "[PRIORITY]") Priorities.Clear();
+                        else if (currentBlock == "[NUM]") Nums.Clear();
                         else if (currentBlock == "[APPEND]") Appends.Clear();
                         else if (currentBlock == "[PITCH]") Pitches.Clear();
                         else if (currentBlock == "[PRE]") Prefixs.Clear();
@@ -132,6 +135,7 @@ namespace Classic {
                         else if (currentBlock == "[ALIAS_PRIORITY_DIFAPPEND]") AliasPriorityDifAppend.Clear();
                         else if (currentBlock == "[ALIAS_PRIORITY_DIFPITCH]") AliasPriorityDifPitch.Clear();
                         else if (currentBlock == "[REPLACE]") Replace.Clear();
+                        else if (currentBlock == "[CFLAGS]") CFlags = string.Empty;
                         continue;
                     }
 
@@ -144,19 +148,20 @@ namespace Classic {
                                 consonantLines.Add(line);
                                 break;
                             case "[PRIORITY]":
-                                Priorities.Clear();
                                 Priorities.AddRange(line.Split(','));
                                 break;
                             case "[REPLACE]":
+                                // Split the raw line: a leading space is part of the key,
+                                // which is how a replacement for " a" is expressed.
                                 var s = rawLine.Split(new char[] { '=' }, 2);
                                 if (s.Length >= 2) {
-                                    Replace[s[0].Trim()] = s[1];
+                                    Replace[s[0]] = s[1];
                                 }
                                 break;
                             case "[ALIAS]":
-                                var parts = rawLine.Split(new char[] { '=' }, 2);
+                                var parts = line.Split(new char[] { '=' }, 2);
                                 if (parts.Length < 2) break;
-                                switch (parts[0].Trim().ToUpper()) {
+                                switch (parts[0].ToUpper()) {
                                     case "VCV": AliasRules.VCV = parts[1]; break;
                                     case "BEGINING_CV": AliasRules.BEGINING_CV = parts[1]; break;
                                     case "CROSS_CV": AliasRules.CROSS_CV = parts[1]; break;
@@ -181,12 +186,10 @@ namespace Classic {
                                 if(!Prefixs.Contains(line)) Prefixs.Add(line);
                                 break;
                             case "[SU]":
+                                MatchCollection matches = Regex.Matches(line, @"%num%|%append%|%pitch%");
                                 SuffixOrder.Clear();
-                                string str = line;
-                                for (int i = 1; i < 3 && str != ""; i++) {
-                                    if (str.StartsWith("%num%")) { SuffixOrder.Add("%num%"); str = str.Replace("%num%", ""); }
-                                    if (str.StartsWith("%append%")) { SuffixOrder.Add("%append%"); str = str.Replace("%append%", ""); }
-                                    if (str.StartsWith("%pitch%")) { SuffixOrder.Add("%pitch%"); str = str.Replace("%pitch%", ""); }
+                                foreach (Match match in matches) {
+                                    SuffixOrder.Add(match.Value);
                                 }
                                 break;
                             case "[NUM]":
