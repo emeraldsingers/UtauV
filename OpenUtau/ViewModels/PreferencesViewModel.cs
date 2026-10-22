@@ -109,6 +109,9 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial GpuInfo? OnnxGpu { get; set; }
         [Reactive] public partial bool ShowOnnxGpu { get; set; }
 
+        public List<string> MergePhrasesSecs { get; } = new List<string> { "Auto", "2.5", "5", "7.5", "10" };
+        [Reactive] public partial int MergePhrasesSecIndex { get; set; }
+
         // GAME backend (onnx / ggml)
         public List<string> GameBackendOptions { get; } = new() { "ONNX", "GGML" };
         [Reactive] public partial string GameBackend { get; set; }
@@ -245,6 +248,10 @@ namespace OpenUtau.App.ViewModels {
                 ? OnnxGpuOptions.FirstOrDefault(x => x.deviceId == Preferences.Default.OnnxGpu, OnnxGpuOptions[0])
                 : null;
             ShowOnnxGpu = (OnnxRunner == "DirectML" || OnnxRunner == "CUDA");
+            MergePhrasesSecIndex = Math.Max(0, MergePhrasesSecs.IndexOf(
+                Preferences.Default.MergePhrasesSec == 0
+                    ? "Auto"
+                    : Preferences.Default.MergePhrasesSec.ToString()));
             // GAME backend: ONNX is the default, GGML is available when installed.
             // The options list always includes both so the ComboBox UX is stable.
             GameBackend = Preferences.Default.GameBackend switch {
@@ -606,6 +613,18 @@ namespace OpenUtau.App.ViewModels {
                 .Subscribe(index => {
                     Preferences.Default.OnnxGpu = index.deviceId;
                     Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.MergePhrasesSecIndex)
+                .Skip(1)
+                .Subscribe(index => {
+                    if (index < 0 || index >= MergePhrasesSecs.Count) {
+                        return;
+                    }
+                    string item = MergePhrasesSecs[index];
+                    Preferences.Default.MergePhrasesSec = item == "Auto" ? 0 : float.Parse(item);
+                    Preferences.Save();
+                    DocManager.Inst.ExecuteCmd(new ValidateProjectNotification());
+                    DocManager.Inst.ExecuteCmd(new PreRenderNotification());
                 });
             this.WhenAnyValue(vm => vm.GameBackend)
                 .Subscribe(index => {

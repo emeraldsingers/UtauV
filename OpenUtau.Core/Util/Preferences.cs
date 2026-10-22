@@ -206,6 +206,7 @@ namespace OpenUtau.Core.Util {
             public bool ExtendEndingPhonemes = false;
             public string OnnxRunner = string.Empty;
             public int OnnxGpu = 0;
+            public float MergePhrasesSec = 0;
             /// <summary>
             /// GAME MIDI extractor backend preference: "onnx" (default) or "ggml".
             /// Affects which inference engine Game uses; see GameBackendFactory.
