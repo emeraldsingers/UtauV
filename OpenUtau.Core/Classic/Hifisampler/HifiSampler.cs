@@ -60,7 +60,8 @@ namespace OpenUtau.Classic.Hifisampler {
             var timing = new HifiNoteTiming(config, melFrames, velocity, offset,
                 consonant, cutoff, length, flags.Has("e"));
             var curves = timing.SourceCurves(tension, breathiness, voicing, gender, tempo, config.OriginHopSize);
-            var features = HifiFeatures.Generate(wave, curves, config, x => Hnsep.Instance.Harmonic(x));
+            var features = HifiFeatures.Generate(wave, curves, config,
+                x => HnsepCache.Harmonic(inputFile, x, Hnsep.Instance.Harmonic));
             var melRender = timing.RenderMel(features.Mel);
 
             var t = new double[melRender.Length];

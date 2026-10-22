@@ -442,18 +442,15 @@ namespace OpenUtau.Core.Render {
                 samples = new float[(trimEndFrame - trimStartFrame) * cfg.hop_size];
                 Array.Copy(untrimmedSamples, trimStartSample, samples, 0, trimEndSample - trimStartSample);
 
-                // Worldline-R1.1: separate with some context around the region, then keep the region.
+                // Worldline-R1.1: the region of the whole file's harmonic part, cached next to the source.
                 float[]? harmonic = null;
                 if (hnsep != null) {
                     if (hnsep.SampleRate != fs) {
                         throw new NotSupportedException($"hnsep model sample rate {hnsep.SampleRate} Hz, expected {fs} Hz.");
                     }
-                    int margin = fs / 5;
-                    int lo = Math.Max(0, trimStartSample - margin);
-                    int hi = Math.Min(untrimmedSamples.Length, trimEndSample + margin);
-                    var harmonicRegion = hnsep.Harmonic(untrimmedSamples[lo..hi]);
+                    var harmonicFile = HnsepCache.Harmonic(item.inputFile, untrimmedSamples, hnsep.Harmonic);
                     harmonic = new float[samples.Length];
-                    Array.Copy(harmonicRegion, trimStartSample - lo, harmonic, 0, trimEndSample - trimStartSample);
+                    Array.Copy(harmonicFile, trimStartSample, harmonic, 0, trimEndSample - trimStartSample);
                 }
 
                 if (!forResampler) {
