@@ -136,7 +136,8 @@ namespace OpenUtau.App.Controls {
 
         public readonly UPart part;
         private readonly PartsCanvas partsCanvas;
-        private readonly Pen notePen = new Pen(Brushes.White, 3);
+        private const byte ContentAlpha = 0xF8;
+        private readonly Pen notePen = new Pen(new SolidColorBrush(Color.FromArgb(ContentAlpha, 255, 255, 255)), 3);
         private static readonly IBrush viewportFill = new SolidColorBrush(Color.FromArgb(28, 255, 255, 255));
         private static readonly IPen viewportPen = new Pen(Brushes.White, 2);
         private const double GripDot = 2;
@@ -427,7 +428,7 @@ private IBrush GetBackgroundBrush() {
         }
 
         private void DrawPeak(int[] data, int width, int x, int y1, int y2) {
-            const int white = unchecked((int)0xFFFFFFFF);
+            const int white = (ContentAlpha << 24) | 0xFFFFFF;
             if (y1 > y2) {
                 int temp = y2;
                 y2 = y1;
