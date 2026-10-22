@@ -71,7 +71,8 @@ namespace OpenUtau.App.Controls {
                     : $"{ThemeManager.GetString("expressiongraph.renderer")}: {graph.renderer}";
                 PitchCurveBox.SelectedIndex = graph?.preferredPitchCurve == Core.Format.Ustx.PITO ? 1 : 0;
                 DefaultBox.IsChecked = graph?.renderer != null
-                    && Project.defaultExpressionGraphs?.TryGetValue(graph.renderer, out var id) == true && id == graph.id;
+                    && Project.defaultExpressionGraphs?.TryGetValue(Renderers.GetExpressionGraphSlot(graph.renderer), out var id) == true
+                    && id == graph.id;
                 Canvas.Show(Project, graph);
                 Hint.Text = ThemeManager.GetString(graph == null ? "expressiongraph.hint.nograph" : "expressiongraph.hint");
                 Hint.IsVisible = graph == null || graph.nodes.Count == 0;
@@ -203,11 +204,13 @@ namespace OpenUtau.App.Controls {
                 return;
             }
             bool isDefault = DefaultBox.IsChecked == true;
+            // Defaults are per slot: a Worldline-R2 graph is the default of Worldline-R's slot.
+            string slot = Renderers.GetExpressionGraphSlot(graph.renderer);
             ExpressionGraphEdits.Apply(Project, draft => {
                 if (isDefault) {
-                    draft.Defaults[graph.renderer] = graph.id;
-                } else if (draft.Defaults.TryGetValue(graph.renderer, out var id) && id == graph.id) {
-                    draft.Defaults.Remove(graph.renderer);
+                    draft.Defaults[slot] = graph.id;
+                } else if (draft.Defaults.TryGetValue(slot, out var id) && id == graph.id) {
+                    draft.Defaults.Remove(slot);
                 }
             });
         }
