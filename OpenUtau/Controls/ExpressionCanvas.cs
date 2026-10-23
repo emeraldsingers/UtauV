@@ -246,6 +246,9 @@ namespace OpenUtau.App.Controls {
                             context.DrawLine(lPen, new Point(x1, defaultHeight), new Point(x2, defaultHeight));
                         }
                     }
+                    // A graph can drive this lane even when the part has no hand-drawn
+                    // curve for it, so the dashed driven line has to be drawn here too.
+                    DrawDrivenCurve(context, viewModel, descriptor, leftTick, rightTick);
                     return;
                 }
 

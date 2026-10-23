@@ -309,6 +309,9 @@ namespace OpenUtau.Core.ExpressionGraph {
             return (project, track, part);
         }
 
+        internal static (UProject project, UTrack track, UVoicePart part) FixtureForTest(UExpressionGraph graph) =>
+            Fixture(graph);
+
         static Dictionary<string, float[]> Evaluate(UExpressionGraph graph, UProject project, UTrack track, UVoicePart part, int[] ticks) {
             var program = ExpressionGraphProgram.Compile(graph, out var error);
             Assert.True(program != null, error);
