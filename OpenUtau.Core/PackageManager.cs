@@ -442,6 +442,7 @@ namespace OpenUtau.Core {
         public async Task<List<RegistrySoftware>> FetchVoicebankRegistryAsync() {
             var merged = await FetchMergedRegistryAsync([
                 new RegistrySource(voicebankRegistryUrlUtauVRequested, voicebankRegistryUrlUtauVFallback),
+                new RegistrySource(registryUrl),
                 new RegistrySource(registryUrlUtauVRequested, registryUrlUtauVFallback),
             ], "voicebank");
             return merged.Values
@@ -452,7 +453,8 @@ namespace OpenUtau.Core {
 
         public async Task<List<RegistrySoftware>> FetchPluginRegistryAsync() {
             var merged = await FetchMergedRegistryAsync([
-                new RegistrySource(pluginRegistryUrlUtauVRequested)
+                new RegistrySource(pluginRegistryUrlUtauVRequested),
+                new RegistrySource(registryUrl),
             ], "plugin");
             return merged.Values
                 .Where(IsPluginEntry)
@@ -584,32 +586,72 @@ namespace OpenUtau.Core {
             string fallbackSourceUrl) {
             try {
                 return await FetchRegistrySourceAsync(client, primarySourceUrl);
-            } catch {
+            } catch (Exception e) {
+                // The fallback keeps the list alive, but a broken primary would otherwise
+                // look like an empty category. Say which source failed and why.
+                Log.Warning(e, "Failed to fetch registry source {sourceUrl}, falling back to {fallbackUrl}",
+                    primarySourceUrl, fallbackSourceUrl);
                 return await FetchRegistrySourceAsync(client, fallbackSourceUrl);
             }
         }
 
+        internal static List<RegistrySoftware> ParseRegistryBodyForTest(string body, string sourceUrl) {
+            return ParseRegistryBody(body, sourceUrl);
+        }
+
         static List<RegistrySoftware> ParseRegistryBody(string body, string sourceUrl) {
             try {
-var token = JsonNode.Parse(body);
-                if (token is JsonArray arr) {
-                    return arr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
-                }
-                if (token is JsonObject obj) {
-                    var items = obj["items"];
-                    if (items is JsonArray itemsArr) {
-                        return itemsArr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
-                    }
-                    var singers = ParseSingerRegistryBody(obj);
-                    if (singers.Count > 0) {
-                        return singers;
-                    }
-                }
+                return ParseRegistryBody(body);
             } catch (Exception e) {
-                throw new InvalidDataException($"Failed to parse registry JSON from {sourceUrl}", e);
+                var where = e is System.Text.Json.JsonException je
+                    ? $" at line {je.LineNumber}, position {je.BytePositionInLine}"
+                    : string.Empty;
+                // Registry files are hand-edited, and markdown descriptions often carry
+                // backslashes that JSON rejects ("\_" for an escaped underscore). Retry with
+                // those dropped so one bad description doesn't blank out a whole category.
+                var relaxed = RelaxInvalidEscapes(body);
+                if (relaxed != body) {
+                    try {
+                        Log.Warning("Invalid JSON escape in registry {sourceUrl}{where}. Ignoring the stray backslashes.",
+                            sourceUrl, where);
+                        return ParseRegistryBody(relaxed);
+                    } catch {
+                        // Fall through to the original error, it describes the real problem.
+                    }
+                }
+                throw new InvalidDataException(
+                    $"Failed to parse registry JSON from {sourceUrl}{where}. {e.Message}", e);
+            }
+        }
+
+        static List<RegistrySoftware> ParseRegistryBody(string body) {
+            var token = JsonNode.Parse(body);
+            if (token is JsonArray arr) {
+                return arr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
+            }
+            if (token is JsonObject obj) {
+                var items = obj["items"];
+                if (items is JsonArray itemsArr) {
+                    return itemsArr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
+                }
+                var singers = ParseSingerRegistryBody(obj);
+                if (singers.Count > 0) {
+                    return singers;
+                }
             }
             return new List<RegistrySoftware>();
         }
+
+        /// <summary>
+        /// Drops backslashes that start an escape sequence JSON doesn't define, so a
+        /// description like "hhskt\_ru" parses as "hhskt_ru". Valid escapes are kept.
+        /// </summary>
+        static string RelaxInvalidEscapes(string body) {
+            return invalidEscapeRegex.Replace(body, "");
+        }
+
+        static readonly Regex invalidEscapeRegex = new Regex(
+            @"\\(?![""\\/bfnrtu])", RegexOptions.Compiled);
 
         static List<RegistrySoftware> ParseSingerRegistryBody(JsonObject root) {
             var singersToken = root["singers"];
@@ -1938,6 +1980,7 @@ internal static bool IsValidPackageName(string id) {
 
             var merged = await FetchMergedRegistryAsync([
                 new RegistrySource(themeRegistryUrlUtauVRequested),
+                new RegistrySource(registryUrl),
             ], "theme");
 
             if (EnablePullRequestThemeSource) {
@@ -1966,6 +2009,7 @@ internal static bool IsValidPackageName(string id) {
 
             var merged = await FetchMergedRegistryAsync([
                 new RegistrySource(themeRegistryUrlUtauVRequested),
+                new RegistrySource(registryUrl),
             ], "singer-theme");
 
             if (EnablePullRequestThemeSource) {
