@@ -864,6 +864,29 @@ OpenUtau стремится стать средой редактирования
 <system:String x:Key="menu.tools.dependency.install">Установить зависимость (.oudep)...</system:String>
   <system:String x:Key="pianoroll.menu.view.tiktokmode">Режим съёмки для TikTok</system:String>
   <system:String x:Key="pianoroll.tool.drawpitch">Инструмент рисовки питча (4)</system:String>
+  <system:String x:Key="pianoroll.tool.curve.cursor">Курсор
+    Левая кнопка для выбора</system:String>
+  <system:String x:Key="pianoroll.tool.curve.pen">Перо
+    Левая кнопка для рисования
+    Правая кнопка для сбрасывания</system:String>
+  <system:String x:Key="pianoroll.tool.curve.line">Линия
+    Левая кнопка для рисования (рисует прямую линию)
+    Удерживайте Shift + левая кнопка для рисования (рисует горизонтальную линию)
+    Правая кнопка для сбрасывания</system:String>
+  <system:String x:Key="pianoroll.tool.curve.eraser">Ластик
+    Нажмите для сбрасывания</system:String>
+  <system:String x:Key="pianoroll.tool.curve.verticalstretch">Вертикальное растяжение
+    Левая кнопка для растяжения кривой по вертикали
+    Правая кнопка для сбрасывания</system:String>
+  <system:String x:Key="pianoroll.tool.curve.horizontalstretch">Горизонтальное растяжение
+    Левая кнопка для растяжения кривой по горизонтали
+    Правая кнопка для сбрасывания</system:String>
+  <system:String x:Key="pianoroll.tool.curve.verticalshift">Вертикальный сдвиг
+    Левая кнопка для перемещения кривой по вертикали
+    Правая кнопка для сбрасывания</system:String>
+  <system:String x:Key="pianoroll.tool.curve.horizontalshift">Горизонтальный сдвиг
+    Левая кнопка для перемещения кривой по горизонтали
+    Правая кнопка для сбрасывания</system:String>
   <system:String x:Key="pianoroll.tool.drawpitchplus">Инструмент рисовки питча Plus (Ctrl + Shift + 1)
     Левая кнопка для рисования, при отпускании нарисованный питч сглаживается
     Правая кнопка для сбрасывания</system:String>
