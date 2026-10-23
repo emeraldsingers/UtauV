@@ -1385,8 +1385,10 @@ namespace OpenUtau.App.Controls {
                 valueTipPointerPosition = args.GetCurrentPoint(ValueTipCanvas!).Position;
             }
             if (editState != null) {
-editState.ctrlShiftHeld = args.KeyModifiers != KeyModifiers.Shift && ViewModel.CurveViewModel.CurveTool == CurveTools.CurveLineTool;
-                editState.shiftHeld = args.KeyModifiers == KeyModifiers.Shift  && (ViewModel.CurveViewModel.CurveTool == CurveTools.CurveLineTool  || (editState is ExpSetValueState expSetValueState && !expSetValueState.IsCurve));
+                // Upstream gates the modifiers on the line tool, which this fork's curve
+                // toolbar doesn't expose yet. Fall back to the plain modifier test.
+                editState.ctrlShiftHeld = args.KeyModifiers != KeyModifiers.Shift;
+                editState.shiftHeld = args.KeyModifiers == KeyModifiers.Shift;
                 UpdateEditState(args, control, point);
             } else {
                 Cursor = null;
