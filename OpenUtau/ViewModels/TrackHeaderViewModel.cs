@@ -256,7 +256,7 @@ if (tracksViewModel != null && tracksViewModel.SelectedTracks.Count > 1) {
             JudgeMuted();
         }
 
-        public void ToggleMute(bool mute) {
+        public void ToggleMuteWithBool(bool mute) {
             if (mute) {
                 Mute = true;
             } else {
