@@ -954,4 +954,15 @@ OpenUtau стремится стать средой редактирования
   <system:String x:Key="packages.themes.status.installfailed">Ошибка установки темы</system:String>
   <system:String x:Key="prefs.appearance.singerthemes.enabled">Использовать цвета тем исполнителей</system:String>
   <system:String x:Key="prefs.appearance.singerthemes.manage">Управление темами исполнителей</system:String>
+  <system:String x:Key="prefs.appearance.group.general">Общее</system:String>
+  <system:String x:Key="prefs.appearance.group.theme">Тема</system:String>
+  <system:String x:Key="prefs.appearance.group.font">Шрифт</system:String>
+  <system:String x:Key="prefs.appearance.group.notes">Ноты</system:String>
+  <system:String x:Key="prefs.appearance.group.trackcolors">Цвета дорожек</system:String>
+  <system:String x:Key="prefs.appearance.group.pianoroll">Пиано-ролл</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditmode">Режим редактирования питча</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditmode.tip">Затемняет весь пиано-ролл, кроме кривой питча, пока активен инструмент питча (Shift+1-5)</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditdim">Сила затемнения в режиме питча</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditdim.tip">Насколько сильно затемняется пиано-ролл в режиме редактирования питча</system:String>
+  <system:String x:Key="prefs.appearance.customtheme.import.tip">Импортировать тему из файла</system:String>
 </ResourceDictionary>

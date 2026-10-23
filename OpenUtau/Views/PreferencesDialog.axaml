@@ -34,6 +34,11 @@
       <Setter Property="TextWrapping" Value="Wrap"/>
       <Setter Property="Margin" Value="4,0"/>
     </Style>
+    <Style Selector="TextBlock.group-header">
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Margin" Value="0,18,0,4"/>
+    </Style>
     <Style Selector="TextBox.no-input">
       <Setter Property="Focusable" Value="False"/>
       <Setter Property="IsReadOnly" Value="True"/>
@@ -285,6 +290,35 @@
 
         <!-- Appearance -->
         <StackPanel>
+          <TextBlock Classes="group-header" Text="{DynamicResource prefs.appearance.group.general}"/>
+          <c:NumberSlider Label="{DynamicResource prefs.appearance.buttonradius}" Margin="0,10,0,0"
+                          Value="{Binding ButtonCornerRadius}" Default="0" Minimum="0" Maximum="10"
+                          TickFrequency="1" IsSnapToTickEnabled="False" Format="{}{0:#0.0}"/>
+          <c:NumberSlider Label="{DynamicResource prefs.appearance.uiradius}" Margin="0,5,0,0"
+                          Value="{Binding UiCornerRadius}" Default="0" Minimum="0" Maximum="10"
+                          TickFrequency="1" IsSnapToTickEnabled="False" Format="{}{0:#0.0}"/>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.showportrait}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding ShowPortrait}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.showicon}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding ShowIcon}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.usesingerflyout}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding UseSingerFlyout}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.diffsingerbarstyle}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding DiffSingerBarStyle}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.reduceanimations}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding ReduceAnimations}"/>
+          </Grid>
+
+          <TextBlock Classes="group-header" Text="{DynamicResource prefs.appearance.group.theme}"/>
           <TextBlock Text="{DynamicResource prefs.appearance.theme}" Margin="0,10,0,0"/>
           <Grid HorizontalAlignment="Stretch" ColumnDefinitions="*,auto,auto,auto,auto">
             <ComboBox Grid.Column="0" IsEnabled="{Binding !IsThemeEditorOpen}" ItemsSource="{Binding ThemeItems}" SelectedItem="{Binding ThemeName}"/>
@@ -317,7 +351,7 @@
               </Grid>
             </Button>
             <Button Grid.Column="4" IsEnabled="{Binding !IsThemeEditorOpen}" Click="OnCustomThemeImport" MinWidth="18" MinHeight="18"
-                Margin="5,0,0,0" Padding="0" ToolTip.Tip="Import theme from file">
+                Margin="5,0,0,0" Padding="0" ToolTip.Tip="{DynamicResource prefs.appearance.customtheme.import.tip}">
               <Grid Width="18" Height="18">
                   <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                     Classes="filled" Data="M5,20H19V18H5V19M19,9H15V3H9V9H5L12,16L19,9Z" >
@@ -331,6 +365,14 @@
               </Grid>
             </Button>
           </Grid>
+          <Grid Margin="0,10,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.singerthemes.enabled}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding UseCustomSingerTheme}"/>
+          </Grid>
+          <Button Content="{DynamicResource prefs.appearance.singerthemes.manage}" Margin="0,6,0,0" HorizontalAlignment="Left"
+                  IsEnabled="{Binding !IsSingerThemeEditorOpen}" Click="OpenSingerThemeEditor"/>
+
+          <TextBlock Classes="group-header" Text="{DynamicResource prefs.appearance.group.font}"/>
           <TextBlock Text="{DynamicResource prefs.appearance.customfont}" Margin="0,10,0,0"/>
           <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2,0,0">
             <TextBlock Grid.Column="0" Text="{Binding UiFontPath}" TextWrapping="Wrap" VerticalAlignment="Center"
@@ -347,46 +389,16 @@
             <TextBlock Text="{DynamicResource prefs.appearance.customfont.notes}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding UseUiFontForNotes}"/>
           </Grid>
-          <c:NumberSlider Label="{DynamicResource prefs.appearance.buttonradius}" Margin="0,10,0,0"
-                          Value="{Binding ButtonCornerRadius}" Default="0" Minimum="0" Maximum="10"
-                          TickFrequency="1" IsSnapToTickEnabled="False" Format="{}{0:#0.0}"/>
-          <c:NumberSlider Label="{DynamicResource prefs.appearance.noteradius}" Margin="0,5,0,0"
+          <TextBlock Classes="group-header" Text="{DynamicResource prefs.appearance.group.notes}"/>
+          <c:NumberSlider Label="{DynamicResource prefs.appearance.noteradius}" Margin="0,10,0,0"
                           Value="{Binding NoteCornerRadius}" Default="2" Minimum="0" Maximum="10"
                           TickFrequency="1" IsSnapToTickEnabled="False" Format="{}{0:#0.0}"/>
           <c:NumberSlider Label="{DynamicResource prefs.appearance.noteopacity}" Margin="0,5,0,0"
                           Value="{Binding NoteOpacity}" Default="100" Minimum="0" Maximum="100"
                           TickFrequency="10" IsSnapToTickEnabled="False" Format="{}{0:#0}%"/>
-          <c:NumberSlider Label="{DynamicResource prefs.appearance.trackcolor.opacity}" Margin="0,5,0,0"
-                          Value="{Binding TrackColorOpacity}" Default="100" Minimum="0" Maximum="100"
-                          TickFrequency="10" IsSnapToTickEnabled="False" Format="{}{0:#0}%"/>
           <c:NumberSlider Label="{DynamicResource prefs.appearance.notehighlight}" Margin="0,5,0,0"
                           Value="{Binding NoteHighlightThickness}" Default="1" Minimum="0.5" Maximum="6"
                           TickFrequency="0.5" IsSnapToTickEnabled="False" Format="{}{0:#0.0}"/>
-          <c:NumberSlider Label="{DynamicResource prefs.appearance.uiradius}" Margin="0,5,0,0"
-                          Value="{Binding UiCornerRadius}" Default="0" Minimum="0" Maximum="10"
-                          TickFrequency="1" IsSnapToTickEnabled="False" Format="{}{0:#0.0}"/>
-          <TextBlock Text="{DynamicResource prefs.appearance.degree}" Margin="0,10,0,0"/>
-          <ComboBox SelectedIndex="{Binding DegreeStyle}">
-            <ComboBoxItem Content="{DynamicResource prefs.appearance.degree.off}"/>
-            <ComboBoxItem Content="{DynamicResource prefs.appearance.degree.solfege}"/>
-            <ComboBoxItem Content="{DynamicResource prefs.appearance.degree.numbered}"/>
-          </ComboBox>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.trackcolor}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding UseTrackColor}"/>
-          </Grid>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.trackcolor.pianoroll}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding UseTrackColorInPianoRoll}"/>
-          </Grid>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.showportrait}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding ShowPortrait}"/>
-          </Grid>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.showicon}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding ShowIcon}"/>
-          </Grid>
           <Grid Margin="0,5,0,0">
             <TextBlock Text="{DynamicResource prefs.appearance.showghostnotes}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding ShowGhostNotes}"/>
@@ -395,39 +407,43 @@
             <TextBlock Text="{DynamicResource prefs.appearance.notehoverglow}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding NoteHoverGlow}"/>
           </Grid>
+
+          <TextBlock Classes="group-header" Text="{DynamicResource prefs.appearance.group.trackcolors}"/>
           <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.usesingerflyout}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding UseSingerFlyout}"/>
+            <TextBlock Text="{DynamicResource prefs.appearance.trackcolor}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding UseTrackColor}"/>
           </Grid>
           <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.diffsingerbarstyle}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding DiffSingerBarStyle}"/>
+            <TextBlock Text="{DynamicResource prefs.appearance.trackcolor.pianoroll}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding UseTrackColorInPianoRoll}"/>
+          </Grid>
+          <c:NumberSlider Label="{DynamicResource prefs.appearance.trackcolor.opacity}" Margin="0,5,0,0"
+                          Value="{Binding TrackColorOpacity}" Default="100" Minimum="0" Maximum="100"
+                          TickFrequency="10" IsSnapToTickEnabled="False" Format="{}{0:#0}%"/>
+
+          <TextBlock Classes="group-header" Text="{DynamicResource prefs.appearance.group.pianoroll}"/>
+          <TextBlock Text="{DynamicResource prefs.appearance.degree}" Margin="0,10,0,0"/>
+          <ComboBox SelectedIndex="{Binding DegreeStyle}">
+            <ComboBoxItem Content="{DynamicResource prefs.appearance.degree.off}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.appearance.degree.solfege}"/>
+            <ComboBoxItem Content="{DynamicResource prefs.appearance.degree.numbered}"/>
+          </ComboBox>
+          <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.detachpianoroll}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding DetachPianoRoll}"/>
           </Grid>
           <Grid Margin="0,5,0,0">
             <TextBlock Text="{DynamicResource prefs.waveformphraseboundaries}" HorizontalAlignment="Left" />
             <ToggleSwitch IsChecked="{Binding ShowWaveformPhraseBoundaries}" />
           </Grid>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.reduceanimations}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding ReduceAnimations}"/>
-          </Grid>
-          <Grid Margin="0,5,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.detachpianoroll}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding DetachPianoRoll}"/>
-          </Grid>
-          <Grid Margin="0,5,0,0" ToolTip.Tip="Dims the whole piano roll except the pitch curve while a pitch tool (Shift+1-5) is active">
-            <TextBlock Text="Pitch edit mode" HorizontalAlignment="Left"/>
+          <Grid Margin="0,5,0,0" ToolTip.Tip="{DynamicResource prefs.appearance.pitcheditmode.tip}">
+            <TextBlock Text="{DynamicResource prefs.appearance.pitcheditmode}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding PitchEditMode}"/>
           </Grid>
-          <c:NumberSlider Label="Pitch edit dimming" Margin="0,5,0,0" ToolTip.Tip="Strength of the pitch edit mode dimming"
+          <c:NumberSlider Label="{DynamicResource prefs.appearance.pitcheditdim}" Margin="0,5,0,0"
+                          ToolTip.Tip="{DynamicResource prefs.appearance.pitcheditdim.tip}"
                           Value="{Binding PitchEditDim}" Default="59" Minimum="0" Maximum="100"
                           TickFrequency="10" IsSnapToTickEnabled="False" Format="{}{0:#0}%"/>
-          <Grid Margin="0,10,0,0">
-            <TextBlock Text="{DynamicResource prefs.appearance.singerthemes.enabled}" HorizontalAlignment="Left"/>
-            <ToggleSwitch IsChecked="{Binding UseCustomSingerTheme}"/>
-          </Grid>
-          <Button Content="{DynamicResource prefs.appearance.singerthemes.manage}" Margin="0,6,0,0" HorizontalAlignment="Left"
-                  IsEnabled="{Binding !IsSingerThemeEditorOpen}" Click="OpenSingerThemeEditor"/>
         </StackPanel>
 
         <!-- UTAU -->

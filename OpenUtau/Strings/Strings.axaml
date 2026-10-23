@@ -1301,6 +1301,17 @@ Rename the ignored folder to load it.</system:String>
   <system:String x:Key="voicebanks.status.uninstallfailed">Voicebank uninstall failed</system:String>
   <system:String x:Key="prefs.appearance.singerthemes.enabled">Use custom singer theme colors</system:String>
   <system:String x:Key="prefs.appearance.singerthemes.manage">Manage Singer Themes</system:String>
+  <system:String x:Key="prefs.appearance.group.general">General</system:String>
+  <system:String x:Key="prefs.appearance.group.theme">Theme</system:String>
+  <system:String x:Key="prefs.appearance.group.font">Font</system:String>
+  <system:String x:Key="prefs.appearance.group.notes">Notes</system:String>
+  <system:String x:Key="prefs.appearance.group.trackcolors">Track colors</system:String>
+  <system:String x:Key="prefs.appearance.group.pianoroll">Piano roll</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditmode">Pitch edit mode</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditmode.tip">Dims the whole piano roll except the pitch curve while a pitch tool (Shift+1-5) is active</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditdim">Pitch edit dimming</system:String>
+  <system:String x:Key="prefs.appearance.pitcheditdim.tip">Strength of the pitch edit mode dimming</system:String>
+  <system:String x:Key="prefs.appearance.customtheme.import.tip">Import theme from file</system:String>
   <system:String x:Key="yamleditor.default">Default: {0}</system:String>
   <system:String x:Key="yamleditor.discarded">{0} has errors, so it can't be saved. Your changes to it were discarded.</system:String>
   <system:String x:Key="yamleditor.errors">Errors: {0}, warnings: {1}. OpenUtau could not load this file; fix the errors to save.</system:String>
