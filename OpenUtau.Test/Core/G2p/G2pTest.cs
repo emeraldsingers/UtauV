@@ -33,6 +33,19 @@ namespace OpenUtau.Core.G2p {
         }
 
         [Fact]
+        public void RussianHhsktG2pTest() {
+            var g2p = new RussianHhsktG2p();
+            Assert.Null(g2p.Query(""));
+            Assert.Null(g2p.Query(","));
+            Assert.Null(g2p.Query("-"));
+            Assert.Equal("ny e vy e zh d a", string.Join(' ', g2p.Query("невежда")));
+            Assert.Equal("ny e vy e zh d a", string.Join(' ', g2p.Query("?нев,.еж да ")));
+            Assert.Equal("p ry x vy e t", string.Join(' ', g2p.Query("привет")));
+            Assert.Equal("j o l k a", string.Join(' ', g2p.Query("ёлка")));
+            Assert.Equal("ny e vy e zh d a", string.Join(' ', g2p.Query("невежда")));
+        }
+
+        [Fact]
         public void PortugueseG2pTest() {
             var g2p = new PortugueseG2p();
             Assert.Null(g2p.Query(""));
