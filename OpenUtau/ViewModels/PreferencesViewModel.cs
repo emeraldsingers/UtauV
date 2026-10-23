@@ -90,6 +90,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial bool LyricsHelperBrackets { get; set; }
         [Reactive] public partial bool PenPlusDefault { get; set; }
         [Reactive] public partial bool ExtendEndingPhonemes { get; set; }
+        [Reactive] public partial bool RenderStatusInTrackBar { get; set; }
 
         // Render
         [Reactive] public partial bool PreRender { get; set; }
@@ -322,6 +323,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             };
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
+            RenderStatusInTrackBar = Preferences.Default.RenderStatusInTrackBar;
             OtoEditor = Preferences.Default.OtoEditor;
             ExperimentalCrossPitchBlend = Preferences.Default.ExperimentalCrossPitchBlend;
             CrossPitchBlendMode = Preferences.Default.CrossPitchBlendMode;
@@ -660,6 +662,11 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
                 .Subscribe(index => {
                     Preferences.Default.OnnxGpu = index.deviceId;
                     Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.RenderStatusInTrackBar)
+                .Subscribe(renderStatus => {
+                    Preferences.Default.RenderStatusInTrackBar = renderStatus;
+                    MessageBus.Current.SendMessage(new TracksRefreshEvent());
                 });
             this.WhenAnyValue(vm => vm.MergePhrasesSecIndex)
                 .Skip(1)

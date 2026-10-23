@@ -6,6 +6,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using OpenUtau.App.ViewModels;
+using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
 using ReactiveUI;
 using ReactiveUI.Primitives;
@@ -205,6 +206,35 @@ namespace OpenUtau.App.Controls {
             control.Dispose();
             partControls.Remove(part);
             Children.Remove(control);
+        }
+
+        public void HandlePhraseRenderStateEvent(UVoicePart part, int startTick, int endTick, bool rendered) {
+            foreach (var control in partControls) {
+                if (control.Key.Equals(part)) {
+                    control.Value.UpdateRenderStatus(startTick, endTick, rendered);
+                    return;
+                }
+            }
+        }
+
+        public void HandlePhraseRenderStateEvent(UVoicePart part, RenderPhrase phrase, bool rendered) {
+            foreach (var control in partControls) {
+                if (control.Key.Equals(part)) {
+                    control.Value.UpdateRenderStatus(phrase, rendered);
+                    return;
+                }
+            }
+        }
+
+        public void RebuildPhraseBlocksEvent(UVoicePart part) {
+            foreach (var control in partControls) {
+                if (control.Key.Equals(part)) {
+                    if (control.Value.RebuildPhraseBlocks(part)) {
+                        control.Value.InvalidateVisual();
+                    }
+                    return;
+                }
+            }
         }
 
         void InvalidatePartViewport() {

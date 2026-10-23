@@ -2342,6 +2342,21 @@ viewModel.NewProject();
                     }
                     _ = RemapImportedVocalModesAsync(track);
                 }
+            } else if (cmd is PhraseRenderStateNotification phraseRenderNotif) {
+                if (phraseRenderNotif.Phrase != null) {
+                    partsCanvas.HandlePhraseRenderStateEvent(
+                        phraseRenderNotif.Part,
+                        phraseRenderNotif.Phrase,
+                        phraseRenderNotif.Rendered);
+                } else {
+                    partsCanvas.HandlePhraseRenderStateEvent(
+                        phraseRenderNotif.Part,
+                        phraseRenderNotif.StartTick,
+                        phraseRenderNotif.EndTick,
+                        phraseRenderNotif.Rendered);
+                }
+            } else if (cmd is RebuildPhraseBlocksNotification phraseBlocksNotif) {
+                partsCanvas.RebuildPhraseBlocksEvent(phraseBlocksNotif.Part);
             }
         }
     }
