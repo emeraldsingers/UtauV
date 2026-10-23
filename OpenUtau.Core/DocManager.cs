@@ -259,8 +259,43 @@ namespace OpenUtau.Core {
             }
         }
 
+        private static readonly string[] recoverySuffixes = { "-autosave", "-backup" };
+
+        private static AutosaveMode getAutosaveMode() {
+            return Enum.TryParse(Preferences.Default.Autosave, out AutosaveMode mode)
+                ? mode
+                : AutosaveMode.BackupFile;
+        }
+
+        private string getAutosavePath() {
+            if (string.IsNullOrEmpty(Project.FilePath)) {
+                Directory.CreateDirectory(PathManager.Inst.BackupsPath);
+                return Path.Join(PathManager.Inst.BackupsPath, "Untitled-autosave.ustx");
+            }
+            string dir = Path.GetDirectoryName(Project.FilePath);
+            string filename = Path.GetFileNameWithoutExtension(Project.FilePath);
+            switch (getAutosaveMode()) {
+                case AutosaveMode.BackupsFolder:
+                    Directory.CreateDirectory(PathManager.Inst.BackupsPath);
+                    return Path.Join(PathManager.Inst.BackupsPath, filename + "-autosave.ustx");
+                case AutosaveMode.SaveInPlace:
+                    return Project.FilePath;
+                case AutosaveMode.OverwriteAutosaveFile:
+                    if (recoverySuffixes.Any(suffix =>
+                            filename.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))) {
+                        return Project.FilePath;
+                    }
+                    return Path.Join(dir, filename + "-autosave.ustx");
+                default:
+                    return Path.Join(dir, filename + "-autosave.ustx");
+            }
+        }
+
         public void AutoSave() {
             if (Project == null) {
+                return;
+            }
+            if (getAutosaveMode() == AutosaveMode.Off) {
                 return;
             }
             if (undoQueue.LastOrDefault() == autosavedPoint) {
@@ -268,22 +303,15 @@ namespace OpenUtau.Core {
                 return;
             }
             try {
-                bool untitled = string.IsNullOrEmpty(Project.FilePath);
-                if (untitled) {
-                    Directory.CreateDirectory(PathManager.Inst.BackupsPath);
-                }
-                string dir = untitled
-                    ? PathManager.Inst.BackupsPath
-                    : Path.GetDirectoryName(Project.FilePath);
-                string filename = untitled
-                    ? "Untitled"
-                    : Path.GetFileNameWithoutExtension(Project.FilePath);
-
-                string backup = Path.Join(dir, filename + "-autosave.ustx");
+                string backup = getAutosavePath();
                 Log.Information($"Autosave {backup}.");
                 Format.Ustx.AutoSave(backup, Project);
                 Log.Information($"Autosaved {backup}.");
                 autosavedPoint = undoQueue.LastOrDefault();
+                if (backup == Project.FilePath) {
+                    savedPoint = autosavedPoint;
+                    Project.Saved = true;
+                }
             } catch (Exception e) {
                 Log.Error(e, "Autosave failed.");
             }

@@ -362,6 +362,8 @@ namespace OpenUtau.Core.Util {
                 errors.txt
                 """;
             public string RecoveryPath = string.Empty;
+            public string Autosave = nameof(AutosaveMode.BackupFile);
+            public int AutosaveIntervalSec = 30;
             public bool DetachPianoRoll = true;
 
             // ----- Mix FX (post-processing) -----
@@ -396,5 +398,13 @@ namespace OpenUtau.Core.Util {
             public string Name { get; set; } = string.Empty;
             public Ustx.UMixFx Fx { get; set; } = new Ustx.UMixFx();
         }
+    }
+
+    public enum AutosaveMode {
+        BackupFile,
+        BackupsFolder,
+        OverwriteAutosaveFile,
+        SaveInPlace,
+        Off,
     }
 }

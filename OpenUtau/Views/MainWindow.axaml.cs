@@ -65,6 +65,7 @@ namespace OpenUtau.App.Views {
 
         private readonly DispatcherTimer timer;
         private readonly DispatcherTimer autosaveTimer;
+        private DateTime lastAutosave = DateTime.UtcNow;
         private bool forceClose;
 
         private bool shouldOpenPartsContextMenu;
@@ -117,9 +118,16 @@ viewModel.NewProject();
             timer.Start();
 
             autosaveTimer = new DispatcherTimer(
-                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(1),
                 DispatcherPriority.Normal,
-                (sender, args) => DocManager.Inst.AutoSave());
+                (sender, args) => {
+                    if ((DateTime.UtcNow - lastAutosave).TotalSeconds
+                            < Math.Max(1, Preferences.Default.AutosaveIntervalSec)) {
+                        return;
+                    }
+                    lastAutosave = DateTime.UtcNow;
+                    DocManager.Inst.AutoSave();
+                });
             autosaveTimer.Start();
 
             notificationManager = new WindowNotificationManager(this) {

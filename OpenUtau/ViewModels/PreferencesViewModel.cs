@@ -194,6 +194,20 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial bool RememberVsqx { get; set; }
         public string WinePath => Preferences.Default.WinePath;
 
+        public List<string> AutosaveModeOptions { get; } = new() {
+            nameof(AutosaveMode.BackupFile),
+            nameof(AutosaveMode.BackupsFolder),
+            nameof(AutosaveMode.OverwriteAutosaveFile),
+            nameof(AutosaveMode.SaveInPlace),
+            nameof(AutosaveMode.Off),
+        };
+        [Reactive] public partial string Autosave { get; set; }
+        public bool IsAutosaveEnabled => Autosave != nameof(AutosaveMode.Off);
+        public List<string> AutosaveIntervals { get; } = new() {
+            "10", "15", "30", "60", "120", "300", "600"
+        };
+        [Reactive] public partial int AutosaveIntervalIndex { get; set; }
+
         public PreferencesViewModel() {
             var audioOutput = PlaybackManager.Inst.AudioOutput;
             if (audioOutput != null) {
@@ -332,6 +346,11 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             RememberVsqx = Preferences.Default.RememberVsqx;
             ClearCacheOnQuit = Preferences.Default.ClearCacheOnQuit;
             ExtendEndingPhonemes = Preferences.Default.ExtendEndingPhonemes;
+            Autosave = AutosaveModeOptions.Contains(Preferences.Default.Autosave)
+                ? Preferences.Default.Autosave
+                : AutosaveModeOptions[0];
+            AutosaveIntervalIndex = Math.Max(0, AutosaveIntervals.IndexOf(
+                Preferences.Default.AutosaveIntervalSec.ToString()));
 
             MessageBus.Current.Listen<ThemeEditorStateChangedEvent>()
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(IsThemeEditorOpen)));
@@ -698,6 +717,21 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
             this.WhenAnyValue(vm => vm.RememberVsqx)
                 .Subscribe(index => {
                     Preferences.Default.RememberVsqx = index;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.Autosave)
+                .Subscribe(mode => {
+                    Preferences.Default.Autosave = mode;
+                    Preferences.Save();
+                    this.RaisePropertyChanged(nameof(IsAutosaveEnabled));
+                });
+            this.WhenAnyValue(vm => vm.AutosaveIntervalIndex)
+                .Skip(1)
+                .Subscribe(index => {
+                    if (index < 0 || index >= AutosaveIntervals.Count) {
+                        return;
+                    }
+                    Preferences.Default.AutosaveIntervalSec = int.Parse(AutosaveIntervals[index]);
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.ClearCacheOnQuit)
