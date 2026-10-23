@@ -1,8 +1,15 @@
+using System.Threading;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 using Xunit;
 
 namespace OpenUtau.Core {
+    [Collection(RenderSingletonCollection.Name)]
     public class SingerManagerTest {
+        public SingerManagerTest() {
+            ThreadGuard.SetUiThread(Thread.CurrentThread);
+        }
+
         class TestSinger : USinger {
             public int FreeCount { get; private set; }
             public TestSinger(string id) {
