@@ -153,6 +153,27 @@ namespace OpenUtau.App.Controls {
                 }
 
             });
+            ViewModel.NoteBatchEdits.Add(new MenuItemViewModel() {
+                Header = ThemeManager.GetString("pianoroll.menu.notes.harmgen"),
+                Command = ReactiveCommand.CreateFromTask(async () => {
+                    var notesVm = ViewModel?.NotesViewModel;
+                    if (notesVm?.Part == null) {
+                        return;
+                    }
+                    var dialog = new HarmGenDialog();
+                    dialog.LoadData(notesVm.Project, notesVm.Part.trackNo);
+                    await dialog.ShowDialog(RootWindow);
+                    if (dialog.Config != null) {
+                        try {
+                            var edit = new HarmGenEdit(dialog.Config);
+                            edit.Run(notesVm.Project, notesVm.Part, notesVm.Selection.ToList(), DocManager.Inst);
+                        } catch (Exception e) {
+                            var customEx = new MessageCustomizableException("Failed to run editing macro", "<translate:errors.failed.runeditingmacro>", e);
+                            DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(customEx));
+                        }
+                    }
+                })
+            });
             ViewModel.NoteBatchEdits.AddRange(new List<BatchEdit>() {
                 new LoadRenderedPitch(),
                 new AutoPitchEdit(),

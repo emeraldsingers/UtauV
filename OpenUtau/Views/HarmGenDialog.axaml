@@ -1,0 +1,421 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="820"
+        x:Class="OpenUtau.App.Views.HarmGenDialog"
+        Icon="/Assets/open-utau.ico"
+        Title="{DynamicResource dialogs.harmgen.caption}"
+        Width="720" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Opacity" Value="0.72"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,1,0,0"/>
+        </Style>
+        <Style Selector="TextBlock.readout">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <Style Selector="CheckBox /template/ Grid">
+            <Setter Property="Width" Value="NaN"/>
+            <Setter Property="Height" Value="NaN"/>
+            <Setter Property="MinHeight" Value="20"/>
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,8"/>
+        </Style>
+        <Style Selector="TextBox.spin">
+            <Setter Property="Width" Value="58"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
+        <Style Selector="Button.link">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="12">
+        <Border DockPanel.Dock="Bottom"
+                BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                Padding="0,10,0,0"
+                Margin="0,12,0,0">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <TextBlock Grid.Column="0"
+                           Classes="readout"
+                           Text="{Binding Summary}"
+                           ToolTip.Tip="{DynamicResource dialogs.harmgen.summary.tip}"/>
+                <Button Grid.Column="2"
+                        Content="{DynamicResource dialogs.harmgen.cancel}"
+                        MinWidth="90"
+                        Margin="8,0,0,0"
+                        Click="OnCancelClicked"/>
+                <Button Grid.Column="3"
+                        Content="{DynamicResource button.ok}"
+                        MinWidth="90"
+                        Margin="8,0,0,0"
+                        Click="OnOkClicked"
+                        IsEnabled="{Binding CanGenerate}"/>
+            </Grid>
+        </Border>
+
+        <ScrollViewer DockPanel.Dock="Top" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="10">
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.tracks}"/>
+                    <TextBlock Classes="hint" Text="{DynamicResource dialogs.harmgen.tracks.hint}"/>
+                    <Border Classes="card" Margin="0,4,0,0">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top"
+                                        Orientation="Horizontal"
+                                        Spacing="4"
+                                        Margin="0,0,0,4">
+                                <Button Classes="link"
+                                        Content="{DynamicResource dialogs.harmgen.tracks.all}"
+                                        Click="OnSelectAllTracks"/>
+                                <Button Classes="link"
+                                        Content="{DynamicResource dialogs.harmgen.tracks.none}"
+                                        Click="OnSelectNoTracks"/>
+                            </StackPanel>
+                            <ScrollViewer MaxHeight="180">
+                                <ItemsControl ItemsSource="{Binding Tracks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsChecked}" Margin="0,1">
+                                                <TextBlock Text="{Binding Name}" Margin="4,0,0,0"/>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.voices}"/>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.voices.count}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Classes="spin" Text="{Binding NumVoices}"/>
+                        <Slider Grid.Column="3"
+                                Classes="fader"
+                                VerticalAlignment="Center"
+                                Minimum="1"
+                                Maximum="8"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding NumVoices}"/>
+                        <TextBlock Grid.Column="4"
+                                   HorizontalAlignment="Right"
+                                   Opacity="0.6"
+                                   Text="{Binding NumVoices, StringFormat={}{0}}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.style}"
+                                   Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding StyleOptions}"
+                                  SelectedIndex="{Binding StyleIndex}"
+                                  HorizontalAlignment="Stretch"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.window}"
+                                   Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding WindowOptions}"
+                                  SelectedIndex="{Binding WindowIndex}"
+                                  HorizontalAlignment="Stretch"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.phonemizer}"
+                                   Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding PhonemizerOptions}"
+                                  SelectedIndex="{Binding PhonemizerIndex}"
+                                  HorizontalAlignment="Stretch"/>
+                    </Grid>
+                    <CheckBox IsChecked="{Binding SustainedChoir}"
+                              Margin="0,8,0,0"
+                              Content="{DynamicResource dialogs.harmgen.sustained}"/>
+                    <TextBlock Classes="hint"
+                               Text="{DynamicResource dialogs.harmgen.sustained.hint}"
+                               Margin="24,0,0,0"/>
+                    <TextBlock Classes="hint"
+                               Text="{DynamicResource dialogs.harmgen.window.hint}"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.key}"/>
+                    <Border Classes="card" Margin="0,4,0,0">
+                        <StackPanel>
+                            <CheckBox IsChecked="{Binding UseManualKey}"
+                                      Content="{DynamicResource dialogs.harmgen.key.manual}"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto,*"
+                                  Margin="0,6,0,0"
+                                  IsEnabled="{Binding UseManualKey}">
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource dialogs.harmgen.key.tonic}"
+                                           Margin="0,0,8,0"/>
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding KeyOptions}"
+                                          SelectedIndex="{Binding KeyIndex}"
+                                          HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="2"
+                                           Text="{DynamicResource dialogs.harmgen.key.mode}"
+                                           Margin="0,0,8,0"/>
+                                <ComboBox Grid.Column="3"
+                                          ItemsSource="{Binding ModeOptions}"
+                                          SelectedIndex="{Binding ModeIndex}"
+                                          HorizontalAlignment="Stretch"/>
+                            </Grid>
+                            <TextBlock Classes="readout"
+                                       Margin="0,8,0,0"
+                                       Text="{Binding DetectedKeyText}"
+                                       IsVisible="{Binding !UseManualKey}"/>
+                            <TextBlock Classes="hint"
+                                       Text="{DynamicResource dialogs.harmgen.key.hint}"
+                                       Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.behaviour}"/>
+                    <Border Classes="card" Margin="0,4,0,0">
+                        <StackPanel>
+                            <CheckBox IsChecked="{Binding AllowSus}"
+                                      Content="{DynamicResource dialogs.harmgen.sus}"/>
+                            <CheckBox IsChecked="{Binding AllowSevenths}"
+                                      Margin="0,4,0,0"
+                                      Content="{DynamicResource dialogs.harmgen.sevenths}"/>
+                            <CheckBox IsChecked="{Binding AvoidCrossing}"
+                                      Margin="0,4,0,0"
+                                      Content="{DynamicResource dialogs.harmgen.crossing}"/>
+                            <CheckBox IsChecked="{Binding RangesRelative}"
+                                      Margin="0,4,0,0"
+                                      Content="{DynamicResource dialogs.harmgen.relative}"/>
+                            <TextBlock Classes="hint"
+                                       Text="{DynamicResource dialogs.harmgen.relative.hint}"
+                                       Margin="24,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.ranges}"/>
+                    <CheckBox IsChecked="{Binding UseDefaultRanges}"
+                              Margin="0,4,0,0"
+                              Content="{DynamicResource dialogs.harmgen.ranges.default}"/>
+                    <TextBlock Classes="hint" Text="{DynamicResource dialogs.harmgen.ranges.hint}"/>
+                    <Border Classes="card" Margin="0,4,0,0" IsEnabled="{Binding RangesEditable}">
+                        <StackPanel Spacing="4">
+                            <Grid ColumnDefinitions="30,58,8,58">
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource dialogs.harmgen.ranges.voice}"/>
+                                <TextBlock Grid.Column="1"
+                                           HorizontalAlignment="Center"
+                                           Text="{DynamicResource dialogs.harmgen.ranges.min}"/>
+                                <TextBlock Grid.Column="3"
+                                           HorizontalAlignment="Center"
+                                           Text="{DynamicResource dialogs.harmgen.ranges.max}"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="30,58,8,58">
+                                <TextBlock Grid.Column="0" Text="V1"/>
+                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range1Min}"/>
+                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range1Max}"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="30,58,8,58">
+                                <TextBlock Grid.Column="0" Text="V2"/>
+                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range2Min}"/>
+                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range2Max}"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="30,58,8,58">
+                                <TextBlock Grid.Column="0" Text="V3"/>
+                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range3Min}"/>
+                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range3Max}"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="30,58,8,58">
+                                <TextBlock Grid.Column="0" Text="V4"/>
+                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range4Min}"/>
+                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range4Max}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.filter}"/>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.minduration}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Classes="spin" Text="{Binding DensityMin}"/>
+                        <Slider Grid.Column="3"
+                                Classes="fader"
+                                VerticalAlignment="Center"
+                                Minimum="0"
+                                Maximum="4800"
+                                TickFrequency="60"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding DensityMin}"/>
+                        <TextBlock Grid.Column="4"
+                                   HorizontalAlignment="Right"
+                                   Opacity="0.6"
+                                   Text="{DynamicResource dialogs.harmgen.unit.ticks}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.melismaduration}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Classes="spin" Text="{Binding MelismaDuration}"/>
+                        <Slider Grid.Column="3"
+                                Classes="fader"
+                                VerticalAlignment="Center"
+                                Minimum="0"
+                                Maximum="4800"
+                                TickFrequency="60"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding MelismaDuration}"/>
+                        <TextBlock Grid.Column="4"
+                                   HorizontalAlignment="Right"
+                                   Opacity="0.6"
+                                   Text="{DynamicResource dialogs.harmgen.unit.ticks}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.melismarun}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Classes="spin" Text="{Binding MelismaRun}"/>
+                        <Slider Grid.Column="3"
+                                Classes="fader"
+                                VerticalAlignment="Center"
+                                Minimum="2"
+                                Maximum="16"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding MelismaRun}"/>
+                        <TextBlock Grid.Column="4"
+                                   HorizontalAlignment="Right"
+                                   Opacity="0.6"
+                                   Text="{DynamicResource dialogs.harmgen.unit.notes}"/>
+                    </Grid>
+                    <TextBlock Classes="hint"
+                               Text="{DynamicResource dialogs.harmgen.filter.hint}"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.humanize}"/>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.humanize.timing}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Classes="spin" Text="{Binding HumanizeTiming}"/>
+                        <Slider Grid.Column="3"
+                                Classes="fader"
+                                VerticalAlignment="Center"
+                                Minimum="0"
+                                Maximum="120"
+                                TickFrequency="5"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding HumanizeTiming}"/>
+                        <TextBlock Grid.Column="4"
+                                   HorizontalAlignment="Right"
+                                   Opacity="0.6"
+                                   Text="{DynamicResource dialogs.harmgen.unit.ticks}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.humanize.velocity}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Classes="spin" Text="{Binding HumanizeVelocity}"/>
+                        <Slider Grid.Column="3"
+                                Classes="fader"
+                                VerticalAlignment="Center"
+                                Minimum="0"
+                                Maximum="60"
+                                TickFrequency="5"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding HumanizeVelocity}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.seed}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Classes="spin" Text="{Binding Seed}"/>
+                        <TextBlock Grid.Column="3"
+                                   Grid.ColumnSpan="2"
+                                   Classes="hint"
+                                   Text="{DynamicResource dialogs.harmgen.seed.hint}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,58,8,Auto,*" Margin="0,6,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource dialogs.harmgen.volume}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1"
+                                 Classes="spin"
+                                 Text="{Binding HarmonyVolume, StringFormat=F2}"/>
+                        <Slider Grid.Column="3"
+                                Classes="fader"
+                                VerticalAlignment="Center"
+                                Minimum="-24"
+                                Maximum="6"
+                                TickFrequency="0.5"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding HarmonyVolume}"/>
+                        <TextBlock Grid.Column="4"
+                                   HorizontalAlignment="Right"
+                                   Opacity="0.6"
+                                   Text="{DynamicResource dialogs.harmgen.unit.db}"/>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.lyrics}"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto,*" Margin="0,6,0,0">
+                        <CheckBox Grid.Column="0"
+                                  Content="{DynamicResource dialogs.harmgen.lyrics.blank}"/>
+                        <TextBlock Grid.Column="2"
+                                   Text="{DynamicResource dialogs.harmgen.lyrics.replacement}"
+                                   Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="3"
+                                 Text="{Binding LyricReplacement}"
+                                 MaxLength="64"/>
+                    </Grid>
+                    <TextBlock Classes="hint"
+                               Text="{DynamicResource dialogs.harmgen.lyrics.hint}"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>
