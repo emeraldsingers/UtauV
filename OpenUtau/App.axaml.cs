@@ -127,10 +127,18 @@ namespace OpenUtau.App {
             var graphite = (IResourceDictionary) Current.Resources["themes-graphite"]!;
             var ice = (IResourceDictionary) Current.Resources["themes-ice"]!;
             var silver = (IResourceDictionary) Current.Resources["themes-silver"]!;
-            var midnight = (IResourceDictionary) Current.Resources["themes-midnight"]!;
-            var daylight = (IResourceDictionary) Current.Resources["themes-daylight"]!;
+            var darkNew = (IResourceDictionary) Current.Resources["themes-dark-new"]!;
             var custom = (IResourceDictionary) Current.Resources["themes-custom"]!;
-            switch (Core.Util.Preferences.Default.ThemeName) { 
+            // "Midnight" was the original name of the new dark palette; accept it so an
+            // existing preference keeps pointing at the same theme. "Daylight" was the
+            // light counterpart, which turned out to be a near-copy of Light, so it now
+            // resolves there.
+            string themeName = Core.Util.Preferences.Default.ThemeName switch {
+                "Midnight" => "Dark_New",
+                "Daylight" => "Light",
+                var other => other,
+            };
+            switch (themeName) {
                 case "Light":
                     ApplyTheme(light);
                     Current.RequestedThemeVariant = ThemeVariant.Light;
@@ -168,12 +176,9 @@ namespace OpenUtau.App {
                     Current.RequestedThemeVariant = ThemeVariant.Light;
                     break;
                 case "Midnight":
-                    ApplyTheme(midnight);
+                case "Dark_New":
+                    ApplyTheme(darkNew);
                     Current.RequestedThemeVariant = ThemeVariant.Dark;
-                    break;
-                case "Daylight":
-                    ApplyTheme(daylight);
-                    Current.RequestedThemeVariant = ThemeVariant.Light;
                     break;
                 default:
                     ApplyTheme(custom);

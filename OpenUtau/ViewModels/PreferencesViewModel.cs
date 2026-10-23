@@ -118,6 +118,18 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
 
         // Appearance
         [Reactive] public partial string ThemeName { get; set; }
+
+        /// <summary>
+        /// The dark palette added from upstream was first shipped as "Midnight" and is now
+        /// "Dark_New"; map it so a saved preference and the theme combo keep agreeing.
+        /// Its light counterpart was dropped as a near-copy of Light, so "Daylight"
+        /// resolves there.
+        /// </summary>
+        static string NormalizeThemeName(string themeName) => themeName switch {
+            "Midnight" => "Dark_New",
+            "Daylight" => "Light",
+            _ => themeName,
+        };
         [Reactive] public partial string UiFontPath { get; set; }
         [Reactive] public partial string UiFontFamily { get; set; }
         [Reactive] public partial bool UseUiFontForNotes { get; set; }
@@ -276,7 +288,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             DiffSingerShowRenderPhraseBoundaries = Preferences.Default.DiffSingerShowRenderPhraseBoundaries;
             ShowWaveformPhraseBoundaries = Preferences.Default.ShowWaveformPhraseBoundaries;
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
-            ThemeName = Preferences.Default.ThemeName;
+            ThemeName = NormalizeThemeName(Preferences.Default.ThemeName);
             UiFontPath = Preferences.Default.UiFontPath;
             UiFontFamily = Preferences.Default.UiFontFamily;
             UseUiFontForNotes = Preferences.Default.UseUiFontForNotes;
