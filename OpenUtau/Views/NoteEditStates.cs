@@ -1053,6 +1053,330 @@ namespace OpenUtau.App.Views {
         }
     }
 
+    abstract class CurveTransformState : NoteEditState {
+        protected readonly UExpressionDescriptor descriptor;
+        protected CurveSelection? initialSelection;
+        protected string abbr = string.Empty;
+
+        protected int[] baseXs = Array.Empty<int>();
+        protected int[] baseYs = Array.Empty<int>();
+
+        protected int lastStartTick;
+        protected int lastEndTick;
+
+        protected override bool ShowValueTip => true;
+        protected override string? commandNameKey => "command.exp.edit";
+
+        public CurveTransformState(
+            Control control,
+            PianoRollViewModel vm,
+            IValueTip valueTip,
+            UExpressionDescriptor descriptor) : base(control, vm, valueTip) {
+            this.descriptor = descriptor;
+        }
+
+        public override void Begin(IPointer pointer, Point point) {
+            base.Begin(pointer, point);
+
+            abbr = descriptor.abbr;
+
+            var curve = vm.NotesViewModel.Part?.curves.FirstOrDefault(c => c.abbr == abbr);
+            baseXs = curve?.xs.ToArray() ?? Array.Empty<int>();
+            baseYs = curve?.ys.ToArray() ?? Array.Empty<int>();
+
+            if (vm.CurveViewModel.TryGetSelection(abbr, out var selection)) {
+                initialSelection = selection;
+            } else {
+                // Without a selection the tool would silently do nothing, so fall
+                // back to the range currently on screen.
+                initialSelection = BuildVisibleSelection(curve);
+            }
+
+            lastStartTick = initialSelection.StartPoint.x;
+            lastEndTick = initialSelection.EndPoint.x;
+        }
+
+        /// <summary>
+        /// A selection spanning the visible ticks, used when the user starts a
+        /// transform without selecting a range first.
+        /// </summary>
+        private CurveSelection BuildVisibleSelection(UCurve? curve) {
+            var notesVm = vm.NotesViewModel;
+            int startTick = (int)Math.Max(0, notesVm.TickOffset);
+            int endTick = (int)Math.Ceiling(notesVm.TickOffset + notesVm.ViewportTicks);
+            if (endTick <= startTick) {
+                endTick = startTick + notesVm.Project.resolution * 4;
+            }
+            int startY = curve?.Sample(startTick) ?? (int)descriptor.CustomDefaultValue;
+            int endY = curve?.Sample(endTick) ?? (int)descriptor.CustomDefaultValue;
+            var xs = new List<int>();
+            var ys = new List<int>();
+            if (curve != null) {
+                for (int i = 0; i < curve.xs.Count; i++) {
+                    int x = curve.xs[i];
+                    if (x <= startTick || endTick <= x) {
+                        continue;
+                    }
+                    xs.Add(x);
+                    ys.Add(curve.ys[i]);
+                }
+            }
+            var selection = new CurveSelection();
+            selection.Add(abbr, (startTick, startY), (endTick, endY), xs, ys);
+            return selection;
+        }
+
+        public override void Update(IPointer pointer, Point point) {
+            if (!CanEdit(out var project, out var part, out var curve)) {
+                return;
+            }
+
+            var oldXs = curve?.xs.ToArray() ?? Array.Empty<int>();
+            var oldYs = curve?.ys.ToArray() ?? Array.Empty<int>();
+            var (newXs, newYs) = BuildEditedCurve(point);
+
+            if (!oldXs.SequenceEqual(newXs) || !oldYs.SequenceEqual(newYs)) {
+                DocManager.Inst.ExecuteCmd(new MergedSetCurveCommand(
+                    project,
+                    part,
+                    abbr,
+                    oldXs,
+                    oldYs,
+                    newXs,
+                    newYs));
+
+                // Keep the displayed selection in sync with the edited curve while dragging.
+                vm.CurveViewModel.Select(
+                    descriptor,
+                    lastStartTick,
+                    lastEndTick,
+                    curve);
+            }
+        }
+
+        public override void End(IPointer pointer, Point point) {
+            base.End(pointer, point);
+            initialSelection = null;
+        }
+
+        private bool CanEdit(out UProject project, out UVoicePart part, out UCurve? curve) {
+            project = null!;
+            part = null!;
+            curve = null;
+
+            if (initialSelection == null || !initialSelection.HasValue(abbr)) {
+                return false;
+            }
+
+            var notesVm = vm.NotesViewModel;
+            if (notesVm.Project == null || notesVm.Part == null) {
+                return false;
+            }
+
+            // A part with no curve yet is fine: MergedSetCurveCommand creates it.
+            curve = notesVm.Part.curves.FirstOrDefault(c => c.abbr == abbr);
+            project = notesVm.Project;
+            part = notesVm.Part;
+            return true;
+        }
+
+        private (int[] xs, int[] ys) BuildEditedCurve(Point point) {
+            if (initialSelection == null || !initialSelection.HasValue(abbr)) {
+                return (baseXs, baseYs);
+            }
+
+            initialSelection.GetSelectedRange(abbr, out var selectedXs, out var selectedYs);
+
+            var start = initialSelection.StartPoint;
+            var end = initialSelection.EndPoint;
+            int movedStartTick = TransformX(start.x, start.y, point);
+            int movedEndTick = TransformX(end.x, end.y, point);
+
+            int originalMinTick = Math.Min(start.x, end.x);
+            int originalMaxTick = Math.Max(start.x, end.x);
+            int movedMinTick = Math.Min(movedStartTick, movedEndTick);
+            int movedMaxTick = Math.Max(movedStartTick, movedEndTick);
+
+            var points = new List<(int x, int y)>(selectedXs.Count);
+            for (int i = 0; i < selectedXs.Count; i++) {
+                points.Add((
+                    TransformX(selectedXs[i], selectedYs[i], point),
+                    TransformY(selectedXs[i], selectedYs[i], point)));
+            }
+
+            lastStartTick = movedStartTick;
+            lastEndTick = movedEndTick;
+
+            if (movedMaxTick < originalMinTick || originalMaxTick < movedMinTick) {
+                // The selection no longer overlaps its original range: clear the original range and
+                // overwrite the destination separately, leaving the curve in between untouched.
+                var (clearedXs, clearedYs) = UCurve.ReplaceRange(
+                    baseXs, baseYs, originalMinTick, originalMaxTick, Array.Empty<(int x, int y)>(), descriptor);
+                return UCurve.ReplaceRange(
+                    clearedXs, clearedYs, movedMinTick, movedMaxTick, points, descriptor);
+            }
+            // Clear both the original range and the destination range as one range.
+            return UCurve.ReplaceRange(
+                baseXs, baseYs,
+                Math.Min(originalMinTick, movedMinTick), Math.Max(originalMaxTick, movedMaxTick),
+                points, descriptor);
+        }
+
+        protected virtual int TransformX(int x, int y, Point point) {
+            return x;
+        }
+
+        protected virtual int TransformY(int x, int y, Point point) {
+            return y;
+        }
+
+        protected int PointToTick(Point point) {
+            var notesVm = vm.NotesViewModel;
+
+            int tick = notesVm.PointToTick(point);
+            if (notesVm.IsSnapOn) {
+                int snapUnit = notesVm.Project.resolution * 4 / notesVm.SnapDiv;
+                tick = (int)Math.Floor((double)tick / snapUnit) * snapUnit;
+            }
+
+            return tick;
+        }
+
+        protected int PointToCurveValue(Point point) {
+            if (control.Bounds.Height <= 0) {
+                return ClampY(descriptor.CustomDefaultValue);
+            }
+
+            return ClampY(Math.Round(
+                descriptor.min + (descriptor.max - descriptor.min) * (1 - point.Y / control.Bounds.Height)));
+        }
+
+        protected int ClampTick(int tick) {
+            return Math.Max(0, tick);
+        }
+
+        protected int ClampY(double y) {
+            return (int)Math.Round(Math.Clamp(y, descriptor.min, descriptor.max));
+        }
+    }
+
+    class CurveVerticalShiftState : CurveTransformState {
+        public CurveVerticalShiftState(
+            Control control,
+            PianoRollViewModel vm,
+            IValueTip valueTip,
+            UExpressionDescriptor descriptor) : base(control, vm, valueTip, descriptor) {
+        }
+
+        protected override int TransformY(int x, int y, Point point) {
+            int deltaY = PointToCurveValue(point) - PointToCurveValue(startPoint);
+            valueTip.UpdateValueTip($"add:{deltaY:0}");
+            return y + deltaY;
+        }
+    }
+
+    class CurveVerticalStretchState : CurveTransformState {
+        private int centerY;
+
+        public CurveVerticalStretchState(
+            Control control,
+            PianoRollViewModel vm,
+            IValueTip valueTip,
+            UExpressionDescriptor descriptor) : base(control, vm, valueTip, descriptor) {
+        }
+
+        public override void Begin(IPointer pointer, Point point) {
+            base.Begin(pointer, point);
+            centerY = GetSelectionCenterY();
+        }
+
+        protected override int TransformY(int x, int y, Point point) {
+            if (initialSelection == null || !initialSelection.HasValue(abbr)) {
+                return y;
+            }
+
+            int deltaY = PointToCurveValue(point) - PointToCurveValue(startPoint);
+            double range = descriptor.max - descriptor.min;
+            if (range <= 0) {
+                return y;
+            }
+
+            double scale = 1.0 + deltaY / range;
+            valueTip.UpdateValueTip($"scale:{scale:0.00}");
+
+            double stretchedY = Math.Round(centerY + (y - centerY) * scale);
+
+            return ClampY(stretchedY);
+        }
+
+        private int GetSelectionCenterY() {
+            if (initialSelection == null || !initialSelection.HasValue(abbr)) {
+                return ClampY(descriptor.CustomDefaultValue);
+            }
+
+            initialSelection.GetSelectedRange(abbr, out _, out var ys);
+
+            if (ys.Count == 0) {
+                return ClampY(descriptor.CustomDefaultValue);
+            }
+
+            int minY = ys.Min();
+            int maxY = ys.Max();
+            return (minY + maxY) / 2;
+        }
+    }
+
+    class CurveHorizontalShiftState : CurveTransformState {
+        public CurveHorizontalShiftState(
+            Control control,
+            PianoRollViewModel vm,
+            IValueTip valueTip,
+            UExpressionDescriptor descriptor) : base(control, vm, valueTip, descriptor) {
+        }
+
+        protected override int TransformX(int x, int y, Point point) {
+            int deltaTick = PointToTick(point) - PointToTick(startPoint);
+            return ClampTick(x + deltaTick);
+        }
+    }
+
+    class CurveHorizontalStretchState : CurveTransformState {
+        public CurveHorizontalStretchState(
+            Control control,
+            PianoRollViewModel vm,
+            IValueTip valueTip,
+            UExpressionDescriptor descriptor) : base(control, vm, valueTip, descriptor) {
+        }
+
+        protected override int TransformX(int x, int y, Point point) {
+            if (initialSelection == null || !initialSelection.HasValue(abbr)) {
+                return x;
+            }
+
+            int deltaTick = PointToTick(point) - PointToTick(startPoint);
+
+            int startTick = initialSelection.StartPoint.x;
+            int endTick = initialSelection.EndPoint.x;
+
+            int minTick = Math.Min(startTick, endTick);
+            int maxTick = Math.Max(startTick, endTick);
+
+            int width = maxTick - minTick;
+            if (width <= 0) {
+                return x;
+            }
+
+            double centerTick = (minTick + maxTick) / 2.0;
+
+            double scale = 1.0 + (double)deltaTick / width;
+            scale = Math.Max(0.01, scale);
+
+            int stretchedX = (int)Math.Round(centerTick + (x - centerTick) * scale);
+
+            return ClampTick(stretchedX);
+        }
+    }
+
     class VibratoChangeStartState : NoteEditState {
         public readonly UNote note;
         protected override string? commandNameKey => "command.vibrato.edit";

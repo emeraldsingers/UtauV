@@ -1369,9 +1369,25 @@ namespace OpenUtau.App.Controls {
                             ViewModel.CurveViewModel.ClearSelect();
                             editState = new ExpSetValueState(control, ViewModel, this, descriptor);
                             break;
+                        case CurveTools.CurveLineTool:
+                            ViewModel.CurveViewModel.ClearSelect();
+                            editState = new ExpSetValueState(control, ViewModel, this, descriptor);
+                            break;
                         case CurveTools.CurveEraserTool:
                             ViewModel.CurveViewModel.ClearSelect();
                             editState = new ExpResetValueState(control, ViewModel, this, descriptor, MouseButton.Left);
+                            break;
+                        case CurveTools.CurveVerticalStretchTool:
+                            editState = new CurveVerticalStretchState(control, ViewModel, this, descriptor);
+                            break;
+                        case CurveTools.CurveHorizontalStretchTool:
+                            editState = new CurveHorizontalStretchState(control, ViewModel, this, descriptor);
+                            break;
+                        case CurveTools.CurveVerticalShiftTool:
+                            editState = new CurveVerticalShiftState(control, ViewModel, this, descriptor);
+                            break;
+                        case CurveTools.CurveHorizontalShiftTool:
+                            editState = new CurveHorizontalShiftState(control, ViewModel, this, descriptor);
                             break;
                         default:
                             ViewModel.CurveViewModel.ClearSelect();
@@ -1406,10 +1422,8 @@ namespace OpenUtau.App.Controls {
                 valueTipPointerPosition = args.GetCurrentPoint(ValueTipCanvas!).Position;
             }
             if (editState != null) {
-                // Upstream gates the modifiers on the line tool, which this fork's curve
-                // toolbar doesn't expose yet. Fall back to the plain modifier test.
-                editState.ctrlShiftHeld = args.KeyModifiers != KeyModifiers.Shift;
-                editState.shiftHeld = args.KeyModifiers == KeyModifiers.Shift;
+                editState.ctrlShiftHeld = args.KeyModifiers != KeyModifiers.Shift && ViewModel.CurveViewModel.CurveTool == CurveTools.CurveLineTool;
+                editState.shiftHeld = args.KeyModifiers == KeyModifiers.Shift && (ViewModel.CurveViewModel.CurveTool == CurveTools.CurveLineTool || (editState is ExpSetValueState expSetValueState && !expSetValueState.IsCurve));
                 UpdateEditState(args, control, point);
             } else {
                 Cursor = null;
