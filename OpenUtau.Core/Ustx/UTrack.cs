@@ -177,20 +177,23 @@ namespace OpenUtau.Core.Ustx {
             if (project.expressions.TryGetValue(Format.Ustx.CLR, out var descriptor)) {
                 if (VoiceColorExp == null && Singer != null && Singer.Found && Singer.Loaded) {
                     VoiceColorExp = descriptor.Clone();
-                    var colors = Singer.Subbanks.Select(subbank => subbank.Color).ToHashSet();
-                    VoiceColorExp.options = colors.OrderBy(c => c).ToArray();
-                    VoiceColorExp.max = VoiceColorExp.options.Length - 1;
-                    VoiceColorExp.CustomDefaultValue = Math.Clamp(VoiceColorExp.CustomDefaultValue, VoiceColorExp.min, VoiceColorExp.max);
+                    UpdateVoiceColorOptions(VoiceColorExp);
                 }
             }
             if (project.expressions.TryGetValue(Format.Ustx.XSYC, out var descriptor2)) {
                 if (VoiceColor2Exp == null && Singer != null && Singer.Found && Singer.Loaded) {
                     VoiceColor2Exp = descriptor2.Clone();
-                    var colors = Singer.Subbanks.Select(subbank => subbank.Color).ToHashSet();
-                    VoiceColor2Exp.options = colors.OrderBy(c => c).ToArray();
-                    VoiceColor2Exp.max = VoiceColor2Exp.options.Length - 1;
-                    VoiceColor2Exp.CustomDefaultValue = Math.Clamp(VoiceColor2Exp.CustomDefaultValue, VoiceColor2Exp.min, VoiceColor2Exp.max);
+                    UpdateVoiceColorOptions(VoiceColor2Exp);
                 }
+            }
+        }
+
+        private void UpdateVoiceColorOptions(UExpressionDescriptor exp) {
+            var colors = Singer.Subbanks.Select(subbank => subbank.Color).ToHashSet();
+            exp.options = colors.OrderBy(c => c).ToArray();
+            exp.max = exp.options.Length - 1;
+            if (exp.max >= exp.min) {
+                exp.CustomDefaultValue = Math.Clamp(exp.CustomDefaultValue, exp.min, exp.max);
             }
         }
 
