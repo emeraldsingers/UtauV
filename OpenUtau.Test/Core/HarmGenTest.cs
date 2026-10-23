@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenUtau;
+using OpenUtau.App.ViewModels;
 using OpenUtau.Classic;
 using OpenUtau.Core;
 using OpenUtau.Core.Editing;
@@ -238,6 +239,29 @@ namespace OpenUtau.Test {
             Assert.Single(project.tracks);
         }
 
+        [Fact]
+        public void RunGeneratesEightVoicesWhenAsked() {
+            var project = DocManager.Inst.Project;
+            var part = project.parts.OfType<UVoicePart>().Single();
+            var config = new HarmGenConfig {
+                TrackIndexes = new List<int> { 0 },
+                NumVoices = 8,
+                StyleName = "Pop",
+                UseManualKey = true,
+                ManualKeyIndex = 0,
+                ManualMode = "major",
+                UseDefaultRanges = true,
+                RangesRelative = true,
+            };
+
+            new HarmGenEdit(config).Run(project, part, new List<UNote>(), DocManager.Inst);
+
+            Assert.Equal(9, project.tracks.Count);
+            var names = project.tracks.Skip(1).Select(track => track.TrackName).ToList();
+            Assert.Equal(8, names.Distinct().Count());
+            Assert.All(names, name => Assert.StartsWith("Lead - ", name));
+        }
+
         static UProject BuildProject() {
             var project = new UProject();
             Ustx.AddDefaultExpressions(project);
@@ -273,6 +297,55 @@ namespace OpenUtau.Test {
             public override USingerType SingerType => USingerType.Classic;
             public override IList<USubbank> Subbanks => new List<USubbank> { new USubbank(new Subbank()) };
             public override IList<UOto> Otos => new List<UOto>();
+        }
+    }
+
+    [Collection(RenderSingletonCollection.Name)]
+    public class HarmGenViewModelTest {
+        [Fact]
+        public void VoiceRangesFollowTheVoiceCount() {
+            var viewModel = new HarmGenViewModel(new UProject(), 0);
+
+            Assert.Equal(2, viewModel.VoiceRanges.Count);
+
+            viewModel.NumVoices = 8;
+
+            Assert.Equal(8, viewModel.VoiceCount);
+            Assert.Equal(8, viewModel.VoiceRanges.Count);
+            Assert.Equal(8, viewModel.VoiceRanges.Select(range => range.Name).Distinct().Count());
+
+            viewModel.NumVoices = 1;
+
+            Assert.Single(viewModel.VoiceRanges);
+        }
+
+        [Fact]
+        public void BuildConfigCarriesOneRangePerVoice() {
+            var viewModel = new HarmGenViewModel(new UProject(), 0);
+            viewModel.NumVoices = 5;
+
+            var config = viewModel.BuildConfig();
+
+            Assert.Equal(5, config.NumVoices);
+            Assert.Equal(5, config.VoiceRanges.Count);
+            Assert.Equal(viewModel.VoiceRanges.Select(range => (range.Min, range.Max)), config.VoiceRanges);
+            Assert.False(config.SustainedChoir);
+        }
+
+        [Fact]
+        public void CustomRangesSurviveAVoiceCountChange() {
+            var viewModel = new HarmGenViewModel(new UProject(), 0);
+            viewModel.NumVoices = 3;
+            viewModel.UseDefaultRanges = false;
+            viewModel.VoiceRanges[0].Min = -5;
+            viewModel.VoiceRanges[0].Max = 5;
+
+            viewModel.NumVoices = 6;
+
+            Assert.Equal(6, viewModel.VoiceRanges.Count);
+            Assert.Equal(-5, viewModel.VoiceRanges[0].Min);
+            Assert.Equal(5, viewModel.VoiceRanges[0].Max);
+            Assert.All(viewModel.VoiceRanges.Skip(3), range => Assert.NotEqual(0, range.Max));
         }
     }
 }

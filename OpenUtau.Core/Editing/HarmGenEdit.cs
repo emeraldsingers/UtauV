@@ -442,8 +442,7 @@ namespace OpenUtau.Core.Editing {
                 config.StrongBeatWeight,
                 config.WeakBeatWeight);
 
-            int maxVoices = config.SustainedChoir ? 8 : 4;
-            int voiceCount = Math.Clamp(config.NumVoices, config.SustainedChoir ? 4 : 1, maxVoices);
+            int voiceCount = Math.Clamp(config.NumVoices, 1, 8);
             var genConfig = new HarmonyConfig(
                 numVoices: voiceCount,
                 style: style,
@@ -1219,7 +1218,12 @@ namespace OpenUtau.Core.Editing {
                 "Randomized Human" => new List<(int, int)> { (-8, -3), (3, 9), (10, 17), (-16, -10) },
                 _ => new List<(int, int)> { (-8, -3), (3, 8), (10, 16), (-16, -10) },
             };
-            return presets.Take(numVoices).ToList();
+            var result = presets.Take(numVoices).ToList();
+            var wider = new List<(int Min, int Max)> {
+                (-21, -14), (17, 23), (-26, -22), (24, 28),
+            };
+            result.AddRange(wider.Take(Math.Max(0, numVoices - result.Count)));
+            return result;
         }
 
         private static Phonemizer ClonePhonemizer(Phonemizer source) {
@@ -1356,14 +1360,18 @@ namespace OpenUtau.Core.Editing {
                 var choirLabels = new List<string> {
                     "Bass 2", "Bass", "Tenor", "Alto", "Mezzo", "Soprano", "High Soprano", "Air",
                 };
-                return choirLabels.Take(numVoices).ToList();
+                return Enumerable.Range(0, numVoices)
+                    .Select(index => index < choirLabels.Count ? choirLabels[index] : $"Voice {index + 1}")
+                    .ToList();
             }
             List<string> labels = styleName switch {
                 "Cinematic" => new List<string> { "Low Oct", "High Fifth", "High Oct", "Low Oct 2" },
                 "Choir" => new List<string> { "Alto", "Tenor", "Soprano", "Bass" },
                 _ => new List<string> { "Harmony 1", "Harmony 2", "Harmony 3", "Harmony 4" },
             };
-            return labels.Take(numVoices).ToList();
+            return Enumerable.Range(0, numVoices)
+                .Select(index => index < labels.Count ? labels[index] : $"Harmony {index + 1}")
+                .ToList();
         }
     }
 }
