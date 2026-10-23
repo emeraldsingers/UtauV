@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using OpenUtau.App.ViewModels;
@@ -10,6 +11,11 @@ namespace OpenUtau.App.Views {
 
         public HarmGenDialog() {
             InitializeComponent();
+            var screen = Screens.ScreenFromVisual(this) ?? Screens.Primary;
+            if (screen != null) {
+                double scaling = screen.Scaling > 0 ? screen.Scaling : 1;
+                MaxHeight = Math.Max(360, screen.WorkingArea.Height / scaling - 140);
+            }
         }
 
         public void LoadData(UProject project, int defaultTrackNo) {

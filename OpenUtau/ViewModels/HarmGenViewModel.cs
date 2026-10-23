@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using OpenUtau.Api;
@@ -24,11 +25,31 @@ namespace OpenUtau.App.ViewModels {
             }
         }
 
+        public class VoiceRangeItem : ViewModelBase {
+            int min;
+            public int Min {
+                get => min;
+                set => this.RaiseAndSetIfChanged(ref min, value);
+            }
+
+            int max;
+            public int Max {
+                get => max;
+                set => this.RaiseAndSetIfChanged(ref max, value);
+            }
+
+            public string Name { get; }
+            public VoiceRangeItem(int index) {
+                Name = $"V{index}";
+            }
+        }
+
         static readonly string[] KeyNames = {
             "C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"
         };
 
         readonly List<TrackItem> trackItems = new List<TrackItem>();
+        readonly ObservableCollection<VoiceRangeItem> voiceRanges = new ObservableCollection<VoiceRangeItem>();
         readonly List<PhonemizerFactory?> phonemizerOptions = new List<PhonemizerFactory?>();
 
         public HarmGenViewModel(UProject project, int defaultTrackNo) {
@@ -86,6 +107,7 @@ namespace OpenUtau.App.ViewModels {
         public static string[] StyleNames => new[] { "Pop", "Choir", "Cinematic", "Randomized Human" };
 
         public List<TrackItem> Tracks { get; }
+        public ObservableCollection<VoiceRangeItem> VoiceRanges => voiceRanges;
         public string[] PhonemizerOptions { get; }
         public string[] StyleOptions { get; }
         public string[] WindowOptions { get; }
@@ -94,7 +116,7 @@ namespace OpenUtau.App.ViewModels {
 
         public int SelectedTrackCount => trackItems.Count(item => item.IsChecked);
         public bool CanGenerate => SelectedTrackCount > 0;
-        public int VoiceCount => Math.Clamp(numVoices, SustainedChoir ? 4 : 1, SustainedChoir ? 8 : 4);
+        public int VoiceCount => Math.Clamp(numVoices, 1, 8);
         public bool RangesEditable => !useDefaultRanges;
         public string StyleName => StyleNames[Math.Clamp(styleIndex, 0, StyleNames.Length - 1)];
 
@@ -120,18 +142,6 @@ namespace OpenUtau.App.ViewModels {
         public int WindowIndex {
             get => windowIndex;
             set => this.RaiseAndSetIfChanged(ref windowIndex, value);
-        }
-
-        bool sustainedChoir;
-        public bool SustainedChoir {
-            get => sustainedChoir;
-            set {
-                this.RaiseAndSetIfChanged(ref sustainedChoir, value);
-                if (value && numVoices < 4) {
-                    NumVoices = 4;
-                }
-                RefreshDefaultRanges();
-            }
         }
 
         int phonemizerIndex;
@@ -195,54 +205,6 @@ namespace OpenUtau.App.ViewModels {
                 this.RaisePropertyChanged(nameof(RangesEditable));
                 RefreshDefaultRanges();
             }
-        }
-
-        int range1Min;
-        public int Range1Min {
-            get => range1Min;
-            set => this.RaiseAndSetIfChanged(ref range1Min, value);
-        }
-
-        int range1Max;
-        public int Range1Max {
-            get => range1Max;
-            set => this.RaiseAndSetIfChanged(ref range1Max, value);
-        }
-
-        int range2Min;
-        public int Range2Min {
-            get => range2Min;
-            set => this.RaiseAndSetIfChanged(ref range2Min, value);
-        }
-
-        int range2Max;
-        public int Range2Max {
-            get => range2Max;
-            set => this.RaiseAndSetIfChanged(ref range2Max, value);
-        }
-
-        int range3Min;
-        public int Range3Min {
-            get => range3Min;
-            set => this.RaiseAndSetIfChanged(ref range3Min, value);
-        }
-
-        int range3Max;
-        public int Range3Max {
-            get => range3Max;
-            set => this.RaiseAndSetIfChanged(ref range3Max, value);
-        }
-
-        int range4Min;
-        public int Range4Min {
-            get => range4Min;
-            set => this.RaiseAndSetIfChanged(ref range4Min, value);
-        }
-
-        int range4Max;
-        public int Range4Max {
-            get => range4Max;
-            set => this.RaiseAndSetIfChanged(ref range4Max, value);
         }
 
         int densityMin;
@@ -355,12 +317,6 @@ namespace OpenUtau.App.ViewModels {
         }
 
         public HarmGenConfig BuildConfig() {
-            var ranges = new List<(int Min, int Max)> {
-                (Range1Min, Range1Max),
-                (Range2Min, Range2Max),
-                (Range3Min, Range3Max),
-                (Range4Min, Range4Max),
-            };
             string? phonemizer = phonemizerIndex > 0 && phonemizerIndex < phonemizerOptions.Count
                 ? phonemizerOptions[phonemizerIndex]?.type.FullName
                 : null;
@@ -368,7 +324,7 @@ namespace OpenUtau.App.ViewModels {
                 TrackIndexes = trackItems.Where(item => item.IsChecked).Select(item => item.Index).ToList(),
                 NumVoices = VoiceCount,
                 StyleName = StyleName,
-                SustainedChoir = SustainedChoir,
+                SustainedChoir = false,
                 WindowSizeIndex = Math.Clamp(windowIndex, 0, 2),
                 UseManualKey = UseManualKey,
                 ManualKeyIndex = Math.Clamp(keyIndex, 0, 11),
@@ -378,7 +334,7 @@ namespace OpenUtau.App.ViewModels {
                 AvoidCrossing = AvoidCrossing,
                 RangesRelative = RangesRelative,
                 UseDefaultRanges = UseDefaultRanges,
-                VoiceRanges = ranges,
+                VoiceRanges = voiceRanges.Select(range => (range.Min, range.Max)).ToList(),
                 DensityMinDuration = Math.Max(0, DensityMin),
                 MelismaNoteDuration = Math.Max(0, MelismaDuration),
                 MelismaRunLen = Math.Max(2, MelismaRun),
@@ -395,47 +351,37 @@ namespace OpenUtau.App.ViewModels {
         void RefreshDefaultRanges() {
             this.RaisePropertyChanged(nameof(VoiceCount));
             this.RaisePropertyChanged(nameof(Summary));
+            var ranges = DefaultVoiceRanges(StyleName, VoiceCount);
+            while (voiceRanges.Count > VoiceCount) {
+                voiceRanges.RemoveAt(voiceRanges.Count - 1);
+            }
+            for (int i = voiceRanges.Count; i < VoiceCount; i++) {
+                (int Min, int Max) added = i < ranges.Count ? ranges[i] : (0, 0);
+                voiceRanges.Add(new VoiceRangeItem(i + 1) { Min = added.Min, Max = added.Max });
+            }
             if (!useDefaultRanges) {
                 return;
             }
-            var ranges = DefaultVoiceRanges(StyleName, VoiceCount, SustainedChoir);
-            SetRange(0, ranges);
-            SetRange(1, ranges);
-            SetRange(2, ranges);
-            SetRange(3, ranges);
-        }
-
-        void SetRange(int voice, List<(int Min, int Max)> ranges) {
-            int min = voice < ranges.Count ? ranges[voice].Min : 0;
-            int max = voice < ranges.Count ? ranges[voice].Max : 0;
-            switch (voice) {
-                case 0: Range1Min = min; Range1Max = max; break;
-                case 1: Range2Min = min; Range2Max = max; break;
-                case 2: Range3Min = min; Range3Max = max; break;
-                default: Range4Min = min; Range4Max = max; break;
+            for (int i = 0; i < voiceRanges.Count; i++) {
+                (int Min, int Max) range = i < ranges.Count ? ranges[i] : (0, 0);
+                voiceRanges[i].Min = range.Min;
+                voiceRanges[i].Max = range.Max;
             }
         }
 
-        static List<(int Min, int Max)> DefaultVoiceRanges(string styleName, int numVoices, bool sustainedChoir) {
-            if (sustainedChoir) {
-                var pool = new List<(int, int)> {
-                    (-24, -13), (-19, -10), (-14, -7), (-9, -3),
-                    (3, 9), (7, 14), (10, 19), (15, 24),
-                };
-                if (numVoices <= 1) {
-                    return new List<(int, int)> { pool[3] };
-                }
-                return Enumerable.Range(0, numVoices)
-                    .Select(index => pool[(int)Math.Round(index * (pool.Count - 1.0) / (numVoices - 1))])
-                    .ToList();
-            }
+        static List<(int Min, int Max)> DefaultVoiceRanges(string styleName, int numVoices) {
             List<(int Min, int Max)> presets = styleName switch {
                 "Cinematic" => new List<(int, int)> { (-12, -5), (7, 14), (12, 19), (-19, -12) },
                 "Choir" => new List<(int, int)> { (-8, -3), (3, 8), (10, 16), (-16, -10) },
                 "Randomized Human" => new List<(int, int)> { (-8, -3), (3, 9), (10, 17), (-16, -10) },
                 _ => new List<(int, int)> { (-8, -3), (3, 8), (10, 16), (-16, -10) },
             };
-            return presets.Take(numVoices).ToList();
+            var result = presets.Take(numVoices).ToList();
+            var wider = new List<(int Min, int Max)> {
+                (-21, -14), (17, 23), (-26, -22), (24, 28),
+            };
+            result.AddRange(wider.Take(Math.Max(0, numVoices - result.Count)));
+            return result;
         }
     }
 }

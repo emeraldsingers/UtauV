@@ -232,8 +232,6 @@ OpenUtau aims to be an open source editing environment for UTAU community, with 
   <system:String x:Key="dialogs.harmgen.summary.none">Select at least one track to generate harmonies for.</system:String>
   <system:String x:Key="dialogs.harmgen.summary.tip">Every selected track gets one new track per harmony voice.</system:String>
   <system:String x:Key="dialogs.harmgen.sus">Allow suspended chords</system:String>
-  <system:String x:Key="dialogs.harmgen.sustained">Sustained choir pads</system:String>
-  <system:String x:Key="dialogs.harmgen.sustained.hint">Creates long chord-based notes that hold for the length of each chord instead of copying the lead rhythm. Needs at least four voices.</system:String>
   <system:String x:Key="dialogs.harmgen.tracks">Tracks</system:String>
   <system:String x:Key="dialogs.harmgen.tracks.all">Select all</system:String>
   <system:String x:Key="dialogs.harmgen.tracks.hint">Each selected track gets its own harmony tracks. When notes are selected in the piano roll, only those notes are harmonised on the current track.</system:String>

@@ -158,8 +158,6 @@ OpenUtau стремится стать средой редактирования
   <system:String x:Key="dialogs.harmgen.summary.none">Выберите хотя бы одну дорожку для генерации гармоний.</system:String>
   <system:String x:Key="dialogs.harmgen.summary.tip">Каждая выбранная дорожка получает по одному новому треку на каждый голос гармонии.</system:String>
   <system:String x:Key="dialogs.harmgen.sus">Разрешить sus-аккорды</system:String>
-  <system:String x:Key="dialogs.harmgen.sustained">Выдержанные хоровые пады</system:String>
-  <system:String x:Key="dialogs.harmgen.sustained.hint">Создаёт длинные аккордовые ноты, которые держатся на протяжении каждого аккорда, вместо копирования ритма ведущей дорожки. Нужно не менее четырёх голосов.</system:String>
   <system:String x:Key="dialogs.harmgen.tracks">Дорожки</system:String>
   <system:String x:Key="dialogs.harmgen.tracks.all">Выделить все</system:String>
   <system:String x:Key="dialogs.harmgen.tracks.hint">Каждая выбранная дорожка получает свои треки гармоний. Если в фортепиано выделены ноты, гармония применяется только к ним на текущей дорожке.</system:String>

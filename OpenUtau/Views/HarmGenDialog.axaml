@@ -6,7 +6,7 @@
         x:Class="OpenUtau.App.Views.HarmGenDialog"
         Icon="/Assets/open-utau.ico"
         Title="{DynamicResource dialogs.harmgen.caption}"
-        Width="720" SizeToContent="Height"
+        Width="720" MaxHeight="620" SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
     <Window.Styles>
@@ -83,7 +83,7 @@
         </Border>
 
         <ScrollViewer DockPanel.Dock="Top" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Spacing="10">
+            <StackPanel Spacing="8">
                 <StackPanel>
                     <TextBlock Classes="section" Text="{DynamicResource dialogs.harmgen.tracks}"/>
                     <TextBlock Classes="hint" Text="{DynamicResource dialogs.harmgen.tracks.hint}"/>
@@ -100,7 +100,7 @@
                                         Content="{DynamicResource dialogs.harmgen.tracks.none}"
                                         Click="OnSelectNoTracks"/>
                             </StackPanel>
-                            <ScrollViewer MaxHeight="180">
+                            <ScrollViewer MaxHeight="150">
                                 <ItemsControl ItemsSource="{Binding Tracks}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -162,12 +162,6 @@
                                   SelectedIndex="{Binding PhonemizerIndex}"
                                   HorizontalAlignment="Stretch"/>
                     </Grid>
-                    <CheckBox IsChecked="{Binding SustainedChoir}"
-                              Margin="0,8,0,0"
-                              Content="{DynamicResource dialogs.harmgen.sustained}"/>
-                    <TextBlock Classes="hint"
-                               Text="{DynamicResource dialogs.harmgen.sustained.hint}"
-                               Margin="24,0,0,0"/>
                     <TextBlock Classes="hint"
                                Text="{DynamicResource dialogs.harmgen.window.hint}"
                                Margin="0,6,0,0"/>
@@ -248,26 +242,21 @@
                                            HorizontalAlignment="Center"
                                            Text="{DynamicResource dialogs.harmgen.ranges.max}"/>
                             </Grid>
-                            <Grid ColumnDefinitions="30,58,8,58">
-                                <TextBlock Grid.Column="0" Text="V1"/>
-                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range1Min}"/>
-                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range1Max}"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="30,58,8,58">
-                                <TextBlock Grid.Column="0" Text="V2"/>
-                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range2Min}"/>
-                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range2Max}"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="30,58,8,58">
-                                <TextBlock Grid.Column="0" Text="V3"/>
-                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range3Min}"/>
-                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range3Max}"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="30,58,8,58">
-                                <TextBlock Grid.Column="0" Text="V4"/>
-                                <TextBox Grid.Column="1" Classes="spin" Text="{Binding Range4Min}"/>
-                                <TextBox Grid.Column="3" Classes="spin" Text="{Binding Range4Max}"/>
-                            </Grid>
+                            <ItemsControl ItemsSource="{Binding VoiceRanges}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="30,58,8,58">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}"/>
+                                            <TextBox Grid.Column="1"
+                                                     Classes="spin"
+                                                     Text="{Binding Min}"/>
+                                            <TextBox Grid.Column="3"
+                                                     Classes="spin"
+                                                     Text="{Binding Max}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
                 </StackPanel>
