@@ -69,5 +69,82 @@ namespace OpenUtau.Test.Core {
             Assert.Contains("\t", singer.description);
             Assert.Contains("\n", singer.description);
         }
+
+        const string pluginsBody = """
+        [
+          {
+            "id": "autocontextualalts",
+            "name": "Auto Contextual Alts",
+            "category": "Batch Edits",
+            "developers": ["Cadlaxa"],
+            "long_description": "Aligns allophone alts.",
+            "homepage_url": "https://github.com/Cadlaxa/Batch-OpenUTAU-Plugins",
+            "versions": [
+              { "version": "1.0.0", "description": "Initial Release" }
+            ]
+          }
+        ]
+        """;
+
+        const string packagesBody = """
+        {
+          "registry": "utauv",
+          "kind": "softwares-all",
+          "version": 1,
+          "count": 2,
+          "items": [
+            {
+              "id": "rmvpe",
+              "category": "host_extension",
+              "tags": ["openutau", "oudep", "rmvpe"]
+            },
+            {
+              "id": "autopitchcurve",
+              "category": "host_extension",
+              "tags": ["openutau", "oudep", "autopitch"]
+            }
+          ]
+        }
+        """;
+
+        [Fact]
+        public void PluginRegistryMapsFields() {
+            // RegistrySoftware is built from public fields, and System.Text.Json only
+            // fills properties unless IncludeFields is set. Without it every entry came
+            // back with an empty id, which made whole categories look empty.
+            var parsed = PackageManager.ParseRegistryBodyForTest(pluginsBody, "test");
+            var plugin = Assert.Single(parsed);
+            Assert.Equal("autocontextualalts", plugin.id);
+            Assert.Equal("Auto Contextual Alts", plugin.LocalizedName());
+            Assert.Equal("Batch Edits", plugin.category);
+            Assert.Equal("Cadlaxa", Assert.Single(plugin.developers));
+            Assert.Contains("Aligns", plugin.long_description);
+            Assert.Equal("https://github.com/Cadlaxa/Batch-OpenUTAU-Plugins", plugin.homepage_url);
+            var version = Assert.Single(plugin.versions);
+            Assert.Equal("1.0.0", version.version);
+        }
+
+        [Fact]
+        public void PackageRegistryMapsFields() {
+            var parsed = PackageManager.ParseRegistryBodyForTest(packagesBody, "test");
+            Assert.Equal(2, parsed.Count);
+            var rmvpe = parsed.Single(s => s.id == "rmvpe");
+            Assert.Equal("host_extension", rmvpe.category);
+            Assert.Contains("oudep", rmvpe.tags);
+            var curve = parsed.Single(s => s.id == "autopitchcurve");
+            Assert.Contains("oudep", curve.tags);
+        }
+
+        [Fact]
+        public void RegistryFieldsMapCaseInsensitively() {
+            var body = """
+            [ { "Id": "cased", "Name": "Cased", "Category": "Batch Edits" } ]
+            """;
+            var parsed = PackageManager.ParseRegistryBodyForTest(body, "test");
+            var entry = Assert.Single(parsed);
+            Assert.Equal("cased", entry.id);
+            Assert.Equal("Cased", entry.LocalizedName());
+            Assert.Equal("Batch Edits", entry.category);
+        }
     }
 }

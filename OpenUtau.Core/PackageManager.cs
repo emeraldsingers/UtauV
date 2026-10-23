@@ -624,15 +624,20 @@ namespace OpenUtau.Core {
             }
         }
 
+        static readonly JsonSerializerOptions registryJsonOptions = new(Json.DefaultOptions) {
+            // Registry files are hand-edited, so tolerate "Id" as well as "id".
+            PropertyNameCaseInsensitive = true
+        };
+
         static List<RegistrySoftware> ParseRegistryBody(string body) {
             var token = JsonNode.Parse(body);
             if (token is JsonArray arr) {
-                return arr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
+                return arr.Deserialize<List<RegistrySoftware>>(registryJsonOptions) ?? new List<RegistrySoftware>();
             }
             if (token is JsonObject obj) {
                 var items = obj["items"];
                 if (items is JsonArray itemsArr) {
-                    return itemsArr.Deserialize<List<RegistrySoftware>>() ?? new List<RegistrySoftware>();
+                    return itemsArr.Deserialize<List<RegistrySoftware>>(registryJsonOptions) ?? new List<RegistrySoftware>();
                 }
                 var singers = ParseSingerRegistryBody(obj);
                 if (singers.Count > 0) {
@@ -2426,6 +2431,12 @@ internal static bool IsValidPackageName(string id) {
         }
 
         static void WriteThemeRegistryCache(string cacheFile, List<RegistrySoftware> entries) {
+            // An empty result is indistinguishable from "this category has nothing" once
+            // cached, and a source that failed or was mis-parsed would lock the category
+            // out for the whole TTL. Keep the previous (or absent) cache instead.
+            if (entries.Count == 0) {
+                return;
+            }
             try {
                 var json = Json.Serialize(entries, Json.WriteIndentedOptions);
                 File.WriteAllText(cacheFile, json, Encoding.UTF8);
