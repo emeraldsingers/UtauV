@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -360,7 +359,8 @@ namespace OpenUtau.Core.Hts {
             var tuples = new List<Tuple<HTSNote, int>>();
             for (int noteIndex = 0; noteIndex < phrase.notes.Length; noteIndex++) {
                 var note = phrase.notes[noteIndex];
-                if (phonemesByNoteIndex.TryGetValue(noteIndex, out var phonemes)) {
+                // phone.noteIndex はパート全体の番号なので、phrase.notes の番号から変換して引く
+                if (phonemesByNoteIndex.TryGetValue(phrase.noteIndexes[noteIndex], out var phonemes)) {
                     foreach (var phone in phonemes) {
                         var phoneStartMs = headMs + (phone.positionMs - phrase.positionMs);
                         var phoneEndMs = headMs + (phone.endMs - phrase.positionMs);
@@ -379,7 +379,7 @@ namespace OpenUtau.Core.Hts {
                     lastBasePhonemes = phonemes;
                     HTSNote htsNote = makeHtsNote(phonemes.Select(phone => phone.phoneme).ToArray(), note, startTick, headMs);
                     tuples.Add(Tuple.Create(htsNote, noteIndex));
-                } else if (IsSyllableVowelExtensionNote(note)) {
+                } else if (IsSyllableVowelExtensionNote(note) && lastBasePhonemes.Length > 0) {
                     // 拍点延長ノートは、直前の通常ノートの最後の母音を引き延ばす
                     var extensionPhoneme = FindLastVowelOrLastPhoneme(lastBasePhonemes);
                     if (!string.IsNullOrEmpty(extensionPhoneme.phoneme)) {
@@ -506,6 +506,17 @@ namespace OpenUtau.Core.Hts {
 
         public abstract override string ToString();
 
+        public virtual bool SupportsRealCurve => false;
+
         public abstract RenderPitchResult LoadRenderedPitch(RenderPhrase phrase);
+        public virtual RenderPitchResult LoadRenderedPitch(RenderPhrase phrase, HashSet<int> selectedNotePositions) {
+            return LoadRenderedPitch(phrase);
+        }
+
+        public virtual List<RenderRealCurveResult> LoadRenderedRealCurves(RenderPhrase phrase) {
+            return new List<RenderRealCurveResult>(0);
+        }
+
+        public virtual void ScheduleRealCurveRefresh(UProject project, UVoicePart part, UCommand command) { }
     }
 }
