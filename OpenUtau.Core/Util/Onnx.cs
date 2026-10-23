@@ -231,7 +231,9 @@ namespace OpenUtau.Core {
             return options;
         }
 
-        private static string getCudaModelPath(byte[] model) {
+        /// <summary>Writes the model to a content-addressed file in the cache and returns
+        /// its path, so onnxruntime can resolve the model's external data files.</summary>
+        private static string getCachedModelPath(byte[] model) {
             Directory.CreateDirectory(PathManager.Inst.CachePath);
             string hash = Convert.ToHexString(SHA256.HashData(model));
             string modelPath = Path.Combine(PathManager.Inst.CachePath, $"onnx-{hash}.onnx");
@@ -255,13 +257,27 @@ namespace OpenUtau.Core {
             return modelPath;
         }
 
+        /// <summary>Creates a session from model bytes. A model whose weights are stored as
+        /// external data cannot be loaded from memory: onnxruntime needs the model's path to
+        /// locate them, so such a model is retried from a cached file on disk.</summary>
+        private static InferenceSession createSessionFromBytes(byte[] model, Func<SessionOptions> optionsFactory) {
+            try {
+                using var options = optionsFactory();
+                return new InferenceSession(model, options);
+            } catch (Exception e) {
+                Log.Information(e, "Failed to create an inference session from model bytes, retrying from a model file.");
+            }
+            using var fileOptions = optionsFactory();
+            return new InferenceSession(getCachedModelPath(model), fileOptions);
+        }
+
         public static InferenceSession getInferenceSession(byte[] model, OnnxRunnerChoice runnerChoice = OnnxRunnerChoice.Default) {
             if (runnerChoice == OnnxRunnerChoice.CPU ||
                 (runnerChoice == OnnxRunnerChoice.CPUForCoreML && Preferences.Default.OnnxRunner == "CoreML")) {
-                return new InferenceSession(model);
+                return createSessionFromBytes(model, () => new SessionOptions());
             } else {
                 if (Preferences.Default.OnnxRunner == "CUDA") {
-                    return new InferenceSession(getCudaModelPath(model), getOnnxSessionOptions());
+                    return new InferenceSession(getCachedModelPath(model), getOnnxSessionOptions());
                 }
                 // Try with CoreML subgraphs enabled first, fallback to default if it fails
                 if (OS.IsMacOS() && Preferences.Default.OnnxRunner == "CoreML") {
@@ -277,11 +293,8 @@ namespace OpenUtau.Core {
                 // so a GC could otherwise finalize the managed options and free the native ones
                 // while the native call is still running.
                 return createSession(
-                    () => {
-                        using var options = getOnnxSessionOptions();
-                        return new InferenceSession(model, options);
-                    },
-                    () => new InferenceSession(model));
+                    () => createSessionFromBytes(model, () => getOnnxSessionOptions()),
+                    () => createSessionFromBytes(model, () => new SessionOptions()));
             }
         }
 
