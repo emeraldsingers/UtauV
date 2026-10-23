@@ -334,6 +334,8 @@ namespace OpenUtau.Core.Ustx {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        public virtual bool HoldsMemory => false;
+
         /// <summary>
         /// Some types of singers store their data in memory when rendering.
         /// This method is called when the singer is no longer used.

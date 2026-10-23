@@ -289,6 +289,10 @@ namespace OpenUtau.Core.DiffSinger {
             return token;
         }
 
+        public override bool HoldsMemory =>
+            acousticSession != null || vocoder != null || pitchPredictor != null ||
+            variancePredictor != null || speakerEmbedManager != null;
+
         public override void FreeMemory(){
             Log.Information($"Freeing memory for singer {Id}");
             // SessionLock only covers session creation, while a render may be mid-inference on a
@@ -304,6 +308,7 @@ namespace OpenUtau.Core.DiffSinger {
                 pitchPredictor = null;
                 variancePredictor?.Dispose();
                 variancePredictor = null;
+                speakerEmbedManager = null;
                 DiffSingerRealCurveScheduler.CancelAll();
             }
         }

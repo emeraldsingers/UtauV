@@ -178,6 +178,8 @@ namespace OpenUtau.Classic {
             otoWatcher = null;
         }
 
+        public override bool HoldsMemory => loaded;
+
         public override void FreeMemory() {
             Log.Information($"Freeing memory for singer {Id}");
             lock (SessionLock) {

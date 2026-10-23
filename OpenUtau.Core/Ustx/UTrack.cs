@@ -167,6 +167,7 @@ namespace OpenUtau.Core.Ustx {
         public void Validate(ValidateOptions options, UProject project) {
             if (Singer != null && Singer.Found) {
                 Singer.EnsureLoaded();
+                SingerManager.Inst.MarkSingerUsed(Singer);
             }
             Pipeline.DocumentSnapshotStore.Inst.SetTrack(this);
             if (RendererSettings == null) {

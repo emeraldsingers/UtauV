@@ -322,9 +322,13 @@ namespace OpenUtau.Core {
         private void ValidateAndRefresh() {
             // A full validate covers anything pending.
             pendingValidate = null;
-            Project.ValidateFull();
-            SingerManager.Inst.ReleaseSingersNotInUse(Project);
+            ValidateAndRelease(new ValidateOptions());
             RenderView.Inst.InvalidateAll();
+        }
+
+        private void ValidateAndRelease(ValidateOptions options) {
+            Project.Validate(options);
+            SingerManager.Inst.ReleaseSingersNotInUse(Project);
         }
 
         public void ExecuteCmd(UCommand cmd) {
@@ -463,7 +467,7 @@ namespace OpenUtau.Core {
         /// </summary>
         void QueueValidate(ValidateOptions options) {
             if (RequestFrame == null) {
-                Project.Validate(options);
+                ValidateAndRelease(options);
                 return;
             }
             if (pendingValidate is ValidateOptions pending) {
@@ -478,7 +482,7 @@ namespace OpenUtau.Core {
         public void FlushValidation() {
             if (pendingValidate is ValidateOptions options) {
                 pendingValidate = null;
-                Project.Validate(options);
+                ValidateAndRelease(options);
             }
         }
 
@@ -579,7 +583,7 @@ namespace OpenUtau.Core {
                     Publish(cmd);
                 }
                 if (validateOptions != null) {
-                    Project.Validate(validateOptions.Value);
+                    ValidateAndRelease(validateOptions.Value);
                     if (preRender) {
                         ExecuteCmd(new PreRenderNotification());
                     }

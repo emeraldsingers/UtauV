@@ -253,7 +253,6 @@ namespace OpenUtau.Core.DiffSinger {
                     $"Vocoder and acoustic model has mismatching mel scale ({vocoder.mel_scale} != {singer.dsConfig.mel_scale})");
             }
 
-            var acousticModel = singer.getAcousticSession();
             var frameMs = vocoder.frameMs();
             var frameSec = frameMs / 1000;
             int headFrames = DiffSingerUtils.headFrames;
@@ -474,7 +473,6 @@ namespace OpenUtau.Core.DiffSinger {
                         .Reshape(new int[] { 1, tension.Length })));
                 }
             }
-            Onnx.VerifyInputNames(acousticModel, acousticInputs);
             var acousticCache = Preferences.Default.DiffSingerTensorCache
                 ? new DiffSingerCache(singer.acousticHash, acousticInputs)
                 : null;
@@ -484,6 +482,8 @@ namespace OpenUtau.Core.DiffSinger {
                     if(cancellation.IsCancellationRequested) {
                         return null;
                     }
+                    var acousticModel = singer.getAcousticSession();
+                    Onnx.VerifyInputNames(acousticModel, acousticInputs);
                     acousticOutputs = acousticModel.Run(acousticInputs).Cast<NamedOnnxValue>().ToList();
                 }
                 acousticCache?.Save(acousticOutputs);
@@ -524,7 +524,7 @@ namespace OpenUtau.Core.DiffSinger {
                     if(cancellation.IsCancellationRequested) {
                         return null;
                     }
-                    vocoderOutputs = vocoder.session.Run(vocoderInputs).Cast<NamedOnnxValue>().ToList();
+                    vocoderOutputs = singer.getVocoder().session.Run(vocoderInputs).Cast<NamedOnnxValue>().ToList();
                 }
                 vocoderCache?.Save(vocoderOutputs);
                 phrase.AddCacheFile(vocoderCache?.Filename);

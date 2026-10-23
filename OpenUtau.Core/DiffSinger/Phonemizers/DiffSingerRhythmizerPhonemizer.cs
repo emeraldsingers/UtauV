@@ -34,6 +34,11 @@ namespace OpenUtau.Core.DiffSinger {
         //Default rhythmizer package name
         public static string DefaultRhythmizer = "rhythmizer_zh_opencpop_strict";
 
+        public void Dispose() {
+            session?.Dispose();
+            session = null;
+        }
+
         public static Dictionary<string, string[]> LoadPhoneDict(string path, Encoding TextFileEncoding) {
             var phoneDict = new Dictionary<string, string[]>();
             if (File.Exists(path)) {
@@ -78,6 +83,7 @@ namespace OpenUtau.Core.DiffSinger {
             if (this.singer == null) {
                 return;
             }
+            var previousRhythmizer = rhythmizer;
             //Load rhythmizer model
             try {
                 //if rhythmizer is packed within the voicebank
@@ -100,6 +106,8 @@ namespace OpenUtau.Core.DiffSinger {
             } catch (Exception ex) {
                 Log.Error(ex, "Failed to load rhythmizer");
                 throw;
+            } finally {
+                previousRhythmizer?.Dispose();
             }
         }
 

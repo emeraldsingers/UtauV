@@ -21,6 +21,7 @@ namespace OpenUtau.Core {
         private CancellationTokenSource reloadCancellation;
 
         private HashSet<USinger> singersUsed = new HashSet<USinger>(ReferenceEqualityComparer.Instance);
+        private readonly object singersUsedLock = new object();
         private readonly ConditionalWeakTable<USinger, USinger> replacements = new ConditionalWeakTable<USinger, USinger>();
 
         public void Initialize() {
@@ -215,14 +216,26 @@ Singers = merged;
                 }
             }
             //Release singers that are no longer in use
-            foreach (var singer in singersUsed) {
-                if (!singersInUse.Contains(singer)) {
-                    Log.Information($"Releasing memory for singer not in use: {singer.Id} ({RuntimeHelpers.GetHashCode(singer)})");
-                    singer.FreeMemory();
-                }
+            List<USinger> unused;
+            lock (singersUsedLock) {
+                unused = singersUsed
+                    .Where(singer => !singersInUse.Contains(singer) && singer.HoldsMemory)
+                    .ToList();
+                singersUsed = singersInUse;
             }
-            //Update singers used
-            singersUsed = singersInUse;
+            foreach (var singer in unused) {
+                Log.Information($"Releasing memory for singer not in use: {singer.Id} ({RuntimeHelpers.GetHashCode(singer)})");
+                singer.FreeMemory();
+            }
+        }
+
+        public void MarkSingerUsed(USinger singer) {
+            if (singer == null) {
+                return;
+            }
+            lock (singersUsedLock) {
+                singersUsed.Add(singer);
+            }
         }
     }
 }
