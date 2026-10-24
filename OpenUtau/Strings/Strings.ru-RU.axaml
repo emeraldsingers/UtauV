@@ -220,6 +220,7 @@ OpenUtau стремится стать средой редактирования
 
   <system:String x:Key="errors.caption">Ошибка</system:String>
   <system:String x:Key="errors.details">Подробности ошибки</system:String>
+  <system:String x:Key="errors.fork.notice">Это UtauV — форк OpenUtau. За помощью обращайтесь на Discord-сервер UtauV, а не на сервер OpenUtau: https://discord.gg/VdAUwckzMd</system:String>
   <system:String x:Key="errors.diffsinger.downloadvocoder">Ошибка при загрузке вокодера "{0}". Пожалуйста, установите вокодер отсюда {1}</system:String>
   <system:String x:Key="errors.diffsinger.downloadvocoder1">Ошибка загрузки вокодера </system:String>
   <system:String x:Key="errors.diffsinger.downloadvocoder2">. Пожалуйста, загрузите вокодер из: </system:String>

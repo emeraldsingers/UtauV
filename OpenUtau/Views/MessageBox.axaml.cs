@@ -10,6 +10,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using OpenUtau.Core;
 using Serilog;
@@ -28,6 +29,34 @@ namespace OpenUtau.App.Views {
             Dispatcher.UIThread.Post(() => {
                 Text.Text = text;
             });
+        }
+
+        /// <summary>
+        /// Shows the fork notice at the bottom of the dialog, above the buttons.
+        /// The notice text and its url are laid out on the same line.
+        /// </summary>
+        public void SetForkNotice() {
+            string notice = ThemeManager.GetString("errors.fork.notice");
+            var match = Regex.Match(notice, @"http(s)?://[^(\r\n|\n| )]+", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            if (match.Success) {
+                ForkNoticeText.Text = notice.Substring(0, match.Index);
+                ForkNoticeLink.Content = new TextBlock {
+                    Text = match.Value.Trim(),
+                    Foreground = Brushes.Blue,
+                    TextDecorations = TextDecorations.Underline,
+                };
+                ForkNoticeLink.Click += (_, __) => {
+                    try {
+                        OS.OpenWeb(match.Value.Trim());
+                    } catch (Exception ex) {
+                        Log.Error(ex, "Failed to open url");
+                    }
+                };
+            } else {
+                ForkNoticeText.Text = notice;
+                ForkNoticeLink.IsVisible = false;
+            }
+            ForkNoticePanel.IsVisible = true;
         }
 
         public static Task<MessageBoxResult> ShowError(Window parent, Exception? e, string message = "", bool fromNotif = false) {
@@ -55,7 +84,7 @@ namespace OpenUtau.App.Views {
                     builder.AppendLine();
                     builder.Append(mce.SubstanceException.ToString());
                     if (!mce.ShowStackTrace) {
-                        return Show(parent, text, title, MessageBoxButtons.Ok);
+                        return Show(parent, text, title, MessageBoxButtons.Ok, forkNotice: true);
                     }
                 } else if (e is AggregateException nestedAe) {
                     foreach (var ie in nestedAe.Flatten().InnerExceptions) {
@@ -86,9 +115,10 @@ namespace OpenUtau.App.Views {
             }
             builder.AppendLine();
             builder.AppendLine();
-            builder.AppendLine(System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "Unknown Version");
+            string? version = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
+            builder.AppendLine(string.IsNullOrEmpty(version) ? "UtauV Unknown Version" : $"UtauV {version}");
 
-            return Show(parent, text, title, MessageBoxButtons.OkCopy, builder.ToString());
+            return Show(parent, text, title, MessageBoxButtons.OkCopy, builder.ToString(), true);
 
             string Translate(MessageCustomizableException mce) {
                 string text;
@@ -119,12 +149,15 @@ namespace OpenUtau.App.Views {
             }
         }
 
-        public static Task<MessageBoxResult> Show(Window parent, string text, string title, MessageBoxButtons buttons, string? stackTrace = null) {
+        public static Task<MessageBoxResult> Show(Window parent, string text, string title, MessageBoxButtons buttons, string? stackTrace = null, bool forkNotice = false) {
             var msgbox = new MessageBox() {
                 Title = title
             };
             msgbox.Text.IsVisible = false;
             msgbox.SetTextWithLink(text, msgbox.TextPanel);
+            if (forkNotice) {
+                msgbox.SetForkNotice();
+            }
             if (stackTrace != null) {
                 var stackTracePanel = new StackPanel();
                 var expander = new Expander() { Header = ThemeManager.GetString("errors.details"), Content = stackTracePanel };
@@ -244,6 +277,7 @@ namespace OpenUtau.App.Views {
                 textPanel.Children.Add(new TextBlock { Text = text.Substring(0, match.Index) });
                 var hyperlink = new Button();
                 hyperlink.Content = match.Value.Trim();
+                hyperlink.Foreground = Brushes.Blue;
                 hyperlink.Click += OnUrlClick;
                 textPanel.Children.Add(hyperlink);
 
