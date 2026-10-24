@@ -4,6 +4,7 @@ using System.Text;
 using Avalonia;
 using Avalonia.Markup.Xaml.Templates;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using OpenUtau.Colors;
 using OpenUtau.Core;
@@ -67,6 +68,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial bool IsDarkModeEasy { get; set; }
 
         [Reactive] public partial bool IsEasyMode { get; set; } = true;
+        private bool applyingGenerated;
 
         public ThemeEditorViewModel(string customThemePath) {
             this.customThemePath = customThemePath;
@@ -138,7 +140,7 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.IsDarkModeEasy)
                 .Subscribe(v => {
                     Application.Current!.Resources["IsDarkModeEasy"] = v;
-                    if (initialized) {
+                    if (initialized && !applyingGenerated) {
                         UpdateColorsByMain();
                     }
                 });
@@ -247,7 +249,7 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.MainColorA)
                 .Subscribe(v => {
                     Application.Current!.Resources["MainColorA"] = v;
-                    if (initialized) {
+                    if (initialized && !applyingGenerated) {
                         UpdateColorsByMain();
                     }
                 });
@@ -255,12 +257,67 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.MainColorB)
                 .Subscribe(v => {
                     Application.Current!.Resources["MainColorB"] = v;
-                    if (initialized) {
+                    if (initialized && !applyingGenerated) {
                         UpdateColorsByMain();
                     }
                 });
 
             initialized = true;
+        }
+
+        public void GenerateThemeFromImage(string filePath) {
+            if (!File.Exists(filePath)) {
+                return;
+            }
+            using var bitmap = new Bitmap(filePath);
+            applyingGenerated = true;
+            try {
+                ApplyGeneratedTheme(ColorExtractor.GenerateTheme(bitmap, Name));
+            } finally {
+                applyingGenerated = false;
+            }
+        }
+
+        private void ApplyGeneratedTheme(CustomTheme.ThemeYaml t) {
+            MainColorA = ParseColor(t.AccentColor1, MainColorA);
+            MainColorB = ParseColor(t.AccentColor2, MainColorB);
+            IsDarkModeEasy = t.IsDarkMode;
+            IsDarkMode = t.IsDarkMode;
+            BackgroundColor = ParseColor(t.BackgroundColor, BackgroundColor);
+            BackgroundColorPointerOver = ParseColor(t.BackgroundColorPointerOver, BackgroundColorPointerOver);
+            BackgroundColorPressed = ParseColor(t.BackgroundColorPressed, BackgroundColorPressed);
+            BackgroundColorDisabled = ParseColor(t.BackgroundColorDisabled, BackgroundColorDisabled);
+            ForegroundColor = ParseColor(t.ForegroundColor, ForegroundColor);
+            ForegroundColorPointerOver = ParseColor(t.ForegroundColorPointerOver, ForegroundColorPointerOver);
+            ForegroundColorPressed = ParseColor(t.ForegroundColorPressed, ForegroundColorPressed);
+            ForegroundColorDisabled = ParseColor(t.ForegroundColorDisabled, ForegroundColorDisabled);
+            BorderColor = ParseColor(t.BorderColor, BorderColor);
+            BorderColorPointerOver = ParseColor(t.BorderColorPointerOver, BorderColorPointerOver);
+            SystemAccentColor = ParseColor(t.SystemAccentColor, SystemAccentColor);
+            SystemAccentColorLight1 = ParseColor(t.SystemAccentColorLight1, SystemAccentColorLight1);
+            SystemAccentColorDark1 = ParseColor(t.SystemAccentColorDark1, SystemAccentColorDark1);
+            NeutralAccentColor = ParseColor(t.NeutralAccentColor, NeutralAccentColor);
+            NeutralAccentColorPointerOver = ParseColor(t.NeutralAccentColorPointerOver, NeutralAccentColorPointerOver);
+            AccentColor1 = ParseColor(t.AccentColor1, AccentColor1);
+            AccentColor2 = ParseColor(t.AccentColor2, AccentColor2);
+            AccentColor3 = ParseColor(t.AccentColor3, AccentColor3);
+            TickLineColor = ParseColor(t.TickLineColor, TickLineColor);
+            BarNumberColor = ParseColor(t.BarNumberColor, BarNumberColor);
+            FinalPitchColor = ParseColor(t.FinalPitchColor, FinalPitchColor);
+            TrackBackgroundAltColor = ParseColor(t.TrackBackgroundAltColor, TrackBackgroundAltColor);
+            WhiteKeyColorLeft = ParseColor(t.WhiteKeyColorLeft, WhiteKeyColorLeft);
+            WhiteKeyColorRight = ParseColor(t.WhiteKeyColorRight, WhiteKeyColorRight);
+            WhiteKeyNameColor = ParseColor(t.WhiteKeyNameColor, WhiteKeyNameColor);
+            CenterKeyColorLeft = ParseColor(t.CenterKeyColorLeft, CenterKeyColorLeft);
+            CenterKeyColorRight = ParseColor(t.CenterKeyColorRight, CenterKeyColorRight);
+            CenterKeyNameColor = ParseColor(t.CenterKeyNameColor, CenterKeyNameColor);
+            BlackKeyColorLeft = ParseColor(t.BlackKeyColorLeft, BlackKeyColorLeft);
+            BlackKeyColorRight = ParseColor(t.BlackKeyColorRight, BlackKeyColorRight);
+            BlackKeyNameColor = ParseColor(t.BlackKeyNameColor, BlackKeyNameColor);
+        }
+
+        private static Color ParseColor(string hex, Color fallback) {
+            return Color.TryParse(hex, out var color) ? color : fallback;
         }
 
         public void Save() {

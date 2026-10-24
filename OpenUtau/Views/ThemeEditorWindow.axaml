@@ -16,7 +16,10 @@
         <ScrollViewer Grid.Row="0" Padding="10,0,10,0">
           <StackPanel Spacing="5">
             <Panel>
-                <Button Content="{DynamicResource easythemeeditor.switch}" Click="SwitchToAccurateMode"/>
+              <Button Content="{DynamicResource easythemeeditor.switch}" Click="SwitchToAccurateMode"/>
+            </Panel>
+            <Panel>
+              <Button Content="{DynamicResource themeeditor.fromimage}" Click="OnGenerateFromImage"/>
             </Panel>
             <Separator Margin="0"/>
             <Panel>
@@ -45,7 +48,10 @@
         <ScrollViewer Grid.Row="0" Padding="10,0,10,0">
           <StackPanel Spacing="5">
             <Panel>
-                <Button Content="{DynamicResource themeeditor.switch}" Click="SwitchToEasyMode"/>
+              <Button Content="{DynamicResource themeeditor.switch}" Click="SwitchToEasyMode"/>
+            </Panel>
+            <Panel>
+              <Button Content="{DynamicResource themeeditor.fromimage}" Click="OnGenerateFromImage"/>
             </Panel>
             <Separator Margin="0"/>
             <Panel>

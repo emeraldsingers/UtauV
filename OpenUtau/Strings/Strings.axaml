@@ -1052,6 +1052,9 @@ The voicebank may not work on another OS.</system:String>
   <system:String x:Key="singersetup.title">Singer Setup</system:String>
 
   <system:String x:Key="themeeditor.cancel">Cancel</system:String>
+  <system:String x:Key="themeeditor.fromimage">Generate from Image</system:String>
+  <system:String x:Key="themeeditor.fromimage.failed">Failed to generate theme from image.</system:String>
+  <system:String x:Key="themeeditor.fromimage.title">Choose Reference Image</system:String>
   <system:String x:Key="themeeditor.save">Save</system:String>
   <system:String x:Key="themeeditor.title">Theme Editor</system:String>
 

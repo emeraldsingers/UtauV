@@ -1,10 +1,14 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml.Templates;
+using OpenUtau.App;
 using OpenUtau.App.ViewModels;
+using OpenUtau.Core;
 using ReactiveUI;
 
 namespace OpenUtau.App.Views {
@@ -47,6 +51,21 @@ namespace OpenUtau.App.Views {
         void SwitchToEasyMode(object? sender, RoutedEventArgs e) {
             if (DataContext is ThemeEditorViewModel vm) {
                 vm.IsEasyMode = true;
+            }
+        }
+
+        async void OnGenerateFromImage(object? sender, RoutedEventArgs e) {
+            if (DataContext is not ThemeEditorViewModel vm) {
+                return;
+            }
+            var path = await FilePicker.OpenFile(this, "themeeditor.fromimage.title", FilePicker.ImageFiles);
+            if (string.IsNullOrEmpty(path)) {
+                return;
+            }
+            try {
+                vm.GenerateThemeFromImage(path);
+            } catch (Exception ex) {
+                await MessageBox.ShowError(this, ex, ThemeManager.GetString("themeeditor.fromimage.failed"));
             }
         }
 

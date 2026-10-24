@@ -849,6 +849,9 @@ OpenUtau стремится стать средой редактирования
   <system:String x:Key="singersetup.title">Настройка вокалиста</system:String>
 
   <!--<system:String x:Key="themeeditor.cancel">Cancel</system:String>-->
+  <system:String x:Key="themeeditor.fromimage">Сгенерировать по картинке</system:String>
+  <system:String x:Key="themeeditor.fromimage.failed">Не удалось сгенерировать тему по картинке.</system:String>
+  <system:String x:Key="themeeditor.fromimage.title">Выберите картинку-референс</system:String>
   <!--<system:String x:Key="themeeditor.save">Save</system:String>-->
   <system:String x:Key="themeeditor.title">Редактор Темы</system:String>
 
