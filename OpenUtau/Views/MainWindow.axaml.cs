@@ -867,6 +867,7 @@ viewModel.NewProject();
                 PathManager.Inst.ClearCache();
                 DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, ThemeManager.GetString("progress.cachecleared")));
             });
+            partsCanvas.SetAllRenderPhrases(false);
         }
 
         void OnMenuDeveloperWindow(object sender, RoutedEventArgs args) {
@@ -2365,6 +2366,12 @@ viewModel.NewProject();
                 }
             } else if (cmd is RebuildPhraseBlocksNotification phraseBlocksNotif) {
                 partsCanvas.RebuildPhraseBlocksEvent(phraseBlocksNotif.Part);
+            } else if (cmd is TrackChangeSingerCommand changeSingerCommand) {
+                partsCanvas.SetAllRenderPhrases(changeSingerCommand.track, false);
+            } else if (cmd is MovePartCommand movePartCommand) {
+                if (movePartCommand.part is UVoicePart voicePart) {
+                    partsCanvas.SetAllRenderPhrases(voicePart, false);
+                }
             }
         }
     }

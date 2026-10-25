@@ -513,32 +513,52 @@ private IBrush GetBackgroundBrush() {
 
         /// <summary>
         /// Updates the phrase blocks based on voicePart, retains render status if phrases match.
+        /// A rendered phrase keeps its status wherever it ends up, so phrases that are still up
+        /// to date are not blanked when the phrase list is rebuilt in a different order.
         /// </summary>
         /// <param name="voicePart">VoicePart to check render blocks by</param>
         /// <returns>Visual update required</returns>
         public bool RebuildPhraseBlocks(UVoicePart voicePart) {
-            bool requiresVisualUpdate = voicePart.renderPhrases.Count != phraseBlocks.Length;
             List<(RenderPhrase phrase, bool rendered)> newPhraseBlocks = [];
+            List<RenderPhrase> renderedPhrases = (
+                from phraseBlock
+                in phraseBlocks
+                where phraseBlock.rendered
+                select phraseBlock.phrase)
+                .ToList();
             Log.Information("Rebuilding phrase blocks for {0}", voicePart.DisplayName);
 
-            for (int i = 0; i < voicePart.renderPhrases.Count; i++) {
-                var partPhrase = voicePart.renderPhrases[i];
-                var newPhraseBlock = (phrase: partPhrase, rendered: false);
-
-                if (i < phraseBlocks.Length) {
-                    var oldPhraseBlock = phraseBlocks[i];
-
-                    if (oldPhraseBlock.phrase.hash.Equals(partPhrase.hash) && oldPhraseBlock.rendered) {
-                        newPhraseBlock.rendered = oldPhraseBlock.rendered;
+            foreach (var partPhrase in voicePart.renderPhrases) {
+                // Search for a rendered phrase that still exists in the part, in any position.
+                bool rendered = false;
+                foreach (var renderedPhrase in renderedPhrases) {
+                    if (partPhrase.hash == renderedPhrase.hash) {
+                        rendered = true;
+                        break;
                     }
-                    if (oldPhraseBlock.rendered != newPhraseBlock.rendered) requiresVisualUpdate = true;
                 }
+                newPhraseBlocks.Add((partPhrase, rendered));
+            }
 
-                newPhraseBlocks.Add(newPhraseBlock);
+            bool requiresVisualUpdate = newPhraseBlocks.Count != phraseBlocks.Length;
+            if (!requiresVisualUpdate) {
+                for (int i = 0; i < phraseBlocks.Length; i++) {
+                    if (phraseBlocks[i].rendered != newPhraseBlocks[i].rendered) {
+                        requiresVisualUpdate = true;
+                        break;
+                    }
+                }
             }
 
             phraseBlocks = newPhraseBlocks.ToArray();
             return requiresVisualUpdate;
+        }
+
+        /// <summary>
+        /// Sets the render status of every phrase block in the part.
+        /// </summary>
+        public void SetAllBlocks(bool state) {
+            UpdateRenderStatus(part.position, part.End, state);
         }
 
         public void Report(int value) { }
