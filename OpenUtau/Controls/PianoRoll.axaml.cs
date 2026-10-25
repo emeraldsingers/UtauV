@@ -40,6 +40,10 @@ namespace OpenUtau.App.Controls {
         private KeyboardPlayState? keyboardPlayState;
         private NoteEditState? editState;
         private Point valueTipPointerPosition;
+        private Control? lastNotesCanvas;    // Last known pointer position over the notes canvas, used by keyboard shortcuts
+        private Point lastNotesCanvasPoint;
+        private NoteSplitEditState? keyboardSplitState;    // Non-null while S is held down and a keyboard split is in progress
+        private bool splitKeyHeld;    // True from the first S key-down until S is released, to ignore key auto-repeat
         private bool shouldOpenNotesContextMenu;
         private UNote[] selectTargets = Array.Empty<UNote>();
 
@@ -292,6 +296,9 @@ namespace OpenUtau.App.Controls {
             });
 
             AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+            AddHandler(KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+            // Safety net: never leave an undo group open if focus is lost while S is held
+            AddHandler(LostFocusEvent, (s, e) => ReleaseSplitKey());
 
             this.WhenAnyValue(x => x.ViewModel!.PlaybackViewModel!.PlayPosTick)
                 .Subscribe(tick => {
@@ -695,6 +702,50 @@ namespace OpenUtau.App.Controls {
             dialog.ShowDialog(RootWindow);
         }
 
+        /// <summary>
+        /// Called when S is pressed. Starts a split at the pointer position, unless one
+        /// is already in progress (key auto-repeat while S is held down).
+        /// </summary>
+        private bool SplitNoteUnderPointer() {
+            if (splitKeyHeld) {
+                // S is still held: auto-repeat, swallow the key event without doing anything
+                return true;
+            }
+            splitKeyHeld = true;
+            var notesVm = ViewModel.NotesViewModel;
+            if (editState != null || notesVm.Part == null
+                || lastNotesCanvas == null || !lastNotesCanvas.IsPointerOver) {
+                return false;
+            }
+            var hit = notesVm.HitTest.HitTestNote(lastNotesCanvasPoint);
+            if (!hit.hitBody || hit.note == null) {
+                return false;
+            }
+            notesVm.DeselectNotes();
+            var state = new NoteSplitEditState(lastNotesCanvas, ViewModel, this, hit.note);
+            if (state.BeginKeyboardSplit(lastNotesCanvasPoint)) {
+                keyboardSplitState = state;       // a cut exists: follow the pointer, ignore clicks
+            } else {
+                state.EndKeyboardSplit();         // nothing was cut: close the undo group right away
+            }
+            return true;
+        }
+
+        /// <summary>Ends the ongoing keyboard split, if any (S released, focus lost...).</summary>
+        private void EndKeyboardSplit() {
+            if (keyboardSplitState == null) {
+                return;
+            }
+            keyboardSplitState.EndKeyboardSplit();
+            keyboardSplitState = null;
+        }
+
+        /// <summary>Called when S is released or focus is lost: re-arms the shortcut and ends any split.</summary>
+        private void ReleaseSplitKey() {
+            splitKeyHeld = false;
+            EndKeyboardSplit();
+        }
+
         private void OnPianoRollFocus(object sender, FocusChangedEventArgs e) {
             var input = e.Source as InputElement;
             if (input is TextBox or ComboBox or ComboBoxItem) {
@@ -856,6 +907,12 @@ namespace OpenUtau.App.Controls {
         }
 
         public void NotesCanvasPointerPressed(object sender, PointerPressedEventArgs args) {
+            // A keyboard split is in progress (S held): ignore mouse clicks so the
+            // current tool does not trigger a second action by accident
+            if (keyboardSplitState != null) {
+                args.Handled = true;
+                return;
+            }
             LyricBox?.EndEdit();
             if (ViewModel.NotesViewModel.Part == null) {
                 return;
@@ -1180,9 +1237,16 @@ namespace OpenUtau.App.Controls {
         public void NotesCanvasPointerMoved(object sender, PointerEventArgs args) {
             var control = (Control)sender;
             var point = args.GetCurrentPoint(control);
+            lastNotesCanvas = control;
+            lastNotesCanvasPoint = point.Position;
             args.Handled = true;
             if (ValueTipCanvas != null) {
                 valueTipPointerPosition = args.GetCurrentPoint(ValueTipCanvas!).Position;
+            }
+            // Keyboard split in progress (S held): the cut follows the pointer, like the Knife tool
+            if (keyboardSplitState != null) {
+                keyboardSplitState.MoveKeyboardSplit(point.Position);
+                return;
             }
             // Edit Status update (while dragging)
             if (editState != null) {
@@ -1758,6 +1822,12 @@ namespace OpenUtau.App.Controls {
             args.Handled = OnKeyExtendedHandler(args);
         }
 
+        void OnKeyUp(object? sender, KeyEventArgs args) {
+            if (args.Key == Key.S) {
+                ReleaseSplitKey();
+            }
+        }
+
         bool OnKeyExtendedHandler(KeyEventArgs args) {
             var notesVm = ViewModel.NotesViewModel;
             var playVm = ViewModel.PlaybackViewModel;
@@ -2216,6 +2286,9 @@ namespace OpenUtau.App.Controls {
                         var track = project.tracks[notesVm.Part.trackNo];
                         MessageBus.Current.SendMessage(new TracksSoloEvent(notesVm.Part.trackNo, !track.Solo, false));
                         return true;
+                    }
+                    if (isNone) {
+                        return SplitNoteUnderPointer();
                     }
                     break;
                 case Key.M:
