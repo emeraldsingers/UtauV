@@ -25,6 +25,14 @@ namespace OpenUtau.Core.DiffSinger
         public NDArray loadSpeakerEmbed(string speaker) {
             string path = Path.Join(rootPath, speaker + ".emb");
             if(File.Exists(path)) {
+                var expectedLength = checked((long)dsConfig.hiddenSize * sizeof(float));
+                var actualLength = new FileInfo(path).Length;
+                if (actualLength != expectedLength) {
+                    throw new InvalidDataException(
+                        $"Speaker embed file {path} has invalid length: expected {expectedLength} bytes " +
+                        $"({dsConfig.hiddenSize} floats), got {actualLength} bytes. Check that the embed " +
+                        $"matches the hidden_size in {Path.Combine(rootPath, "dsconfig.yaml")}.");
+                }
                 using var reader = new BinaryReader(File.OpenRead(path));
                 return np.array<float>(Enumerable.Range(0, dsConfig.hiddenSize)
                     .Select(i => reader.ReadSingle()));
