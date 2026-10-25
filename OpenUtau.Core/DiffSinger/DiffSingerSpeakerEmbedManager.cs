@@ -67,6 +67,15 @@ namespace OpenUtau.Core.DiffSinger
         }
 
         public int getSpeakerIndexBySuffix(string suffix) {
+            if (dsConfig.speakers == null) {
+                return 0;
+            }
+            // Voicebanks without subbanks (or with a subbank that has no suffix) have no speaker to
+            // resolve. The first speaker is the only sensible choice, and warning about it would fire
+            // on every render for a correctly configured single-speaker model.
+            if (string.IsNullOrEmpty(suffix)) {
+                return 0;
+            }
             var speakerIndex = dsConfig.speakers.IndexOf(suffix);
             if (speakerIndex >= 0) {
                 return speakerIndex;

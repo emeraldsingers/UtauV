@@ -283,12 +283,10 @@ namespace OpenUtau.Core.Pipeline {
             }
             Flags = UPhoneme.BuildResamplerFlags(flagExpressions, abbr => phoneme.GetExpression(project, track, abbr).Item1);
             string voiceColor = phoneme.GetVoiceColor(project, track);
-            Suffix = track.Singer.Subbanks
-                .FirstOrDefault(subbank => subbank.Color == voiceColor)?.Suffix ?? string.Empty;
+            Suffix = GetSubbankSuffix(track, voiceColor);
             string targetColor = xsyAvailable ? phoneme.GetVoiceColor2(project, track) : null;
             if (!string.IsNullOrEmpty(targetColor)) {
-                Suffix2 = track.Singer.Subbanks
-                    .FirstOrDefault(subbank => subbank.Color == targetColor)?.Suffix ?? string.Empty;
+                Suffix2 = GetSubbankSuffix(track, targetColor);
             }
             Volume = phoneme.GetExpression(project, track, Format.Ustx.VOL).Item1 * 0.01f;
             float vel = phoneme.GetExpression(project, track, Format.Ustx.VEL).Item1;
@@ -319,6 +317,20 @@ namespace OpenUtau.Core.Pipeline {
                     Oto2 = secondaryOto;
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves the subbank suffix for a voice color. The voice color can be unavailable or no
+        /// longer match any subbank (voice colors are remapped when the singer changes), and falling
+        /// back to an empty suffix there makes the renderer look up a speaker that does not exist.
+        /// </summary>
+        static string GetSubbankSuffix(UTrack track, string voiceColor) {
+            var subbanks = track.Singer.Subbanks;
+            var subbank = subbanks.FirstOrDefault(s => s.Color == voiceColor);
+            if (subbank == null) {
+                subbank = subbanks.FirstOrDefault();
+            }
+            return subbank?.Suffix ?? string.Empty;
         }
 
         internal PhonemeSource(NoteSource note, TimeAxis axis, int partPosition, string phoneme) {
