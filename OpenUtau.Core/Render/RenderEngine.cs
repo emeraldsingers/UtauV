@@ -429,7 +429,7 @@ namespace OpenUtau.Core.Render {
                         int pitchStart = phrase.position - phrase.leading;
                         for (int f = 0; f < frameCount; f++) {
                             double timeMs = phrase.positionMs - phrase.leadingMs
-                                + (double)(f * hopSize) / 44100.0 * 1000.0;
+                                + (double)(f * hopSize + fftSize / 2) / 44100.0 * 1000.0;
                             double tick = project.timeAxis.MsPosToTickPos(timeMs);
                             int curveIndex = (int)Math.Max(0, (tick - pitchStart) / 5);
                             if (phrase.xsy.Length > 0) {

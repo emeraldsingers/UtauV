@@ -126,7 +126,9 @@ namespace OpenUtau.Core.SignalChain {
                     float minMag = MathF.Min(magA, magB);
                     float silenceWeight = MathF.Min(1f, minMag / 0.01f);
                     float magOut = (linBlend + silenceWeight * (geoBlend - linBlend)) * silenceGateA;
-                    float phsOut = phsAccA[k];
+                    float pxr = (1f - ratio) * MathF.Cos(phsAccA[k]) + ratio * MathF.Cos(phsAccB[k]);
+                    float pxi = (1f - ratio) * MathF.Sin(phsAccA[k]) + ratio * MathF.Sin(phsAccB[k]);
+                    float phsOut = pxr * pxr + pxi * pxi > 1e-12f ? MathF.Atan2(pxi, pxr) : phsAccA[k];
                     reA[k] = magOut * MathF.Cos(phsOut);
                     imA[k] = (k == 0 || k == half - 1) ? 0f : magOut * MathF.Sin(phsOut);
 
