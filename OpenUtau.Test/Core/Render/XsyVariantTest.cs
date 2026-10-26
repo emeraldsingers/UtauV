@@ -65,7 +65,7 @@ namespace OpenUtau.Core {
             otoA = UOto.OfDummy("A");
             otoB = UOto.OfDummy("B");
             track.Singer = new TestSinger(otoA, otoB);
-            track.VoiceColor2Exp = new UExpressionDescriptor("color2", "clry", 0, 100, 0) {
+            track.VoiceColor2Exp = new UExpressionDescriptor("color2", "xsyc", 0, 100, 0) {
                 options = new[] { "B" },
             };
             track.RendererSettings.Renderer = new StubRenderer();
