@@ -616,6 +616,12 @@ namespace OpenUtau.Core.Render {
                 using (var writer = new BinaryWriter(stream)) {
                     writer.Write(singer?.Id ?? string.Empty);
                     writer.Write(renderer?.ToString() ?? "");
+                    if (renderer is SineRenderer) {
+                        // The sine renderer's output depends on this preference, so it is part
+                        // of the phrase identity: turning it off has to invalidate phrases
+                        // that were rendered while it was on.
+                        writer.Write(OpenUtau.Core.Util.Preferences.Default.PlaySineWhenNoSinger);
+                    }
                     writer.Write(wavtool ?? "");
                     writer.Write(timeAxis.Timestamp);
                     foreach (var phone in phones) {

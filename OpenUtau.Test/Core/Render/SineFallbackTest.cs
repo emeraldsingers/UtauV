@@ -1,7 +1,10 @@
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenUtau.Core.Render;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 using Xunit;
 
 namespace OpenUtau.Core {
@@ -106,6 +109,56 @@ namespace OpenUtau.Core {
             var phrases = RenderPhrase.FromPart(project, track, part);
             Assert.NotEmpty(phrases);
             Assert.All(phrases, phrase => Assert.NotSame(SineRenderer.Instance, phrase.renderer));
+        }
+
+        [Fact]
+        public void PreferenceOffSilencesSineWithoutStoppingTheRender() {
+            var project = CreateProject(out var track, out var part);
+            part.notes.Add(MakeNote(0, 480, 60));
+            var phrase = RenderPhrase.FromPart(project, track, part).Single();
+            var layout = SineRenderer.Instance.Layout(phrase);
+
+            var original = Preferences.Default.PlaySineWhenNoSinger;
+            var previousProject = DocManager.Inst.TakeProjectForTest(project);
+            DocManager.Inst.CommandSink = cmd => cmd.Execute();
+            try {
+                Preferences.Default.PlaySineWhenNoSinger = true;
+                var tone = SineRenderer.Instance.Render(phrase, new Progress(1), 0,
+                    new CancellationTokenSource()).Result;
+                Assert.True(tone.samples.Any(sample => sample != 0f));
+
+                Preferences.Default.PlaySineWhenNoSinger = false;
+                var silent = SineRenderer.Instance.Render(phrase, new Progress(1), 0,
+                    new CancellationTokenSource()).Result;
+                // The phrase still goes through the renderer: same layout, same length,
+                // just no samples, so dynamics and completion still behave as before.
+                Assert.Equal(tone.samples.Length, silent.samples.Length);
+                Assert.All(silent.samples, sample => Assert.Equal(0f, sample));
+                Assert.Equal(layout.leadingMs, silent.leadingMs);
+                Assert.Equal(layout.estimatedLengthMs, silent.estimatedLengthMs);
+            } finally {
+                Preferences.Default.PlaySineWhenNoSinger = original;
+                DocManager.Inst.CommandSink = null!;
+                DocManager.Inst.TakeProjectForTest(previousProject);
+            }
+        }
+
+        [Fact]
+        public void PreferenceOffChangesPhraseHash() {
+            var project = CreateProject(out var track, out var part);
+            part.notes.Add(MakeNote(0, 480, 60));
+
+            var original = Preferences.Default.PlaySineWhenNoSinger;
+            try {
+                Preferences.Default.PlaySineWhenNoSinger = true;
+                var withTone = RenderPhrase.FromPart(project, track, part).Single();
+                Preferences.Default.PlaySineWhenNoSinger = false;
+                var withoutTone = RenderPhrase.FromPart(project, track, part).Single();
+
+                Assert.NotEqual(withTone.hash, withoutTone.hash);
+            } finally {
+                Preferences.Default.PlaySineWhenNoSinger = original;
+            }
         }
 
         class MockLoadedSinger : USinger {

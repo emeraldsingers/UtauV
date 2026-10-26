@@ -285,6 +285,12 @@ namespace OpenUtau.Core.Util {
             public bool ShowRainbowEffect = false;
             public EditTool EditTool = new EditTool();
             public bool PlayTone = true;
+            /// <summary>
+            /// Whether a track without a usable singer plays the sine tone renderer.
+            /// Off silences those tracks; the rest of the track keeps working, so a
+            /// voicebank can still be assigned later.
+            /// </summary>
+            public bool PlaySineWhenNoSinger = true;
             /// <summary>Legacy; migrated to <see cref="RealTimePitchMode"/> on load.</summary>
             public bool RealTimePitchGeneration = false;
             public int RealTimePitchMode = (int)LivePitchMode.Off;

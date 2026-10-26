@@ -46,6 +46,7 @@ namespace OpenUtau.App.ViewModels {
         }
         // Release channel index: 0 = stable, 1 = beta, 2 = alpha.
         [Reactive] public partial int Channel { get; set; }
+        [Reactive] public partial bool PlaySineWhenNoSinger { get; set; }
 
         // Playback
         private List<AudioOutputDevice>? audioOutputDevices;
@@ -335,6 +336,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
                 "alpha" => 2,
                 _ => 0
             };
+            PlaySineWhenNoSinger = Preferences.Default.PlaySineWhenNoSinger;
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
             RenderStatusInTrackBar = Preferences.Default.RenderStatusInTrackBar;
@@ -630,6 +632,15 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
                         _ => "stable"
                     };
                     Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaySineWhenNoSinger)
+                .Skip(1)
+                .Subscribe(playSine => {
+                    Preferences.Default.PlaySineWhenNoSinger = playSine;
+                    Preferences.Save();
+                    // Phrase hashes carry the preference, so the parts that were rendered
+                    // with the other setting read as unrendered and get re-rendered.
+                    DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
                 });
             this.WhenAnyValue(vm => vm.LyricsHelper)
                 .Subscribe(option => {

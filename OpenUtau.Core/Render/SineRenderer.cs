@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenUtau.Core.Format;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Util;
 
 namespace OpenUtau.Core.Render {
     public class SineRenderer : IRenderer {
@@ -52,7 +53,9 @@ namespace OpenUtau.Core.Render {
                 if (totalSamples <= 0 || cancellation.IsCancellationRequested) {
                     return result;
                 }
-                result.samples = Synthesize(phrase, result, totalSamples);
+                result.samples = Preferences.Default.PlaySineWhenNoSinger
+                    ? Synthesize(phrase, result, totalSamples)
+                    : new float[totalSamples];
                 progress.Complete(phrase.phones.Length, progressInfo);
                 Renderers.ApplyDynamics(phrase, result);
                 DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
@@ -61,6 +64,8 @@ namespace OpenUtau.Core.Render {
         }
 
         internal float[] Synthesize(RenderPhrase phrase, RenderResult result, int totalSamples) {
+            // Silence is produced by Render when the preference is off; this always
+            // synthesizes so callers (tests, script) get the tone regardless.
             var samples = new float[totalSamples];
             double startMs = result.positionMs - result.leadingMs;
             int pitchStartTick = phrase.position - phrase.leading;
