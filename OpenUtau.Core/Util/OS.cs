@@ -96,7 +96,38 @@ namespace OpenUtau {
             return null;
         }
 
-        private static readonly string[] linuxOpeners = { "xdg-open", "mimeopen", "gnome-open", "open" };
+        private static readonly string[] wineNames = { "wine", "wine64", "wine32", "wine32on64" };
+        private static readonly string[] macWineBundles = { "Wine Devel", "Wine Stable", "Wine Staging" };
+        private static readonly string[] macWineFallbacks = { "/opt/homebrew/bin/wine", "/usr/local/bin/wine" };
+
+        public static string FindWine() {
+            foreach (var wineName in wineNames) {
+                var path = WhereIs(wineName);
+                if (!string.IsNullOrEmpty(path)) {
+                    return path;
+                }
+            }
+            if (!IsMacOS()) {
+                return null;
+            }
+            var userApplications = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Applications");
+            foreach (var root in new[] { "/Applications", userApplications }) {
+                foreach (var bundle in macWineBundles) {
+                    var path = Path.Combine(root, $"{bundle}.app", "Contents", "Resources", "wine", "bin", "wine");
+                    if (File.Exists(path)) {
+                        return path;
+                    }
+                }
+            }
+            foreach (var path in macWineFallbacks) {
+                if (File.Exists(path)) {
+                    return path;
+                }
+            }
+            return null;
+        }
+
+        private static readonly string[] linuxOpeners ={ "xdg-open", "mimeopen", "gnome-open", "open" };
         private static string GetOpener() {
             if (IsWindows()) {
                 return "explorer.exe";
