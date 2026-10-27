@@ -1201,12 +1201,12 @@ namespace OpenUtau.Core.DiffSinger {
             linguisticInputs.Add(NamedOnnxValue.CreateFromTensor("tokens",
                 new DenseTensor<Int64>(tokens, new int[] { tokens.Length }, false)
                 .Reshape(new int[] { 1, tokens.Length })));
-            linguisticInputs.Add(NamedOnnxValue.CreateFromTensor("word_div",
-                new DenseTensor<Int64>(word_div, new int[] { word_div.Length }, false)
-                .Reshape(new int[] { 1, word_div.Length })));
-            linguisticInputs.Add(NamedOnnxValue.CreateFromTensor("word_dur",
-                new DenseTensor<Int64>(word_dur, new int[] { word_dur.Length }, false)
-                .Reshape(new int[] { 1, word_dur.Length })));
+            var wordDivTensor = new DenseTensor<Int64>(word_div, new int[] { word_div.Length }, false)
+                .Reshape(new int[] { 1, word_div.Length });
+            var wordDurTensor = new DenseTensor<Int64>(word_dur, new int[] { word_dur.Length }, false)
+                .Reshape(new int[] { 1, word_dur.Length });
+            linguisticInputs.Add(NamedOnnxValue.CreateFromTensor("word_div", wordDivTensor));
+            linguisticInputs.Add(NamedOnnxValue.CreateFromTensor("word_dur", wordDurTensor));
 
             // Add language ID if required
             if (dsConfig.use_lang_id) {
@@ -1250,6 +1250,14 @@ namespace OpenUtau.Core.DiffSinger {
             durationInputs.Add(NamedOnnxValue.CreateFromTensor("ph_midi",
                 new DenseTensor<Int64>(ph_midi, new int[] { ph_midi.Length }, false)
                 .Reshape(new int[] { 1, ph_midi.Length })));
+
+            bool feedWordInputs = dsConfig.dur_type == "rel"
+                || (string.IsNullOrEmpty(dsConfig.dur_type)
+                    && durationModel.InputMetadata.ContainsKey("word_div"));
+            if (feedWordInputs) {
+                durationInputs.Add(NamedOnnxValue.CreateFromTensor("word_div", wordDivTensor));
+                durationInputs.Add(NamedOnnxValue.CreateFromTensor("word_dur", wordDurTensor));
+            }
 
             // Add speaker embeddings if available
             if (dsConfig.speakers != null) {
