@@ -280,7 +280,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             OnnxGpu = OnnxGpuOptions.Count > 0
                 ? OnnxGpuOptions.FirstOrDefault(x => x.deviceId == Preferences.Default.OnnxGpu, OnnxGpuOptions[0])
                 : null;
-            ShowOnnxGpu = (OnnxRunner == "DirectML" || OnnxRunner == "CUDA");
+            ShowOnnxGpu = (OnnxRunner == "DirectML" || OnnxRunner == "CUDA" || OnnxRunner == "WebGPU");
             MergePhrasesSecIndex = Math.Max(0, MergePhrasesSecs.IndexOf(
                 Preferences.Default.MergePhrasesSec == 0
                     ? "Auto"
@@ -356,7 +356,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
 
             MessageBus.Current.Listen<ThemeEditorStateChangedEvent>()
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(IsThemeEditorOpen)));
-            
+
             this.WhenAnyValue(vm => vm.UseSystemDefaultDevice)
                 .Subscribe(useDefault => {
                     Preferences.Default.UseSystemDefaultAudioDevice = useDefault;
@@ -685,7 +685,7 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
                 .Subscribe(index => {
                     Preferences.Default.OnnxRunner = index;
                     Preferences.Save();
-                    ToggleOnnxGpuDisplay(index == "DirectML" || index == "CUDA");
+                    ToggleOnnxGpuDisplay(index == "DirectML" || index == "CUDA" || index == "WebGPU");
                 });
             this.WhenAnyValue(vm => vm.OnnxGpu)
                 .Where(x => x != null).Select(x => x!)
