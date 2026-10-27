@@ -2203,7 +2203,9 @@ viewModel.NewProject();
             return abbr != Ustx.DYN && abbr != Ustx.PITD && abbr != Ustx.TENC &&
                 abbr != Ustx.BREC && abbr != Ustx.GENC && abbr != Ustx.VOIC &&
                 abbr != Ustx.SHFC && abbr != Ustx.CLR && abbr != Ustx.XSYC &&
-                abbr != "opec";
+                abbr != Ustx.GRWC && abbr != Ustx.RPIT && abbr != Ustx.PITO &&
+                abbr != DiffSingerUtils.VELC && abbr != DiffSingerUtils.ENE &&
+                abbr != DiffSingerUtils.PEXP && abbr != "opec";
         }
         async Task VoiceColorRemappingAsync(UTrack track, string[] oldColors, string[] newColors) {
             var parts = DocManager.Inst.Project.parts
