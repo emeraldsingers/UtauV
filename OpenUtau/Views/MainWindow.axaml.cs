@@ -380,13 +380,35 @@ viewModel.NewProject();
             if (files == null || files.Length == 0) {
                 return;
             }
+            var (proceed, svpOptions) = await AskSvpImportOptions(files);
+            if (!proceed) {
+                return;
+            }
             try {
-                viewModel.OpenProject(files);
+                viewModel.OpenProject(files, svpOptions);
                 viewModel.Page = 1;
             } catch (Exception e) {
                 Log.Error(e, $"Failed to open files {string.Join("\n", files)}");
                 _ = await MessageBox.ShowError(this, new MessageCustomizableException($"Failed to open files {string.Join("\n", files)}", $"<translate:errors.failed.openfile>:\n{string.Join("\n", files)}", e));
             }
+        }
+
+        readonly SvpImportOptions svpImportOptions = new SvpImportOptions();
+
+        async Task<(bool Proceed, SvpImportOptions? Options)> AskSvpImportOptions(string[] files) {
+            bool hasSvp = files.Any(file => {
+                try {
+                    return Formats.DetectProjectFormat(file) == ProjectFormats.Svp;
+                } catch {
+                    return false;
+                }
+            });
+            if (!hasSvp) {
+                return (true, null);
+            }
+            var dialog = new SvpImportDialog(svpImportOptions);
+            await dialog.ShowDialog(this);
+            return (dialog.Apply, dialog.Apply ? svpImportOptions : null);
         }
 
         void OnMainMenuOpened(object sender, RoutedEventArgs args) {
@@ -514,8 +536,12 @@ viewModel.NewProject();
             if (files == null || files.Length == 0) {
                 return;
             }
+            var (proceed, svpOptions) = await AskSvpImportOptions(files);
+            if (!proceed) {
+                return;
+            }
             try {
-                var loadedProjects = Formats.ReadProjects(files);
+                var loadedProjects = Formats.ReadProjects(files, svpOptions);
                 if (loadedProjects == null || loadedProjects.Length == 0) {
                     return;
                 }
@@ -1171,9 +1197,14 @@ viewModel.NewProject();
                         }
                     }
 
+                    var (proceed, svpOptions) = await AskSvpImportOptions(projectFiles);
+                    if (!proceed) {
+                        return;
+                    }
+
                     if (openAsProject) {
                         try {
-                            viewModel.OpenProject(projectFiles);
+                            viewModel.OpenProject(projectFiles, svpOptions);
                         } catch (Exception e) {
                             Log.Error(e, $"Failed to open files {string.Join("\n", projectFiles)}");
                             _ = await MessageBox.ShowError(this,
@@ -1182,7 +1213,7 @@ viewModel.NewProject();
                         }
                     } else {
                         try {
-                            var loadedProjects = Formats.ReadProjects(projectFiles);
+                            var loadedProjects = Formats.ReadProjects(projectFiles, svpOptions);
                             // Imports tempo for new projects, otherwise asks the user.
                             bool importTempo = DocManager.Inst.Project.parts.Count == 0;
                             if (!importTempo && loadedProjects[0].tempos.Count > 0) {

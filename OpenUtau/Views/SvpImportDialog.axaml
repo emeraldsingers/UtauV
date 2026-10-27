@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" Width="320" SizeToContent="Height" CanResize="False"
+        x:Class="OpenUtau.App.Views.SvpImportDialog"
+        Icon="/Assets/open-utau.ico"
+        Title="{DynamicResource dialogs.svpimport.caption}"
+        WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="10" Spacing="4">
+    <TextBlock Text="{DynamicResource dialogs.svpimport.message}" Margin="0,0,0,6"/>
+    <Grid ColumnDefinitions="Auto,*" RowDefinitions="25,25,25,25,25,25,25,25,25,25,25">
+      <CheckBox IsChecked="{Binding Pitch}" Grid.Row="0" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.pitch}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding Dynamics}" Grid.Row="1" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.dynamics}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="1" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding Tension}" Grid.Row="2" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.tension}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="2" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding Breathiness}" Grid.Row="3" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.breathiness}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="3" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding Gender}" Grid.Row="4" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.gender}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="4" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding Voicing}" Grid.Row="5" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.voicing}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="5" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding ToneShift}" Grid.Row="6" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.toneshift}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="6" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding MouthOpening}" Grid.Row="7" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.mouthopening}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="7" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding VocalModes}" Grid.Row="8" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.vocalmodes}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="8" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding PhonemeHints}" Grid.Row="9" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.phonemehints}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="9" VerticalAlignment="Center"/>
+      <CheckBox IsChecked="{Binding Vibrato}" Grid.Row="10" VerticalAlignment="Center"/>
+      <TextBlock Text="{DynamicResource dialogs.svpimport.vibrato}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="10" VerticalAlignment="Center"/>
+    </Grid>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10" Margin="0,10,0,0">
+      <Button Content="{DynamicResource button.ok}" Click="Ok_OnClick" Width="100"/>
+      <Button Content="{DynamicResource button.cancel}" Click="Cancel_OnClick" Width="100"/>
+    </StackPanel>
+  </StackPanel>
+</Window>

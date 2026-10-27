@@ -47,11 +47,6 @@ namespace OpenUtau.App.ViewModels {
         // Release channel index: 0 = stable, 1 = beta, 2 = alpha.
         [Reactive] public partial int Channel { get; set; }
         [Reactive] public partial bool PlaySineWhenNoSinger { get; set; }
-        [Reactive] public partial bool SvpImportTension { get; set; }
-        [Reactive] public partial bool SvpImportBreathiness { get; set; }
-        [Reactive] public partial bool SvpImportGender { get; set; }
-        [Reactive] public partial bool SvpImportVoicing { get; set; }
-        [Reactive] public partial bool SvpImportToneShift { get; set; }
 
         // Playback
         private List<AudioOutputDevice>? audioOutputDevices;
@@ -342,11 +337,6 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
                 _ => 0
             };
             PlaySineWhenNoSinger = Preferences.Default.PlaySineWhenNoSinger;
-            SvpImportTension = Preferences.Default.SvpImportTension;
-            SvpImportBreathiness = Preferences.Default.SvpImportBreathiness;
-            SvpImportGender = Preferences.Default.SvpImportGender;
-            SvpImportVoicing = Preferences.Default.SvpImportVoicing;
-            SvpImportToneShift = Preferences.Default.SvpImportToneShift;
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
             RenderStatusInTrackBar = Preferences.Default.RenderStatusInTrackBar;
@@ -652,16 +642,6 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
                     // with the other setting read as unrendered and get re-rendered.
                     DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
                 });
-            this.WhenAnyValue(vm => vm.SvpImportTension).Skip(1)
-                .Subscribe(v => { Preferences.Default.SvpImportTension = v; Preferences.Save(); });
-            this.WhenAnyValue(vm => vm.SvpImportBreathiness).Skip(1)
-                .Subscribe(v => { Preferences.Default.SvpImportBreathiness = v; Preferences.Save(); });
-            this.WhenAnyValue(vm => vm.SvpImportGender).Skip(1)
-                .Subscribe(v => { Preferences.Default.SvpImportGender = v; Preferences.Save(); });
-            this.WhenAnyValue(vm => vm.SvpImportVoicing).Skip(1)
-                .Subscribe(v => { Preferences.Default.SvpImportVoicing = v; Preferences.Save(); });
-            this.WhenAnyValue(vm => vm.SvpImportToneShift).Skip(1)
-                .Subscribe(v => { Preferences.Default.SvpImportToneShift = v; Preferences.Save(); });
             this.WhenAnyValue(vm => vm.LyricsHelper)
                 .Subscribe(option => {
                     ActiveLyricsHelper.Inst.Set(option?.klass);

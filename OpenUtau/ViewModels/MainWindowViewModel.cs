@@ -241,14 +241,14 @@ namespace OpenUtau.App.ViewModels {
 
 
 
-        public void OpenProject(string[] files) {
+        public void OpenProject(string[] files, Core.Format.SvpImportOptions? svpOptions = null) {
             if (files == null) {
                 return;
             }
             DocManager.Inst.ExecuteCmd(new LoadingNotification(typeof(MainWindow), true, "project"));
             try {
 
-                Core.Format.Formats.LoadProject(files);
+                Core.Format.Formats.LoadProject(files, svpOptions);
                 DocManager.Inst.ExecuteCmd(new VoiceColorRemappingNotification(-1, true));
                 this.RaisePropertyChanged(nameof(Title));
             } finally {

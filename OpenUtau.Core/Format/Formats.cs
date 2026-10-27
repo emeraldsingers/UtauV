@@ -62,7 +62,7 @@ namespace OpenUtau.Core.Format {
         /// Read project from files to a new UProject object, used by LoadProject and ImportTracks.
         /// </summary>
         /// <param name="files">Names of the files to be loaded</param>
-        public static UProject? ReadProject(string[] files){
+        public static UProject? ReadProject(string[] files, SvpImportOptions? svpOptions = null){
             if (files.Length < 1) {
                 return null;
             }
@@ -97,9 +97,9 @@ namespace OpenUtau.Core.Format {
                     break;
                 case ProjectFormats.Svp:
                     if (contents.Contains(svp2)) {
-                        project = SVP2.Load(files[0]);
+                        project = SVP2.Load(files[0], svpOptions);
                     } else {
-                        project = SVP.Load(files[0]);
+                        project = SVP.Load(files[0], svpOptions);
                     }
                     break;
                 case ProjectFormats.Tssln:
@@ -118,8 +118,8 @@ namespace OpenUtau.Core.Format {
         /// Load project from files.
         /// </summary>
         /// <param name="files">Names of the files to be loaded</param>
-        public static void LoadProject(string[] files) {
-            UProject project = ReadProject(files);
+        public static void LoadProject(string[] files, SvpImportOptions? svpOptions = null) {
+            UProject project = ReadProject(files, svpOptions);
             if (project != null) {
                 DocManager.Inst.ExecuteCmd(new LoadProjectNotification(project));
             }
@@ -131,12 +131,12 @@ namespace OpenUtau.Core.Format {
         /// </summary>
         /// <param name="files">Names of the files to be loaded</param>
         /// <returns></returns>
-        public static UProject[] ReadProjects(string[] files){
+        public static UProject[] ReadProjects(string[] files, SvpImportOptions? svpOptions = null){
             if (files == null || files.Length < 1) {
                 return new UProject[0];
             }
             return files
-                .Select(file => ReadProject(new string[] { file }))
+                .Select(file => ReadProject(new string[] { file }, svpOptions))
                 .Where(p => p != null)
                 .Cast<UProject>()
                 .ToArray();

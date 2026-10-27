@@ -8,30 +8,16 @@ using OpenUtau.Core.Ustx;
 using OpenUtau.Core;
 
 namespace OpenUtau.Core.Format {
-    internal static class SvpCurveFilter {
-        public static bool Allows(string abbr) {
-            var prefs = Util.Preferences.Default;
-            return abbr switch {
-                Ustx.TENC => prefs.SvpImportTension,
-                Ustx.BREC => prefs.SvpImportBreathiness,
-                Ustx.GENC => prefs.SvpImportGender,
-                Ustx.VOIC => prefs.SvpImportVoicing,
-                Ustx.SHFC => prefs.SvpImportToneShift,
-                _ => true,
-            };
-        }
-    }
-
     // Synthv Studio SVR2 (SV1)
     public static class SVP {
-        public static UProject Load(string svpFilePath) {
+        public static UProject Load(string svpFilePath, SvpImportOptions options = null) {
             try {
 var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
                 var svpProject = Json.Deserialize<SVPProject>(json);
                 if (svpProject == null) {
                     throw new FileFormatException("Failed to parse SVP file");
                 }
-                return ConvertToUstx(svpProject, svpFilePath);
+                return ConvertToUstx(svpProject, svpFilePath, options ?? new SvpImportOptions());
             } catch (Exception ex) {
                 throw new FileFormatException($"Error loading SVP file: {ex.Message}", ex);
             }
@@ -44,7 +30,7 @@ var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
             return 0;
         }
 
-        private static UProject ConvertToUstx(SVPProject svpProject, string svpFilePath) {
+        private static UProject ConvertToUstx(SVPProject svpProject, string svpFilePath, SvpImportOptions options) {
             var project = new UProject { };
             Ustx.AddDefaultExpressions(project);
 
@@ -175,7 +161,7 @@ var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
                             if (note.lyric == "-") note.lyric = "+~";
                             else if (note.lyric.StartsWith(".")) note.lyric = $"[{note.lyric.Substring(1)}]";
 
-                            if (!string.IsNullOrWhiteSpace(svpNote.phonemes)) {
+                            if (options.PhonemeHints && !string.IsNullOrWhiteSpace(svpNote.phonemes)) {
                                 phonemeQueue.Clear();
                                 foreach (var syl in svpNote.phonemes.Split('+').Select(s => s.Trim())) if (!string.IsNullOrWhiteSpace(syl)) phonemeQueue.Enqueue(syl);
                             } else if (note.lyric != "+" && note.lyric != "+~") phonemeQueue.Clear();
@@ -195,7 +181,7 @@ var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
                             double? fF0Vbr = activeAttrs?.fF0Vbr ?? voice?.fF0Vbr;
                             double? tF0VbrStart = activeAttrs?.tF0VbrStart ?? voice?.tF0VbrStart;
 
-                            if ((dF0Vbr ?? 0) > 0) {
+                            if (options.Vibrato && (dF0Vbr ?? 0) > 0) {
                                 note.vibrato.depth = (float)(dF0Vbr.Value * 100);
                                 note.vibrato.period = (float)(1000.0 / (fF0Vbr ?? 5.5));
                                 double noteSec = (duration * project.resolution) / 705600000.0;
@@ -276,21 +262,21 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
                     }
 
                     // Boogsh smack, flop
-                    FinalizeMergedPitch(project, part, Ustx.PITD, grpPitch, trkPitch, aiPitchPoints, new List<(double, double)>(), new List<(double, double)>(), manualNoteRanges);
+                    if (options.Pitch) FinalizeMergedPitch(project, part, Ustx.PITD, grpPitch, trkPitch, aiPitchPoints, new List<(double, double)>(), new List<(double, double)>(), manualNoteRanges);
                     
-                    CombineAndFinalizeCurve(project, part, Ustx.DYN, grpDyn, trkDyn, 0, 10f);
-                    CombineAndFinalizeCurve(project, part, Ustx.TENC, grpTen, trkTen, baseTen, 100f);
-                    CombineAndFinalizeCurve(project, part, Ustx.BREC, grpBre, trkBre, baseBre, 100f);
-                    CombineAndFinalizeCurve(project, part, Ustx.GENC, grpGen, trkGen, baseGen, 100f);
-                    CombineAndFinalizeCurve(project, part, Ustx.VOIC, grpVoic, trkVoic, baseVoic, 100f);
-                    CombineAndFinalizeCurve(project, part, Ustx.SHFC, grpShft, trkShft, baseShft, 100f);
+                    if (options.Dynamics) CombineAndFinalizeCurve(project, part, Ustx.DYN, grpDyn, trkDyn, 0, 10f);
+                    if (options.Tension) CombineAndFinalizeCurve(project, part, Ustx.TENC, grpTen, trkTen, baseTen, 100f);
+                    if (options.Breathiness) CombineAndFinalizeCurve(project, part, Ustx.BREC, grpBre, trkBre, baseBre, 100f);
+                    if (options.Gender) CombineAndFinalizeCurve(project, part, Ustx.GENC, grpGen, trkGen, baseGen, 100f);
+                    if (options.Voicing) CombineAndFinalizeCurve(project, part, Ustx.VOIC, grpVoic, trkVoic, baseVoic, 100f);
+                    if (options.ToneShift) CombineAndFinalizeCurve(project, part, Ustx.SHFC, grpShft, trkShft, baseShft, 100f);
 
                     var allModeKeys = new HashSet<string>();
                     foreach (var k in grpModes.Keys) allModeKeys.Add(k);
                     foreach (var k in trkModes.Keys) allModeKeys.Add(k);
                     foreach (var k in baseModes.Keys) allModeKeys.Add(k);
 
-                    foreach (var mode in allModeKeys) {
+                    foreach (var mode in options.VocalModes ? allModeKeys : new HashSet<string>()) {
                         string abbr = mode.ToLower();
                         if (!project.expressions.ContainsKey(abbr)) project.RegisterExpression(new UExpressionDescriptor(mode, abbr, -200, 200, 0) { type = UExpressionType.Curve });
                         
@@ -360,7 +346,6 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
         }
 
         private static void CombineAndFinalizeCurve(UProject project, UVoicePart part, string abbr, List<(double x, double y)> groupPts, List<(double x, double y)> trackPts, double baseVal, float multiplier) {
-            if (!SvpCurveFilter.Allows(abbr)) return;
             if (groupPts.Count == 0 && trackPts.Count == 0 && baseVal == 0) return;
             var curve = GetCurve(project, part, abbr);
             if (curve == null) return;
@@ -505,12 +490,12 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
 
     // Synthv Studio SVR3 (SV2)
     public static class SVP2 {
-        public static UProject Load(string svpFilePath) {
+        public static UProject Load(string svpFilePath, SvpImportOptions options = null) {
             try {
                 var json = File.ReadAllText(svpFilePath).TrimEnd('\0');
                 var svpProject = Json.Deserialize<SVPProject>(json);
                 if (svpProject == null) throw new FileFormatException("Failed to parse SV2 file");
-                return ConvertToUstx(svpProject, svpFilePath);
+                return ConvertToUstx(svpProject, svpFilePath, options ?? new SvpImportOptions());
             } catch (Exception ex) {
                 throw new FileFormatException($"Error loading SV2 file: {ex.Message}", ex);
             }
@@ -523,7 +508,7 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
             return 0;
         }
 
-        private static UProject ConvertToUstx(SVPProject svpProject, string svpFilePath) {
+        private static UProject ConvertToUstx(SVPProject svpProject, string svpFilePath, SvpImportOptions options) {
             var project = new UProject { };
             Ustx.AddDefaultExpressions(project);
 
@@ -662,7 +647,7 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
                             if (note.lyric == "-") note.lyric = "+~";
                             else if (note.lyric.StartsWith(".")) note.lyric = $"[{note.lyric.Substring(1)}]";
 
-                            if (!string.IsNullOrWhiteSpace(svpNote.phonemes)) {
+                            if (options.PhonemeHints && !string.IsNullOrWhiteSpace(svpNote.phonemes)) {
                                 phonemeQueue.Clear();
                                 foreach (var syl in svpNote.phonemes.Split('+').Select(s => s.Trim())) if (!string.IsNullOrWhiteSpace(syl)) phonemeQueue.Enqueue(syl);
                             } else if (note.lyric != "+" && note.lyric != "+~") phonemeQueue.Clear();
@@ -682,7 +667,7 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
                             double? fF0Vbr = activeAttrs?.fF0Vbr ?? voice?.fF0Vbr;
                             double? tF0VbrStart = activeAttrs?.tF0VbrStart ?? voice?.tF0VbrStart;
 
-                            if ((dF0Vbr ?? 0) > 0) {
+                            if (options.Vibrato && (dF0Vbr ?? 0) > 0) {
                                 note.vibrato.depth = (float)(dF0Vbr.Value * 100);
                                 note.vibrato.period = (float)(1000.0 / (fF0Vbr ?? 5.5));
                                 double noteSec = (duration * project.resolution) / 705600000.0;
@@ -774,22 +759,22 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
                         }
                     }
 
-                    FinalizeMergedPitch(project, part, Ustx.PITD, grpPitch, trkPitch, aiPitchPoints, aiAbsolutePitchPoints, ouEffectivePitchPoints);
+                    if (options.Pitch) FinalizeMergedPitch(project, part, Ustx.PITD, grpPitch, trkPitch, aiPitchPoints, aiAbsolutePitchPoints, ouEffectivePitchPoints);
                     
-                    CombineAndFinalizeCurve(project, part, Ustx.DYN, grpDyn, trkDyn, 0, 10f); // Loudness has no slider
-                    CombineAndFinalizeCurve(project, part, Ustx.TENC, grpTen, trkTen, baseTen, 100f);
-                    CombineAndFinalizeCurve(project, part, Ustx.BREC, grpBre, trkBre, baseBre, 100f);
-                    CombineAndFinalizeCurve(project, part, Ustx.GENC, grpGen, trkGen, baseGen, 100f); // Inverted polarity
-                    CombineAndFinalizeCurve(project, part, Ustx.VOIC, grpVoic, trkVoic, baseVoic, 100f);
-                    CombineAndFinalizeCurve(project, part, Ustx.SHFC, grpShft, trkShft, baseShft, 100f);
-                    CombineAndFinalizeCurve(project, part, "opec", grpOpe, trkOpe, baseOpe, 100f);
+                    if (options.Dynamics) CombineAndFinalizeCurve(project, part, Ustx.DYN, grpDyn, trkDyn, 0, 10f); // Loudness has no slider
+                    if (options.Tension) CombineAndFinalizeCurve(project, part, Ustx.TENC, grpTen, trkTen, baseTen, 100f);
+                    if (options.Breathiness) CombineAndFinalizeCurve(project, part, Ustx.BREC, grpBre, trkBre, baseBre, 100f);
+                    if (options.Gender) CombineAndFinalizeCurve(project, part, Ustx.GENC, grpGen, trkGen, baseGen, 100f); // Inverted polarity
+                    if (options.Voicing) CombineAndFinalizeCurve(project, part, Ustx.VOIC, grpVoic, trkVoic, baseVoic, 100f);
+                    if (options.ToneShift) CombineAndFinalizeCurve(project, part, Ustx.SHFC, grpShft, trkShft, baseShft, 100f);
+                    if (options.MouthOpening) CombineAndFinalizeCurve(project, part, "opec", grpOpe, trkOpe, baseOpe, 100f);
 
                     var allModeKeys = new HashSet<string>();
                     foreach (var k in grpModes.Keys) allModeKeys.Add(k);
                     foreach (var k in trkModes.Keys) allModeKeys.Add(k);
                     foreach (var k in baseModes.Keys) allModeKeys.Add(k);
 
-                    foreach (var mode in allModeKeys) {
+                    foreach (var mode in options.VocalModes ? allModeKeys : new HashSet<string>()) {
                         string abbr = mode.ToLower();
                         if (!project.expressions.ContainsKey(abbr)) project.RegisterExpression(new UExpressionDescriptor(mode, abbr, -200, 200, 0) { type = UExpressionType.Curve });
                         
@@ -874,7 +859,6 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
         }
 
         private static void CombineAndFinalizeCurve(UProject project, UVoicePart part, string abbr, List<(double x, double y)> groupPts, List<(double x, double y)> trackPts, double baseVal, float multiplier) {
-            if (!SvpCurveFilter.Allows(abbr)) return;
             if (groupPts.Count == 0 && trackPts.Count == 0 && baseVal == 0) return;
             var curve = GetCurve(project, part, abbr);
             if (curve == null) return;

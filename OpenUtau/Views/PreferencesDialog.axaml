@@ -587,20 +587,6 @@
             <Button Grid.Column="4" Content="{DynamicResource prefs.paths.detect}"
                     HorizontalAlignment="Stretch" Click="DetectWinePath"/>
           </Grid>
-          <Expander Header="{DynamicResource prefs.svp.import}" IsExpanded="False" Margin="0,10,0,0" HorizontalAlignment="Stretch">
-            <Grid ColumnDefinitions="Auto,*" RowDefinitions="25,25,25,25,25" Margin="4">
-              <CheckBox IsChecked="{Binding SvpImportTension}" Grid.Column="0" Grid.Row="0" VerticalAlignment="Center"/>
-              <TextBlock Text="{DynamicResource prefs.svp.tension}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center"/>
-              <CheckBox IsChecked="{Binding SvpImportBreathiness}" Grid.Column="0" Grid.Row="1" VerticalAlignment="Center"/>
-              <TextBlock Text="{DynamicResource prefs.svp.breathiness}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="1" VerticalAlignment="Center"/>
-              <CheckBox IsChecked="{Binding SvpImportGender}" Grid.Column="0" Grid.Row="2" VerticalAlignment="Center"/>
-              <TextBlock Text="{DynamicResource prefs.svp.gender}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="2" VerticalAlignment="Center"/>
-              <CheckBox IsChecked="{Binding SvpImportVoicing}" Grid.Column="0" Grid.Row="3" VerticalAlignment="Center"/>
-              <TextBlock Text="{DynamicResource prefs.svp.voicing}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="3" VerticalAlignment="Center"/>
-              <CheckBox IsChecked="{Binding SvpImportToneShift}" Grid.Column="0" Grid.Row="4" VerticalAlignment="Center"/>
-              <TextBlock Text="{DynamicResource prefs.svp.toneshift}" Margin="6,0,0,0" Grid.Column="1" Grid.Row="4" VerticalAlignment="Center"/>
-            </Grid>
-          </Expander>
         </StackPanel>
       </Carousel>
     </ScrollViewer>
