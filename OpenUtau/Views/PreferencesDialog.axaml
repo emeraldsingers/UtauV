@@ -395,6 +395,14 @@
             <TextBlock Text="{DynamicResource prefs.appearance.customfont.notes}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding UseUiFontForNotes}"/>
           </Grid>
+          <StackPanel IsVisible="{Binding !UseUiFontForNotes}">
+            <TextBlock Text="{DynamicResource prefs.appearance.customfont.notesfamily}" Margin="0,4,0,0"/>
+            <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+              <ComboBox Grid.Column="0" ItemsSource="{Binding UiFontFamilies}" SelectedItem="{Binding NoteFontFamily}"
+                        HorizontalAlignment="Stretch" MaxDropDownHeight="320"/>
+              <Button Grid.Column="1" Content="{DynamicResource button.reset}" Click="ResetNoteFont" Margin="5,0,0,0"/>
+            </Grid>
+          </StackPanel>
           <TextBlock Classes="group-header" Text="{DynamicResource prefs.appearance.group.notes}"/>
           <c:NumberSlider Label="{DynamicResource prefs.appearance.noteradius}" Margin="0,10,0,0"
                           Value="{Binding NoteCornerRadius}" Default="2" Minimum="0" Maximum="10"

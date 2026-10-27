@@ -189,6 +189,7 @@ namespace OpenUtau.Core.Util {
             public string UiFontPath = string.Empty;
             public string UiFontFamily = string.Empty;
             public bool UseUiFontForNotes = false;
+            public string NoteFontFamily = string.Empty;
             public double ButtonCornerRadius = 0;
             public double NoteCornerRadius = 2;
             public double NoteOpacity = 1;

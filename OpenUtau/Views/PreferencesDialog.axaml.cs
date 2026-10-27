@@ -148,6 +148,10 @@ namespace OpenUtau.App.Views {
             viewModel!.ResetUiFont();
         }
 
+        void ResetNoteFont(object sender, RoutedEventArgs e) {
+            viewModel!.ResetNoteFont();
+        }
+
         void ResetWinePath(object sender, RoutedEventArgs e) {
             ((PreferencesViewModel)DataContext!).SetWinePath(string.Empty);
         }

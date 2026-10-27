@@ -135,6 +135,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial string UiFontPath { get; set; }
         [Reactive] public partial string UiFontFamily { get; set; }
         [Reactive] public partial bool UseUiFontForNotes { get; set; }
+        [Reactive] public partial string NoteFontFamily { get; set; }
         public List<string> UiFontFamilies { get; private set; } = new();
         [Reactive] public partial double ButtonCornerRadius { get; set; }
         [Reactive] public partial double NoteCornerRadius { get; set; }
@@ -308,6 +309,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             UiFontPath = Preferences.Default.UiFontPath;
             UiFontFamily = Preferences.Default.UiFontFamily;
             UseUiFontForNotes = Preferences.Default.UseUiFontForNotes;
+            NoteFontFamily = Preferences.Default.NoteFontFamily;
             RefreshUiFontFamilies();
             ButtonCornerRadius = Preferences.Default.ButtonCornerRadius;
             NoteCornerRadius = Preferences.Default.NoteCornerRadius;
@@ -512,6 +514,14 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
             this.WhenAnyValue(vm => vm.UseUiFontForNotes)
                 .Subscribe(useUiFont => {
                     Preferences.Default.UseUiFontForNotes = useUiFont;
+                    Preferences.Save();
+                    OpenUtau.App.Controls.TextLayoutCache.Clear();
+                    MessageBus.Current.SendMessage(new NotesRefreshEvent());
+                });
+            this.WhenAnyValue(vm => vm.NoteFontFamily)
+                .Skip(1)
+                .Subscribe(family => {
+                    Preferences.Default.NoteFontFamily = family?.Trim() ?? string.Empty;
                     Preferences.Save();
                     OpenUtau.App.Controls.TextLayoutCache.Clear();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
@@ -906,6 +916,10 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
         public void ResetUiFont() {
             UiFontPath = string.Empty;
             UiFontFamily = string.Empty;
+        }
+
+        public void ResetNoteFont() {
+            NoteFontFamily = string.Empty;
         }
 
         private void RefreshUiFontFamilies() {

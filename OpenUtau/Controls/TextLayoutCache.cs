@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
 using Avalonia.Styling;
+using OpenUtau.Core.Util;
 
 namespace OpenUtau.App.Controls {
     static class TextLayoutCache {
@@ -37,7 +38,28 @@ namespace OpenUtau.App.Controls {
                 && resource is FontFamily fontFamily) {
                 return fontFamily;
             }
+            if (!useUiFont) {
+                var noteFamily = Preferences.Default.NoteFontFamily?.Trim();
+                if (!string.IsNullOrEmpty(noteFamily)) {
+                    return GetNoteFontFamily(noteFamily);
+                }
+            }
             return FontFamily.Default;
+        }
+
+        private static string? noteFamilyName;
+        private static FontFamily? noteFamily;
+
+        private static FontFamily GetNoteFontFamily(string name) {
+            if (noteFamily == null || !string.Equals(noteFamilyName, name, StringComparison.Ordinal)) {
+                try {
+                    noteFamily = new FontFamily(name);
+                } catch (Exception) {
+                    noteFamily = FontFamily.Default;
+                }
+                noteFamilyName = name;
+            }
+            return noteFamily;
         }
     }
 }
