@@ -2196,7 +2196,7 @@ viewModel.NewProject();
             if (colors.Length == 0) return;
             var parts = DocManager.Inst.Project.parts.Where(p => p.trackNo == track.TrackNo && p is UVoicePart).Cast<UVoicePart>().ToArray();
             var modes = parts.SelectMany(p => p.curves)
-                .Where(c => c.descriptor != null && IsImportedVocalModeCurve(c.abbr))
+                .Where(c => c.descriptor != null && IsImportedVocalModeCurve(c.abbr) && c.ys.Any(y => y != 0))
                 .Select(c => c.descriptor.name)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
