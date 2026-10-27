@@ -889,6 +889,12 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.editing">Editing</system:String>
   <system:String x:Key="prefs.general">General</system:String>
   <system:String x:Key="prefs.general.sinewhenosinger">Play sine tone when no singer is selected</system:String>
+  <system:String x:Key="prefs.svp.import">SVP import: curves to import</system:String>
+  <system:String x:Key="prefs.svp.tension">Tension</system:String>
+  <system:String x:Key="prefs.svp.breathiness">Breathiness</system:String>
+  <system:String x:Key="prefs.svp.gender">Gender</system:String>
+  <system:String x:Key="prefs.svp.voicing">Voicing</system:String>
+  <system:String x:Key="prefs.svp.toneshift">Tone shift</system:String>
   <system:String x:Key="prefs.note.restart">Note: please restart OpenUtau after changing this item.</system:String>
   <system:String x:Key="prefs.otoeditor">Oto Editor</system:String>
   <system:String x:Key="prefs.otoeditor.select">Default Oto Editor</system:String>

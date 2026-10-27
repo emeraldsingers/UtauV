@@ -8,6 +8,20 @@ using OpenUtau.Core.Ustx;
 using OpenUtau.Core;
 
 namespace OpenUtau.Core.Format {
+    internal static class SvpCurveFilter {
+        public static bool Allows(string abbr) {
+            var prefs = Util.Preferences.Default;
+            return abbr switch {
+                Ustx.TENC => prefs.SvpImportTension,
+                Ustx.BREC => prefs.SvpImportBreathiness,
+                Ustx.GENC => prefs.SvpImportGender,
+                Ustx.VOIC => prefs.SvpImportVoicing,
+                Ustx.SHFC => prefs.SvpImportToneShift,
+                _ => true,
+            };
+        }
+    }
+
     // Synthv Studio SVR2 (SV1)
     public static class SVP {
         public static UProject Load(string svpFilePath) {
@@ -346,6 +360,7 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
         }
 
         private static void CombineAndFinalizeCurve(UProject project, UVoicePart part, string abbr, List<(double x, double y)> groupPts, List<(double x, double y)> trackPts, double baseVal, float multiplier) {
+            if (!SvpCurveFilter.Allows(abbr)) return;
             if (groupPts.Count == 0 && trackPts.Count == 0 && baseVal == 0) return;
             var curve = GetCurve(project, part, abbr);
             if (curve == null) return;
@@ -859,6 +874,7 @@ if (kvp.Value.GetValueKind() == JsonValueKind.Object) {
         }
 
         private static void CombineAndFinalizeCurve(UProject project, UVoicePart part, string abbr, List<(double x, double y)> groupPts, List<(double x, double y)> trackPts, double baseVal, float multiplier) {
+            if (!SvpCurveFilter.Allows(abbr)) return;
             if (groupPts.Count == 0 && trackPts.Count == 0 && baseVal == 0) return;
             var curve = GetCurve(project, part, abbr);
             if (curve == null) return;

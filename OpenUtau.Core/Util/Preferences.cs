@@ -291,6 +291,11 @@ namespace OpenUtau.Core.Util {
             /// voicebank can still be assigned later.
             /// </summary>
             public bool PlaySineWhenNoSinger = true;
+            public bool SvpImportTension = true;
+            public bool SvpImportBreathiness = true;
+            public bool SvpImportGender = true;
+            public bool SvpImportVoicing = true;
+            public bool SvpImportToneShift = true;
             /// <summary>Legacy; migrated to <see cref="RealTimePitchMode"/> on load.</summary>
             public bool RealTimePitchGeneration = false;
             public int RealTimePitchMode = (int)LivePitchMode.Off;
