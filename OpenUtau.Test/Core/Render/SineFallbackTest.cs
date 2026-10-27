@@ -8,6 +8,7 @@ using OpenUtau.Core.Util;
 using Xunit;
 
 namespace OpenUtau.Core {
+    [Collection(RenderSingletonCollection.Name)]
     public class SineFallbackTest {
         static UProject CreateProject(out UTrack track, out UVoicePart part) {
             var project = new UProject();
