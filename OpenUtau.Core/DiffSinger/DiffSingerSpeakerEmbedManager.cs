@@ -141,20 +141,37 @@ namespace OpenUtau.Core.DiffSinger
                         .Select(f => (float)f).ToArray();
                 }
             }
-            foreach(int frameId in Enumerable.Range(0,totalFrames)) {
-                //standarization
-                var spkSum = spkCurves[frameId, ":"].ToArray<float>().Sum();
-                if (spkSum > 1) {
-                    spkCurves[frameId, ":"] /= spkSum;
-                } else {
-                    spkCurves[frameId, defaultSpkByFrame[frameId]] += 1 - spkSum;
+            int speakerCount = dsConfig.speakers.Count;
+            var embeds = new float[speakerCount][];
+            for (int spk = 0; spk < speakerCount; ++spk) {
+                embeds[spk] = speakerEmbeds[":", spk].ToArray<float>();
+            }
+            var mixed = MixSpeakerEmbeds(spkCurves.ToArray<float>(), totalFrames, speakerCount,
+                defaultSpkByFrame, embeds, hiddenSize);
+            return new DenseTensor<float>(mixed, new int[] { totalFrames, hiddenSize })
+                .Reshape(new int[] { 1, totalFrames, hiddenSize });
+        }
+
+        public static float[] MixSpeakerEmbeds(float[] amounts, int totalFrames, int speakerCount,
+                IList<int> defaultSpkByFrame, float[][] embeds, int hiddenSize) {
+            var result = new float[totalFrames * hiddenSize];
+            for (int frame = 0; frame < totalFrames; ++frame) {
+                var dest = result.AsSpan(frame * hiddenSize, hiddenSize);
+                int defaultSpk = defaultSpkByFrame[frame];
+                var origin = embeds[defaultSpk];
+                origin.AsSpan(0, hiddenSize).CopyTo(dest);
+                for (int spk = 0; spk < speakerCount; ++spk) {
+                    float amount = amounts[frame * speakerCount + spk];
+                    if (spk == defaultSpk || Math.Abs(amount) < 1e-8f) {
+                        continue;
+                    }
+                    var target = embeds[spk];
+                    for (int j = 0; j < hiddenSize; ++j) {
+                        dest[j] += amount * (target[j] - origin[j]);
+                    }
                 }
             }
-            var spkEmbedResult = np.dot(spkCurves, speakerEmbeds.T);
-            var spkEmbedTensor = new DenseTensor<float>(spkEmbedResult.ToArray<float>(), 
-                new int[] { totalFrames, hiddenSize })
-                .Reshape(new int[] { 1, totalFrames, hiddenSize });
-            return spkEmbedTensor;
+            return result;
         }
     }
 }

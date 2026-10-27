@@ -730,8 +730,8 @@ namespace OpenUtau.Core.DiffSinger {
                         name=$"voice color {subbank.Color}",
                         abbr=VoiceColorHeader+index.ToString("D2"),
                         type=UExpressionType.Curve,
-                        min=0,
-                        max=100,
+                        min=DiffSingerUtils.VoiceColorMin,
+                        max=DiffSingerUtils.VoiceColorMax,
                         defaultValue=0,
                         isFlag=false,
                     }));

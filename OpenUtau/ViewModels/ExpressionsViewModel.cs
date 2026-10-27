@@ -307,6 +307,14 @@ namespace OpenUtau.App.ViewModels {
             }
         }
 
+        private static bool IsVoiceColorCurve(ExpressionBuilder existing, UExpressionDescriptor suggestion) {
+            var header = Core.DiffSinger.DiffSingerUtils.VoiceColorHeader;
+            return suggestion.type == UExpressionType.Curve
+                && existing.ExpressionType == (int)UExpressionType.Curve
+                && suggestion.abbr.StartsWith(header)
+                && int.TryParse(suggestion.abbr.Substring(header.Length), out _);
+        }
+
         public void GetSuggestions() {
             foreach (var track in DocManager.Inst.Project.tracks) {
                 if (track.RendererSettings.Renderer == null) {
@@ -318,8 +326,12 @@ namespace OpenUtau.App.ViewModels {
                 }
                 foreach (var suggestion in suggestions) {
                     //Add if not already in the list
-                    if (!expressionsSourceProject.Any(builder => builder.Abbr == suggestion.abbr)) {
+                    var existing = expressionsSourceProject.FirstOrDefault(builder => builder.Abbr == suggestion.abbr);
+                    if (existing == null) {
                         expressionsSourceProject.Add(new ExpressionBuilder(suggestion));
+                    } else if (IsVoiceColorCurve(existing, suggestion)) {
+                        existing.Min = Math.Min(existing.Min, suggestion.min);
+                        existing.Max = Math.Max(existing.Max, suggestion.max);
                     }
                 }
             }

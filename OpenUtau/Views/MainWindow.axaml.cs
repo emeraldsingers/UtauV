@@ -2218,7 +2218,7 @@ viewModel.NewProject();
                 // subbank k as curve cl(k+1) (see DiffSingerRenderer.GetExpressions).
                 string targetAbbr = $"cl{mapping.SelectedIndex + 1:D2}";
                 if (!DocManager.Inst.Project.expressions.TryGetValue(targetAbbr, out var targetDescriptor)) {
-                    targetDescriptor = new UExpressionDescriptor($"voice color {colors[mapping.SelectedIndex]}", targetAbbr, 0, 100, 0) { type = UExpressionType.Curve };
+                    targetDescriptor = new UExpressionDescriptor($"voice color {colors[mapping.SelectedIndex]}", targetAbbr, DiffSingerUtils.VoiceColorMin, DiffSingerUtils.VoiceColorMax, 0) { type = UExpressionType.Curve };
                     DocManager.Inst.Project.RegisterExpression(targetDescriptor);
                 }
                 foreach (var part in parts) {
