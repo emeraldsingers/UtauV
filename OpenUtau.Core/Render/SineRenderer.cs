@@ -28,6 +28,10 @@ namespace OpenUtau.Core.Render {
             return track.Singer == null || !track.Singer.Found || !track.Singer.Loaded;
         }
 
+        public static IRenderer RendererFor(UTrack track) {
+            return IsFallbackActive(track) && Preferences.Default.PlaySineWhenNoSinger ? Instance : null;
+        }
+
         public USingerType SingerType => USingerType.Classic;
 
         public bool SupportsRenderPitch => false;

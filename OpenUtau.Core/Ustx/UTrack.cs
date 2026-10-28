@@ -24,7 +24,7 @@ namespace OpenUtau.Core.Ustx {
                 wavtool = null;
             }
             if (Render.SineRenderer.IsFallbackActive(track)) {
-                Renderer = Render.SineRenderer.Instance;
+                Renderer = Render.SineRenderer.RendererFor(track);
                 Resampler = null;
                 Wavtool = null;
                 return;

@@ -445,7 +445,9 @@ namespace OpenUtau.App.ViewModels {
             });
             PersistOn(this.WhenAnyValue(vm => vm.PlaySineWhenNoSinger), playSine => {
                 Preferences.Default.PlaySineWhenNoSinger = playSine;
+                DocManager.Inst.ExecuteCmd(new ValidateProjectNotification());
                 DocManager.Inst.ExecuteCmd(new WaveformReadyNotification());
+                MessageBus.Current.SendMessage(new TracksRefreshEvent());
             });
             this.WhenAnyValue(vm => vm.LyricsHelper)
                 .Skip(1)
