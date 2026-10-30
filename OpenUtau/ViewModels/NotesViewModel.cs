@@ -100,6 +100,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial UVoicePart? Part { get; set; }
         [Reactive] public partial Bitmap? Avatar { get; set; }
         [Reactive] public partial Bitmap? Portrait { get; set; }
+        [Reactive] public partial Bitmap? BackgroundImage { get; set; }
+        [Reactive] public partial double BackgroundImageOpacity { get; set; }
         [Reactive] public partial IBrush? PortraitMask { get; set; }
         [Reactive] public partial string WindowTitle { get; set; } = "Piano Roll";
         [Reactive] public partial SolidColorBrush TrackAccentColor { get; set; } = ThemeManager.GetTrackColor("Blue").AccentColor;
@@ -148,6 +150,7 @@ namespace OpenUtau.App.ViewModels {
 
         public NotesViewModel() {
             portraitBlender = new LipSyncBlender(portraitLock, bmp => Portrait = bmp);
+            LoadBackgroundImage();
             avatarBlender = new LipSyncBlender(portraitLock, bmp => Avatar = bmp);
             SnapDivs = new List<MenuItemViewModel>();
             SetSnapUnitCommand = ReactiveCommand.Create<int>(div => {
@@ -440,6 +443,9 @@ namespace OpenUtau.App.ViewModels {
                         case "Portrait":
                             LoadPortrait(Part, Project);
                             break;
+                        case "Background":
+                            LoadBackgroundImage();
+                            break;
                         case "TrackColor":
                             LoadTrackColor(Part, Project);
                             break;
@@ -626,6 +632,23 @@ namespace OpenUtau.App.ViewModels {
                 targetWidth = 1;
             }
             return Portrait.CreateScaledBitmap(new PixelSize(targetWidth, targetHeight));
+        }
+
+        private void LoadBackgroundImage() {
+            var path = Preferences.Default.PianoRollBackgroundImage;
+            var old = BackgroundImage;
+            Bitmap? next = null;
+            if (!string.IsNullOrEmpty(path) && File.Exists(path)) {
+                try {
+                    using var stream = File.OpenRead(path);
+                    next = Bitmap.DecodeToWidth(stream, 2560);
+                } catch (Exception e) {
+                    Log.Error(e, $"Failed to load background image {path}");
+                }
+            }
+            BackgroundImageOpacity = Preferences.Default.PianoRollBackgroundOpacity;
+            BackgroundImage = next;
+            old?.Dispose();
         }
 
         private void LoadPortrait(UPart? part, UProject? project) {

@@ -133,6 +133,8 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             _ => themeName,
         };
         [Reactive] public partial string UiFontPath { get; set; }
+        [Reactive] public partial string BackgroundImagePath { get; set; }
+        [Reactive] public partial double BackgroundImageOpacity { get; set; }
         [Reactive] public partial string UiFontFamily { get; set; }
         [Reactive] public partial bool UseUiFontForNotes { get; set; }
         [Reactive] public partial string NoteFontFamily { get; set; }
@@ -309,6 +311,8 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
             ThemeName = NormalizeThemeName(Preferences.Default.ThemeName);
             UiFontPath = Preferences.Default.UiFontPath;
+            BackgroundImagePath = Preferences.Default.PianoRollBackgroundImage;
+            BackgroundImageOpacity = Preferences.Default.PianoRollBackgroundOpacity;
             UiFontFamily = Preferences.Default.UiFontFamily;
             UseUiFontForNotes = Preferences.Default.UseUiFontForNotes;
             NoteFontFamily = Preferences.Default.NoteFontFamily;
@@ -501,6 +505,18 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
                         Preferences.Save();
                         App.SetTheme();
                     }
+                });
+            this.WhenAnyValue(vm => vm.BackgroundImagePath)
+                .Subscribe(path => {
+                    Preferences.Default.PianoRollBackgroundImage = path ?? string.Empty;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new PianorollRefreshEvent("Background"));
+                });
+            this.WhenAnyValue(vm => vm.BackgroundImageOpacity)
+                .Subscribe(opacity => {
+                    Preferences.Default.PianoRollBackgroundOpacity = opacity;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new PianorollRefreshEvent("Background"));
                 });
             this.WhenAnyValue(vm => vm.UiFontPath)
                 .Subscribe(path => {
@@ -920,6 +936,14 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
             Preferences.Default.SetParamPath = path;
             Preferences.Save();
             this.RaisePropertyChanged(nameof(SetParamPath));
+        }
+
+        public void SetBackgroundImage(string path) {
+            BackgroundImagePath = path;
+        }
+
+        public void ResetBackgroundImage() {
+            BackgroundImagePath = string.Empty;
         }
 
         public void SetUiFontPath(string path) {

@@ -1033,6 +1033,10 @@ OpenUtau стремится стать средой редактирования
   <system:String x:Key="prefs.appearance.singerthemes.manage">Управление темами исполнителей</system:String>
   <system:String x:Key="prefs.appearance.group.general">Общее</system:String>
   <system:String x:Key="prefs.appearance.group.theme">Тема</system:String>
+  <system:String x:Key="prefs.appearance.bgimage">Фоновое изображение пианоролла</system:String>
+  <system:String x:Key="prefs.appearance.bgimage.none">Нет</system:String>
+  <system:String x:Key="prefs.appearance.bgimage.select">Выберите фоновое изображение</system:String>
+  <system:String x:Key="prefs.appearance.bgimage.opacity">Непрозрачность фонового изображения</system:String>
   <system:String x:Key="prefs.appearance.group.font">Шрифт</system:String>
   <system:String x:Key="prefs.appearance.group.notes">Ноты</system:String>
   <system:String x:Key="prefs.appearance.group.trackcolors">Цвета дорожек</system:String>
