@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static ReactiveUI.Primitives.SubscribeExtensions;
 using Avalonia;
@@ -13,8 +14,8 @@ using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using OpenUtau.Api;
-using OpenUtau.App.Views;
 using OpenUtau.App.Util;
+using OpenUtau.App.Views;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
@@ -24,7 +25,7 @@ using ReactiveUI.Primitives;
 using Serilog;
 
 namespace OpenUtau.App.ViewModels {
-    public partial class TrackHeaderViewModel : ViewModelBase, IActivatableViewModel {
+    public partial class TrackHeaderViewModel : ViewModelBase, IActivatableViewModel, ICmdSubscriber, IDisposable {
         public int TrackNo => track.TrackNo + 1;
         public USinger Singer => track.Singer;
         public Phonemizer Phonemizer => track.Phonemizer;
@@ -59,6 +60,14 @@ namespace OpenUtau.App.ViewModels {
 
         public ViewModelActivator Activator { get; }
 
+        private Bitmap? baseAvatar;
+        private readonly Dictionary<string, Bitmap> lipSyncAvatars = new Dictionary<string, Bitmap>();
+        private readonly object avatarLock = new object();
+        private readonly LipSyncBlender avatarBlender;
+        private string? currentAvatarVowel;
+        private bool lipSyncLoaded;
+        private bool subscribed;
+
         private readonly UTrack track;
         private TracksViewModel? tracksViewModel;
         readonly MenuItemViewModel singerSearchMenuItem;
@@ -72,6 +81,7 @@ namespace OpenUtau.App.ViewModels {
 
         // Parameterless constructor for Avalonia preview only.
         public TrackHeaderViewModel() {
+            avatarBlender = new LipSyncBlender(avatarLock, bmp => Avatar = bmp);
             singerSearchMenuItem = BuildSingerSearchMenuItem();
             SelectSingerCommand = ReactiveCommand.Create<USinger>(_ => { });
             SelectPhonemizerCommand = ReactiveCommand.Create<PhonemizerFactory>(_ => { });
@@ -85,6 +95,7 @@ namespace OpenUtau.App.ViewModels {
 
         public TrackHeaderViewModel(UTrack track) {
             this.track = track;
+            avatarBlender = new LipSyncBlender(avatarLock, bmp => Avatar = bmp);
             singerSearchMenuItem = BuildSingerSearchMenuItem();
             SelectSingerCommand = ReactiveCommand.Create<USinger>(singer => {
                 var targetTracks = GetBatchTargetTracks()
@@ -194,6 +205,8 @@ namespace OpenUtau.App.ViewModels {
 
             RefreshAvatar();
             RefreshSelectionStyle();
+            DocManager.Inst.AddSubscriber(this);
+            subscribed = true;
         }
 
         public void SetTracksViewModel(TracksViewModel tracksViewModel) {
@@ -696,17 +709,119 @@ namespace OpenUtau.App.ViewModels {
 
         public void RefreshAvatar() {
             var singer = track?.Singer;
-            Avatar?.Dispose();
-            if (singer == null || singer.AvatarData == null) {
-                Avatar = new RenderTargetBitmap(new PixelSize(1, 1));
+            lock (avatarLock) {
+                avatarBlender.Reset();
+                Avatar = null;
+                baseAvatar?.Dispose();
+                baseAvatar = null;
+                foreach (var bmp in lipSyncAvatars.Values) {
+                    bmp.Dispose();
+                }
+                lipSyncAvatars.Clear();
+                lipSyncLoaded = false;
+                currentAvatarVowel = null;
+                if (singer == null || singer.AvatarData == null) {
+                    Avatar = new RenderTargetBitmap(new PixelSize(1, 1));
+                    return;
+                }
+                try {
+                    using var stream = new MemoryStream(singer.AvatarData);
+                    baseAvatar = new Bitmap(stream).CreateScaledBitmap(new PixelSize(100, 100));
+                    Avatar = baseAvatar;
+                } catch (Exception e) {
+                    Avatar = null;
+                    Log.Error(e, "Failed to decode avatar.");
+                }
+            }
+        }
+
+        private void LoadLipSyncAvatars(USinger singer) {
+            lipSyncLoaded = true;
+            var map = singer.LipSyncAvatars;
+            if (map == null || map.Count == 0) {
+                return;
+            }
+            foreach (var key in LipSync.Visemes) {
+                try {
+                    var data = singer.LoadLipSyncAvatar(key);
+                    if (data != null) {
+                        using var stream = new MemoryStream(data);
+                        lipSyncAvatars[key] = new Bitmap(stream).CreateScaledBitmap(new PixelSize(100, 100));
+                    }
+                } catch (Exception e) {
+                    Log.Error(e, $"Failed to load lipsync avatar '{key}' for {singer.Name}");
+                }
+            }
+        }
+
+        private void UpdateAvatarLipSync(int tick) {
+            var singer = track?.Singer;
+            if (singer == null || baseAvatar == null) {
+                return;
+            }
+            if (!Monitor.TryEnter(avatarLock)) {
                 return;
             }
             try {
-                using var stream = new MemoryStream(singer.AvatarData);
-                Avatar = new Bitmap(stream).CreateScaledBitmap(new PixelSize(100, 100));
-            } catch (Exception e) {
-                Avatar = null;
-                Log.Error(e, "Failed to decode avatar.");
+                string? viseme = null;
+                if (Preferences.Default.LipSyncEnabled) {
+                    if (!lipSyncLoaded) {
+                        LoadLipSyncAvatars(singer);
+                    }
+                    viseme = ComputeAvatarViseme(tick);
+                }
+                if (viseme == currentAvatarVowel || lipSyncAvatars.Count == 0) {
+                    return;
+                }
+                currentAvatarVowel = viseme;
+                Bitmap? next = null;
+                if (viseme != null) {
+                    lipSyncAvatars.TryGetValue(viseme, out next);
+                }
+                avatarBlender.Show(next ?? baseAvatar, Preferences.Default.LipSyncInterpolation);
+            } finally {
+                Monitor.Exit(avatarLock);
+            }
+        }
+
+        private string? ComputeAvatarViseme(int tick) {
+            if (!PlaybackManager.Inst.PlayingMaster) {
+                return null;
+            }
+            var project = DocManager.Inst.Project;
+            if (project == null) {
+                return "n";
+            }
+            try {
+                tick = LipSync.LeadTick(project, tick);
+                foreach (var part in project.parts) {
+                    if (part.trackNo != track.TrackNo || part is not UVoicePart voicePart) {
+                        continue;
+                    }
+                    if (tick < part.position || tick >= part.End) {
+                        continue;
+                    }
+                    var v = LipSync.VisemeAt(voicePart.phonemes, tick - part.position);
+                    if (v != null) {
+                        return v;
+                    }
+                }
+                return "n";
+            } catch {
+                return currentAvatarVowel;
+            }
+        }
+
+        public void OnNext(UCommand cmd, bool isUndo) {
+            if (cmd is SetPlayPosTickNotification setPlayPos && !setPlayPos.waitingRendering) {
+                UpdateAvatarLipSync(setPlayPos.playPosTick);
+            }
+        }
+
+        public void Dispose() {
+            if (subscribed) {
+                DocManager.Inst.RemoveSubscriber(this);
+                subscribed = false;
             }
         }
 

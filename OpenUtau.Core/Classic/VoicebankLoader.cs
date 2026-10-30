@@ -187,6 +187,23 @@ namespace OpenUtau.Classic {
                 bank.PortraitOpacity = bankConfig.PortraitOpacity ?? 0.67f;
                 bank.PortraitHeight = bankConfig.PortraitHeight ?? 0;
             }
+            void AddLipSync(Dictionary<string, string> map, string key, string? path) {
+                if (!string.IsNullOrWhiteSpace(path)) {
+                    map[key] = path;
+                }
+            }
+            AddLipSync(bank.LipSyncPortraits, "a", bankConfig.PortraitA);
+            AddLipSync(bank.LipSyncPortraits, "i", bankConfig.PortraitI);
+            AddLipSync(bank.LipSyncPortraits, "u", bankConfig.PortraitU);
+            AddLipSync(bank.LipSyncPortraits, "e", bankConfig.PortraitE);
+            AddLipSync(bank.LipSyncPortraits, "o", bankConfig.PortraitO);
+            AddLipSync(bank.LipSyncPortraits, "n", bankConfig.PortraitN);
+            AddLipSync(bank.LipSyncImages, "a", bankConfig.ImageA);
+            AddLipSync(bank.LipSyncImages, "i", bankConfig.ImageI);
+            AddLipSync(bank.LipSyncImages, "u", bankConfig.ImageU);
+            AddLipSync(bank.LipSyncImages, "e", bankConfig.ImageE);
+            AddLipSync(bank.LipSyncImages, "o", bankConfig.ImageO);
+            AddLipSync(bank.LipSyncImages, "n", bankConfig.ImageN);
             if (!string.IsNullOrWhiteSpace(bankConfig.Author)) {
                 bank.Author = bankConfig.Author;
             }

@@ -13,6 +13,8 @@ namespace OpenUtau.Classic {
         public string Portrait;
         public float PortraitOpacity;
         public int PortraitHeight;
+        public Dictionary<string, string> LipSyncPortraits = new Dictionary<string, string>();
+        public Dictionary<string, string> LipSyncImages = new Dictionary<string, string>();
         public string Author;
         public string Team;
         public string Voice;
@@ -36,6 +38,8 @@ namespace OpenUtau.Classic {
             Portrait = null;
             PortraitOpacity = 0;
             PortraitHeight = 0;
+            LipSyncPortraits.Clear();
+            LipSyncImages.Clear();
             Author = null;
             Team = null;
             Voice = null;

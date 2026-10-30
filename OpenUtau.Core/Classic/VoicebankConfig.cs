@@ -55,6 +55,30 @@ namespace OpenUtau.Classic {
         public float? PortraitOpacity;
         [Description("Height in pixels the portrait is scaled to. 0 scales portraits taller than 800 pixels down to 800.")]
         public int? PortraitHeight;
+        [Description("Lip sync portrait for the a vowel, relative to the voicebank folder.")]
+        public string? PortraitA;
+        [Description("Lip sync portrait for the i vowel, relative to the voicebank folder.")]
+        public string? PortraitI;
+        [Description("Lip sync portrait for the u vowel, relative to the voicebank folder.")]
+        public string? PortraitU;
+        [Description("Lip sync portrait for the e vowel, relative to the voicebank folder.")]
+        public string? PortraitE;
+        [Description("Lip sync portrait for the o vowel, relative to the voicebank folder.")]
+        public string? PortraitO;
+        [Description("Lip sync portrait for a closed mouth, relative to the voicebank folder.")]
+        public string? PortraitN;
+        [Description("Lip sync icon image for the a vowel, relative to the voicebank folder.")]
+        public string? ImageA;
+        [Description("Lip sync icon image for the i vowel, relative to the voicebank folder.")]
+        public string? ImageI;
+        [Description("Lip sync icon image for the u vowel, relative to the voicebank folder.")]
+        public string? ImageU;
+        [Description("Lip sync icon image for the e vowel, relative to the voicebank folder.")]
+        public string? ImageE;
+        [Description("Lip sync icon image for the o vowel, relative to the voicebank folder.")]
+        public string? ImageO;
+        [Description("Lip sync icon image for a closed mouth, relative to the voicebank folder.")]
+        public string? ImageN;
         [Description("Author of the voicebank.")]
         public string? Author;
         [Description("Team or group the voicebank belongs to.")]

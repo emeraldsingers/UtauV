@@ -312,6 +312,14 @@
             <ToggleSwitch IsChecked="{Binding ShowIcon}"/>
           </Grid>
           <Grid Margin="0,5,0,0">
+            <TextBlock Text="{DynamicResource prefs.appearance.lipsync}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding LipSyncEnabled}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0" IsEnabled="{Binding LipSyncEnabled}">
+            <TextBlock Text="{DynamicResource prefs.appearance.lipsyncinterpolation}" HorizontalAlignment="Left"/>
+            <ToggleSwitch IsChecked="{Binding LipSyncInterpolation}"/>
+          </Grid>
+          <Grid Margin="0,5,0,0">
             <TextBlock Text="{DynamicResource prefs.appearance.usesingerflyout}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding UseSingerFlyout}"/>
           </Grid>

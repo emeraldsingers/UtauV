@@ -372,6 +372,7 @@ namespace OpenUtau.App.Controls {
         public void Dispose() {
             unbinds.ForEach(u => u.Dispose());
             unbinds.Clear();
+            ViewModel?.Dispose();
         }
     }
 }

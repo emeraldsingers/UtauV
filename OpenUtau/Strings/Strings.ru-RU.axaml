@@ -675,6 +675,8 @@ OpenUtau стремится стать средой редактирования
   <!--<system:String x:Key="prefs.appearance.playbacknotehighlight">Highlight notes on playback</system:String>-->
   <system:String x:Key="prefs.appearance.showghostnotes">Отображать ноты других треков на пианоролле</system:String>
   <system:String x:Key="prefs.appearance.showicon">Отображать иконку на пианоролле</system:String>
+  <system:String x:Key="prefs.appearance.lipsync">Липсинк портретов и иконок</system:String>
+  <system:String x:Key="prefs.appearance.lipsyncinterpolation">Плавные переходы липсинка</system:String>
   <system:String x:Key="prefs.appearance.showportrait">Отображать портрет на пианоролле</system:String>
   <system:String x:Key="prefs.appearance.sortorder">Язык отображения имени вокалиста</system:String>
   <system:String x:Key="prefs.appearance.theme">Тема</system:String>

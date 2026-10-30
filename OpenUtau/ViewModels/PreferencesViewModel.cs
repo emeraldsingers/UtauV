@@ -149,6 +149,8 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial bool UseCustomSingerTheme { get; set; }
         [Reactive] public partial bool ShowPortrait { get; set; }
         [Reactive] public partial bool ShowIcon { get; set; }
+        [Reactive] public partial bool LipSyncEnabled { get; set; }
+        [Reactive] public partial bool LipSyncInterpolation { get; set; }
         [Reactive] public partial bool ShowGhostNotes { get; set; }
         [Reactive] public partial bool NoteHoverGlow { get; set; }
 [Reactive] public partial bool UseSingerFlyout { get; set; }
@@ -323,6 +325,8 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             UseCustomSingerTheme = Preferences.Default.UseCustomSingerTheme;
             ShowPortrait = Preferences.Default.ShowPortrait;
             ShowIcon = Preferences.Default.ShowIcon;
+            LipSyncEnabled = Preferences.Default.LipSyncEnabled;
+            LipSyncInterpolation = Preferences.Default.LipSyncInterpolation;
             ShowGhostNotes = Preferences.Default.ShowGhostNotes;
             NoteHoverGlow = Preferences.Default.NoteHoverGlow;
             UseSingerFlyout = Preferences.Default.UseSingerFlyout;
@@ -598,6 +602,16 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
                     Preferences.Default.ShowIcon = showIcon;
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new PianorollRefreshEvent("Portrait"));
+                });
+            this.WhenAnyValue(vm => vm.LipSyncEnabled)
+                .Subscribe(value => {
+                    Preferences.Default.LipSyncEnabled = value;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.LipSyncInterpolation)
+                .Subscribe(value => {
+                    Preferences.Default.LipSyncInterpolation = value;
+                    Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.ShowGhostNotes)
                 .Subscribe(showGhostNotes => {

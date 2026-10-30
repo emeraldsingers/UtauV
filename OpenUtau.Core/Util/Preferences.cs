@@ -266,6 +266,8 @@ namespace OpenUtau.Core.Util {
             public bool ReverseLogOrder = true;
             public bool ShowPortrait = true;
             public bool ShowIcon = true;
+            public bool LipSyncEnabled = true;
+            public bool LipSyncInterpolation = false;
             public bool ShowGhostNotes = true;
             public bool NoteHoverGlow = true;
             public bool ShowPlaybackVerticalFollow = false;

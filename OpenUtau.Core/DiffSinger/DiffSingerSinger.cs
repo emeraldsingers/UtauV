@@ -32,6 +32,8 @@ namespace OpenUtau.Core.DiffSinger {
         public override string Portrait => voicebank.Portrait == null ? null : Path.Combine(Location, voicebank.Portrait);
         public override float PortraitOpacity => voicebank.PortraitOpacity;
         public override int PortraitHeight => voicebank.PortraitHeight;
+        public override IReadOnlyDictionary<string, string> LipSyncPortraits => voicebank.LipSyncPortraits;
+        public override IReadOnlyDictionary<string, string> LipSyncAvatars => voicebank.LipSyncImages;
         public override string Sample => voicebank.Sample == null ? null : Path.Combine(Location, voicebank.Sample);
         public override string DefaultPhonemizer => voicebank.DefaultPhonemizer;
         public override Encoding TextFileEncoding => voicebank.TextFileEncoding;
@@ -189,6 +191,22 @@ namespace OpenUtau.Core.DiffSinger {
             return string.IsNullOrEmpty(Portrait)
                 ? null
                 : File.ReadAllBytes(Portrait);
+        }
+
+        public override byte[] LoadLipSyncPortrait(string vowel) {
+            if (vowel != null && voicebank.LipSyncPortraits.TryGetValue(vowel, out var rel) && !string.IsNullOrEmpty(rel)) {
+                var path = Path.Combine(Location, rel);
+                return File.Exists(path) ? File.ReadAllBytes(path) : null;
+            }
+            return null;
+        }
+
+        public override byte[] LoadLipSyncAvatar(string vowel) {
+            if (vowel != null && voicebank.LipSyncImages.TryGetValue(vowel, out var rel) && !string.IsNullOrEmpty(rel)) {
+                var path = Path.Combine(Location, rel);
+                return File.Exists(path) ? File.ReadAllBytes(path) : null;
+            }
+            return null;
         }
 
         public InferenceSession getAcousticSession() {

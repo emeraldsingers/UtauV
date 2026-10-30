@@ -699,7 +699,7 @@ namespace OpenUtau.Core {
 
         private void Publish(UCommand cmd, bool isUndo = false) {
             lock (lockObj) {
-                foreach (var sub in subscribers) {
+                foreach (var sub in subscribers.ToArray()) {
                     sub.OnNext(cmd, isUndo);
                 }
             }
