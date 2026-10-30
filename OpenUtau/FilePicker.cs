@@ -66,6 +66,9 @@ namespace OpenUtau.App {
         public static FilePickerFileType WAV { get; } = new("WAV") {
             Patterns = new[] { "*.wav" },
         };
+        public static FilePickerFileType MP4 { get; } = new("MP4 Video") {
+            Patterns = new[] { "*.mp4" },
+        };
         public static FilePickerFileType ArchiveFiles { get; } = new("Archive File") {
             Patterns = new[] { "*.zip", "*.rar", "*.uar", "*.vogeon", "*.oudep" },
         };

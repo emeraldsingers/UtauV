@@ -1,4 +1,5 @@
 ﻿using System;
+using OpenUtau.App.Render;
 using OpenUtau.Core;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
@@ -26,7 +27,7 @@ namespace OpenUtau.App.ViewModels {
             }
         }
         public bool HasRangeSelection => DocManager.Inst.rangeEndTick > DocManager.Inst.rangeStartTick;
-        public bool IsPlaying => PlaybackManager.Inst.PlayingMaster;
+        public bool IsPlaying => PlaybackClock.IsActive;
         public bool ShowPlayPosHighlight => !IsPlaying || HasRangeSelection;
         public bool LoopPlayback {
             get => PlaybackManager.Inst.LoopPlayback;
@@ -51,6 +52,10 @@ namespace OpenUtau.App.ViewModels {
             DocManager.Inst.ExecuteCmd(new SeekPlayPosTickNotification(Project.EndTick));
         }
         public void PlayOrPause(int tick = -1, int endTick = -1, int trackNo = -1) {
+            if (VideoRenderer.IsRenderingVideo) {
+                VideoRenderer.Cancel();
+                return;
+            }
             PlaybackManager.Inst.PlayOrPause(tick: tick, endTick: endTick, trackNo: trackNo);
             var lockStartTime = Convert.ToBoolean(Preferences.Default.LockStartTime);
             if (!PlaybackManager.Inst.OutputActive && !PlaybackManager.Inst.StartingToPlay && lockStartTime) {

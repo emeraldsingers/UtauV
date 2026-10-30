@@ -14,7 +14,7 @@ namespace OpenUtau.App.Util {
         private readonly Action<Bitmap?> apply;
         private readonly object gate;
         private bool running;
-        private readonly Stopwatch watch = new Stopwatch();
+        private DateTime startedAt;
         private readonly List<IDisposable> retired = new List<IDisposable>();
         private Bitmap? shown;
         private Bitmap? from;
@@ -49,9 +49,10 @@ namespace OpenUtau.App.Util {
                 fromOwned = false;
             }
             target = next;
-            watch.Restart();
+            startedAt = PlaybackClock.Now;
             if (!running) {
                 running = true;
+                PlaybackClock.Advanced += Tick;
                 Dispatcher.UIThread.Post(Run);
             }
         }
@@ -63,6 +64,7 @@ namespace OpenUtau.App.Util {
                     await Task.Delay(16);
                 }
             } finally {
+                PlaybackClock.Advanced -= Tick;
                 running = false;
             }
         }
@@ -101,7 +103,7 @@ namespace OpenUtau.App.Util {
                 return;
             }
             try {
-                double t = Math.Min(1.0, watch.Elapsed.TotalMilliseconds / LipSync.BlendMs);
+                double t = Math.Min(1.0, (PlaybackClock.Now - startedAt).TotalMilliseconds / LipSync.BlendMs);
                 if (t >= 1.0) {
                     shown = to;
                     target = null;

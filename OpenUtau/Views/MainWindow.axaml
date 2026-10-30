@@ -49,6 +49,7 @@
               <MenuItem Header="{DynamicResource menu.file.exportmixdown}" Click="OnMenuExportMixdown"/>
             </MenuItem>
             <MenuItem Header="{DynamicResource menu.file.exportproject}">
+              <MenuItem Header="{DynamicResource menu.file.exportvideo}" Click="OnMenuExportVideo"/>
               <MenuItem Header="{DynamicResource menu.file.exportust}" Click="OnMenuExportUst"/>
               <MenuItem Header="{DynamicResource menu.file.exportustto}" Click="OnMenuExportUstTo"/>
               <MenuItem Header="{DynamicResource menu.file.exportmidi}" Click="OnMenuExportMidi"/>

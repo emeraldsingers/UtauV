@@ -163,6 +163,25 @@ namespace OpenUtau.App.Views {
             viewModel!.ResetNoteFont();
         }
 
+        void ResetFfmpegPath(object sender, RoutedEventArgs e) {
+            ((PreferencesViewModel)DataContext!).SetFfmpegPath(string.Empty);
+        }
+
+        async void SelectFfmpegPath(object sender, RoutedEventArgs e) {
+            var type = OS.IsWindows() ? FilePicker.EXE : OS.IsMacOS() ? FilePicker.APP : FilePickerFileTypes.All;
+            var path = await FilePicker.OpenFile(this, "prefs.advanced.ffmpegpath", type);
+            if (!string.IsNullOrEmpty(path) && File.Exists(path)) {
+                ((PreferencesViewModel)DataContext!).SetFfmpegPath(path);
+            }
+        }
+
+        void DetectFfmpegPath(object sender, RoutedEventArgs e) {
+            string ffmpegPath = OS.WhereIs(OS.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
+            if (!string.IsNullOrEmpty(ffmpegPath)) {
+                ((PreferencesViewModel)DataContext!).SetFfmpegPath(ffmpegPath);
+            }
+        }
+
         void ResetWinePath(object sender, RoutedEventArgs e) {
             ((PreferencesViewModel)DataContext!).SetWinePath(string.Empty);
         }

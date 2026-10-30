@@ -861,6 +861,16 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.advanced.stable">Stable</system:String>
   <system:String x:Key="prefs.advanced.vlabelerpath">vLabeler Path</system:String>
   <system:String x:Key="prefs.advanced.wayland">Use Wayland</system:String>
+  <system:String x:Key="prefs.advanced.ffmpegpath">FFmpeg Path (required for video export)</system:String>
+  <system:String x:Key="menu.file.exportvideo">Export Video</system:String>
+  <system:String x:Key="videoexport.title">Export Video</system:String>
+  <system:String x:Key="videoexport.resolution">Resolution:</system:String>
+  <system:String x:Key="videoexport.resolution.half">0.5x (Draft, fastest)</system:String>
+  <system:String x:Key="videoexport.resolution.1x">1x (Default)</system:String>
+  <system:String x:Key="videoexport.resolution.2x">2x (High Quality)</system:String>
+  <system:String x:Key="videoexport.fps">Frame Rate (FPS):</system:String>
+  <system:String x:Key="videoexport.exporting">Exporting video</system:String>
+  <system:String x:Key="videoexport.cancelhint">Press Space to cancel</system:String>
   <system:String x:Key="prefs.advanced.winepath">Wine Path (set to enable wine for compatibility)</system:String>
   <system:String x:Key="prefs.appearance">Appearance</system:String>
   <system:String x:Key="prefs.appearance.customtheme.create.empty">Theme name cannot be empty.</system:String>

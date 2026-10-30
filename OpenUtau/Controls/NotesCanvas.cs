@@ -777,12 +777,16 @@ namespace OpenUtau.App.Controls {
         private bool renderPassActive;
         private bool invalidatePending;
 
+        public void StepPlaybackAnimation() {
+            UpdatePlaybackHighlight(false);
+        }
+
         private void UpdatePlaybackHighlight(bool seek) {
-            var now = DateTime.UtcNow;
+            var now = PlaybackClock.Now;
             float dt = (float)Math.Clamp((now - highlightLastFrame).TotalSeconds, 0, 0.1);
             highlightLastFrame = now;
             bool anyEffect = ShowPlaybackNoteHighlight || ShowPlaybackNoteBounce || ShowPlaybackNoteOrbit;
-            var target = (!anyEffect || !PlaybackManager.Inst.PlayingMaster)
+            var target = (!anyEffect || !PlaybackClock.IsActive)
                 ? null
                 : seek || activePlaybackNote == null ? FindPlaybackNote() : activePlaybackNote;
             bool changed = false;
@@ -818,13 +822,13 @@ namespace OpenUtau.App.Controls {
                 activeBounceElapsed += dt;
                 changed = true;
             }
-            if (ShowPlaybackNoteOrbit && PlaybackManager.Inst.PlayingMaster) {
+            if (ShowPlaybackNoteOrbit && PlaybackClock.IsActive) {
                 playbackOrbitElapsed += dt * GetPlaybackOrbitTempoScale();
                 changed = true;
             }
-            bool orbiting = ShowPlaybackNoteOrbit && PlaybackManager.Inst.PlayingMaster;
+            bool orbiting = ShowPlaybackNoteOrbit && PlaybackClock.IsActive;
             bool needed = activeHighlight > 0.001f || fadingHighlight > 0.001f || bouncing || orbiting;
-            if (needed || (anyEffect && PlaybackManager.Inst.PlayingMaster)) {
+            if (needed || (anyEffect && PlaybackClock.IsActive)) {
                 if (!highlightTimer.IsEnabled) {
                     highlightTimer.Start();
                 }
@@ -847,7 +851,7 @@ namespace OpenUtau.App.Controls {
         }
 
         private Vector GetPlaybackAnimationOffset(UNote note) {
-            if (!PlaybackManager.Inst.PlayingMaster ||
+            if (!PlaybackClock.IsActive ||
                 (!ShowPlaybackNoteOrbit && (!ShowPlaybackNoteBounce || note != activePlaybackNote))) {
                 return default;
             }
@@ -887,7 +891,7 @@ namespace OpenUtau.App.Controls {
         }
 
         private Matrix GetPlaybackRotation(UNote note, Point center) {
-            if (!ShowPlaybackNoteOrbit || !PlaybackManager.Inst.PlayingMaster) {
+            if (!ShowPlaybackNoteOrbit || !PlaybackClock.IsActive) {
                 return Matrix.Identity;
             }
             return RofloficEffects.OrbitRotation(note.position, playbackOrbitElapsed, center, true);

@@ -602,6 +602,18 @@
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
+          <TextBlock Text="{DynamicResource prefs.advanced.ffmpegpath}" Margin="0,10,0,0"/>
+          <TextBox Classes="no-input" HorizontalAlignment="Stretch" Margin="0,4" TextWrapping="Wrap"
+                    PlaceholderText="{DynamicResource prefs.placeholdertext.none}" FontSize="11"
+                    Text="{Binding FfmpegPath}" />
+          <Grid HorizontalAlignment="Stretch" ColumnDefinitions="*,10,*,10,*">
+            <Button Grid.Column="0" Content="{DynamicResource button.reset}"
+                    HorizontalAlignment="Stretch" Click="ResetFfmpegPath"/>
+            <Button Grid.Column="2" Content="{DynamicResource button.select}"
+                    HorizontalAlignment="Stretch" Click="SelectFfmpegPath"/>
+            <Button Grid.Column="4" Content="{DynamicResource prefs.paths.detect}"
+                    HorizontalAlignment="Stretch" Click="DetectFfmpegPath"/>
+          </Grid>
           <TextBlock Text="{DynamicResource prefs.advanced.winepath}" 
                       IsVisible="{OnPlatform Windows=False, Default=True}" Margin="0,10,0,0"/>
           <TextBox Classes="no-input" HorizontalAlignment="Stretch" Margin="0,4" TextWrapping="Wrap"

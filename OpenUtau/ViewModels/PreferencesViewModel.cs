@@ -199,6 +199,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial bool RememberUst { get; set; }
         [Reactive] public partial bool RememberVsqx { get; set; }
         public string WinePath => Preferences.Default.WinePath;
+        public string FfmpegPath => Preferences.Default.FfmpegPath;
 
         public List<string> AutosaveModeOptions { get; } = new() {
             nameof(AutosaveMode.BackupFile),
@@ -974,6 +975,12 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
             Preferences.Save();
             ToolsManager.Inst.Initialize();
             this.RaisePropertyChanged(nameof(WinePath));
+        }
+
+        public void SetFfmpegPath(string path) {
+            Preferences.Default.FfmpegPath = path;
+            Preferences.Save();
+            this.RaisePropertyChanged(nameof(FfmpegPath));
         }
 
         private void RePredictDiffSingerDurations() {

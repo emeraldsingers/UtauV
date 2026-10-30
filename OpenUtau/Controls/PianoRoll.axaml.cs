@@ -99,7 +99,7 @@ namespace OpenUtau.App.Controls {
 
         private void UpdatePortraitSpin() {
             var notes = ViewModel?.NotesViewModel;
-            bool active = notes?.ShowPlaybackPortraitSpin == true && PlaybackManager.Inst.PlayingMaster;
+            bool active = notes?.ShowPlaybackPortraitSpin == true && PlaybackClock.IsActive;
             if (active) {
                 var note = ViewModel?.PlaybackViewModel == null
                     ? null

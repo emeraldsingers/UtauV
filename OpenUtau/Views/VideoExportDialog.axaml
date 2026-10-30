@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenUtau.App.Views.VideoExportDialog"
+        Title="{DynamicResource videoexport.title}" Width="400" Height="250"
+        WindowStartupLocation="CenterOwner" CanResize="False">
+  <Grid Margin="15" RowDefinitions="*,auto">
+    <StackPanel Spacing="10">
+      <TextBlock Text="{DynamicResource videoexport.title}" FontSize="18" FontWeight="SemiBold"/>
+      <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" Margin="0,10,0,0">
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource videoexport.resolution}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+        <ComboBox Grid.Row="0" Grid.Column="1" SelectedIndex="{Binding ResolutionIndex}" HorizontalAlignment="Stretch" Margin="0,0,0,10">
+          <ComboBoxItem Content="{DynamicResource videoexport.resolution.half}"/>
+          <ComboBoxItem Content="{DynamicResource videoexport.resolution.1x}"/>
+          <ComboBoxItem Content="{DynamicResource videoexport.resolution.2x}"/>
+        </ComboBox>
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource videoexport.fps}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+        <ComboBox Grid.Row="1" Grid.Column="1" SelectedIndex="{Binding FpsIndex}" HorizontalAlignment="Stretch" Margin="0,0,0,10">
+          <ComboBoxItem Content="30"/>
+          <ComboBoxItem Content="60"/>
+          <ComboBoxItem Content="144"/>
+        </ComboBox>
+      </Grid>
+    </StackPanel>
+    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+      <Button Content="{DynamicResource button.cancel}" Click="OnCancelClick"/>
+      <Button Content="{DynamicResource button.ok}" Click="OnOkClick" Classes="accent"/>
+    </StackPanel>
+  </Grid>
+</Window>

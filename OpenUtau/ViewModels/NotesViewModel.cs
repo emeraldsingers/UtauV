@@ -809,7 +809,7 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private string? ComputeViseme(int relTick) {
-            if (!PlaybackManager.Inst.PlayingMaster) {
+            if (!PlaybackClock.IsActive) {
                 return null;
             }
             var part = Part;
@@ -1604,7 +1604,7 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private double GetVerticalFollowDelta(double targetOffset) {
-            var now = DateTime.UtcNow;
+            var now = PlaybackClock.Now;
             double dt = Math.Clamp((now - playbackVerticalFollowLastFrame).TotalSeconds, 0, 0.05);
             playbackVerticalFollowLastFrame = now;
             double alpha = 1 - Math.Exp(-Preferences.Default.PlaybackVerticalFollowDamping * dt);
@@ -1635,7 +1635,7 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private void ResetPlaybackVerticalFollow() {
-            playbackVerticalFollowLastFrame = DateTime.UtcNow;
+            playbackVerticalFollowLastFrame = PlaybackClock.Now;
             playbackVerticalFollowTargetOffset = null;
         }
 

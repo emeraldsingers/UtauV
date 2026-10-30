@@ -584,6 +584,28 @@ viewModel.NewProject();
             }
         }
 
+        async void OnMenuExportVideo(object sender, RoutedEventArgs args) {
+            if (pianoRoll == null) {
+                DocManager.Inst.ExecuteCmd(new ErrorMessageNotification("Please open the Piano Roll to export video."));
+                return;
+            }
+            if (OpenUtau.App.Render.VideoRenderer.IsRenderingVideo) {
+                return;
+            }
+            var project = DocManager.Inst.Project;
+            if (!await WarnToSave(project)) {
+                return;
+            }
+            var dialog = new VideoExportDialog();
+            if (!await dialog.ShowDialog<bool>(this)) {
+                return;
+            }
+            var file = await FilePicker.SaveFileAboutProject(this, "menu.file.exportvideo", FilePicker.MP4);
+            if (!string.IsNullOrEmpty(file)) {
+                await OpenUtau.App.Render.VideoRenderer.RenderVideoAsync(pianoRoll, file, dialog.ViewModel.Fps, dialog.ViewModel.Resolution);
+            }
+        }
+
         async void OnMenuExportMixdown(object sender, RoutedEventArgs args) {
             var project = DocManager.Inst.Project;
             var file = await FilePicker.SaveFileAboutProject(

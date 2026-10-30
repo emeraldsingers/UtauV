@@ -785,7 +785,7 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private string? ComputeAvatarViseme(int tick) {
-            if (!PlaybackManager.Inst.PlayingMaster) {
+            if (!PlaybackClock.IsActive) {
                 return null;
             }
             var project = DocManager.Inst.Project;
