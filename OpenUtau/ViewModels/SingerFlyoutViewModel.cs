@@ -111,7 +111,7 @@ namespace OpenUtau.App.ViewModels {
     public partial class SingerFlyoutViewModel : ViewModelBase, ICmdSubscriber {
         /// <summary>Singer types in the order the flyout's sections use them.</summary>
         static readonly USingerType[] TypeOrder = {
-            USingerType.Classic, USingerType.DiffSinger, USingerType.Enunu, USingerType.Voicevox, USingerType.Vogen,
+            USingerType.Classic, USingerType.DiffSinger, USingerType.Enunu, USingerType.Voicevox, USingerType.Vogen, USingerType.Neutrino, USingerType.Coeiroink,
         };
 
         [Reactive] public partial IReadOnlyList<SingerTileViewModel> Tiles { get; set; } = Array.Empty<SingerTileViewModel>();

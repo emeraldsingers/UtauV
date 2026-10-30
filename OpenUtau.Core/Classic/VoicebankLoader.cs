@@ -62,6 +62,7 @@ namespace OpenUtau.Classic {
             if (!Directory.Exists(basePath)) {
                 return Enumerable.Empty<string>();
             }
+            EnsureCoeiroinkCharacterFiles();
             IEnumerable<string> files;
             if (Preferences.Default.LoadDeepFolderSinger) {
                 files = Directory.EnumerateFiles(basePath, kCharTxt, SearchOption.AllDirectories);
@@ -70,6 +71,32 @@ namespace OpenUtau.Classic {
                     .SelectMany(path => Directory.EnumerateFiles(path, kCharTxt));
             }
             return files.ToList();
+        }
+
+        void EnsureCoeiroinkCharacterFiles() {
+            try {
+                var option = Preferences.Default.LoadDeepFolderSinger ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                foreach (var dir in Directory.EnumerateDirectories(basePath, "*", option).ToList()) {
+                    if (File.Exists(Path.Combine(dir, kCharTxt)) || !Core.Coeiroink.CoeiroinkConfig.IsCoeiroinkFolder(dir)) {
+                        continue;
+                    }
+                    var config = Core.Coeiroink.CoeiroinkConfig.Load(dir);
+                    File.WriteAllText(Path.Combine(dir, kCharTxt), $"name={config.SpeakerName}{Environment.NewLine}", new UTF8Encoding(false));
+                    var yamlFile = Path.Combine(dir, kCharYaml);
+                    if (!File.Exists(yamlFile)) {
+                        var bankConfig = new VoicebankConfig() {
+                            SingerType = SingerTypeUtils.SingerTypeNames[USingerType.Coeiroink],
+                            TextFileEncoding = Encoding.UTF8.WebName,
+                            DefaultPhonemizer = typeof(Core.Coeiroink.CoeiroinkPhonemizer).FullName,
+                        };
+                        using (var stream = File.Create(yamlFile)) {
+                            bankConfig.Save(stream);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.Error(e, "Failed to prepare COEIROINK voicebank files.");
+            }
         }
 
         public static void LoadVoicebank(Voicebank voicebank) {
@@ -102,6 +129,8 @@ namespace OpenUtau.Classic {
                     voicebank.SingerType = USingerType.Enunu;
                 } else if (File.Exists(dsconfigFile)) {
                     voicebank.SingerType = USingerType.DiffSinger;
+                } else if (Core.Coeiroink.CoeiroinkConfig.IsCoeiroinkFolder(dir)) {
+                    voicebank.SingerType = USingerType.Coeiroink;
                 } else if (voicebank.SingerType != USingerType.Enunu) {
                     voicebank.SingerType = USingerType.Classic;
                 }

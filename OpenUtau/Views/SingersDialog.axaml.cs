@@ -400,7 +400,7 @@ namespace OpenUtau.App.Views {
                 return sample;
             }
 
-            if (singer.SingerType == USingerType.Classic || singer.SingerType == USingerType.Voicevox) {
+            if (singer.SingerType == USingerType.Classic || singer.SingerType == USingerType.Voicevox || singer.SingerType == USingerType.Coeiroink) {
                 var path = singer.Location;
                 if (!Directory.Exists(path)) {
                     return null;

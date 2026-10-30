@@ -110,6 +110,8 @@ namespace OpenUtau.App.ViewModels {
             USingerType.DiffSinger,
             USingerType.Voicevox,
             USingerType.Vogen,
+            USingerType.Neutrino,
+            USingerType.Coeiroink,
         };
 
         readonly USinger? trackSinger;
@@ -224,6 +226,8 @@ namespace OpenUtau.App.ViewModels {
                 USingerType.DiffSinger => "DiffSinger",
                 USingerType.Voicevox => "VOICEVOX",
                 USingerType.Vogen => "Vogen",
+                USingerType.Neutrino => "NEUTRINO",
+                USingerType.Coeiroink => "COEIROINK",
                 _ => type.ToString(),
             };
         }

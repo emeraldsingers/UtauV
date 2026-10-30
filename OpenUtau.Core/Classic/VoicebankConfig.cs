@@ -42,7 +42,7 @@ namespace OpenUtau.Classic {
         public Dictionary<string, string>? LocalizedNames;
         [Description("Extra words that find this singer in singer search, such as nicknames or romanized names.")]
         public string[]? SearchTerms;
-        [Description("Kind of voicebank: utau, enunu, diffsinger or voicevox. If unspecified, OpenUtau guesses from the files in the folder.")]
+        [Description("Kind of voicebank: utau, enunu, diffsinger, voicevox, neutrino or coeiroink. If unspecified, OpenUtau guesses from the files in the folder.")]
         [YamlValues(typeof(SingerTypeValues))]
         public string? SingerType;
         [Description("Encoding of the voicebank's text files, such as character.txt and oto.ini, e.g. shift_jis or utf-8. If unspecified, shift_jis. An oto.ini can declare its own with a #Charset: line.")]

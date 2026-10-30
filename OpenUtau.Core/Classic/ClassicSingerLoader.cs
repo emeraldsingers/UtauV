@@ -15,6 +15,8 @@ namespace OpenUtau.Classic {
                     return new Core.Voicevox.VoicevoxSinger(v) as USinger;
                 case USingerType.Neutrino:
                     return new Core.Neutrino.NeutrinoSinger(v) as USinger;
+                case USingerType.Coeiroink:
+                    return new Core.Coeiroink.CoeiroinkSinger(v) as USinger;
                 default:
                     return new ClassicSinger(v) as USinger;
             }

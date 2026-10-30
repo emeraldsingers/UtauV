@@ -17,6 +17,7 @@ namespace OpenUtau.Core.Render {
         public const string DIFFSINGER = "DIFFSINGER";
         public const string VOICEVOX = "VOICEVOX";
         public const string NEUTRINO = "NEUTRINO";
+        public const string COEIROINK = "COEIROINK";
 
         static readonly string[] classicRenderers = new[] { WORLDLINE_R, WORLDLINE_R11, CLASSIC };
         static readonly string[] enunuRenderers = new[] { ENUNU };
@@ -24,6 +25,7 @@ namespace OpenUtau.Core.Render {
         static readonly string[] diffSingerRenderers = new[] { DIFFSINGER };
         static readonly string[] voicevoxRenderers = new[] { VOICEVOX };
         static readonly string[] neutrinoRenderers = new[] { NEUTRINO };
+        static readonly string[] coeiroinkRenderers = new[] { COEIROINK };
         static readonly string[] noRenderers = new string[0];
 
         public static string[] GetSupportedRenderers(USingerType singerType) {
@@ -40,6 +42,8 @@ namespace OpenUtau.Core.Render {
                     return voicevoxRenderers;
                 case USingerType.Neutrino:
                     return neutrinoRenderers;
+                case USingerType.Coeiroink:
+                    return coeiroinkRenderers;
                 default:
                     return noRenderers;
             }
@@ -83,6 +87,8 @@ namespace OpenUtau.Core.Render {
                 return new Voicevox.VoicevoxRenderer();
             } else if (renderer == NEUTRINO) {
                 return new Neutrino.NeutrinoRenderer();
+            } else if (renderer == COEIROINK) {
+                return new Coeiroink.CoeiroinkRenderer();
             }
             return null;
         }

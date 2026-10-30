@@ -88,7 +88,7 @@ namespace OpenUtau.App.Views {
             if (!string.IsNullOrEmpty(sample) && File.Exists(sample)) {
                 return sample;
             }
-            if (singer.SingerType != USingerType.Classic && singer.SingerType != USingerType.Voicevox) {
+            if (singer.SingerType != USingerType.Classic && singer.SingerType != USingerType.Voicevox && singer.SingerType != USingerType.Coeiroink) {
                 return null;
             }
             if (!Directory.Exists(singer.Location)) {
