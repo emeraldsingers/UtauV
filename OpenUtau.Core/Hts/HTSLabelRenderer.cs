@@ -290,9 +290,7 @@ namespace OpenUtau.Core.Hts {
         }
 
         public void ProcessPart(RenderPhrase phrase) {
-            if (timeAxis == null) {
-                timeAxis = phrase.timeAxis;
-            }
+            timeAxis = phrase.timeAxis;
 
             int startTick = phrase.position;
             int endTick = phrase.position + phrase.duration;
@@ -479,9 +477,7 @@ namespace OpenUtau.Core.Hts {
         }
 
         public virtual RenderResult Layout(RenderPhrase phrase) {
-            if (timeAxis == null) {
-                timeAxis = phrase.timeAxis;
-            }
+            timeAxis = phrase.timeAxis;
             startTick = phrase.position;
             endTick = phrase.position + phrase.duration;
 
