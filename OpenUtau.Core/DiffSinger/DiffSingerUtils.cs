@@ -126,7 +126,13 @@ namespace OpenUtau.Core.DiffSinger {
 
         public static (Int64[] wordDiv, Int64[] wordDur) PaddedWordDivAndDur(
             RenderPhrase phrase, int[] phDur, Func<string, bool> isVowel, double frameMs, int headFrames, int tailFrames) {
-            var segments = PaddedSegments(phrase, frameMs, headFrames, tailFrames);
+            return WordDivAndDur(
+                PaddedSegments(phrase, frameMs, headFrames, tailFrames), phDur, isVowel);
+        }
+
+        internal static (Int64[] wordDiv, Int64[] wordDur) WordDivAndDur(
+            IReadOnlyList<(string Phoneme, double DurationMs, int PhoneIndex)> segments,
+            int[] phDur, Func<string, bool> isVowel) {
             if (segments.Count == 0) {
                 throw new InvalidDataException("DiffSinger word mode requires at least one phoneme.");
             }
@@ -143,11 +149,14 @@ namespace OpenUtau.Core.DiffSinger {
                 vowelIds = new int[] { segments.Count - 2 };
             }
 
-            // Vowel indexes are in segment space (phones shifted by +1 for
-            // the head "SP"), hence no +1 on the first word.
+            // Vowel indexes are in segment space (phones shifted by +1 for the
+            // head "SP"), hence no +1 on the first word. The tail SP is its own
+            // word in the .ds format, so do not merge it into the last vowel group.
+            int tailIndex = segments.Count - 1;
             var wordDiv = vowelIds.Zip(vowelIds.Skip(1), (a, b) => (Int64)(b - a))
                 .Prepend((Int64)vowelIds[0])
-                .Append((Int64)segments.Count - vowelIds[^1])
+                .Append((Int64)(tailIndex - vowelIds[^1]))
+                .Append(1L)
                 .ToArray();
 
             if (wordDiv.Any(d => d <= 0)) {
