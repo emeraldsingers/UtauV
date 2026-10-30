@@ -26,6 +26,22 @@ namespace OpenUtau.Core.DiffSinger {
                 {Format.Ustx.TENC, (x, y) => x + y / 20},
             };
 
+        /// <summary>
+        /// Applies the user delta to a predicted variance curve and clamps it to the
+        /// range the acoustic model expects. Shared by the renderer and the .ds export
+        /// so the exported conditioning matches what is actually fed to the model.
+        /// </summary>
+        public static float ApplyVarianceDelta(string abbr, float predicted, float user) {
+            float value = VarianceDeltaFunctions[abbr](predicted, user);
+            if (abbr == ENE || abbr == Format.Ustx.BREC || abbr == Format.Ustx.VOIC) {
+                return Math.Clamp(value, -96f, 0f);
+            }
+            if (abbr == Format.Ustx.TENC) {
+                return Math.Clamp(value, -10f, 10f);
+            }
+            return value;
+        }
+
         public static float GetHeadMs(double frameMs) {
             return (float)(frameMs * headFrames);
         }
