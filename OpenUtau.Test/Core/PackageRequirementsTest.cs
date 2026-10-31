@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using OpenUtau.Classic;
 using OpenUtau.Classic.Hifisampler;
 using OpenUtau.Core.Analysis;
@@ -13,6 +14,7 @@ namespace OpenUtau.Core {
     public class PackageRequirementsTest {
         [Fact]
         public void DiffSingerFallsBackToPcNsfWhenNamedVocoderMissing() {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             string dir = Path.Combine(Path.GetTempPath(), $"OpenUtau.VocoderFallback.{Guid.NewGuid():N}");
             Directory.CreateDirectory(dir);
             try {
