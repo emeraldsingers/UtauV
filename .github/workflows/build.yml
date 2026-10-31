@@ -238,7 +238,7 @@ jobs:
 
       - name: Add Liquid Glass icon (macOS)
         run: |
-          sudo xcode-select -s "$(xcode-select -p)"
+          sudo xcode-select -s /Applications/Xcode_26.2.app
           chmod +x .github/scripts/add-liquid-glass-icon.sh
           APP=$(find bin/${{ matrix.arch.name }}/publish -maxdepth 1 -name "*.app" -type d | head -1)
           test -n "$APP"
