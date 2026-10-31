@@ -180,7 +180,7 @@ subbanks:
         public void SuggestsKnownValuesOfFreeTextKeys() {
             var suggestions = SuggestAt<VoicebankConfig>("singer_type: di|\n")!;
             Assert.Equal(14, suggestions.StartColumn);
-            Assert.Equal(new[] { "utau", "enunu", "diffsinger", "voicevox", "neutrino" }, suggestions.Values.Select(v => v.Text));
+            Assert.Equal(new[] { "utau", "enunu", "diffsinger", "voicevox", "neutrino", "coeiroink" }, suggestions.Values.Select(v => v.Text));
             // The installed phonemizers come from the same kind of source.
             var key = YamlValidator.DescribeKeyAt("default_phonemizer: x\n", typeof(VoicebankConfig), 1, 1)!;
             Assert.Equal(typeof(OpenUtau.Api.PhonemizerTypeValues), key.ValueSource);
