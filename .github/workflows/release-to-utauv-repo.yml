@@ -84,7 +84,7 @@ jobs:
           [[ "$WIN_X86" == true ]] && add '{"name":"win-x86","rid":"win-x86","arch":"x86","os":"win","runs-on":"windows-latest","variant":"directml"}'
           [[ "$WIN_ARM64" == true ]] && add '{"name":"win-arm64","rid":"win-arm64","arch":"arm64","os":"win","runs-on":"windows-latest","variant":"directml"}'
           [[ "$OSX_X64" == true ]] && add '{"name":"osx-x64","rid":"osx-x64","arch":"x64","os":"osx","runs-on":"macos-15-intel"}'
-          [[ "$OSX_ARM64" == true ]] && add '{"name":"osx-arm64","rid":"osx-arm64","arch":"arm64","os":"osx","runs-on":"macos-15-intel"}'
+          [[ "$OSX_ARM64" == true ]] && add '{"name":"osx-arm64","rid":"osx-arm64","arch":"arm64","os":"osx","runs-on":"macos-latest"}'
           [[ "$LINUX_X64" == true ]] && add '{"name":"linux-x64","rid":"linux-x64","arch":"x64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"x86_64"}'
           [[ "$LINUX_ARM64" == true ]] && add '{"name":"linux-arm64","rid":"linux-arm64","arch":"arm64","os":"linux","runs-on":"ubuntu-latest","linuxarch":"aarch64"}'
           matrix=$(printf '%s\n' "${targets[@]}" | jq -sc '{arch:.}')
