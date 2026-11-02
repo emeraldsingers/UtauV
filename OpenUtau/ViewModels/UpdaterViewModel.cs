@@ -285,7 +285,7 @@ namespace OpenUtau.App.ViewModels {
                 return $"msiexec /p \"{downloadFilePath}\"";
             }
             if (DoExtensionsMatch(installerExt, ".zip")) {
-                string restart = RestartExecutablePath.TrimEnd('\\', '/');
+                string restart = PathManager.Inst.RootPath.TrimEnd('\\', '/');
                 if (Environment.OSVersion.Version.Major >= 10 && Environment.OSVersion.Version.Build >= 17063) {
                     Log.Information("Starting update with tar.");
                     return $"tar -x -f \"{downloadFilePath}\" -C \"{restart}\"";

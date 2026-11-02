@@ -15,9 +15,15 @@ namespace OpenUtau.Core {
     public class PathManager : SingletonBase<PathManager> {
         public PathManager() {
             string exePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            RootPath = string.Equals(Path.GetFileName(exePath), "bin", StringComparison.OrdinalIgnoreCase)
-                ? Directory.GetParent(exePath)!.FullName
-                : exePath;
+            BinaryPath = exePath;
+            string rootPath = exePath;
+            var chain = new List<string>();
+            while (string.Equals(Path.GetFileName(rootPath), "bin", StringComparison.OrdinalIgnoreCase)
+                && Directory.GetParent(rootPath) != null) {
+                chain.Add(rootPath);
+                rootPath = Directory.GetParent(rootPath)!.FullName;
+            }
+            RootPath = rootPath;
             if (OS.IsMacOS()) {
                 string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 DataPath = Path.Combine(userHome, "Library", "UtauV");
@@ -61,7 +67,12 @@ namespace OpenUtau.Core {
                 IsInstalled = File.Exists(Path.Combine(appDir, "installed.txt"))
                     || File.Exists(Path.Combine(RootPath, "installed.txt"));
                 if (!IsInstalled) {
-                    DataPath = appDir;
+                    bool packaged = !string.Equals(
+                        Path.TrimEndingDirectorySeparator(RootPath), appDir, StringComparison.OrdinalIgnoreCase);
+                    DataPath = packaged ? Path.Combine(RootPath, "Data") : appDir;
+                    if (packaged) {
+                        LegacyDataSources = chain.Append(RootPath).ToArray();
+                    }
                 } else {
                     string dataHome = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
                     DataPath = Path.Combine(dataHome, "UtauV", "Data");
@@ -79,8 +90,9 @@ namespace OpenUtau.Core {
             }
         }
 
+        public string[] LegacyDataSources { get; private set; } = Array.Empty<string>();
         public string RootPath { get; private set; }
-        public string BinaryPath => Directory.Exists(Path.Combine(RootPath, "bin")) ? Path.Combine(RootPath, "bin") : RootPath;
+        public string BinaryPath { get; private set; }
         public string DataPath { get; private set; }
         public string CachePath { get; private set; }
         public bool HomePathIsAscii { get; private set; }
@@ -164,21 +176,37 @@ namespace OpenUtau.Core {
             return Path.Combine(dir, $"{filename}_{trackName}.wav");
         }
 
-        public void ClearCache() {
-            var files = Directory.GetFiles(CachePath);
-            foreach (var file in files) {
-                try {
-                    File.Delete(file);
-                } catch (Exception e) {
-                    Log.Error(e, $"Failed to delete file {file}");
-                }
+        public IEnumerable<string> CachePaths {
+            get {
+                var legacy = LegacyDataSources
+                    .Select(source => Path.Combine(source, "Cache"))
+                    .Where(path => !string.Equals(
+                        Path.TrimEndingDirectorySeparator(path),
+                        Path.TrimEndingDirectorySeparator(CachePath),
+                        StringComparison.OrdinalIgnoreCase)
+                        && Directory.Exists(path));
+                return new[] { CachePath }.Concat(legacy);
             }
-            var dirs = Directory.GetDirectories(CachePath);
-            foreach (var dir in dirs) {
-                try {
-                    Directory.Delete(dir, true);
-                } catch (Exception e) {
-                    Log.Error(e, $"Failed to delete dir {dir}");
+        }
+
+        public void ClearCache() {
+            foreach (var cachePath in CachePaths) {
+                if (!Directory.Exists(cachePath)) {
+                    continue;
+                }
+                foreach (var file in Directory.GetFiles(cachePath)) {
+                    try {
+                        File.Delete(file);
+                    } catch (Exception e) {
+                        Log.Error(e, $"Failed to delete file {file}");
+                    }
+                }
+                foreach (var dir in Directory.GetDirectories(cachePath)) {
+                    try {
+                        Directory.Delete(dir, true);
+                    } catch (Exception e) {
+                        Log.Error(e, $"Failed to delete dir {dir}");
+                    }
                 }
             }
             OpenUtau.Core.PlaybackManager.Inst.StopPlayback();
@@ -189,11 +217,9 @@ namespace OpenUtau.Core {
 
         readonly static string[] sizes = { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
         public string GetCacheSize() {
-            if (!Directory.Exists(CachePath)) {
-                return "0B";
-            }
-            var dir = new DirectoryInfo(CachePath);
-            double size = dir.GetFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+            double size = CachePaths
+                .Where(Directory.Exists)
+                .Sum(path => new DirectoryInfo(path).GetFiles("*", SearchOption.AllDirectories).Sum(f => f.Length));
             int order = 0;
             while (size >= 1024 && order < sizes.Length - 1) {
                 order++;

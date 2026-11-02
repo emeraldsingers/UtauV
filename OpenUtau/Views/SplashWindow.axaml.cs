@@ -45,6 +45,22 @@ namespace OpenUtau.App.Views {
             }
             started = true;
             CenterOnPrimaryScreen();
+            _ = Prepare();
+        }
+
+        private async Task Prepare() {
+            var migration = LegacyDataMigration.ForCurrent();
+            if (migration.IsNeeded()) {
+                await new LegacyDataMigrationDialog(migration).ShowDialog(this);
+            }
+            if (LayoutRepair.IsNeeded()) {
+                var dialog = new LayoutRepairDialog();
+                await dialog.ShowDialog(this);
+                if (dialog.Accepted && LayoutRepair.Schedule()) {
+                    Close();
+                    return;
+                }
+            }
             Start();
         }
 

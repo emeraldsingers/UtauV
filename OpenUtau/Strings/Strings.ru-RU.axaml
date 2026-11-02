@@ -920,6 +920,19 @@ OpenUtau стремится стать средой редактирования
 
   <system:String x:Key="updater.caption">Проверка наличия обновлений</system:String>
   <system:String x:Key="updater.description">Открытая платформа синтеза вокала</system:String>
+  <system:String x:Key="migration.title">Перенос данных</system:String>
+  <system:String x:Key="migration.heading">Наводим порядок в файлах UtauV</system:String>
+  <system:String x:Key="migration.message">В предыдущих версиях UtauV была ошибка: голосовые банки, ресемплеры, плагины и прочие данные хранились в папке «bin» рядом с файлами программы. Это исправлено: в «bin» остаётся только сама программа, а всё, что вы добавляете, лежит в папке «Data». UtauV автоматически переносит ваши файлы туда, после чего всё будет работать ровно так, как задумано.</system:String>
+  <system:String x:Key="migration.wait">Обычно это занимает несколько секунд, а на медленном диске или при проверке антивирусом может занять пару минут. Пожалуйста, не закрывайте UtauV, пока перенос не завершится.</system:String>
+  <system:String x:Key="migration.moving">Переносится: {0}</system:String>
+  <system:String x:Key="migration.count">{0} из {1}</system:String>
+  <system:String x:Key="migration.finishing">Завершаем...</system:String>
+  <system:String x:Key="layoutrepair.title">Исправление структуры папок</system:String>
+  <system:String x:Key="layoutrepair.heading">UtauV нужно привести в порядок папку программы</system:String>
+  <system:String x:Key="layoutrepair.message">Из-за той же ошибки предыдущие обновления складывали программу во вложенные папки «bin» (bin\bin\bin). Ваши данные уже в безопасности в папке «Data». Чтобы закончить, небольшой фоновый скрипт должен переместить файлы программы в одну папку «bin». Пока UtauV запущен, Windows этого не позволяет.</system:String>
+  <system:String x:Key="layoutrepair.steps">Нажмите «Исправить и закрыть»: UtauV закроется, скрипт закончит работу за несколько секунд, после чего можно запускать UtauV как обычно. Ничего скачивать и переустанавливать не нужно. Если выбрать «Не сейчас», UtauV запустится как обычно и спросит снова в следующий раз.</system:String>
+  <system:String x:Key="layoutrepair.fix">Исправить и закрыть</system:String>
+  <system:String x:Key="layoutrepair.later">Не сейчас</system:String>
   <!--<system:String x:Key="updater.github">GitHub</system:String>-->
   <system:String x:Key="updater.status.available">Доступно обновление {0}!</system:String>
   <system:String x:Key="updater.status.checking">Проверка наличия обновлений...</system:String>

@@ -1160,6 +1160,19 @@ General
 
   <system:String x:Key="updater.caption">Check for Update</system:String>
   <system:String x:Key="updater.description">Open singing synthesis platform</system:String>
+  <system:String x:Key="migration.title">Moving your data</system:String>
+  <system:String x:Key="migration.heading">Organizing UtauV files</system:String>
+  <system:String x:Key="migration.message">Earlier versions of UtauV had a bug and stored your singers, resamplers, plugins and other data inside the "bin" folder next to the program files. This is now fixed: the "bin" folder keeps only the program itself, and everything you add lives in the "Data" folder. UtauV is moving your files there automatically, and afterwards everything will work exactly as intended.</system:String>
+  <system:String x:Key="migration.wait">This usually takes a few seconds and can take a couple of minutes on a slow disk or when an antivirus scans the files. Please do not close UtauV until it is finished.</system:String>
+  <system:String x:Key="migration.moving">Moving: {0}</system:String>
+  <system:String x:Key="migration.count">{0} of {1}</system:String>
+  <system:String x:Key="migration.finishing">Finishing...</system:String>
+  <system:String x:Key="layoutrepair.title">Fixing the folder structure</system:String>
+  <system:String x:Key="layoutrepair.heading">UtauV needs to tidy its program folder</system:String>
+  <system:String x:Key="layoutrepair.message">Because of the same bug, previous updates stacked the program into nested "bin" folders (bin\bin\bin). Your data is already safe in the "Data" folder. To finish, a small background script has to move the program files into a single "bin" folder. Windows does not allow this while UtauV is running.</system:String>
+  <system:String x:Key="layoutrepair.steps">Choose "Fix and close": UtauV will close, the script will finish in a few seconds, and then you can start UtauV as usual. Nothing needs to be downloaded or reinstalled. If you choose "Not now", UtauV starts normally and asks again next time.</system:String>
+  <system:String x:Key="layoutrepair.fix">Fix and close</system:String>
+  <system:String x:Key="layoutrepair.later">Not now</system:String>
   <system:String x:Key="updater.github">GitHub</system:String>
   <system:String x:Key="updater.status.available">Update v{0} available!</system:String>
   <system:String x:Key="updater.status.checking">Checking for updates...</system:String>

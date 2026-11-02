@@ -34,7 +34,10 @@ namespace OpenUtau.Core.Util {
             try
             {
                 string exePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-                string shippedPrefsPath = Path.Combine(exePath, "prefs-default.json");
+                string shippedPrefsPath = Path.Combine(PathManager.Inst.RootPath, "prefs-default.json");
+                if (!File.Exists(shippedPrefsPath)) {
+                    shippedPrefsPath = Path.Combine(exePath, "prefs-default.json");
+                }
                 if (File.Exists(shippedPrefsPath)) {
                     var shippedPrefs = Json.Deserialize<SerializablePreferences>(
                         File.ReadAllText(shippedPrefsPath, Encoding.UTF8));

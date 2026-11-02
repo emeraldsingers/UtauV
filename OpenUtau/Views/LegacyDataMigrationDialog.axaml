@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenUtau.App.Views.LegacyDataMigrationDialog"
+        Icon="/Assets/open-utau.ico"
+        Title="{DynamicResource migration.title}"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Width="560" Height="330">
+  <Grid Margin="{Binding $parent.WindowDecorationMargin}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+      <Grid ColumnDefinitions="Auto,14,*">
+        <Image Width="44" Height="44" Source="/Assets/open-utau.ico" Stretch="Uniform"/>
+        <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold"
+                   TextWrapping="Wrap" Text="{DynamicResource migration.heading}"/>
+      </Grid>
+
+      <StackPanel Grid.Row="1" Margin="0,16,0,0" Spacing="10">
+        <TextBlock FontSize="12" LineHeight="18" TextWrapping="Wrap" Opacity="0.9"
+                   Text="{DynamicResource migration.message}"/>
+        <TextBlock FontSize="12" LineHeight="18" TextWrapping="Wrap" FontWeight="SemiBold"
+                   Text="{DynamicResource migration.wait}"/>
+      </StackPanel>
+
+      <StackPanel Grid.Row="2" Spacing="6">
+        <ProgressBar x:Name="Bar" Height="8" Minimum="0" Maximum="1" Value="0" IsIndeterminate="True"/>
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock x:Name="CurrentText" FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis"/>
+          <TextBlock x:Name="CountText" Grid.Column="1" FontSize="11" Opacity="0.75"/>
+        </Grid>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>
