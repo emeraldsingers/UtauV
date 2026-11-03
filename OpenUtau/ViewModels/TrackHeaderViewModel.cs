@@ -69,6 +69,7 @@ namespace OpenUtau.App.ViewModels {
         private bool subscribed;
 
         private readonly UTrack track;
+        bool HasSinger => track.Singer is { } current && (current.Found || !string.IsNullOrEmpty(current.Name));
         private TracksViewModel? tracksViewModel;
         readonly MenuItemViewModel singerSearchMenuItem;
         MenuItemViewModel? singerSearchSeparator;
@@ -544,6 +545,14 @@ namespace OpenUtau.App.ViewModels {
                     await dialog.ShowDialog(mainWindow);
                     if (dialog.SelectedSinger != null) {
                         SelectSingerCommand.Execute(dialog.SelectedSinger).Subscribe();
+                    }
+                })
+            });
+            items.Add(new MenuItemViewModel() {
+                Header = ThemeManager.GetString("tracks.clearsinger"),
+                Command = ReactiveCommand.Create(() => {
+                    if (HasSinger) {
+                        SelectSingerCommand.Execute(null!).Subscribe();
                     }
                 })
             });
