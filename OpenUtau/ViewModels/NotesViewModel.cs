@@ -1617,13 +1617,24 @@ namespace OpenUtau.App.ViewModels {
                 return;
             }
             double nowOffset = TrackOffset;
-            double delta = GetVerticalFollowDelta(playbackVerticalFollowTargetOffset.Value);
+            if (double.IsNaN(playbackVerticalFollowVirtual) || nowOffset != playbackVerticalFollowApplied) {
+                playbackVerticalFollowVirtual = nowOffset;
+                playbackVerticalFollowApplied = nowOffset;
+            }
+            double delta = GetVerticalFollowDelta(playbackVerticalFollowTargetOffset.Value, playbackVerticalFollowVirtual);
             if (Math.Abs(delta) < 0.002) {
                 return;
             }
-            double nextOffset = Math.Clamp(nowOffset + delta, 0, VScrollBarMax);
-            if (Math.Abs(nextOffset - nowOffset) >= 0.002) {
-                TrackOffset = nextOffset;
+            double nextOffset = Math.Clamp(playbackVerticalFollowVirtual + delta, 0, VScrollBarMax);
+            playbackVerticalFollowVirtual = nextOffset;
+            double applied = nextOffset;
+            double rowHeight = TrackHeight;
+            if (rowHeight > 0 && applied > 0 && applied < VScrollBarMax) {
+                applied = Math.Round(applied * rowHeight) / rowHeight;
+            }
+            if (applied != nowOffset) {
+                TrackOffset = applied;
+                playbackVerticalFollowApplied = TrackOffset;
             }
             if (Math.Abs(playbackVerticalFollowTargetOffset.Value - nextOffset) < 0.05) {
                 playbackVerticalFollowTargetOffset = null;
@@ -1676,12 +1687,15 @@ namespace OpenUtau.App.ViewModels {
             return note.Prev == null ? prepTick : Math.Max(prepTick, note.Prev.RightBound);
         }
 
-        private double GetVerticalFollowDelta(double targetOffset) {
+        private double playbackVerticalFollowVirtual = double.NaN;
+        private double playbackVerticalFollowApplied;
+
+        private double GetVerticalFollowDelta(double targetOffset, double currentOffset) {
             var now = PlaybackClock.Now;
             double dt = Math.Clamp((now - playbackVerticalFollowLastFrame).TotalSeconds, 0, 0.05);
             playbackVerticalFollowLastFrame = now;
             double alpha = 1 - Math.Exp(-Preferences.Default.PlaybackVerticalFollowDamping * dt);
-            return Math.Clamp((targetOffset - TrackOffset) * alpha,
+            return Math.Clamp((targetOffset - currentOffset) * alpha,
                 -Preferences.Default.PlaybackVerticalFollowMaxStep,
                 Preferences.Default.PlaybackVerticalFollowMaxStep);
         }
@@ -1721,6 +1735,7 @@ namespace OpenUtau.App.ViewModels {
         private void ResetPlaybackVerticalFollow() {
             playbackVerticalFollowLastFrame = PlaybackClock.Now;
             playbackVerticalFollowTargetOffset = null;
+            playbackVerticalFollowVirtual = double.NaN;
         }
 
         private double GetScrollValueDelta(double positionX) {
