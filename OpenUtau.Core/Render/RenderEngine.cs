@@ -268,9 +268,13 @@ namespace OpenUtau.Core.Render {
                 oldCancellation.Cancel();
                 oldCancellation.Dispose();
             }
-            Task.Run(() => {
+            Task.Run(async () => {
                 try {
-                    Thread.Sleep(200);
+                    try {
+                        await Task.Delay(200, newCancellation.Token);
+                    } catch (OperationCanceledException) {
+                        return;
+                    }
                     if (newCancellation.Token.IsCancellationRequested) {
                         return;
                     }

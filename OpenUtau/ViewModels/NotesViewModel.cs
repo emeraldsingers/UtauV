@@ -849,6 +849,7 @@ namespace OpenUtau.App.ViewModels {
             DeselectNotes();
             Part = null;
             playbackNotes = Array.Empty<UNote>();
+            playbackIndexDirty = true;
             ResetPlaybackVerticalFollow();
             LoadPortrait(null, null);
             LoadWindowTitle(null, null);
@@ -1043,7 +1044,7 @@ namespace OpenUtau.App.ViewModels {
         }
 
         public void CleanupSelectedNotes() {
-            if (Part == null) {
+            if (Part == null || Selection.Count == 0) {
                 return;
             }
             var toCleanup = Selection.Except(Part.notes).ToList();
@@ -1569,6 +1570,7 @@ namespace OpenUtau.App.ViewModels {
         }
 
         private UNote? FindPlaybackVerticalFollowNote(int tick) {
+            EnsurePlaybackNoteIndex();
             int low = 0;
             int high = playbackNotes.Length - 1;
             UNote? next = null;
@@ -1623,11 +1625,22 @@ namespace OpenUtau.App.ViewModels {
                 Preferences.Default.PlaybackVerticalFollowMaxStep);
         }
 
+        private bool playbackIndexDirty = true;
+
         private void RebuildPlaybackNoteIndex() {
+            playbackIndexDirty = true;
+        }
+
+        private void EnsurePlaybackNoteIndex() {
+            if (!playbackIndexDirty) {
+                return;
+            }
+            playbackIndexDirty = false;
             playbackNotes = Part?.notes.ToArray() ?? Array.Empty<UNote>();
         }
 
         public UNote? FindVoiceNoteAtTick(int tick) {
+            EnsurePlaybackNoteIndex();
             int low = 0;
             int high = playbackNotes.Length - 1;
             while (low <= high) {

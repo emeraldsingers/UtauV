@@ -337,7 +337,9 @@ namespace OpenUtau.Core {
                 return;
             }
             if (mainThread != Thread.CurrentThread) {
-                if (!(cmd is ProgressBarNotification or PhraseRenderStateNotification)) {
+                if (!(cmd is ProgressBarNotification or PhraseRenderStateNotification
+                    or RealCurvesUpdatedNotification or RealCurveCoverageNotification
+                    or RebuildPhraseBlocksNotification or PartRenderedNotification)) {
                     Log.Warning($"{cmd} not on main thread");
                 }
                 PostOnUIThread(() => ExecuteCmd(cmd));
@@ -415,7 +417,7 @@ namespace OpenUtau.Core {
                 }
                 Publish(cmd);
                 if (!cmd.Silent) {
-                    Log.Information($"Publish notification {cmd}");
+                    Log.Information("Publish notification {Command}", cmd);
                 }
                 return;
             }

@@ -226,6 +226,7 @@ namespace OpenUtau.Core {
             Part = part;
         }
 
+        public override bool Silent => true;
         public override string ToString() => $"Rebuild phrase blocks | {Part.DisplayName}";
     }
 
@@ -361,6 +362,7 @@ namespace OpenUtau.Core {
             this.focusTick = focusTick;
         }
 
+        public override bool Silent => true;
         public override string ToString() => "Pre-render notification.";
     }
 
@@ -368,6 +370,7 @@ namespace OpenUtau.Core {
         public PartRenderedNotification(UVoicePart part) {
             this.part = part;
         }
+        public override bool Silent => true;
         public override string ToString() => "Part rendered.";
     }
 
