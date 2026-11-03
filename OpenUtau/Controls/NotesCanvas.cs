@@ -210,6 +210,21 @@ namespace OpenUtau.App.Controls {
         private Point lastPointerPos;
         private readonly Dictionary<(Color color, byte alpha, int thickness), Pen> glowPens = new();
 
+        private int brushPreviewStart = -1;
+        private int brushPreviewEnd = -1;
+        private IBrush? preserveFill;
+        private IBrush? preservePreviewFill;
+
+        /// <summary>Live range while the take-lock brush is dragging; -1 clears it.</summary>
+        public void SetBrushPreview(int startTick, int endTick) {
+            if (brushPreviewStart == startTick && brushPreviewEnd == endTick) {
+                return;
+            }
+            brushPreviewStart = startTick;
+            brushPreviewEnd = endTick;
+            InvalidateVisual();
+        }
+
         public NotesCanvas() {
             ClipToBounds = true;
             pointGeometry = new EllipseGeometry(new Rect(-2.5, -2.5, 5, 5));
@@ -412,6 +427,7 @@ namespace OpenUtau.App.Controls {
             renderPassActive = true;
             try {
                 DrawBackgroundForHitTest(context);
+                DrawPreservedRanges(context);
                 double leftTick = TickOffset - 480;
                 double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
                 bool hidePitch = viewModel.TickWidth <= ViewConstants.PianoRollTickWidthShowDetails * 0.5;
@@ -503,6 +519,44 @@ namespace OpenUtau.App.Controls {
 
         private void DrawBackgroundForHitTest(DrawingContext context) {
             context.DrawRectangle(Brushes.Transparent, null, Bounds.WithX(0).WithY(0));
+        }
+
+        /// <summary>
+        /// The ranges the take lock will keep. Drawn under the notes so it reads as
+        /// a region of the timeline rather than a note attribute.
+        /// </summary>
+        private void DrawPreservedRanges(DrawingContext context) {
+            var ranges = Part?.preservedRanges;
+            bool hasRanges = ranges != null && ranges.Count > 0;
+            bool hasPreview = brushPreviewStart >= 0 && brushPreviewEnd > brushPreviewStart;
+            if (!hasRanges && !hasPreview) {
+                return;
+            }
+            preserveFill ??= new SolidColorBrush(Color.FromArgb(38, 96, 200, 128));
+            preservePreviewFill ??= new SolidColorBrush(Color.FromArgb(72, 120, 220, 150));
+            if (hasRanges) {
+                foreach (var range in ranges!) {
+                    DrawTickRange(context, range.start, range.end, preserveFill, null);
+                }
+            }
+            if (hasPreview) {
+                DrawTickRange(context, brushPreviewStart, brushPreviewEnd, preservePreviewFill,
+                    new Pen(preservePreviewFill, 1));
+            }
+        }
+
+        private void DrawTickRange(DrawingContext context, int start, int end, IBrush fill, Pen? pen) {
+            double x0 = (start - TickOffset) * TickWidth;
+            double x1 = (end - TickOffset) * TickWidth;
+            if (x1 <= 0 || x0 >= Bounds.Width) {
+                return;
+            }
+            x0 = Math.Max(0, x0);
+            x1 = Math.Min(Bounds.Width, x1);
+            if (x1 <= x0) {
+                return;
+            }
+            context.DrawRectangle(fill, pen, new Rect(x0, 0, x1 - x0, Bounds.Height));
         }
 
         private void RenderPhonemePanels(NotesViewModel viewModel, DrawingContext context) {

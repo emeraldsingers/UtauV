@@ -18,6 +18,7 @@ using OpenUtau.App.Views;
 using OpenUtau.App.Roflofic;
 using OpenUtau.Core;
 using OpenUtau.Core.Render;
+using OpenUtau.Core.DiffSinger;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using OpenUtau.ViewModels;
@@ -68,6 +69,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public partial bool LivePitchFast { get; set; }
         [Reactive] public partial bool MergeNearbyPhrases { get; set; }
         [Reactive] public partial bool IsDiffSinger { get; set; }
+        /// <summary>While on, dragging on the notes canvas paints take-lock ranges.</summary>
+        [Reactive] public partial bool IsProtectBrush { get; set; }
         bool livePitchSyncing;
         [Reactive] public partial bool ShowWaveform { get; set; }
         [Reactive] public partial bool ShowRenderPhraseBoundaries { get; set; }
@@ -898,6 +901,9 @@ namespace OpenUtau.App.ViewModels {
             var renderer = track.RendererSettings.Renderer;
             IsDiffSinger = renderer?.SingerType == USingerType.DiffSinger
                 || track.Singer?.SingerType == USingerType.DiffSinger;
+            if (!IsDiffSinger) {
+                IsProtectBrush = false;
+            }
         }
 
         private void DeselectNote(UNote note) {
@@ -1297,6 +1303,25 @@ namespace OpenUtau.App.ViewModels {
             DocManager.Inst.EndUndoGroup();
         }
 
+        /// <summary>
+        /// Re-samples the selected notes (or the whole part) while the take lock
+        /// keeps every other frame. This is the "roll again, but not here" action.
+        /// </summary>
+        public void RerollPreservingLocks() {
+            if (Part == null) {
+                return;
+            }
+            var ranges = new List<(int start, int end)>();
+            foreach (var note in Selection) {
+                ranges.Add((Part.position + note.position, Part.position + note.End));
+            }
+            if (ranges.Count == 0) {
+                ranges.Add((Part.position, Part.End));
+            }
+            DiffSingerTakeReroll.Request(Part.trackNo, ranges);
+            DocManager.Inst.ExecuteCmd(new PreRenderNotification(Part));
+        }
+
         public void ClearPhraseCache() {
             if (Part != null && !Selection.IsEmpty) {
                 DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, ThemeManager.GetString("progress.clearingcache")));
@@ -1405,6 +1430,9 @@ namespace OpenUtau.App.ViewModels {
         }
 
         public void OnNext(UCommand cmd, bool isUndo) {
+            if (cmd is SetPreservedRangesCommand) {
+                MessageBus.Current.SendMessage(new NotesRefreshEvent());
+            }
             if (cmd is UNotification notif) {
                 if (cmd is LoadPartNotification loadPart) {
                     LoadPart(loadPart.part, loadPart.project);

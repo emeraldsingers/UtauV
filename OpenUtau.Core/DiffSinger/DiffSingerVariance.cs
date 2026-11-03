@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -270,8 +270,12 @@ namespace OpenUtau.Core.DiffSinger{
                 "diffsinger_retake",
                 new DenseTensor<int>(new[] { retakeVersion }, new[] { 1 }, false)));
             ulong? variancePatchKey = null;
-            if (Preferences.Default.DiffSingerTensorCache &&
-                Preferences.Default.DiffSingerVarianceLocalPitchPatch) {
+            // Take lock needs the previous prediction even when the standalone patch
+            // preference is off, otherwise a pitch edit re-rolls the whole phrase's
+            // variance and there is nothing local for the acoustic take to keep.
+            bool localVariancePatch = Preferences.Default.DiffSingerTakeLock ||
+                (Preferences.Default.DiffSingerTensorCache && Preferences.Default.DiffSingerVarianceLocalPitchPatch);
+            if (localVariancePatch) {
                 var baseHash = new DiffSingerCache(varianceHash, variancePatchInputs).Hash;
                 variancePatchKey = DiffSingerVariancePatch.BuildStateKey(baseHash, phrase.position, phrase.end);
             }

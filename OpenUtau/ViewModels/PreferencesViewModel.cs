@@ -192,6 +192,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial double DiffSingerDepth { get; set; }
         [Reactive] public partial bool DiffSingerTensorCache { get; set; }
         [Reactive] public partial bool DiffSingerVarianceLocalPitchPatch { get; set; }
+        [Reactive] public partial bool DiffSingerTakeLock { get; set; }
         [Reactive] public partial bool DiffSingerLangCodeHide { get; set; }
         [Reactive] public partial bool DiffSingerAutoSP { get; set; }
         [Reactive] public partial int DiffSingerAutoSPMs { get; set; }
@@ -308,6 +309,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             DiffSingerStepsPitch = Preferences.Default.DiffSingerStepsPitch;
             DiffSingerTensorCache = Preferences.Default.DiffSingerTensorCache;
             DiffSingerVarianceLocalPitchPatch = Preferences.Default.DiffSingerVarianceLocalPitchPatch;
+            DiffSingerTakeLock = Preferences.Default.DiffSingerTakeLock;
             DiffSingerLangCodeHide = Preferences.Default.DiffSingerLangCodeHide;
             DiffSingerAutoSP = Preferences.Default.DiffSingerAutoSP;
             DiffSingerAutoSPMs = Math.Clamp(Preferences.Default.DiffSingerAutoSPMs, 10, 200);
@@ -895,6 +897,11 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
                         DocManager.Inst.Project.ValidateFull();
                         DocManager.Inst.ExecuteCmd(new ValidateProjectNotification());
                     }
+                });
+            this.WhenAnyValue(vm => vm.DiffSingerTakeLock)
+                .Subscribe(value => {
+                    Preferences.Default.DiffSingerTakeLock = value;
+                    Preferences.Save();
                 });
         }
 

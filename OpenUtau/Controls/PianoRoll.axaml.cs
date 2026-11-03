@@ -953,6 +953,11 @@ namespace OpenUtau.App.Controls {
         }
 
         private void NotesCanvasLeftPointerPressed(Control control, PointerPoint point, PointerPressedEventArgs args) {
+            if (ViewModel.NotesViewModel.IsProtectBrush && args.KeyModifiers != cmdKey) {
+                editState = new ProtectRangeEditState(control, ViewModel, this, erase: false);
+                Cursor = ViewConstants.cursorCross;
+                return;
+            }
             EditTools tool = ViewModel.EditTool.CurrentTool;
             if (ViewModel.EditTool.IsPitchTool && tool != EditTools.PitchPointTool) {
                 ViewModel.NotesViewModel.DeselectNotes();
@@ -1071,6 +1076,11 @@ namespace OpenUtau.App.Controls {
         }
 
         private void NotesCanvasRightPointerPressed(Control control, PointerPoint point, PointerPressedEventArgs args) {
+            if (ViewModel.NotesViewModel.IsProtectBrush) {
+                editState = new ProtectRangeEditState(control, ViewModel, this, erase: true);
+                Cursor = ViewConstants.cursorNo;
+                return;
+            }
             if (ViewModel.NotesContextMenuItems.Count > 0) {
                 ViewModel.NotesContextMenuItems.Clear();
             }
@@ -1208,6 +1218,13 @@ namespace OpenUtau.App.Controls {
                             Header = ThemeManager.GetString("context.note.clearcache"),
                             Command = ViewModel.ClearPhraseCacheCommand,
                         });
+                        if (ViewModel.NotesViewModel.IsDiffSinger && Preferences.Default.DiffSingerTakeLock) {
+                            ViewModel.NotesContextMenuItems.Add(new MenuItemViewModel() {
+                                Header = ThemeManager.GetString("context.note.reroll"),
+                                Command = ViewModel.RerollTakeLockCommand,
+                                CommandParameter = hitInfo,
+                            });
+                        }
                         shouldOpenNotesContextMenu = true;
                         return;
                     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,6 +21,8 @@ namespace OpenUtau.Core.DiffSinger {
         const string ENE = DiffSingerUtils.ENE;
         const string PEXP = DiffSingerUtils.PEXP;
         const string VoiceColorHeader = DiffSingerUtils.VoiceColorHeader;
+        // Distinguishes re-roll wav names across process starts, where the nonce resets.
+        static readonly string sessionTag = Guid.NewGuid().ToString("N").Substring(0, 8);
 
         static readonly HashSet<string> supportedExp = new HashSet<string>(){
             Format.Ustx.DYN,
@@ -127,29 +129,83 @@ namespace OpenUtau.Core.DiffSinger {
                 } else {
                     depth = 1.0;
                 }
-                var wavName = GetRenderCacheFileName(
+                bool takeLock = Preferences.Default.DiffSingerTakeLock;
+                int phraseStartTick = phrase.timeAxis.MsPosToTickPos(phrase.positionMs);
+                int phraseEndTick = phrase.timeAxis.MsPosToTickPos(phrase.endMs);
+                ulong takeKey = DiffSingerTakeStore.ComputeKey(
+                    phrase, singer.Id, trackNo, phraseStartTick, singer.dsConfig.frameMs(),
+                    singer.dsConfig.num_mel_bins, depth, steps, phrase.isXsyVariant);
+                phrase.AddCacheFile(DiffSingerTakeStore.GetFilename(takeKey));
+                int rerollNonce = 0;
+                int rerollEpoch = 0;
+                List<(int start, int end)>? rerollRanges = null;
+                DateTime rerollCreatedUtc = default;
+                if (takeLock) {
+                    rerollNonce = DiffSingerTakeReroll.Consume(
+                        trackNo, phraseStartTick, phraseEndTick,
+                        out rerollRanges, out rerollCreatedUtc, out rerollEpoch);
+                }
+                var preservedRanges = phrase.preservedRanges;
+                string takeTag = takeLock
+                    ? $"-t{takeKey:x16}-p{DiffSingerTakeStore.ComputePreserveHash(preservedRanges, phraseStartTick, phraseEndTick):x16}"
+                    : string.Empty;
+                string generation = rerollNonce > 0 ? $"-g{rerollNonce}-s{sessionTag}" : string.Empty;
+                var baseWavName = GetRenderCacheFileName(
                     phrase.hash,
                     depth,
                     steps,
                     Preferences.Default.DiffSingerStepsVariance,
                     Preferences.Default.DiffSingerVarianceLocalPitchPatch);
+                var wavName = takeTag.Length + generation.Length == 0
+                    ? baseWavName
+                    : baseWavName.Insert("ds-".Length + 16, takeTag + generation);
                 var wavPath = Path.Join(PathManager.Inst.CachePath, wavName);
                 phrase.AddCacheFile(wavPath);
                 string progressInfo = $"Track {trackNo + 1}: {this} depth={depth:f2} steps={steps} \"{string.Join(" ", phrase.phones.Select(p => p.phoneme))}\"";
-                result.samples = TryReadCachedRender(wavPath);
+                bool LoadCachedRender() {
+                    result.samples = TryReadCachedRender(wavPath);
+                    if (result.samples == null) {
+                        return false;
+                    }
+                    var cachedTake = DiffSingerTakeStore.TryLoad(takeKey);
+                    if (cachedTake != null && cachedTake.WavFile != wavName) {
+                        result.onAccepted = () =>
+                            DiffSingerTakeStore.DeleteIfMatches(takeKey, cachedTake.WavFile);
+                    }
+                    return true;
+                }
+                if (!takeLock) {
+                    LoadCachedRender();
+                }
                 if (result.samples == null) {
                     lock (lockObj) {
                         // The static lock serializes DiffSinger renders; the DirectML scope additionally
                         // keeps them from overlapping pitch/variance work or session disposal.
                         using var dmlScope = Onnx.EnterDmlScope();
                         if (cancellation.IsCancellationRequested) {
+                            DiffSingerTakeReroll.Restore(trackNo, rerollNonce, rerollCreatedUtc, rerollEpoch, rerollRanges);
                             return new RenderResult();
                         }
-                        result.samples = TryReadCachedRender(wavPath);
+                        if (!takeLock) {
+                            LoadCachedRender();
+                        }
                         if (result.samples == null) {
-                            result.samples = InvokeDiffsinger(phrase, depth, steps, cancellation, renderEvents);
-                            if (result.samples != null) {
-                                WriteCachedRender(wavPath, result.samples);
+                            try {
+                                var outcome = InvokeDiffsinger(phrase, depth, steps, cancellation, renderEvents,
+                                    takeKey, rerollRanges, preservedRanges, takeLock);
+                                result.samples = outcome.Samples;
+                                if (result.samples != null) {
+                                    WriteCachedRender(wavPath, result.samples);
+                                    if (outcome.Take != null) {
+                                        outcome.Take.WavFile = wavName;
+                                        DiffSingerTakeStore.Save(outcome.Take);
+                                    }
+                                } else {
+                                    DiffSingerTakeReroll.Restore(trackNo, rerollNonce, rerollCreatedUtc, rerollEpoch, rerollRanges);
+                                }
+                            } catch {
+                                DiffSingerTakeReroll.Restore(trackNo, rerollNonce, rerollCreatedUtc, rerollEpoch, rerollRanges);
+                                throw;
                             }
                         }
                     }
@@ -188,7 +244,10 @@ namespace OpenUtau.Core.DiffSinger {
         leadingMs、positionMs、estimatedLengthMs: timeaxis layout in Ms, double
          */
 
-        float[] InvokeDiffsinger(RenderPhrase phrase, double depth, int steps, CancellationTokenSource cancellation, RenderPhraseEvents? renderEvents) {
+        (float[]? Samples, DiffSingerTake? Take) InvokeDiffsinger(
+                RenderPhrase phrase, double depth, int steps, CancellationTokenSource cancellation,
+                RenderPhraseEvents? renderEvents, ulong takeKey, IReadOnlyList<(int start, int end)>? rerollRanges,
+                IReadOnlyList<(int start, int end)>? preservedRanges, bool takeLock) {
             var singer = phrase.singer as DiffSingerSinger;
             //Check if dsconfig.yaml is correct
             if(String.IsNullOrEmpty(singer.dsConfig.vocoder) ||
@@ -276,6 +335,17 @@ namespace OpenUtau.Core.DiffSinger {
             var frameSec = frameMs / 1000;
             int headFrames = DiffSingerUtils.headFrames;
             int tailFrames = DiffSingerUtils.tailFrames;
+            int bins = singer.dsConfig.num_mel_bins;
+            int fadeFrames = headFrames + tailFrames;
+            // Everything the acoustic model consumes, per frame, for take diffing.
+            var takeConditions = new List<DiffSingerTakeCondition>();
+            void AddCondition(string name, float[] values, int valuesPerFrame = 1) {
+                takeConditions.Add(new DiffSingerTakeCondition {
+                    Name = name,
+                    Values = values,
+                    ValuesPerFrame = valuesPerFrame,
+                });
+            }
             var result = Layout(phrase);
             //acoustic
             //mel = session.run(['mel'], {'tokens': tokens, 'durations': durations, 'f0': f0, 'speedup': speedup})[0]
@@ -296,6 +366,8 @@ namespace OpenUtau.Core.DiffSinger {
             float[] shiftedF0 = f0.Zip(DiffSingerUtils.SampleCurve(phrase, phrase.toneShift, 0, frameMs, totalFrames,
                 headFrames, tailFrames, x => x),
                 (x, d) => x * (float) Math.Pow(2, d / 1200)).ToArray();
+            float[] acousticF0 = vocoder.pitch_controllable ? shiftedF0 : f0;
+            AddCondition("f0", acousticF0);
 
             var acousticInputs = new List<NamedOnnxValue>();
             acousticInputs.Add(NamedOnnxValue.CreateFromTensor("tokens",
@@ -304,15 +376,9 @@ namespace OpenUtau.Core.DiffSinger {
             acousticInputs.Add(NamedOnnxValue.CreateFromTensor("durations",
                 new DenseTensor<long>(durations.Select(x=>(long)x).ToArray(), new int[] { durations.Count }, false)
                 .Reshape(new int[] { 1, durations.Count })));
-            var f0Tensor = new DenseTensor<float>(f0, new int[] { f0.Length })
-                .Reshape(new int[] { 1, f0.Length });
-            if (vocoder.pitch_controllable) {
-                var shiftedF0Tensor = new DenseTensor<float>(shiftedF0, new int[] { shiftedF0.Length })
-                    .Reshape(new int[] { 1, shiftedF0.Length });
-                acousticInputs.Add(NamedOnnxValue.CreateFromTensor("f0", shiftedF0Tensor));
-            } else {
-                acousticInputs.Add(NamedOnnxValue.CreateFromTensor("f0", f0Tensor));
-            }
+            acousticInputs.Add(NamedOnnxValue.CreateFromTensor("f0",
+                new DenseTensor<float>(acousticF0, new int[] { acousticF0.Length })
+                    .Reshape(new int[] { 1, acousticF0.Length })));
 
             // sampling acceleration related
             if (singer.dsConfig.useContinuousAcceleration) {
@@ -355,6 +421,7 @@ namespace OpenUtau.Core.DiffSinger {
                 var speakerEmbedManager = singer.getSpeakerEmbedManager();
                 var spkEmbedTensor = speakerEmbedManager.PhraseSpeakerEmbedByFrame(phrase, durations, frameMs, totalFrames, headFrames, tailFrames);
                 acousticInputs.Add(NamedOnnxValue.CreateFromTensor("spk_embed", spkEmbedTensor));
+                AddCondition("spk_embed", spkEmbedTensor.ToArray(), spkEmbedTensor.Dimensions[2]);
             }
             //gender
             //Definition of GENC: 100 = 12 semitones of formant shift, positive GENC means shift down
@@ -369,6 +436,7 @@ namespace OpenUtau.Core.DiffSinger {
                 var genderTensor = new DenseTensor<float>(gender, new int[] { gender.Length })
                     .Reshape(new int[] { 1, gender.Length });
                 acousticInputs.Add(NamedOnnxValue.CreateFromTensor("gender", genderTensor));
+                AddCondition("gender", gender);
             }
 
             //velocity
@@ -388,6 +456,7 @@ namespace OpenUtau.Core.DiffSinger {
                 var velocityTensor = new DenseTensor<float>(velocity, new int[] { velocity.Length })
                     .Reshape(new int[] { 1, velocity.Length });
                 acousticInputs.Add(NamedOnnxValue.CreateFromTensor("velocity", velocityTensor));
+                AddCondition("velocity", velocity);
             }
 
             //Variance: Energy, Breathiness, Voicing and Tension
@@ -403,7 +472,7 @@ namespace OpenUtau.Core.DiffSinger {
                 VarianceResult varianceResult;
                 lock(singer.SessionLock){
                     if(cancellation.IsCancellationRequested) {
-                        return null;
+                        return (null, null);
                     }
                     varianceResult = singer.getVariancePredictor().Process(phrase);
                 }
@@ -433,6 +502,7 @@ namespace OpenUtau.Core.DiffSinger {
                     acousticInputs.Add(NamedOnnxValue.CreateFromTensor("energy",
                         new DenseTensor<float>(energy, new int[] { energy.Length })
                         .Reshape(new int[] { 1, energy.Length })));
+                    AddCondition("energy", energy);
                 }
                 if(singer.dsConfig.useBreathinessEmbed){
                     var userBreathiness = DiffSingerUtils.SampleCurve(phrase, phrase.breathiness,
@@ -453,6 +523,7 @@ namespace OpenUtau.Core.DiffSinger {
                     acousticInputs.Add(NamedOnnxValue.CreateFromTensor("breathiness",
                         new DenseTensor<float>(breathiness, new int[] { breathiness.Length })
                         .Reshape(new int[] { 1, breathiness.Length })));
+                    AddCondition("breathiness", breathiness);
                 }
                 if(singer.dsConfig.useVoicingEmbed){
                     var userVoicing = DiffSingerUtils.SampleCurve(phrase, phrase.voicing,
@@ -473,6 +544,7 @@ namespace OpenUtau.Core.DiffSinger {
                     acousticInputs.Add(NamedOnnxValue.CreateFromTensor("voicing",
                         new DenseTensor<float>(voicing, new int[] { voicing.Length })
                         .Reshape(new int[] { 1, voicing.Length })));
+                    AddCondition("voicing", voicing);
                 }
                 if(singer.dsConfig.useTensionEmbed){
                     var userTension = DiffSingerUtils.SampleCurve(phrase, phrase.tension,
@@ -493,50 +565,101 @@ namespace OpenUtau.Core.DiffSinger {
                     acousticInputs.Add(NamedOnnxValue.CreateFromTensor("tension",
                         new DenseTensor<float>(tension, new int[] { tension.Length })
                         .Reshape(new int[] { 1, tension.Length })));
+                    AddCondition("tension", tension);
                 }
             }
-            var acousticCache = Preferences.Default.DiffSingerTensorCache
-                ? new DiffSingerCache(singer.acousticHash, acousticInputs)
-                : null;
-            var acousticOutputs = acousticCache?.Load();
-            if (acousticOutputs is null) {
-                lock(singer.SessionLock){
-                    if(cancellation.IsCancellationRequested) {
-                        return null;
-                    }
-                    var acousticModel = singer.getAcousticSession();
-                    Onnx.VerifyInputNames(acousticModel, acousticInputs);
-                    acousticOutputs = acousticModel.Run(acousticInputs).Cast<NamedOnnxValue>().ToList();
-                }
-                acousticCache?.Save(acousticOutputs);
-                phrase.AddCacheFile(acousticCache?.Filename);
-            }
-            Tensor<float> mel = acousticOutputs.First().AsTensor<float>().Clone();
-            //mel transforms for different mel base
-            if (vocoder.mel_base != singer.dsConfig.mel_base) {
-                float k;
-                if (vocoder.mel_base == "e" && singer.dsConfig.mel_base == "10") {
-                    k = 2.30259f;
-                }
-                else if (vocoder.mel_base == "10" && singer.dsConfig.mel_base == "e") {
-                    k = 0.434294f;
-                } else {
-                    // this should never happen
-                    throw new Exception("This should never happen");
-                }
-                for (int b = 0; b < mel.Dimensions[0]; ++b) {
-                    for (int t = 0; t < mel.Dimensions[1]; ++t) {
-                        for (int c = 0; c < mel.Dimensions[2]; ++c) {
-                            mel[b, t, c] *= k;
+            // Take lock: compare the conditioning with the last accepted take. Frames
+            // that did not change keep the old mel, so a local curve edit stays local
+            // no matter how far the model's attention or receptive field reaches.
+            DiffSingerTake? previous = null;
+            float[]? weights = null;
+            if (takeLock && takeKey != 0) {
+                var candidate = DiffSingerTakeStore.TryLoad(takeKey);
+                if (candidate != null && candidate.IsCompatible(
+                        totalFrames, bins, frameMs, takeConditions,
+                        singer.acousticHash, vocoder.hash)) {
+                    previous = candidate;
+                    var changed = DiffSingerTakeComposer.DiffConditions(
+                        candidate.Conditions, takeConditions, totalFrames);
+                    double phraseStartMs = phrase.positionMs - headFrames * frameMs;
+                    if (rerollRanges != null) {
+                        foreach (var (rangeStart, rangeEnd) in DiffSingerTakeComposer.ToFrameRanges(
+                                rerollRanges, phrase.timeAxis, phraseStartMs, frameMs, totalFrames)) {
+                            for (int i = rangeStart; i < rangeEnd; i++) {
+                                changed[i] = true;
+                            }
                         }
                     }
+                    weights = DiffSingerTakeComposer.BuildWeights(changed, fadeFrames, totalFrames);
+                    if (preservedRanges != null && preservedRanges.Count > 0) {
+                        var protect = DiffSingerTakeComposer.ToFrameRanges(
+                            preservedRanges, phrase.timeAxis, phraseStartMs, frameMs, totalFrames);
+                        DiffSingerTakeComposer.ApplyProtect(weights, protect, fadeFrames);
+                    }
+                }
+            }
+
+            float[] melData;
+            float[] vocoderF0 = f0;
+            bool allOld = previous != null && weights != null && DiffSingerTakeComposer.IsAllOld(weights);
+            if (allOld) {
+                // Nothing the acoustic model sees changed: the take's mel is the render.
+                melData = previous!.Mel;
+                vocoderF0 = previous.F0;
+            } else {
+                // A reroll asks for a new sample from the same inputs; the input-keyed
+                // tensor cache would hand back the previous one instead.
+                var acousticCache = Preferences.Default.DiffSingerTensorCache && rerollRanges == null
+                    ? new DiffSingerCache(singer.acousticHash, acousticInputs)
+                    : null;
+                var acousticOutputs = acousticCache?.Load();
+                if (acousticOutputs is null) {
+                    lock (singer.SessionLock) {
+                        if (cancellation.IsCancellationRequested) {
+                            return (null, null);
+                        }
+                        var acousticModel = singer.getAcousticSession();
+                        Onnx.VerifyInputNames(acousticModel, acousticInputs);
+                        acousticOutputs = acousticModel.Run(acousticInputs).Cast<NamedOnnxValue>().ToList();
+                    }
+                    acousticCache?.Save(acousticOutputs);
+                    phrase.AddCacheFile(acousticCache?.Filename);
+                }
+                Tensor<float> mel = acousticOutputs.First().AsTensor<float>().Clone();
+                if (mel.Dimensions.Length != 3
+                        || mel.Dimensions[1] != totalFrames
+                        || mel.Dimensions[2] != bins) {
+                    throw new Exception(
+                        $"The shape of acoustic output should be (1, {totalFrames}, {bins}), but the actual shape is {DiffSingerUtils.ShapeString(mel)}");
+                }
+                melData = mel.ToArray();
+                //mel transforms for different mel base
+                if (vocoder.mel_base != singer.dsConfig.mel_base) {
+                    float k;
+                    if (vocoder.mel_base == "e" && singer.dsConfig.mel_base == "10") {
+                        k = 2.30259f;
+                    } else if (vocoder.mel_base == "10" && singer.dsConfig.mel_base == "e") {
+                        k = 0.434294f;
+                    } else {
+                        // this should never happen
+                        throw new Exception("This should never happen");
+                    }
+                    for (int i = 0; i < melData.Length; i++) {
+                        melData[i] *= k;
+                    }
+                }
+                if (previous != null && weights != null) {
+                    melData = DiffSingerTakeComposer.BlendMel(previous.Mel, melData, weights, totalFrames, bins);
+                    vocoderF0 = DiffSingerTakeComposer.BlendF0(previous.F0, f0, weights, totalFrames);
                 }
             }
             //vocoder
             //waveform = session.run(['waveform'], {'mel': mel, 'f0': f0})[0]
+            var melTensor = new DenseTensor<float>(melData, new[] { 1, totalFrames, bins });
+            var vocoderF0Tensor = new DenseTensor<float>(vocoderF0, new[] { 1, totalFrames });
             var vocoderInputs = new List<NamedOnnxValue>();
-            vocoderInputs.Add(NamedOnnxValue.CreateFromTensor("mel", mel));
-            vocoderInputs.Add(NamedOnnxValue.CreateFromTensor("f0",f0Tensor));
+            vocoderInputs.Add(NamedOnnxValue.CreateFromTensor("mel", melTensor));
+            vocoderInputs.Add(NamedOnnxValue.CreateFromTensor("f0", vocoderF0Tensor));
             var vocoderCache = Preferences.Default.DiffSingerTensorCache
                 ? new DiffSingerCache(vocoder.hash, vocoderInputs)
                 : null;
@@ -544,7 +667,7 @@ namespace OpenUtau.Core.DiffSinger {
             if (vocoderOutputs is null) {
                 lock(singer.SessionLock){
                     if(cancellation.IsCancellationRequested) {
-                        return null;
+                        return (null, null);
                     }
                     vocoderOutputs = singer.getVocoder().session.Run(vocoderInputs).Cast<NamedOnnxValue>().ToList();
                 }
@@ -563,7 +686,45 @@ namespace OpenUtau.Core.DiffSinger {
                 signal = NWaves.Operations.Operation.Resample(signal, 44100);
                 samples = signal.Samples;
             }
-            return samples;
+            if (previous != null && weights != null) {
+                // Frames with weight 0 (and, in the all-old shortcut, every frame) play
+                // the previous take's audio. Store the conditioning that actually produced
+                // each frame; otherwise a later render diffs against the edited values,
+                // sees no change, and pins the stale mel under them forever.
+                var composed = new List<DiffSingerTakeCondition>(takeConditions.Count);
+                for (int c = 0; c < takeConditions.Count; c++) {
+                    var current = takeConditions[c];
+                    var prior = previous.Conditions[c];
+                    int valuesPerFrame = current.ValuesPerFrame;
+                    var values = new float[current.Values.Length];
+                    for (int frame = 0; frame < totalFrames; frame++) {
+                        var source = weights[frame] > 0f ? current.Values : prior.Values;
+                        int offset = frame * valuesPerFrame;
+                        Array.Copy(source, offset, values, offset, valuesPerFrame);
+                    }
+                    composed.Add(new DiffSingerTakeCondition {
+                        Name = current.Name,
+                        Values = values,
+                        ValuesPerFrame = valuesPerFrame,
+                    });
+                }
+                takeConditions = composed;
+            }
+            DiffSingerTake? take = null;
+            if (takeKey != 0) {
+                take = new DiffSingerTake {
+                    Key = takeKey,
+                    TotalFrames = totalFrames,
+                    Bins = bins,
+                    FrameMs = frameMs,
+                    Mel = melData,
+                    F0 = vocoderF0,
+                    Conditions = takeConditions.ToArray(),
+                    AcousticHash = singer.acousticHash,
+                    VocoderHash = vocoder.hash,
+                };
+            }
+            return (samples, take);
         }
 
         public RenderPitchResult LoadRenderedPitch(RenderPhrase phrase) {
