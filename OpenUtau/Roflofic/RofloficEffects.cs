@@ -31,6 +31,7 @@ namespace OpenUtau.App.Roflofic {
                 Dispatcher.UIThread.Post(() => SetRainbowEnabled(enabled));
                 return;
             }
+            enabled &= !OpenUtau.Core.Util.Preferences.Default.LowPerformanceMode;
             RainbowEnabled = enabled;
             if (enabled) Timer.Start(); else Timer.Stop();
             Changed?.Invoke();

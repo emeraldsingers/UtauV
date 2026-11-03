@@ -82,7 +82,7 @@ namespace OpenUtau.App.Controls {
         /// is not in a window, so there are no frames to glide on.
         /// </returns>
         internal bool Start() {
-            if (Preferences.Default.ReduceAnimations) {
+            if (Preferences.Default.ReduceAnimations || Preferences.Default.LowPerformanceMode) {
                 return false;
             }
             var topLevel = TopLevel.GetTopLevel(owner);

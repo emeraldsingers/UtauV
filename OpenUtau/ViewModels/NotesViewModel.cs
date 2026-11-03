@@ -677,7 +677,7 @@ namespace OpenUtau.App.ViewModels {
                     }
                 }
             }
-            if (singer == null || string.IsNullOrEmpty(singer.Portrait) || !Preferences.Default.ShowPortrait) {
+            if (singer == null || string.IsNullOrEmpty(singer.Portrait) || !Preferences.Default.ShowPortrait || Preferences.Default.LowPerformanceMode) {
                 lock (portraitLock) {
                     DisposePortraits();
                     portraitSource = null;

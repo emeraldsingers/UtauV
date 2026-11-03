@@ -87,6 +87,18 @@ namespace OpenUtau.App {
                 builder.UseWaylandWithFallback();
             }
             
+            if (OS.IsWindows()) {
+                var modes = Core.Util.Preferences.Default.WindowsRenderBackend switch {
+                    1 => new[] { Win32RenderingMode.AngleEgl, Win32RenderingMode.Software },
+                    2 => new[] { Win32RenderingMode.Wgl, Win32RenderingMode.Software },
+                    3 => new[] { Win32RenderingMode.Software },
+                    _ => null,
+                };
+                if (modes != null) {
+                    builder.With(new Win32PlatformOptions { RenderingMode = modes });
+                }
+            }
+
             return builder.With(new X11PlatformOptions {
                 EnableIme = true
             });

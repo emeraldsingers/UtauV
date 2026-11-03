@@ -72,6 +72,7 @@ namespace OpenUtau.App.Controls {
 
         public PianoRoll(PianoRollViewModel model) {
             InitializeComponent();
+            Loaded += (_, _) => LowPerformance.StripShadows(this);
             DataContext = ViewModel = model;
             var smoothViewport = new SmoothViewport(this);
             hScroll = smoothViewport.Scroll(HScrollBar);
@@ -99,7 +100,7 @@ namespace OpenUtau.App.Controls {
 
         private void UpdatePortraitSpin() {
             var notes = ViewModel?.NotesViewModel;
-            bool active = notes?.ShowPlaybackPortraitSpin == true && PlaybackClock.IsActive;
+            bool active = notes?.ShowPlaybackPortraitSpin == true && PlaybackClock.IsActive && !Preferences.Default.LowPerformanceMode;
             if (active) {
                 var note = ViewModel?.PlaybackViewModel == null
                     ? null

@@ -160,6 +160,9 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial bool PitchEditMode { get; set; }
         [Reactive] public partial double PitchEditDim { get; set; }
         [Reactive] public partial bool ReduceAnimations { get; set; }
+        [Reactive] public partial bool LowPerformanceMode { get; set; }
+        [Reactive] public partial int WindowsRenderBackend { get; set; }
+        public bool IsWindows => OS.IsWindows();
         [Reactive] public partial bool ShowPlaybackNoteHighlight { get; set; }
         [Reactive] public partial bool ShowPlaybackNoteBounce { get; set; }
         [Reactive] public partial bool DetachPianoRoll { get; set; }
@@ -339,6 +342,8 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             PitchEditMode = Preferences.Default.PitchEditMode;
             PitchEditDim = Preferences.Default.PitchEditDim;
             ReduceAnimations = Preferences.Default.ReduceAnimations;
+            LowPerformanceMode = Preferences.Default.LowPerformanceMode;
+            WindowsRenderBackend = Preferences.Default.WindowsRenderBackend;
             ShowPlaybackNoteHighlight = Preferences.Default.ShowPlaybackNoteHighlight;
             ShowPlaybackNoteBounce = Preferences.Default.ShowPlaybackNoteBounce;
             DetachPianoRoll = Preferences.Default.DetachPianoRoll;
@@ -465,6 +470,16 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
             this.WhenAnyValue(vm => vm.PreRender)
                 .Subscribe(preRender => {
                     Preferences.Default.PreRender = preRender;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.LowPerformanceMode)
+                .Subscribe(value => {
+                    Preferences.Default.LowPerformanceMode = value;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.WindowsRenderBackend)
+                .Subscribe(value => {
+                    Preferences.Default.WindowsRenderBackend = value;
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.ReduceAnimations)

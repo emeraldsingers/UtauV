@@ -109,7 +109,7 @@ viewModel.NewProject();
             var lastIsPlaying = false;
             var lastShowHighlight = true;
             timer = new DispatcherTimer(
-                TimeSpan.FromMilliseconds(25),
+                TimeSpan.FromMilliseconds(Preferences.Default.LowPerformanceMode ? 40 : 25),
                 DispatcherPriority.Normal,
                 (sender, args) => {
                     PlaybackManager.Inst.UpdatePlayPos();
@@ -126,6 +126,7 @@ viewModel.NewProject();
                     }
                 });
             timer.Start();
+            Loaded += (_, _) => LowPerformance.StripShadows(this);
 
             autosaveTimer = new DispatcherTimer(
                 TimeSpan.FromSeconds(1),

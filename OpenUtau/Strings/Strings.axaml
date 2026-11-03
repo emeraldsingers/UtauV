@@ -895,6 +895,9 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.appearance.lipsync">Lip sync portraits and icons</system:String>
   <system:String x:Key="prefs.appearance.lipsyncinterpolation">Smooth lip sync transitions</system:String>
   <system:String x:Key="prefs.appearance.reduceanimations">Reduce animations</system:String>
+  <system:String x:Key="prefs.appearance.lowperformance">Low performance mode (disables effects, shadows and portrait; restart recommended)</system:String>
+  <system:String x:Key="prefs.appearance.renderbackend">Rendering backend (Windows, restart required)</system:String>
+  <system:String x:Key="prefs.appearance.renderbackend.auto">Auto</system:String>
   <system:String x:Key="prefs.appearance.renderbackground">Show render status in track background</system:String>
   <system:String x:Key="prefs.appearance.showportrait">Show portrait on piano roll</system:String>
   <system:String x:Key="prefs.appearance.sortorder">Singer name display language</system:String>

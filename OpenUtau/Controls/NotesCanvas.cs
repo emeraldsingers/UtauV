@@ -127,15 +127,15 @@ namespace OpenUtau.App.Controls {
         }
         public bool ShowPlaybackNoteHighlight {
             get => showPlaybackNoteHighlight;
-            private set => SetAndRaise(ShowPlaybackNoteHighlightProperty, ref showPlaybackNoteHighlight, value);
+            private set => SetAndRaise(ShowPlaybackNoteHighlightProperty, ref showPlaybackNoteHighlight, value && !Preferences.Default.LowPerformanceMode);
         }
         public bool ShowPlaybackNoteBounce {
             get => showPlaybackNoteBounce;
-            private set => SetAndRaise(ShowPlaybackNoteBounceProperty, ref showPlaybackNoteBounce, value);
+            private set => SetAndRaise(ShowPlaybackNoteBounceProperty, ref showPlaybackNoteBounce, value && !Preferences.Default.LowPerformanceMode);
         }
         public bool ShowPlaybackNoteOrbit {
             get => showPlaybackNoteOrbit;
-            private set => SetAndRaise(ShowPlaybackNoteOrbitProperty, ref showPlaybackNoteOrbit, value);
+            private set => SetAndRaise(ShowPlaybackNoteOrbitProperty, ref showPlaybackNoteOrbit, value && !Preferences.Default.LowPerformanceMode);
         }
         public int PlayPosTick {
             get => playPosTick;
@@ -246,7 +246,7 @@ namespace OpenUtau.App.Controls {
         }
 
         void RefreshGhostNotes() {
-            showGhostNotes = Convert.ToBoolean(Preferences.Default.ShowGhostNotes);
+            showGhostNotes = Convert.ToBoolean(Preferences.Default.ShowGhostNotes) && !Preferences.Default.LowPerformanceMode;
             if (Part == null || !showGhostNotes) {
                 return;
             }
@@ -305,7 +305,7 @@ namespace OpenUtau.App.Controls {
         }
 
         void UpdateHoveredNote() {
-            if (!Preferences.Default.NoteHoverGlow || Part == null) {
+            if (!Preferences.Default.NoteHoverGlow || Preferences.Default.LowPerformanceMode || Part == null) {
                 SetHoveredNote(null);
                 return;
             }
@@ -318,7 +318,7 @@ namespace OpenUtau.App.Controls {
         }
 
         void SetHoveredNote(UNote? note) {
-            if (!Preferences.Default.NoteHoverGlow) {
+            if (!Preferences.Default.NoteHoverGlow || Preferences.Default.LowPerformanceMode) {
                 note = null;
             }
             if (ReferenceEquals(note, hoverNote)) {
@@ -560,7 +560,7 @@ namespace OpenUtau.App.Controls {
                 renderHighlightPenBrush = highlightBrush;
                 renderHighlightPenThickness = thickness;
             }
-            renderHoverGlow = Preferences.Default.NoteHoverGlow;
+            renderHoverGlow = Preferences.Default.NoteHoverGlow && !Preferences.Default.LowPerformanceMode;
             renderUseUiFont = Preferences.Default.UseUiFontForNotes;
             renderSingerTheme = null;
             if (Preferences.Default.UseCustomSingerTheme && Part != null) {
