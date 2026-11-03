@@ -43,6 +43,21 @@ namespace OpenUtau.Core.Coeiroink {
         }
 
         [Theory]
+        [InlineData("yi", "i")]
+        [InlineData("wu", "u")]
+        [InlineData("si", "sh i")]
+        [InlineData("zi", "j i")]
+        [InlineData("hu", "f u")]
+        [InlineData("kyi", "k i")]
+        [InlineData("ny i", "n i")]
+        [InlineData("ye", "y e")]
+        [InlineData("wi", "w i")]
+        [InlineData("kya", "ky a")]
+        public void ReplacesPairsTheModelNeverSaw(string lyric, string expected) {
+            Assert.Equal(expected, Parse(lyric));
+        }
+
+        [Theory]
         [InlineData("hello")]
         [InlineData("k")]
         [InlineData("")]

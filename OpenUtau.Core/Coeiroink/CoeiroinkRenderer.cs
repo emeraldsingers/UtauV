@@ -18,7 +18,7 @@ namespace OpenUtau.Core.Coeiroink {
         public const double TailMs = 120;
         const int OutputSampleRate = 44100;
         const int CurveInterval = 5;
-        const int CacheVersion = 5;
+        const int CacheVersion = 6;
 
         static readonly HashSet<string> supportedExp = new HashSet<string>() {
             Format.Ustx.DYN,
@@ -98,8 +98,11 @@ namespace OpenUtau.Core.Coeiroink {
             if (syllables.Count == 0) {
                 return new float[(int)Math.Ceiling((HeadMs + phrase.durationMs + TailMs) * OutputSampleRate / 1000)];
             }
-            var plan = CoeiroinkTimeline.BuildPlan(syllables);
+            var plan = CoeiroinkTimeline.BuildPlan(syllables, true);
             if (!model.TryEncode(plan.Tokens, out var ids)) {
+                plan = CoeiroinkTimeline.BuildPlan(syllables);
+            }
+            if (!model.TryEncode(plan.Tokens, out ids)) {
                 var missing = plan.Tokens.Where(t => !model.TokenIds.ContainsKey(t)).Distinct();
                 throw new MessageCustomizableException(
                     $"The COEIROINK model does not know the tokens: {string.Join(" ", missing)}",
@@ -113,11 +116,14 @@ namespace OpenUtau.Core.Coeiroink {
             }
             double startMs = phrase.positionMs - HeadMs;
             var frames = CoeiroinkTimeline.Allocate(plan, syllables, predicted, startMs, model.Config.FrameMs);
-            var wave = model.Synthesize(ids, frames, seed);
+            var modelFrames = CoeiroinkTimeline.ModelFrames(plan, frames);
+            var wave = model.Synthesize(ids, modelFrames, seed);
+            int kept = plan.PhraseTokenCount;
+            wave = wave.Take(modelFrames.Take(kept).Sum() * (int)Math.Round(model.Config.FrameMs * OutputSampleRate / 1000)).ToArray();
             if (cancellation.IsCancellationRequested) {
                 return null;
             }
-            return Vocode(phrase, wave, startMs, model.Config.FrameMs, VoicedMask(plan, frames));
+            return Vocode(phrase, wave, startMs, model.Config.FrameMs, plan, modelFrames.Take(kept).ToArray(), frames.Take(kept).ToArray());
         }
 
         static List<CoeiroinkSyllable> BuildSyllables(RenderPhrase phrase) {
@@ -208,7 +214,7 @@ namespace OpenUtau.Core.Coeiroink {
             return mask;
         }
 
-        float[] Vocode(RenderPhrase phrase, float[] wave, double startMs, double frameMs, bool[] voiced) {
+        float[] Vocode(RenderPhrase phrase, float[] wave, double startMs, double frameMs, CoeiroinkTokenPlan plan, int[] modelFrames, int[] outputFrames) {
             var vocoder = HifiVocoder.Instance;
             var config = vocoder.Config;
             if (config.sample_rate != OutputSampleRate || Math.Abs(config.hop_size - frameMs * OutputSampleRate / 1000) > 0.5) {
@@ -217,19 +223,24 @@ namespace OpenUtau.Core.Coeiroink {
                     $"Vocoder {config.name} is {config.sample_rate} Hz with hop {config.hop_size}.",
                     new InvalidDataException());
             }
-            int frames = HifiMelSpectrogram.FrameCount(wave.Length, config.hop_size);
-            var gender = SampleCurve(phrase, phrase.gender, 0, startMs + frameMs / 2, frameMs, frames, x => -0.12 * Math.Clamp(x, -100, 100));
+            int modelCount = HifiMelSpectrogram.FrameCount(wave.Length, config.hop_size);
+            var modelPositions = CoeiroinkMelWarp.OutputPositions(modelFrames, outputFrames);
+            var gender = SampleCurve(phrase, phrase.gender, 0, startMs, frameMs, modelPositions.Take(modelCount).ToArray(), x => -0.12 * Math.Clamp(x, -100, 100));
             var analyzer = new HifiMelSpectrogram(config.sample_rate, config.fft_size, config.win_size, config.hop_size, config.mel_fmin, config.mel_fmax, config.num_mel_bins);
             var mel = analyzer.Compute(wave, gender);
             HifiMelSpectrogram.LogCompress(mel);
-            var f0 = SampleCurve(phrase, phrase.pitches, 0, startMs + frameMs / 2, frameMs, frames, x => MusicMath.ToneToFreq(x * 0.01));
+            var warped = CoeiroinkMelWarp.Warp(mel, modelFrames, outputFrames, CoeiroinkTimeline.SustainMask(plan));
+            int frames = warped.Length;
+            var outputPositions = Enumerable.Range(0, frames).Select(i => (double)i).ToArray();
+            var f0 = SampleCurve(phrase, phrase.pitches, 0, startMs, frameMs, outputPositions, x => MusicMath.ToneToFreq(x * 0.01));
+            var voiced = VoicedMask(plan, outputFrames);
             for (int i = 0; i < frames; i++) {
                 if (i >= voiced.Length || !voiced[i]) {
                     f0[i] = 0;
                 }
             }
-            var synthesized = vocoder.Synthesize(mel, f0);
-            var result = new float[wave.Length];
+            var synthesized = vocoder.Synthesize(warped, f0);
+            var result = new float[frames * config.hop_size];
             Array.Copy(synthesized, result, Math.Min(synthesized.Length, result.Length));
             float peak = result.Length == 0 ? 0 : result.Max(Math.Abs);
             if (peak > 0.99f) {
@@ -241,15 +252,15 @@ namespace OpenUtau.Core.Coeiroink {
             return result;
         }
 
-        static double[] SampleCurve(RenderPhrase phrase, float[] curve, double defaultValue, double startMs, double frameMs, int length, Func<double, double> convert) {
-            var result = new double[length];
+        static double[] SampleCurve(RenderPhrase phrase, float[] curve, double defaultValue, double startMs, double frameMs, double[] positions, Func<double, double> convert) {
+            var result = new double[positions.Length];
             if (curve == null || curve.Length == 0) {
                 Array.Fill(result, defaultValue);
                 return result;
             }
             int origin = phrase.position - phrase.leading;
-            for (int i = 0; i < length; i++) {
-                int ticks = phrase.timeAxis.MsPosToTickPos(startMs + i * frameMs) - origin;
+            for (int i = 0; i < positions.Length; i++) {
+                int ticks = phrase.timeAxis.MsPosToTickPos(startMs + positions[i] * frameMs) - origin;
                 int index = Math.Clamp(ticks / CurveInterval, 0, curve.Length - 1);
                 result[i] = convert(curve[index]);
             }

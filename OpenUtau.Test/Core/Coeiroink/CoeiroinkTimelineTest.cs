@@ -93,5 +93,59 @@ namespace OpenUtau.Core.Coeiroink {
             }
             Assert.Equal(3, vowelIndex);
         }
+
+        [Fact]
+        public void CarrierFollowsThePhraseAfterATailPause() {
+            var syllables = Melody(("か", 60), ("あ", 60));
+            var plan = CoeiroinkTimeline.BuildPlan(syllables, true);
+            Assert.Equal("^ k a a _ a r i g a t o u $", string.Join(" ", plan.Tokens));
+            Assert.Equal(5, plan.PhraseTokenCount);
+            Assert.Equal(CoeiroinkTokenRole.Tail, plan.Roles[4]);
+            Assert.All(plan.Roles.Skip(5).Take(8), r => Assert.Equal(CoeiroinkTokenRole.Carrier, r));
+        }
+
+        [Fact]
+        public void PlanWithoutCarrierCountsEveryToken() {
+            var plan = CoeiroinkTimeline.BuildPlan(Melody(("か", 60)));
+            Assert.Equal(plan.Tokens.Count, plan.PhraseTokenCount);
+        }
+
+        [Fact]
+        public void CarrierTokensGetPredictedFramesAndTheTailGetsTailFrames() {
+            var syllables = Melody(("か", 60), ("あ", 60));
+            var plan = CoeiroinkTimeline.BuildPlan(syllables, true);
+            var predicted = Enumerable.Repeat(3.2f, plan.Tokens.Count).ToArray();
+            var frames = CoeiroinkTimeline.Allocate(plan, syllables, predicted, 240, FrameMs);
+            Assert.Equal(CoeiroinkTimeline.TailFrames, frames[plan.PhraseTokenCount - 1]);
+            Assert.All(frames.Skip(plan.PhraseTokenCount), f => Assert.Equal(4, f));
+        }
+
+        [Fact]
+        public void ModelFramesCapVowelsAndLeadingSilence() {
+            var syllables = Melody(("か", 60), ("あ", 60));
+            var plan = CoeiroinkTimeline.BuildPlan(syllables, true);
+            var predicted = Enumerable.Repeat(2f, plan.Tokens.Count).ToArray();
+            var frames = CoeiroinkTimeline.Allocate(plan, syllables, predicted, 240, FrameMs);
+            var model = CoeiroinkTimeline.ModelFrames(plan, frames);
+            for (int i = 0; i < frames.Length; i++) {
+                if (plan.Roles[i] == CoeiroinkTokenRole.Vowel) {
+                    Assert.Equal(System.Math.Min(frames[i], CoeiroinkTimeline.MaxVowelFrames), model[i]);
+                } else if (plan.Roles[i] == CoeiroinkTokenRole.Start) {
+                    Assert.True(model[i] <= CoeiroinkTimeline.StartModelFrames);
+                } else if (plan.Roles[i] == CoeiroinkTokenRole.Consonant || plan.Roles[i] == CoeiroinkTokenRole.Carrier) {
+                    Assert.Equal(frames[i], model[i]);
+                }
+            }
+            Assert.Contains(frames.Where((f, i) => plan.Roles[i] == CoeiroinkTokenRole.Vowel), f => f > CoeiroinkTimeline.MaxVowelFrames);
+        }
+
+        [Fact]
+        public void SustainMaskMarksOnlySungVowels() {
+            var plan = CoeiroinkTimeline.BuildPlan(Melody(("か", 60), ("っ", 60), ("ん", 60)), true);
+            var mask = CoeiroinkTimeline.SustainMask(plan);
+            for (int i = 0; i < mask.Length; i++) {
+                Assert.Equal(plan.Roles[i] == CoeiroinkTokenRole.Vowel && plan.Tokens[i] != "cl", mask[i]);
+            }
+        }
     }
 }

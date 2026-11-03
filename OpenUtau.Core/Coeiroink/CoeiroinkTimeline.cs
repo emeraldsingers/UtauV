@@ -19,6 +19,8 @@ namespace OpenUtau.Core.Coeiroink {
         Consonant,
         Vowel,
         Marker,
+        Tail,
+        Carrier,
         End,
     }
 
@@ -26,6 +28,7 @@ namespace OpenUtau.Core.Coeiroink {
         public readonly List<string> Tokens = new List<string>();
         public readonly List<CoeiroinkTokenRole> Roles = new List<CoeiroinkTokenRole>();
         public readonly List<int> MoraIndexes = new List<int>();
+        public int PhraseTokenCount;
 
         public void Add(string token, CoeiroinkTokenRole role, int mora) {
             Tokens.Add(token);
@@ -46,8 +49,14 @@ namespace OpenUtau.Core.Coeiroink {
         public const int MaxConsonantFrames = 14;
         public const int MaxMarkerFrames = 3;
         public const int TailFrames = 9;
+        public const int MaxVowelFrames = 10;
+        public const int MaxGeminateFrames = 6;
+        public const int StartModelFrames = 2;
+        public const int MaxPauseModelFrames = 8;
 
-        public static CoeiroinkTokenPlan BuildPlan(IReadOnlyList<CoeiroinkSyllable> syllables) {
+        public static readonly string[] CarrierTokens = { "a", "r", "i", "g", "a", "t", "o", "u" };
+
+        public static CoeiroinkTokenPlan BuildPlan(IReadOnlyList<CoeiroinkSyllable> syllables, bool carrier = false) {
             var plan = new CoeiroinkTokenPlan();
             plan.Add(StartToken, CoeiroinkTokenRole.Start, -1);
             var markers = BuildMarkers(syllables);
@@ -68,7 +77,17 @@ namespace OpenUtau.Core.Coeiroink {
                     plan.Add(marker, CoeiroinkTokenRole.Marker, k);
                 }
             }
-            plan.Add(EndToken, CoeiroinkTokenRole.End, syllables.Count);
+            if (carrier) {
+                plan.Add(PauseToken, CoeiroinkTokenRole.Tail, syllables.Count);
+                plan.PhraseTokenCount = plan.Tokens.Count;
+                foreach (var token in CarrierTokens) {
+                    plan.Add(token, CoeiroinkTokenRole.Carrier, syllables.Count);
+                }
+                plan.Add(EndToken, CoeiroinkTokenRole.End, syllables.Count);
+            } else {
+                plan.Add(EndToken, CoeiroinkTokenRole.End, syllables.Count);
+                plan.PhraseTokenCount = plan.Tokens.Count;
+            }
             return plan;
         }
 
@@ -120,6 +139,27 @@ namespace OpenUtau.Core.Coeiroink {
             }
         }
 
+        public static int[] ModelFrames(CoeiroinkTokenPlan plan, IReadOnlyList<int> output) {
+            var result = new int[output.Count];
+            for (int i = 0; i < result.Length; i++) {
+                result[i] = plan.Roles[i] switch {
+                    CoeiroinkTokenRole.Start => Math.Min(output[i], StartModelFrames),
+                    CoeiroinkTokenRole.Pause => Math.Min(output[i], MaxPauseModelFrames),
+                    CoeiroinkTokenRole.Vowel => Math.Min(output[i], plan.Tokens[i] == CoeiroinkKana.Geminate ? MaxGeminateFrames : MaxVowelFrames),
+                    _ => output[i],
+                };
+            }
+            return result;
+        }
+
+        public static bool[] SustainMask(CoeiroinkTokenPlan plan) {
+            var result = new bool[plan.Tokens.Count];
+            for (int i = 0; i < result.Length; i++) {
+                result[i] = plan.Roles[i] == CoeiroinkTokenRole.Vowel && plan.Tokens[i] != CoeiroinkKana.Geminate;
+            }
+            return result;
+        }
+
         public static int[] Allocate(
             CoeiroinkTokenPlan plan,
             IReadOnlyList<CoeiroinkSyllable> syllables,
@@ -166,6 +206,7 @@ namespace OpenUtau.Core.Coeiroink {
             int PreStart(int k) => anchors[k] - consonant[k] - boundary[k];
 
             var result = new int[plan.Tokens.Count];
+            bool carrierPlan = plan.Roles.Contains(CoeiroinkTokenRole.Tail);
             for (int i = 0; i < plan.Tokens.Count; i++) {
                 int k = plan.MoraIndexes[i];
                 switch (plan.Roles[i]) {
@@ -192,7 +233,13 @@ namespace OpenUtau.Core.Coeiroink {
                         result[i] = Math.Max(1, Math.Min(MaxMarkerFrames, (int)Math.Ceiling(predicted[i])));
                         break;
                     case CoeiroinkTokenRole.End:
+                        result[i] = carrierPlan ? Math.Max(1, (int)Math.Ceiling(predicted[i])) : TailFrames;
+                        break;
+                    case CoeiroinkTokenRole.Tail:
                         result[i] = TailFrames;
+                        break;
+                    case CoeiroinkTokenRole.Carrier:
+                        result[i] = Math.Max(1, (int)Math.Ceiling(predicted[i]));
                         break;
                 }
             }

@@ -32,6 +32,29 @@ namespace OpenUtau.Core.Coeiroink {
         static readonly Dictionary<string, (string? c, string v)> table = BuildTable();
         static readonly Regex romaji = new Regex("^(ky|gy|ny|hy|my|by|py|ry|dy|ty|sh|ch|ts|[kstnhfmyrwgzjdbpv])?([aiueo])$", RegexOptions.Compiled);
 
+        static readonly HashSet<string> palatalConsonants = new HashSet<string> { "ky", "gy", "ny", "hy", "my", "by", "py", "ry", "dy", "ty" };
+
+        public static CoeiroinkMora Canonical(string? consonant, string vowel) {
+            if (consonant == null) {
+                return new CoeiroinkMora(null, vowel);
+            }
+            switch ((consonant, vowel)) {
+                case ("y", "i"):
+                case ("w", "u"):
+                    return new CoeiroinkMora(null, vowel);
+                case ("s", "i"):
+                    return new CoeiroinkMora("sh", vowel);
+                case ("z", "i"):
+                    return new CoeiroinkMora("j", vowel);
+                case ("h", "u"):
+                    return new CoeiroinkMora("f", vowel);
+            }
+            if (vowel == "i" && palatalConsonants.Contains(consonant)) {
+                return new CoeiroinkMora(consonant.Substring(0, 1), vowel);
+            }
+            return new CoeiroinkMora(consonant, vowel);
+        }
+
         public static bool IsConsonantToken(string text) {
             return consonantTokens.Contains(text.Trim());
         }
@@ -220,7 +243,7 @@ namespace OpenUtau.Core.Coeiroink {
             }
             var match = romaji.Match(text.ToLowerInvariant());
             if (match.Success) {
-                moras = new[] { new CoeiroinkMora(match.Groups[1].Success ? match.Groups[1].Value : null, match.Groups[2].Value) };
+                moras = new[] { Canonical(match.Groups[1].Success ? match.Groups[1].Value : null, match.Groups[2].Value) };
                 return true;
             }
             var result = new List<CoeiroinkMora>();
@@ -233,7 +256,7 @@ namespace OpenUtau.Core.Coeiroink {
                     }
                     pending = part;
                 } else if (vowelTokens.Contains(part) || part == Nasal || part == Geminate) {
-                    result.Add(new CoeiroinkMora(pending, part));
+                    result.Add(part == Nasal || part == Geminate ? new CoeiroinkMora(pending, part) : Canonical(pending, part));
                     pending = null;
                 } else {
                     return false;
