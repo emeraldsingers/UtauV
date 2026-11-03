@@ -109,61 +109,80 @@ namespace OpenUtau.Core.DiffSinger {
 
         public Task<RenderResult> Render(RenderPhrase phrase, Progress progress, int trackNo, CancellationTokenSource cancellation, bool isPreRender, RenderPhraseEvents? renderEvents = null) {
             var task = Task.Run(() => {
-                lock (lockObj) {
-                    // The static lock serializes DiffSinger renders; the DirectML scope additionally
-                    // keeps them from overlapping pitch/variance work or session disposal.
-                    using var dmlScope = Onnx.EnterDmlScope();
-                    if (cancellation.IsCancellationRequested) {
-                        return new RenderResult();
-                    }
-                    var result = Layout(phrase);
-
-                    // calculate real depth
-                    var singer = (DiffSingerSinger) phrase.singer;
-                    double depth;
-                    int steps = Preferences.Default.DiffSingerSteps;
-                    if (singer.dsConfig.useVariableDepth) {
-                        double maxDepth = singer.dsConfig.maxDepth;
-                        if (maxDepth < 0) {
-                            throw new InvalidDataException("Max depth is unset or is negative.");
-                        }
-                        depth = Math.Min(Preferences.Default.DiffSingerDepth, maxDepth);
-                    } else {
-                        depth = 1.0;
-                    }
-                    var wavName = GetRenderCacheFileName(
-                        phrase.hash,
-                        depth,
-                        steps,
-                        Preferences.Default.DiffSingerStepsVariance,
-                        Preferences.Default.DiffSingerVarianceLocalPitchPatch);
-                    var wavPath = Path.Join(PathManager.Inst.CachePath, wavName);
-                    phrase.AddCacheFile(wavPath);
-                    string progressInfo = $"Track {trackNo + 1}: {this} depth={depth:f2} steps={steps} \"{string.Join(" ", phrase.phones.Select(p => p.phoneme))}\"";
-                    if (File.Exists(wavPath)) {
-                        try {
-                            using (var waveStream = Wave.OpenFile(wavPath)) {
-                                result.samples = Wave.GetSamples(waveStream.ToSampleProvider().ToMono(1, 0));
-                            }
-                        } catch (Exception e) {
-                            Log.Error(e, "Failed to read cached render, re-rendering.");
-                        }
-                    }
-                    if (result.samples == null) {
-                        result.samples = InvokeDiffsinger(phrase, depth, steps, cancellation, renderEvents);
-                        if (result.samples != null) {
-                            Wave.WriteMono16Wav(wavPath, result.samples);
-                        }
-                    }
-                    if (result.samples != null) {
-                        Renderers.ApplyDynamics(phrase, result);
-                    }
-                    progress.Complete(phrase.phones.Length, progressInfo);
-                    return result;
+                if (cancellation.IsCancellationRequested) {
+                    return new RenderResult();
                 }
+                var result = Layout(phrase);
+
+                // calculate real depth
+                var singer = (DiffSingerSinger) phrase.singer;
+                double depth;
+                int steps = Preferences.Default.DiffSingerSteps;
+                if (singer.dsConfig.useVariableDepth) {
+                    double maxDepth = singer.dsConfig.maxDepth;
+                    if (maxDepth < 0) {
+                        throw new InvalidDataException("Max depth is unset or is negative.");
+                    }
+                    depth = Math.Min(Preferences.Default.DiffSingerDepth, maxDepth);
+                } else {
+                    depth = 1.0;
+                }
+                var wavName = GetRenderCacheFileName(
+                    phrase.hash,
+                    depth,
+                    steps,
+                    Preferences.Default.DiffSingerStepsVariance,
+                    Preferences.Default.DiffSingerVarianceLocalPitchPatch);
+                var wavPath = Path.Join(PathManager.Inst.CachePath, wavName);
+                phrase.AddCacheFile(wavPath);
+                string progressInfo = $"Track {trackNo + 1}: {this} depth={depth:f2} steps={steps} \"{string.Join(" ", phrase.phones.Select(p => p.phoneme))}\"";
+                result.samples = TryReadCachedRender(wavPath);
+                if (result.samples == null) {
+                    lock (lockObj) {
+                        // The static lock serializes DiffSinger renders; the DirectML scope additionally
+                        // keeps them from overlapping pitch/variance work or session disposal.
+                        using var dmlScope = Onnx.EnterDmlScope();
+                        if (cancellation.IsCancellationRequested) {
+                            return new RenderResult();
+                        }
+                        result.samples = TryReadCachedRender(wavPath);
+                        if (result.samples == null) {
+                            result.samples = InvokeDiffsinger(phrase, depth, steps, cancellation, renderEvents);
+                            if (result.samples != null) {
+                                WriteCachedRender(wavPath, result.samples);
+                            }
+                        }
+                    }
+                }
+                if (result.samples != null) {
+                    Renderers.ApplyDynamics(phrase, result);
+                }
+                progress.Complete(phrase.phones.Length, progressInfo);
+                return result;
             });
             return task;
         }
+        static float[]? TryReadCachedRender(string wavPath) {
+            if (!File.Exists(wavPath)) {
+                return null;
+            }
+            try {
+                using (var waveStream = Wave.OpenFile(wavPath)) {
+                    return Wave.GetSamples(waveStream.ToSampleProvider().ToMono(1, 0));
+                }
+            } catch (Exception e) {
+                Log.Error(e, "Failed to read cached render, re-rendering.");
+                return null;
+            }
+        }
+
+        static void WriteCachedRender(string wavPath, float[] samples) {
+            var tmpPath = wavPath + ".tmp";
+            Wave.WriteMono16Wav(tmpPath, samples);
+            File.Move(tmpPath, wavPath, true);
+        }
+
+
         /*result format: 
         result.samples: Rendered audio, float[]
         leadingMs、positionMs、estimatedLengthMs: timeaxis layout in Ms, double

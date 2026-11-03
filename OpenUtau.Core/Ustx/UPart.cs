@@ -339,6 +339,16 @@ namespace OpenUtau.Core.Ustx {
             }
         }
 
+        internal void FailPhraseSource(Pipeline.PhraseSource source) {
+            lock (this) {
+                if (source.Generation > phraseAppliedGeneration) {
+                    phraseAppliedGeneration = source.Generation;
+                    renderPhrases.Clear();
+                }
+            }
+            phraseGate.MarkCompleted(source.Generation);
+        }
+
         internal void ApplyPhraseSourceResult(Pipeline.PhraseSource source, RenderPhrase[] phrases) {
             bool applied;
             lock (this) {

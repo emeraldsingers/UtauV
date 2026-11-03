@@ -123,7 +123,6 @@ namespace OpenUtau.Core.Render {
             var oldCancellation = Interlocked.Exchange(ref cancellation, newCancellation);
             if (oldCancellation != null) {
                 oldCancellation.Cancel();
-                oldCancellation.Dispose();
             }
             double startMs = project.timeAxis.TickPosToMsPos(startTick);
             double endMs = endTick == -1 ? double.PositiveInfinity : project.timeAxis.TickPosToMsPos(endTick);
@@ -195,7 +194,7 @@ namespace OpenUtau.Core.Render {
                 RenderRequests(requests, newCancellation, playing: !wait, planner);
             });
             task.ContinueWith(task => {
-                if (task.IsFaulted && !wait) {
+                if (task.IsFaulted && !wait && !newCancellation.IsCancellationRequested) {
                     Log.Error(task.Exception.Flatten(), "Failed to render.");
                     PlaybackManager.Inst.StopPlayback();
                     var flatEx = task.Exception.Flatten();
@@ -230,7 +229,6 @@ namespace OpenUtau.Core.Render {
             var oldCancellation = Interlocked.Exchange(ref cancellation, newCancellation);
             if (oldCancellation != null) {
                 oldCancellation.Cancel();
-                oldCancellation.Dispose();
             }
             var trackMixes = new List<SlotMixSource>();
             var requests = PrepareRequests();
@@ -266,7 +264,6 @@ namespace OpenUtau.Core.Render {
             var oldCancellation = Interlocked.Exchange(ref cancellation, newCancellation);
             if (oldCancellation != null) {
                 oldCancellation.Cancel();
-                oldCancellation.Dispose();
             }
             Task.Run(async () => {
                 try {
@@ -304,8 +301,10 @@ namespace OpenUtau.Core.Render {
             }
             // Wait for each part's latest phrase build, outside the project
             // lock, so the pass renders the newest phrases.
+            var phraseDeadline = DateTime.UtcNow.AddSeconds(10);
             foreach (var part in parts) {
-                part.WaitPhraseSource(TimeSpan.FromSeconds(10));
+                var remaining = phraseDeadline - DateTime.UtcNow;
+                part.WaitPhraseSource(remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero);
             }
             RenderPartRequest[] requests;
             lock (project) {

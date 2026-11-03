@@ -127,23 +127,24 @@ namespace OpenUtau.Core.Pipeline {
             }
         }
 
-        private (PhraseSource Source, UVoicePart Part, RenderPhrase[] Phrases)? Build(Request request) {
+        private (PhraseSource Source, UVoicePart Part, RenderPhrase[]? Phrases) Build(Request request) {
             try {
                 var phrases = request.Source.BuildPhrases();
                 return (request.Source, request.Part, phrases);
             } catch (Exception e) {
                 Log.Error(e, "Failed to build phrase source {part}", request.Source.PartId);
-                return null;
+                return (request.Source, request.Part, null);
             }
         }
 
-        private void SendResult((PhraseSource Source, UVoicePart Part, RenderPhrase[] Phrases)? result) {
+        private void SendResult((PhraseSource Source, UVoicePart Part, RenderPhrase[]? Phrases) result) {
             Task.Factory.StartNew(_ => {
-                if (result == null) {
+                var (source, part, phrases) = result;
+                if (DocManager.Inst.Project?.parts.Contains(part) != true) {
                     return;
                 }
-                var (source, part, phrases) = result.Value;
-                if (DocManager.Inst.Project?.parts.Contains(part) != true) {
+                if (phrases == null) {
+                    part.FailPhraseSource(source);
                     return;
                 }
                 part.ApplyPhraseSourceResult(source, phrases);

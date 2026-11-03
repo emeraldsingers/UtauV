@@ -60,7 +60,11 @@ namespace OpenUtau.Api {
                     }
                     for (int i = toRun.Count - 1; i >= 0; i--) {
                         if (parts.Remove(toRun[i].part)) {
-                            SendResponse(Phonemize(toRun[i]));
+                            try {
+                                SendResponse(Phonemize(toRun[i]));
+                            } catch (Exception e) {
+                                Log.Error(e, "Phonemizer loop iteration failed.");
+                            }
                         }
                     }
                     parts.Clear();
