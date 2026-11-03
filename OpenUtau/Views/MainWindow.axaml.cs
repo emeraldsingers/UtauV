@@ -108,21 +108,66 @@ viewModel.NewProject();
 
             var lastIsPlaying = false;
             var lastShowHighlight = true;
+            void PlaybackTick() {
+                PlaybackManager.Inst.UpdatePlayPos();
+                var pvm = viewModel.PlaybackViewModel;
+                var isPlaying = pvm.IsPlaying;
+                if (isPlaying != lastIsPlaying) {
+                    lastIsPlaying = isPlaying;
+                    pvm.RaisePropertyChanged(nameof(pvm.IsPlaying));
+                }
+                var showHighlight = pvm.ShowPlayPosHighlight;
+                if (showHighlight != lastShowHighlight) {
+                    lastShowHighlight = showHighlight;
+                    pvm.RaisePropertyChanged(nameof(pvm.ShowPlayPosHighlight));
+                }
+            }
+            int frameLoopId = 0;
+            bool frameLoopRunning = false;
+            long lastFrameWall = 0;
+            void StartFrameLoop() {
+                int id = ++frameLoopId;
+                frameLoopRunning = true;
+                lastFrameWall = Environment.TickCount64;
+                var lastFrame = TimeSpan.Zero;
+                var lastTick = TimeSpan.Zero;
+                double frameDelta = 16;
+                Action<TimeSpan>? callback = null;
+                callback = now => {
+                    if (id != frameLoopId) {
+                        return;
+                    }
+                    lastFrameWall = Environment.TickCount64;
+                    double delta = (now - lastFrame).TotalMilliseconds;
+                    lastFrame = now;
+                    if (delta > 0 && delta < 100) {
+                        frameDelta = delta;
+                    }
+                    double interval = 1000.0 / Math.Clamp(Preferences.Default.PlaybackUpdateRate, 30, 360);
+                    if ((now - lastTick).TotalMilliseconds + frameDelta * 0.5 >= interval) {
+                        lastTick = now;
+                        PlaybackTick();
+                    }
+                    if (PlaybackClock.IsActive) {
+                        RequestAnimationFrame(callback!);
+                    } else {
+                        frameLoopRunning = false;
+                    }
+                };
+                RequestAnimationFrame(callback);
+            }
             timer = new DispatcherTimer(
-                TimeSpan.FromMilliseconds(Preferences.Default.LowPerformanceMode ? 40 : 25),
+                TimeSpan.FromMilliseconds(50),
                 DispatcherPriority.Normal,
                 (sender, args) => {
-                    PlaybackManager.Inst.UpdatePlayPos();
-                    var pvm = viewModel.PlaybackViewModel;
-                    var isPlaying = pvm.IsPlaying;
-                    if (isPlaying != lastIsPlaying) {
-                        lastIsPlaying = isPlaying;
-                        pvm.RaisePropertyChanged(nameof(pvm.IsPlaying));
+                    if (frameLoopRunning && Environment.TickCount64 - lastFrameWall < 100) {
+                        return;
                     }
-                    var showHighlight = pvm.ShowPlayPosHighlight;
-                    if (showHighlight != lastShowHighlight) {
-                        lastShowHighlight = showHighlight;
-                        pvm.RaisePropertyChanged(nameof(pvm.ShowPlayPosHighlight));
+                    PlaybackTick();
+                    if (PlaybackClock.IsActive) {
+                        StartFrameLoop();
+                    } else {
+                        frameLoopRunning = false;
                     }
                 });
             timer.Start();

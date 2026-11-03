@@ -162,6 +162,8 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
         [Reactive] public partial bool ReduceAnimations { get; set; }
         [Reactive] public partial bool LowPerformanceMode { get; set; }
         [Reactive] public partial int WindowsRenderBackend { get; set; }
+        [Reactive] public partial int PlaybackUpdateRate { get; set; }
+        public int PlaybackUpdateRateMax => DisplayInfo.MaxRefreshRate();
         public bool IsWindows => OS.IsWindows();
         [Reactive] public partial bool ShowPlaybackNoteHighlight { get; set; }
         [Reactive] public partial bool ShowPlaybackNoteBounce { get; set; }
@@ -344,6 +346,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
             ReduceAnimations = Preferences.Default.ReduceAnimations;
             LowPerformanceMode = Preferences.Default.LowPerformanceMode;
             WindowsRenderBackend = Preferences.Default.WindowsRenderBackend;
+            PlaybackUpdateRate = Math.Clamp(Preferences.Default.PlaybackUpdateRate, 30, PlaybackUpdateRateMax);
             ShowPlaybackNoteHighlight = Preferences.Default.ShowPlaybackNoteHighlight;
             ShowPlaybackNoteBounce = Preferences.Default.ShowPlaybackNoteBounce;
             DetachPianoRoll = Preferences.Default.DetachPianoRoll;
@@ -475,6 +478,11 @@ this.WhenAnyValue(vm => vm.PreferPortAudio)
             this.WhenAnyValue(vm => vm.LowPerformanceMode)
                 .Subscribe(value => {
                     Preferences.Default.LowPerformanceMode = value;
+                    Preferences.Save();
+                });
+            this.WhenAnyValue(vm => vm.PlaybackUpdateRate)
+                .Subscribe(value => {
+                    Preferences.Default.PlaybackUpdateRate = value;
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.WindowsRenderBackend)

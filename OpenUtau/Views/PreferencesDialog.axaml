@@ -335,6 +335,14 @@
             <TextBlock Text="{DynamicResource prefs.appearance.lowperformance}" HorizontalAlignment="Left"/>
             <ToggleSwitch IsChecked="{Binding LowPerformanceMode}"/>
           </Grid>
+          <StackPanel Margin="0,5,0,0">
+            <Grid ColumnDefinitions="*,auto">
+              <TextBlock Text="{DynamicResource prefs.appearance.playbackupdaterate}" HorizontalAlignment="Left"/>
+              <TextBlock Grid.Column="1" Text="{Binding PlaybackUpdateRate, StringFormat={}{0} Hz}"/>
+            </Grid>
+            <Slider Minimum="30" Maximum="{Binding PlaybackUpdateRateMax}" Value="{Binding PlaybackUpdateRate}"
+                    TickFrequency="1" IsSnapToTickEnabled="True"/>
+          </StackPanel>
           <StackPanel Margin="0,5,0,0" IsVisible="{Binding IsWindows}">
             <TextBlock Text="{DynamicResource prefs.appearance.renderbackend}"/>
             <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding WindowsRenderBackend}">

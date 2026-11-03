@@ -284,6 +284,7 @@ namespace OpenUtau.Core.Util {
             public bool ReduceAnimations = false;
             public bool LowPerformanceMode = false;
             public int WindowsRenderBackend = 0;
+            public int PlaybackUpdateRate = 66;
             public bool ShowPlaybackNoteHighlight = true;
             public double PlaybackHighlightFadeInPerSecond = 8.0;
             public double PlaybackHighlightFadeOutPerSecond = 6.2;
