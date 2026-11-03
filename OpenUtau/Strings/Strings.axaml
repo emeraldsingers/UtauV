@@ -895,10 +895,13 @@ Warning: this option removes custom presets.</system:String>
   <system:String x:Key="prefs.appearance.lipsync">Lip sync portraits and icons</system:String>
   <system:String x:Key="prefs.appearance.lipsyncinterpolation">Smooth lip sync transitions</system:String>
   <system:String x:Key="prefs.appearance.reduceanimations">Reduce animations</system:String>
-  <system:String x:Key="prefs.appearance.lowperformance">Low performance mode (disables effects, shadows and portrait; restart recommended)</system:String>
-  <system:String x:Key="prefs.appearance.renderbackend">Rendering backend (Windows, restart required)</system:String>
+  <system:String x:Key="prefs.appearance.lowperformance">Low performance mode</system:String>
+  <system:String x:Key="prefs.appearance.renderbackend">Rendering backend</system:String>
+  <system:String x:Key="prefs.appearance.lowperformance.hint">Disables effects, shadows and portrait. Restart recommended.</system:String>
+  <system:String x:Key="prefs.appearance.renderbackend.hint">Windows only. Restart required.</system:String>
+  <system:String x:Key="prefs.appearance.playbackupdaterate.hint">From 30 up to the monitor refresh rate. Default 66, recommended 40 for weak devices.</system:String>
   <system:String x:Key="prefs.appearance.renderbackend.auto">Auto</system:String>
-  <system:String x:Key="prefs.appearance.playbackupdaterate">Playhead update rate (30 to monitor refresh rate; default 66, recommended 40 for weak devices)</system:String>
+  <system:String x:Key="prefs.appearance.playbackupdaterate">Playhead update rate</system:String>
   <system:String x:Key="prefs.appearance.renderbackground">Show render status in track background</system:String>
   <system:String x:Key="prefs.appearance.showportrait">Show portrait on piano roll</system:String>
   <system:String x:Key="prefs.appearance.sortorder">Singer name display language</system:String>
