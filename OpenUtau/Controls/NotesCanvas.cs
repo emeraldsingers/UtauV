@@ -216,7 +216,7 @@ namespace OpenUtau.App.Controls {
             highlightTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 30.0) };
             highlightTimer.Tick += (_, _) => UpdatePlaybackHighlight(false);
             RofloficEffects.Changed += InvalidateVisual;
-            hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 60.0) };
+            hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / 40.0) };
             hoverTimer.Tick += (_, _) => UpdateHoverGlow();
 
             MessageBus.Current.Listen<NotesRefreshEvent>()
@@ -443,23 +443,24 @@ namespace OpenUtau.App.Controls {
                     }
                 }
 
+                visibleNotes.Clear();
                 foreach (var note in Part.notes) {
                     if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
                         continue;
                     }
+                    visibleNotes.Add(note);
+                }
+                foreach (var note in visibleNotes) {
                     RenderNoteBody(note, viewModel, context);
                 }
                 if (ShowPhonemePanel && viewModel.ShowPhonemePanelButton) {
-                    RenderPhonemePanels(viewModel, context, leftTick, rightTick);
+                    RenderPhonemePanels(viewModel, context);
                 }
                 RenderDiffSingerPhraseBoundaries(leftTick, rightTick, viewModel, context);
                 if (ShowFinalPitch && !hidePitch) {
                     RenderFinalPitch(leftTick, rightTick, viewModel, context);
                 }
-                foreach (var note in Part.notes) {
-                    if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
-                        continue;
-                    }
+                foreach (var note in visibleNotes) {
                     if (ShowPitch && !hidePitch) {
                         RenderPitchBend(note, viewModel, context);
                     }
@@ -504,16 +505,13 @@ namespace OpenUtau.App.Controls {
             context.DrawRectangle(Brushes.Transparent, null, Bounds.WithX(0).WithY(0));
         }
 
-        private void RenderPhonemePanels(NotesViewModel viewModel, DrawingContext context, double leftTick, double rightTick) {
+        private void RenderPhonemePanels(NotesViewModel viewModel, DrawingContext context) {
             if (Part == null) {
                 return;
             }
             string langCode = PhonemeUIRender.getLangCode(Part);
             var phonemesByParent = PhonemePanelLayout.GetPhonemesByParent(Part);
-            foreach (var note in Part.notes) {
-                if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
-                    continue;
-                }
+            foreach (var note in visibleNotes) {
                 var size = viewModel.TickToneToSize(note.duration, 1);
                 var layout = PhonemePanelLayout.Build(note, langCode, size.Width, phonemesByParent);
                 if (layout == null) {
@@ -531,6 +529,12 @@ namespace OpenUtau.App.Controls {
         private readonly HashSet<UNote> renderErroredParents = new();
         private readonly HashSet<UNote> renderPhonemeParents = new();
         private Pen? renderHighlightPen;
+        private IBrush? renderHighlightPenBrush;
+        private double renderHighlightPenThickness;
+        private readonly List<UNote> visibleNotes = new();
+        private CustomSingerTheme.SingerThemeYaml? renderSingerTheme;
+        private bool renderHoverGlow;
+        private bool renderUseUiFont;
 
         private void PrepareNoteRenderState() {
             renderErroredParents.Clear();
@@ -547,7 +551,25 @@ namespace OpenUtau.App.Controls {
                     }
                 }
             }
-            renderHighlightPen = new Pen(ThemeManager.AccentBrush2, Preferences.Default.NoteHighlightThickness);
+            var highlightBrush = ThemeManager.AccentBrush2;
+            double thickness = Preferences.Default.NoteHighlightThickness;
+            if (renderHighlightPen == null ||
+                !ReferenceEquals(renderHighlightPenBrush, highlightBrush) ||
+                renderHighlightPenThickness != thickness) {
+                renderHighlightPen = new Pen(highlightBrush, thickness);
+                renderHighlightPenBrush = highlightBrush;
+                renderHighlightPenThickness = thickness;
+            }
+            renderHoverGlow = Preferences.Default.NoteHoverGlow;
+            renderUseUiFont = Preferences.Default.UseUiFontForNotes;
+            renderSingerTheme = null;
+            if (Preferences.Default.UseCustomSingerTheme && Part != null) {
+                var project = ((PianoRollViewModel?)DataContext)?.NotesViewModel?.Project;
+                if (project != null && Part.trackNo >= 0 && Part.trackNo < project.tracks.Count) {
+                    var singer = project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
+                    renderSingerTheme = CustomSingerTheme.GetThemeForSinger(singer);
+                }
+            }
         }
 
         private sealed class NullDisposable : IDisposable {
@@ -581,14 +603,11 @@ namespace OpenUtau.App.Controls {
             if (RofloficEffects.RainbowEnabled) {
                 brush = RofloficEffects.Gradient(note.position * 0.002, 230);
             }
-            if (Preferences.Default.UseCustomSingerTheme && Part != null) {
-                var singer = viewModel.Project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
-                var theme = CustomSingerTheme.GetThemeForSinger(singer);
-                if (theme != null) {
-                    bool selected = selectedNotes.Contains(note);
-                    if (selected ? theme.HasTrackAccentColorLight : theme.HasTrackAccentColor) {
-                        brush = theme.GetBrush(selected ? theme.TrackAccentColorLight : theme.TrackAccentColor);
-                    }
+            var theme = renderSingerTheme;
+            if (theme != null) {
+                bool selected = selectedNotes.Contains(note);
+                if (selected ? theme.HasTrackAccentColorLight : theme.HasTrackAccentColor) {
+                    brush = theme.GetBrush(selected ? theme.TrackAccentColorLight : theme.TrackAccentColor);
                 }
             }
             if (trackColor != null) {
@@ -614,7 +633,7 @@ namespace OpenUtau.App.Controls {
             if (!selectedNotes.Contains(note)) {
                 context.DrawRectangle(null, renderHighlightPen, new Rect(leftTop, rightBottom), radius, radius);
             }
-            if (Preferences.Default.NoteHoverGlow) {
+            if (renderHoverGlow) {
                 DrawHoverGlow(context, leftTop, size, 2, brush, GetHoverGlow(note));
             }
             // At dense zoom levels there is no room for labels or badges. Avoid
@@ -677,7 +696,7 @@ namespace OpenUtau.App.Controls {
                         }
                         if (!string.IsNullOrEmpty(displayLang)) {
                             var langLayout = TextLayoutCache.Get(displayLang, Avalonia.Media.Brushes.White, 10,
-                                useUiFont: Preferences.Default.UseUiFontForNotes);
+                                useUiFont: renderUseUiFont);
                             double paddingX = 3;
                             double paddingY = 1.5;
                             Avalonia.Rect badgeRect = new Avalonia.Rect(
@@ -707,19 +726,19 @@ namespace OpenUtau.App.Controls {
             }
             int txtsize = 12;
             var textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize,
-                useUiFont: Preferences.Default.UseUiFontForNotes);
+                useUiFont: renderUseUiFont);
             if (txtsize > size.Height) {
                 return;
             }
             if (textLayout.Height + 5 < size.Height) {
                 txtsize = (int)(12 * (size.Height / textLayout.Height));
                 textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize,
-                    useUiFont: Preferences.Default.UseUiFontForNotes);
+                    useUiFont: renderUseUiFont);
             }
             if (textLayout.Width + 5 > size.Width) {
                 displayLyric = displayLyric[0] + "..";
                 textLayout = TextLayoutCache.Get(displayLyric, Brushes.White, txtsize,
-                    useUiFont: Preferences.Default.UseUiFontForNotes);
+                    useUiFont: renderUseUiFont);
                 if (textLayout.Width + 5 > size.Width) {
                     return;
                 }
@@ -1169,10 +1188,9 @@ namespace OpenUtau.App.Controls {
 
         private void RenderFinalPitch(double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context, bool bright = false) {
             var pen = bright ? pitchEditPen : ThemeManager.FinalPitchPen!;
-            if (!bright && Preferences.Default.UseCustomSingerTheme && Part != null) {
-                var singer = viewModel.Project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
-                var theme = CustomSingerTheme.GetThemeForSinger(singer);
-                if (theme?.HasPitchColor == true) pen = theme.GetPen(theme.PitchColor);
+            var pitchTheme = renderSingerTheme;
+            if (!bright && pitchTheme?.HasPitchColor == true) {
+                pen = pitchTheme.GetPen(pitchTheme.PitchColor);
             }
             lock (Part!) {
                 foreach (var phrase in Part!.renderPhrases) {
@@ -1180,10 +1198,12 @@ namespace OpenUtau.App.Controls {
                         continue;
                     }
                     int pitchStart = phrase.position - phrase.leading - Part.position;
+                    int stride = Math.Max(1, (int)Math.Ceiling(1.5 / (5 * TickWidth)));
                     int startIdx = (int)Math.Max(0, (leftTick - pitchStart) / 5);
+                    startIdx -= startIdx % stride;
                     int endIdx = (int)Math.Min(phrase.pitches.Length, (rightTick - pitchStart) / 5 + 1);
                     points.Clear();
-                    for (int i = startIdx; i < endIdx; ++i) {
+                    for (int i = startIdx; i < endIdx; i += stride) {
                         int t = pitchStart + i * 5;
                         float p = phrase.pitches[i];
                         points.Add(viewModel.TickToneToPoint(t, p / 100 - 0.5));
@@ -1196,6 +1216,9 @@ namespace OpenUtau.App.Controls {
         private void DrawPolyline(DrawingContext context, IPen? pen) {
             // Drawing is deferred; use an immutable snapshot so later point edits cannot
             // mutate geometry already queued for the current render pass.
+            if (points.Count < 2) {
+                return;
+            }
             context.DrawGeometry(null, pen, new PolylineGeometry(points.ToArray(), false));
         }
     }
