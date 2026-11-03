@@ -1524,7 +1524,17 @@ namespace OpenUtau.App.ViewModels {
 
         private void AutoScroll(double positionX) {
             double scrollDelta = GetScrollValueDelta(positionX);
-            TickOffset = Math.Clamp(TickOffset + scrollDelta, 0, HScrollBarMax);
+            if (scrollDelta == 0) {
+                return;
+            }
+            double next = Math.Clamp(TickOffset + scrollDelta, 0, HScrollBarMax);
+            double tickWidth = TickWidth;
+            if (tickWidth > 0 && next > 0 && next < HScrollBarMax) {
+                next = Math.Round(next * tickWidth) / tickWidth;
+            }
+            if (next != TickOffset) {
+                TickOffset = next;
+            }
         }
 
         private void MaybeAutoScrollVertical() {

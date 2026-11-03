@@ -106,14 +106,24 @@ viewModel.NewProject();
             viewModel.AddTimeSigChangeCmd = ReactiveCommand.Create<int>(bar => AddTimeSigChange(bar));
             viewModel.DelTimeSigChangeCmd = ReactiveCommand.Create<int>(bar => DelTimeSigChange(bar));
 
+            var lastIsPlaying = false;
+            var lastShowHighlight = true;
             timer = new DispatcherTimer(
-                TimeSpan.FromMilliseconds(15),
+                TimeSpan.FromMilliseconds(25),
                 DispatcherPriority.Normal,
                 (sender, args) => {
                     PlaybackManager.Inst.UpdatePlayPos();
                     var pvm = viewModel.PlaybackViewModel;
-                    pvm.RaisePropertyChanged(nameof(pvm.IsPlaying));
-                    pvm.RaisePropertyChanged(nameof(pvm.ShowPlayPosHighlight));
+                    var isPlaying = pvm.IsPlaying;
+                    if (isPlaying != lastIsPlaying) {
+                        lastIsPlaying = isPlaying;
+                        pvm.RaisePropertyChanged(nameof(pvm.IsPlaying));
+                    }
+                    var showHighlight = pvm.ShowPlayPosHighlight;
+                    if (showHighlight != lastShowHighlight) {
+                        lastShowHighlight = showHighlight;
+                        pvm.RaisePropertyChanged(nameof(pvm.ShowPlayPosHighlight));
+                    }
                 });
             timer.Start();
 

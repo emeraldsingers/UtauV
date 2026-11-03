@@ -546,8 +546,10 @@ namespace OpenUtau.App.ViewModels {
                     if (!setPlayPosTick.pause || Preferences.Default.LockStartTime == 1) {
                         MaybeAutoScroll();
                     }
+                    return;
                 } else if (cmd is SetRangeSelectionNotification) {
                     UpdateHighlight();
+                    return;
                 } else if (cmd is LoadPartNotification loadPartNotif) {
                     if (SelectedParts.Count != 1 || SelectedParts.First() != loadPartNotif.part) {
                         DeselectParts();
@@ -570,7 +572,17 @@ namespace OpenUtau.App.ViewModels {
 
         private void AutoScroll() {
             double scrollDelta = GetScrollValueDelta();
-            TickOffset = Math.Clamp(TickOffset + scrollDelta, 0, HScrollBarMax);
+            if (scrollDelta == 0) {
+                return;
+            }
+            double next = Math.Clamp(TickOffset + scrollDelta, 0, HScrollBarMax);
+            double tickWidth = TickWidth;
+            if (tickWidth > 0 && next > 0 && next < HScrollBarMax) {
+                next = Math.Round(next * tickWidth) / tickWidth;
+            }
+            if (next != TickOffset) {
+                TickOffset = next;
+            }
         }
 
         private double GetScrollValueDelta() {

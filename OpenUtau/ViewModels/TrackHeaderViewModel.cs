@@ -759,6 +759,9 @@ namespace OpenUtau.App.ViewModels {
             if (singer == null || baseAvatar == null) {
                 return;
             }
+            if (!Preferences.Default.LipSyncEnabled && currentAvatarVowel == null) {
+                return;
+            }
             if (!Monitor.TryEnter(avatarLock)) {
                 return;
             }
