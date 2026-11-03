@@ -547,6 +547,12 @@ namespace OpenUtau.App.ViewModels {
                 right = Project.resolution;
                 return;
             }
+            if (tick + TickOrigin < SnapTicks[0] && tick + TickOrigin >= 0 && SnapDiv > 0 && TickWidth > 0) {
+                LineTickFromGrid(tick + TickOrigin, out left, out right);
+                left -= TickOrigin;
+                right -= TickOrigin;
+                return;
+            }
             int index = SnapTicks.BinarySearch(tick + TickOrigin);
             if (index < 0) {
                 index = ~index - 1;
@@ -558,6 +564,33 @@ namespace OpenUtau.App.ViewModels {
             index = Math.Clamp(index, 0, SnapTicks.Count - 2);
             left = SnapTicks[index] - TickOrigin;
             right = SnapTicks[index + 1] - TickOrigin;
+        }
+
+        private void LineTickFromGrid(int absTick, out int left, out int right) {
+            var axis = Project.timeAxis;
+            int snapUnit = Project.resolution * 4 / SnapDiv;
+            while (snapUnit > 0 && snapUnit * TickWidth < ViewConstants.MinTicklineWidth) {
+                snapUnit *= 2;
+            }
+            double minLineTick = ViewConstants.MinTicklineWidth / TickWidth;
+            var timeSig = axis.TimeSignatureAtTick(absTick);
+            axis.TickPosToBarBeat(absTick, out int bar, out int beat, out int remainingTicks);
+            int barTick = axis.BarBeatToTickPos(bar, 0);
+            int nextBarTick = axis.BarBeatToTickPos(bar + 1, 0);
+            int ticksPerBeat = Project.resolution * 4 * timeSig.beatPerBar / timeSig.beatUnit;
+            int ticksPerLine = snapUnit;
+            if (ticksPerBeat < snapUnit) {
+                ticksPerLine = ticksPerBeat;
+            } else if (ticksPerBeat % snapUnit != 0) {
+                ticksPerLine = ticksPerBeat > minLineTick ? ticksPerBeat : nextBarTick - barTick;
+            }
+            if (ticksPerLine <= 0) {
+                left = barTick;
+                right = nextBarTick;
+                return;
+            }
+            left = barTick + (absTick - barTick) / ticksPerLine * ticksPerLine;
+            right = Math.Min(left + ticksPerLine, nextBarTick);
         }
 
         public void PointToLineTick(Point point, out int left, out int right) {

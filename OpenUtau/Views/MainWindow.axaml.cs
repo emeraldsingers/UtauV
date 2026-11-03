@@ -151,6 +151,7 @@ viewModel.NewProject();
                     if (PlaybackClock.IsActive) {
                         RequestAnimationFrame(callback!);
                     } else {
+                        PlaybackTick();
                         frameLoopRunning = false;
                     }
                 };
@@ -165,7 +166,9 @@ viewModel.NewProject();
                     }
                     PlaybackTick();
                     if (PlaybackClock.IsActive) {
-                        StartFrameLoop();
+                        if (!frameLoopRunning || Environment.TickCount64 - lastFrameWall > 1000) {
+                            StartFrameLoop();
+                        }
                     } else {
                         frameLoopRunning = false;
                     }

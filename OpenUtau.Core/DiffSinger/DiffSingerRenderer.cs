@@ -135,7 +135,9 @@ namespace OpenUtau.Core.DiffSinger {
                 ulong takeKey = DiffSingerTakeStore.ComputeKey(
                     phrase, singer.Id, trackNo, phraseStartTick, singer.dsConfig.frameMs(),
                     singer.dsConfig.num_mel_bins, depth, steps, phrase.isXsyVariant);
-                phrase.AddCacheFile(DiffSingerTakeStore.GetFilename(takeKey));
+                if (takeLock) {
+                    phrase.AddCacheFile(DiffSingerTakeStore.GetFilename(takeKey));
+                }
                 int rerollNonce = 0;
                 int rerollEpoch = 0;
                 List<(int start, int end)>? rerollRanges = null;
@@ -711,7 +713,7 @@ namespace OpenUtau.Core.DiffSinger {
                 takeConditions = composed;
             }
             DiffSingerTake? take = null;
-            if (takeKey != 0) {
+            if (takeLock && takeKey != 0) {
                 take = new DiffSingerTake {
                     Key = takeKey,
                     TotalFrames = totalFrames,
