@@ -227,6 +227,7 @@ namespace OpenUtau.App.Controls {
                 double x3 = Math.Round(viewModel.TickToneToPoint(leftTick, 0).X);
                 double x4 = Math.Round(viewModel.TickToneToPoint(rightTick, 0).X);
                 context.DrawLine(lPen3, new Point(x3, defaultHeight), new Point(x4, defaultHeight));
+                DrawOtherPartCurves(context, viewModel, descriptor, leftTick, rightTick, defaultHeight);
 
                 curveSelection.GetWholeCurveAndSelection(descriptor.abbr, curve, out List<int> xs, out List<int> ys);
                 if (curve == null) {
@@ -483,7 +484,43 @@ namespace OpenUtau.App.Controls {
             }
         }
 
-        static IPen DrivenPen => new Pen(ThemeManager.FinalPitchBrush, 1.5, new DashStyle(new double[] { 3, 2 }, 0));
+        private void DrawOtherPartCurves(DrawingContext context, NotesViewModel viewModel, UExpressionDescriptor descriptor,
+                double leftTick, double rightTick, double defaultHeight) {
+            double range = descriptor.max - descriptor.min;
+            var pen = new Pen(ThemeManager.NeutralAccentBrush, 2);
+            using var opacity = context.PushOpacity(NotesCanvas.OtherPartOpacity);
+            foreach (var other in viewModel.OtherPartsOnTrack) {
+                var curve = other.curves.FirstOrDefault(c => c.descriptor == descriptor);
+                if (curve == null || curve.xs.Count == 0) {
+                    continue;
+                }
+                int offset = other.position - Part!.position;
+                var points = new Points();
+                int count = curve.xs.Count;
+                for (int i = 0; i < count; i++) {
+                    if (i + 1 < count && curve.xs[i + 1] + offset < leftTick) {
+                        continue;
+                    }
+                    if (i > 0 && curve.xs[i - 1] + offset > rightTick) {
+                        break;
+                    }
+                    double x = viewModel.TickToneToPoint(curve.xs[i] + offset, 0).X;
+                    double y = defaultHeight - Bounds.Height * (curve.ys[i] - descriptor.defaultValue) / range;
+                    if (points.Count == 0 && i == 0) {
+                        points.Add(new Point(x, defaultHeight));
+                    }
+                    points.Add(new Point(x, y));
+                    if (i == count - 1) {
+                        points.Add(new Point(x, defaultHeight));
+                    }
+                }
+                if (points.Count >= 2) {
+                    context.DrawGeometry(null, pen, new PolylineGeometry(points, false));
+                }
+            }
+        }
+
+        static IPen DrivenPen =>new Pen(ThemeManager.FinalPitchBrush, 1.5, new DashStyle(new double[] { 3, 2 }, 0));
 
         /// <summary>A masked curve's runs; nothing is drawn where it has no value.</summary>
         private void DrawMaskedCurve(DrawingContext context, NotesViewModel viewModel, UExpressionDescriptor descriptor,

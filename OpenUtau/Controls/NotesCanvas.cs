@@ -463,7 +463,7 @@ namespace OpenUtau.App.Controls {
 
                 visibleNotes.Clear();
                 RenderOutsideOpenPart(viewModel, context);
-                RenderOtherPartsOnTrack(viewModel, context, leftTick, rightTick);
+                RenderOtherPartsOnTrack(viewModel, context, leftTick, rightTick, hidePitch);
                 foreach (var note in Part.notes) {
                     if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
                         continue;
@@ -478,11 +478,11 @@ namespace OpenUtau.App.Controls {
                 }
                 RenderDiffSingerPhraseBoundaries(leftTick, rightTick, viewModel, context);
                 if (ShowFinalPitch && !hidePitch) {
-                    RenderFinalPitch(leftTick, rightTick, viewModel, context);
+                    RenderFinalPitch(Part, leftTick, rightTick, viewModel, context);
                 }
                 foreach (var note in visibleNotes) {
                     if (ShowPitch && !hidePitch) {
-                        RenderPitchBend(note, viewModel, context);
+                        RenderPitchBend(note, Part, viewModel, context);
                     }
                     if ((ShowPitch || ShowVibrato) && !hidePitch) {
                         RenderVibrato(note, viewModel, context);
@@ -495,7 +495,7 @@ namespace OpenUtau.App.Controls {
                 if (PitchEditMode) {
                     UpdatePitchEditVisuals();
                     context.FillRectangle(pitchEditDimBrush, Bounds.WithX(0).WithY(0));
-                    RenderFinalPitch(leftTick, rightTick, viewModel, context, bright: true);
+                    RenderFinalPitch(Part, leftTick, rightTick, viewModel, context, bright: true);
                 }
             } finally {
                 renderPassActive = false;
@@ -658,7 +658,7 @@ namespace OpenUtau.App.Controls {
         /// Draws the notes of the other voice parts on the open part's track, as notes of the open part
         /// look but see-through, under the open part's notes.
         /// </summary>
-        private void RenderOtherPartsOnTrack(NotesViewModel viewModel, DrawingContext context, double leftTick, double rightTick) {
+        private void RenderOtherPartsOnTrack(NotesViewModel viewModel, DrawingContext context, double leftTick, double rightTick, bool hidePitch) {
             using var opacity = context.PushOpacity(OtherPartOpacity);
             foreach (var other in viewModel.OtherPartsOnTrack) {
                 // Ticks of the other part, relative to the open part as the view's ticks are.
@@ -672,6 +672,17 @@ namespace OpenUtau.App.Controls {
                         continue;
                     }
                     RenderNoteBody(note, other, viewModel, context);
+                }
+                if (ShowFinalPitch && !hidePitch) {
+                    RenderFinalPitch(other, leftTick - offset, rightTick - offset, viewModel, context);
+                }
+                if (ShowPitch && !hidePitch) {
+                    foreach (var note in other.notes) {
+                        if (note.LeftBound + offset >= rightTick || note.RightBound + offset <= leftTick) {
+                            continue;
+                        }
+                        RenderPitchBend(note, other, viewModel, context);
+                    }
                 }
             }
         }
@@ -1167,13 +1178,13 @@ namespace OpenUtau.App.Controls {
             return (phrase.position - phrase.leading - Part.position, phrase.end - Part.position);
         }
 
-        private void RenderPitchBend(UNote note, NotesViewModel viewModel, DrawingContext context) {
+        private void RenderPitchBend(UNote note, UVoicePart part, NotesViewModel viewModel, DrawingContext context) {
             var pitchExp = note.pitch;
             var pts = pitchExp.data;
-            if (pts.Count < 2 || viewModel.Part == null) return;
+            if (pts.Count < 2) return;
 
             var project = viewModel.Project;
-            double p0Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[0].X) - viewModel.Part.position;
+            double p0Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[0].X) - part.position;
             double p0Tone = note.AdjustedTone + pts[0].Y / 10.0;
             Point p0 = viewModel.TickToneToPoint(p0Tick, p0Tone - 0.5);
             Point p_1 = p0;
@@ -1187,7 +1198,7 @@ namespace OpenUtau.App.Controls {
             }
 
             for (int i = 1; i < pts.Count; i++) {
-                double p1Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[i].X) - viewModel.Part.position;
+                double p1Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[i].X) - part.position;
                 double p1Tone = note.AdjustedTone + pts[i].Y / 10.0;
                 Point p1 = viewModel.TickToneToPoint(p1Tick, p1Tone - 0.5);
                 CubicSplineSegment? curve = null;
@@ -1200,7 +1211,7 @@ namespace OpenUtau.App.Controls {
                         }
                     }
                     if (i < pts.Count - 1) {
-                        double p2Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[i + 1].X) - viewModel.Part.position;
+                        double p2Tick = project.timeAxis.MsPosToTickPos(note.PositionMs + pts[i + 1].X) - part.position;
                         double p2Tone = note.AdjustedTone + pts[i + 1].Y / 10.0;
                         p2 = viewModel.TickToneToPoint(p2Tick, p2Tone - 0.5);
                     } else if (pts[i].X < note.DurationMs) {
@@ -1302,18 +1313,18 @@ namespace OpenUtau.App.Controls {
             context.DrawLine(pen, periodEnd, periodEnd + new Vector(0, height));
         }
 
-        private void RenderFinalPitch(double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context, bool bright = false) {
+        private void RenderFinalPitch(UVoicePart part, double leftTick, double rightTick, NotesViewModel viewModel, DrawingContext context, bool bright = false) {
             var pen = bright ? pitchEditPen : ThemeManager.FinalPitchPen!;
             var pitchTheme = renderSingerTheme;
             if (!bright && pitchTheme?.HasPitchColor == true) {
                 pen = pitchTheme.GetPen(pitchTheme.PitchColor);
             }
-            lock (Part!) {
-                foreach (var phrase in Part!.renderPhrases) {
-                    if (phrase.position - Part.position > rightTick || phrase.end - Part.position < leftTick) {
+            lock (part) {
+                foreach (var phrase in part.renderPhrases) {
+                    if (phrase.position - part.position > rightTick || phrase.end - part.position < leftTick) {
                         continue;
                     }
-                    int pitchStart = phrase.position - phrase.leading - Part.position;
+                    int pitchStart = phrase.position - phrase.leading - part.position;
                     int stride = Math.Max(1, (int)Math.Ceiling(1.5 / (5 * TickWidth)));
                     int startIdx = (int)Math.Max(0, (leftTick - pitchStart) / 5);
                     startIdx -= startIdx % stride;
