@@ -160,6 +160,9 @@ namespace OpenUtau.App.Controls {
                 change.Property == TickWidthProperty) {
                 SetPosition();
             }
+            // The piano roll's view is drawn by PartsCanvas over the parts, so scrolling the
+            // piano roll doesn't redraw them; redrawing every part on it would redraw all
+            // parts, waveforms included, on every frame.
             if (change.Property == SelectedProperty ||
                 change.Property == TextProperty ||
                 change.Property == FadeInProperty ||
