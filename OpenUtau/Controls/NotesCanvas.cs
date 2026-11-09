@@ -265,10 +265,9 @@ namespace OpenUtau.App.Controls {
             if (Part == null || !showGhostNotes) {
                 return;
             }
+            // The piano roll scrolls over the whole track, so any part on another track can come into view.
             otherPartsInView = DocManager.Inst.Project.parts
-                .Where(other => other.trackNo != Part.trackNo &&
-                    other.position < Part.End &&
-                    Part.position < other.End)
+                .Where(other => other.trackNo != Part.trackNo)
                 .ToList();
         }
 
@@ -460,6 +459,8 @@ namespace OpenUtau.App.Controls {
                 }
 
                 visibleNotes.Clear();
+                RenderOutsideOpenPart(viewModel, context);
+                RenderOtherPartsOnTrack(viewModel, context, leftTick, rightTick);
                 foreach (var note in Part.notes) {
                     if (note.LeftBound >= rightTick || note.RightBound <= leftTick) {
                         continue;
@@ -467,7 +468,7 @@ namespace OpenUtau.App.Controls {
                     visibleNotes.Add(note);
                 }
                 foreach (var note in visibleNotes) {
-                    RenderNoteBody(note, viewModel, context);
+                    RenderNoteBody(note, Part, viewModel, context);
                 }
                 if (ShowPhonemePanel && viewModel.ShowPhonemePanelButton) {
                     RenderPhonemePanels(viewModel, context);
@@ -631,7 +632,48 @@ namespace OpenUtau.App.Controls {
             public void Dispose() { }
         }
 
-        private void RenderNoteBody(UNote note, NotesViewModel viewModel, DrawingContext context) {
+        // Shades where the open part isn't, darker on a dark theme to show as much.
+        static readonly IBrush OutsideOpenPartLight = new SolidColorBrush(Avalonia.Media.Colors.Black, 0.12);
+        static readonly IBrush OutsideOpenPartDark = new SolidColorBrush(Avalonia.Media.Colors.Black, 0.35);
+        // How solid the notes of the other parts on the track are.
+        public const double OtherPartOpacity = 0.6;
+
+        /// <summary>Shades the piano roll before and after the open part, where its notes can't go.</summary>
+        private void RenderOutsideOpenPart(NotesViewModel viewModel, DrawingContext context) {
+            double start = viewModel.TickToneToPoint(0, 0).X;
+            double end = viewModel.TickToneToPoint(Part!.Duration, 0).X;
+            var brush = ThemeManager.IsDarkMode ? OutsideOpenPartDark : OutsideOpenPartLight;
+            if (start > 0) {
+                context.FillRectangle(brush, new Rect(0, 0, start, Bounds.Height));
+            }
+            if (end < Bounds.Width) {
+                context.FillRectangle(brush, new Rect(end, 0, Bounds.Width - end, Bounds.Height));
+            }
+        }
+
+        /// <summary>
+        /// Draws the notes of the other voice parts on the open part's track, as notes of the open part
+        /// look but see-through, under the open part's notes.
+        /// </summary>
+        private void RenderOtherPartsOnTrack(NotesViewModel viewModel, DrawingContext context, double leftTick, double rightTick) {
+            using var opacity = context.PushOpacity(OtherPartOpacity);
+            foreach (var other in viewModel.OtherPartsOnTrack) {
+                // Ticks of the other part, relative to the open part as the view's ticks are.
+                int offset = other.position - Part!.position;
+                if (other.position + other.Duration <= Part.position + leftTick || Part.position + rightTick <= other.position) {
+                    continue;
+                }
+                using var moved = context.PushTransform(Matrix.CreateTranslation(offset * TickWidth, 0));
+                foreach (var note in other.notes) {
+                    if (note.LeftBound + offset >= rightTick || note.RightBound + offset <= leftTick) {
+                        continue;
+                    }
+                    RenderNoteBody(note, other, viewModel, context);
+                }
+            }
+        }
+
+        private void RenderNoteBody(UNote note, UVoicePart part, NotesViewModel viewModel, DrawingContext context) {
             Point leftTop = viewModel.TickToneToPoint(note.position, note.AdjustedTone);
             leftTop = leftTop.WithX(leftTop.X + 1).WithY(Math.Round(leftTop.Y + 1));
             Vector playbackOffset = GetPlaybackAnimationOffset(note);
@@ -640,10 +682,27 @@ namespace OpenUtau.App.Controls {
             size = size.WithWidth(size.Width - 1).WithHeight(Math.Floor(size.Height - 2));
             Point rightBottom = new Point(leftTop.X + size.Width, leftTop.Y + size.Height);
 
-            bool hasError = note.Error ||
-                renderErroredParents.Contains(note) ||
-                (!note.lyric.StartsWith("+") && !note.lyric.StartsWith("-") &&
-                 !renderPhonemeParents.Contains(note));
+            bool hasError = note.Error;
+            if (part == Part) {
+                hasError = hasError ||
+                    renderErroredParents.Contains(note) ||
+                    (!note.lyric.StartsWith("+") && !note.lyric.StartsWith("-") &&
+                     !renderPhonemeParents.Contains(note));
+            } else if (!hasError && part.phonemes != null) {
+                int phonemeCount = 0;
+                foreach (var p in part.phonemes) {
+                    if (p.Parent == note) {
+                        phonemeCount++;
+                        if (p.Error) {
+                            hasError = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hasError && phonemeCount == 0 && !note.lyric.StartsWith("+") && !note.lyric.StartsWith("-")) {
+                    hasError = true;
+                }
+            }
 
             Matrix rotationMatrix = GetPlaybackRotation(note, new Point(
                 leftTop.X + size.Width / 2, leftTop.Y + size.Height / 2));

@@ -137,32 +137,51 @@ namespace OpenUtau.App.Controls {
             if (Part == null || !ShowPhoneme) {
                 return;
             }
-            string langCode = PhonemeUIRender.getLangCode(Part);
             var viewModel = ((PianoRollViewModel?)DataContext)?.NotesViewModel;
             if (viewModel == null) {
                 return;
             }
             context.DrawRectangle(Background, null, Bounds.WithX(0).WithY(0));
-            bool diffSinger = PhonemeUIRender.UseDiffSingerBarStyle(Part);
             double leftTick = TickOffset - 480;
             double rightTick = TickOffset + Bounds.Width / TickWidth + 480;
+            // The phonemes of the other parts on the track, see-through as their notes are.
+            using (context.PushOpacity(NotesCanvas.OtherPartOpacity)) {
+                foreach (var other in viewModel.OtherPartsOnTrack) {
+                    // Ticks of the other part, relative to the open part as the view's ticks are.
+                    int offset = other.position - Part.position;
+                    if (other.Duration + offset <= leftTick || rightTick <= offset) {
+                        continue;
+                    }
+                    using var moved = context.PushTransform(Matrix.CreateTranslation(offset * TickWidth, 0));
+                    RenderPhonemes(context, viewModel, other, leftTick - offset, rightTick - offset);
+                }
+            }
+            RenderPhonemes(context, viewModel, Part, leftTick, rightTick);
+        }
+
+        /// <summary>Draws a part's phonemes between two ticks of that part, in that part's ticks.</summary>
+        private void RenderPhonemes(DrawingContext context, NotesViewModel viewModel, UVoicePart part, double leftTick, double rightTick) {
+            string langCode = PhonemeUIRender.getLangCode(part);
             bool raiseText = false;
             double lastTextEndX = double.NegativeInfinity;
-            string singerName = viewModel.Project.tracks[Part.trackNo].Singer?.Name ?? string.Empty;
+            string singerName = viewModel.Project.tracks[part.trackNo].Singer?.Name ?? string.Empty;
             var customTheme = Preferences.Default.UseCustomSingerTheme
                 ? CustomSingerTheme.GetThemeForSinger(singerName)
                 : null;
             var trackColor = Preferences.Default.UseTrackColorInPianoRoll
-                ? ThemeManager.GetTrackColor(viewModel.Project.tracks[Part.trackNo].TrackColor)
+                ? ThemeManager.GetTrackColor(viewModel.Project.tracks[part.trackNo].TrackColor)
                 : null;
             var trackPen = trackColor == null ? null : new Pen(trackColor.AccentColor, 1);
             var trackSelectedPen = trackColor == null ? null : new Pen(trackColor.AccentColorDark, 1);
 
             const double y = 35.5;
             const double height = 24;
-            context.DrawLine(ThemeManager.NeutralAccentPenSemi, new Point(0, y + height), new Point(Bounds.Width, y + height));
-            foreach (var phoneme in Part.phonemes) {
-                double leftBound = viewModel.Project.timeAxis.MsPosToTickPos(phoneme.PositionMs - phoneme.preutter) - Part.position;
+            bool diffSinger = PhonemeUIRender.UseDiffSingerBarStyle(part);
+            if (part == Part) {
+                context.DrawLine(ThemeManager.NeutralAccentPenSemi, new Point(0, y + height), new Point(Bounds.Width, y + height));
+            }
+            foreach (var phoneme in part.phonemes) {
+                double leftBound = viewModel.Project.timeAxis.MsPosToTickPos(phoneme.PositionMs - phoneme.preutter) - part.position;
                 double rightBound = phoneme.End;
                 if (leftBound > rightTick || rightBound < leftTick || phoneme.Parent.OverlapError) {
                     continue;
@@ -186,15 +205,15 @@ namespace OpenUtau.App.Controls {
                         context.DrawRectangle(brushBar, null, new Rect(x, y, xRight - x, height));
                         goto DrawPosition;
                     }
-                    double x0 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[0].X) - Part.position, 0).X;
+                    double x0 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[0].X) - part.position, 0).X;
                     double y0 = (1 - phoneme.envelope.data[0].Y / 100) * height;
-                    double x1 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[1].X) - Part.position, 0).X;
+                    double x1 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[1].X) - part.position, 0).X;
                     double y1 = (1 - phoneme.envelope.data[1].Y / 100) * height;
-                    double x2 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[2].X) - Part.position, 0).X;
+                    double x2 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[2].X) - part.position, 0).X;
                     double y2 = (1 - phoneme.envelope.data[2].Y / 100) * height;
-                    double x3 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[3].X) - Part.position, 0).X;
+                    double x3 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[3].X) - part.position, 0).X;
                     double y3 = (1 - phoneme.envelope.data[3].Y / 100) * height;
-                    double x4 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[4].X) - Part.position, 0).X;
+                    double x4 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[4].X) - part.position, 0).X;
                     double y4 = (1 - phoneme.envelope.data[4].Y / 100) * height;
 
                     var pen = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
@@ -276,7 +295,7 @@ namespace OpenUtau.App.Controls {
                     }
                 }
             }
-            if (PitchEditMode) {
+            if (part == Part && PitchEditMode) {
                 context.FillRectangle(pitchEditDimBrush, Bounds.WithX(0).WithY(0));
             }
         }
