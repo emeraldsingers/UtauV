@@ -1481,6 +1481,11 @@ viewModel.NewProject();
                 if (args.KeyModifiers == cmdKey) {
                     partEditState = new PartSelectionEditState(control, viewModel, SelectionBox);
                     Cursor = ViewConstants.cursorCross;
+                } else if (pianoRoll != null && control is PartsCanvas partsCanvas
+                    && partsCanvas.HitPianoRollViewportHandle(point.Position)) {
+                    // The piano roll's view can span parts and the space between them.
+                    partEditState = new PianoRollViewportDragState(control, viewModel, pianoRoll.ViewModel.NotesViewModel);
+                    Cursor = HandCursors.Grabbing;
                 } else if (hitPartControl == null) {
                     // Clicked empty canvas — equivalent to old `hitControl == control`
                     viewModel.TracksViewModel.DeselectParts();
@@ -1489,10 +1494,6 @@ viewModel.NewProject();
                         partEditState = new PartMoveEditState(control, viewModel, part);
                         Cursor = ViewConstants.cursorSizeAll;
                     }
-                } else if (pianoRoll != null &&
-                    hitPartControl.HitPianoRollViewportHandle(point.Position - hitPartControl.Bounds.Position)) {
-                    partEditState = new PianoRollViewportDragState(control, viewModel, pianoRoll.ViewModel.NotesViewModel);
-                    Cursor = HandCursors.Grabbing;
                 } else {
                     // Clicked on a part
                     bool fadein = false;
@@ -1579,7 +1580,11 @@ viewModel.NewProject();
             }
             var sourceControl = args.Source as Control;
             var hitPartControl = sourceControl?.FindAncestorOfType<PartControl>(includeSelf: true);
-            if (hitPartControl != null) {
+            var partsCanvas = control as PartsCanvas;
+            partsCanvas?.HoverPianoRollViewport(point.Position);
+            if (pianoRoll != null && partsCanvas != null && partsCanvas.HitPianoRollViewportHandle(point.Position)) {
+                Cursor = HandCursors.Grab;
+            } else if (hitPartControl != null) {
                 bool fadein = false;
                 bool fadeout = false;
                 if (hitPartControl.part is UWavePart && point.Position.Y < hitPartControl.Bounds.Top + 6) {
@@ -1590,9 +1595,7 @@ viewModel.NewProject();
                 }
                 bool skip = point.Position.X < hitPartControl.Bounds.Left + ViewConstants.ResizeMargin;
                 bool trim = point.Position.X > hitPartControl.Bounds.Right - ViewConstants.ResizeMargin;
-                if (hitPartControl.HitPianoRollViewportHandle(point.Position - hitPartControl.Bounds.Position)) {
-                    Cursor = HandCursors.Grab;
-                } else if (fadein || fadeout) {
+                if (fadein || fadeout) {
                     Cursor = ViewConstants.cursorHand;
                 } else if (skip || trim) {
                     Cursor = ViewConstants.cursorSizeWE;
@@ -1602,6 +1605,10 @@ viewModel.NewProject();
             } else {
                 Cursor = null;
             }
+        }
+
+        public void PartsCanvasPointerExited(object sender, PointerEventArgs args) {
+            (sender as PartsCanvas)?.HoverPianoRollViewport(null);
         }
 
         public void PartsCanvasPointerReleased(object sender, PointerReleasedEventArgs args) {

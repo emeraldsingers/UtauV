@@ -160,6 +160,7 @@ namespace OpenUtau.App.ViewModels {
         private int userKey => Project.key;
         private int playPosTick;
         private UNote[] playbackNotes = Array.Empty<UNote>();
+        private PlaybackNote[] playbackTrackNotes = Array.Empty<PlaybackNote>();
         private DateTime playbackVerticalFollowLastFrame = DateTime.UtcNow;
         private double? playbackVerticalFollowTargetOffset;
         private const int PlaybackVerticalFollowOutlierThreshold = 12;
@@ -903,6 +904,7 @@ namespace OpenUtau.App.ViewModels {
             DeselectNotes();
             Part = null;
             playbackNotes = Array.Empty<UNote>();
+            playbackTrackNotes = Array.Empty<PlaybackNote>();
             playbackIndexDirty = true;
             ResetPlaybackVerticalFollow();
             LoadPortrait(null, null);
@@ -918,6 +920,8 @@ namespace OpenUtau.App.ViewModels {
             UpdatePhonemePanelButton();
             UpdateIsDiffSinger();
             Notify();
+            // The other parts' notes are indexed relative to the open part.
+            RebuildPlaybackNoteIndex();
         }
 
         private void UpdateRenderPhraseBoundariesButton() {
@@ -1488,6 +1492,10 @@ namespace OpenUtau.App.ViewModels {
                 if (cmd is LoadPartNotification loadPart) {
                     LoadPart(loadPart.part, loadPart.project);
                     double tickOffset = loadPart.tick - loadPart.part.position - Bounds.Width / TickWidth / 2;
+                    // Centred on the tick, but within the part where it can be, so that opening a part
+                    // near its start or end puts that edge at the side of the view, as before the view
+                    // could scroll past the part.
+                    tickOffset = Math.Clamp(tickOffset, 0, Math.Max(0, loadPart.part.Duration - ViewportTicks));
                     TickOffset = ClampTickOffset(tickOffset);
                     PrimaryKeyNotSupported = !IsExpSupported(PrimaryKey);
                 } else if (cmd is LoadProjectNotification) {
@@ -1543,6 +1551,7 @@ namespace OpenUtau.App.ViewModels {
                     // Other parts on the track show in the piano roll, and set how far it scrolls.
                     if (Part != null) {
                         Notify();
+                        RebuildPlaybackNoteIndex();
                         MessageBus.Current.SendMessage(new NotesRefreshEvent());
                     }
                     return;
@@ -1576,6 +1585,7 @@ namespace OpenUtau.App.ViewModels {
                 } else if (Part != null && noteCommand.Part.trackNo == Part.trackNo) {
                     // Notes of other parts on the track show in the piano roll too, as after undoing an
                     // edit made while that part was open.
+                    RebuildPlaybackNoteIndex();
                     MessageBus.Current.SendMessage(new NotesRefreshEvent());
                 }
             } else if (cmd is ExpCommand) {
@@ -1739,24 +1749,49 @@ namespace OpenUtau.App.ViewModels {
             }
             playbackIndexDirty = false;
             playbackNotes = Part?.notes.ToArray() ?? Array.Empty<UNote>();
+            var part = Part;
+            if (part == null) {
+                playbackTrackNotes = Array.Empty<PlaybackNote>();
+                return;
+            }
+            playbackTrackNotes = part.notes.Select(note => new PlaybackNote(note.LeftBound, note.RightBound, note, true))
+                .Concat(OtherPartsOnTrack.SelectMany(other => other.notes.Select(note => new PlaybackNote(
+                    note.LeftBound + other.position - part.position,
+                    note.RightBound + other.position - part.position,
+                    note, false))))
+                .OrderBy(note => note.Left)
+                .ToArray();
         }
 
+        record struct PlaybackNote(int Left, int Right, UNote Note, bool InOpenPart);
+
+        /// <summary>
+        /// The note at a tick of the open part, in it or in another part on its track, preferring the
+        /// open part's where parts overlap.
+        /// </summary>
         public UNote? FindVoiceNoteAtTick(int tick) {
             EnsurePlaybackNoteIndex();
             int low = 0;
-            int high = playbackNotes.Length - 1;
+            int high = playbackTrackNotes.Length - 1;
             while (low <= high) {
                 int mid = low + (high - low) / 2;
-                var note = playbackNotes[mid];
-                if (tick < note.LeftBound) {
-                    high = mid - 1;
-                } else if (tick >= note.RightBound) {
+                if (playbackTrackNotes[mid].Left <= tick) {
                     low = mid + 1;
                 } else {
-                    return note;
+                    high = mid - 1;
                 }
             }
-            return null;
+            UNote? found = null;
+            for (int i = high; i >= 0 && i > high - 8; i--) {
+                var candidate = playbackTrackNotes[i];
+                if (candidate.Left <= tick && tick < candidate.Right) {
+                    if (candidate.InOpenPart) {
+                        return candidate.Note;
+                    }
+                    found ??= candidate.Note;
+                }
+            }
+            return found;
         }
 
         private void ResetPlaybackVerticalFollow() {

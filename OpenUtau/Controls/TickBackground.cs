@@ -137,10 +137,8 @@ namespace OpenUtau.App.Controls {
             double leftTick = TickOffset + TickOrigin;
             double rightTick = TickOffset + TickOrigin + Bounds.Width / TickWidth;
 
-            project.timeAxis.TickPosToBarBeat(Math.Max(0, (int)leftTick), out int bar, out int beat, out int remainingTicks);
-            if (bar > 0) {
-                bar--;
-            }
+            // From the bar at the left of the view: the piano roll can show the track before the open part.
+            project.timeAxis.TickPosToBarBeat(Math.Max(0, (int)Math.Floor(leftTick)), out int bar, out int beat, out int remainingTicks);
             int barTick = project.timeAxis.BarBeatToTickPos(bar, 0);
             var snapTicks = SnapTicks;
             var suspend = (snapTicks as DynamicData.Binding.ObservableCollectionExtended<int>)?.SuspendNotifications();
