@@ -161,8 +161,7 @@ namespace OpenUtau.Core.DiffSinger
                 var origin = embeds[defaultSpk];
                 origin.AsSpan(0, hiddenSize).CopyTo(dest);
                 for (int spk = 0; spk < speakerCount; ++spk) {
-                    float amount = Math.Clamp(amounts[frame * speakerCount + spk],
-                        -DiffSingerUtils.VoiceColorRenderLimit, DiffSingerUtils.VoiceColorRenderLimit);
+                    float amount = amounts[frame * speakerCount + spk];
                     if (spk == defaultSpk || Math.Abs(amount) < 1e-8f) {
                         continue;
                     }

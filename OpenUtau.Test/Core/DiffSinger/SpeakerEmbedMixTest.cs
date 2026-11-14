@@ -70,10 +70,9 @@ namespace OpenUtau.Test.Core.DiffSinger {
         }
 
         [Fact]
-        public void AmountsAreClampedAtThreeHundredPercentEitherWay() {
-            Assert.Equal(Mix(new float[] { 0, 3, 0 }, 0), Mix(new float[] { 0, 10, 0 }, 0));
-            Assert.Equal(Mix(new float[] { 0, -3, 0 }, 0), Mix(new float[] { 0, -10, 0 }, 0));
-            Assert.NotEqual(Mix(new float[] { 0, 3, 0 }, 0), Mix(new float[] { 0, 2, 0 }, 0));
+        public void AmountsAreNotLimited() {
+            Assert.Equal(new float[] { -9, 10, 0, 22 }, Mix(new float[] { 0, 10, 0 }, 0));
+            Assert.Equal(new float[] { 11, -10, 0, -18 }, Mix(new float[] { 0, -10, 0 }, 0));
         }
 
         [Fact]

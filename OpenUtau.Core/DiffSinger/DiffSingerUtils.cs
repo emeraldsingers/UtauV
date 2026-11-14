@@ -14,7 +14,6 @@ namespace OpenUtau.Core.DiffSinger {
         public const string VoiceColorHeader = "cl";
         public const float VoiceColorMin = 0;
         public const float VoiceColorMax = 100;
-        public const float VoiceColorRenderLimit = 3f;
         public const int headFrames = 8;
         public const int tailFrames = 8;
 
