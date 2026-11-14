@@ -151,6 +151,7 @@ namespace OpenUtau.Core.Util {
                             true => 1
                         };
                         Default.PreferPortAudio = null;
+                        Save();
                     }
                     Default.MigrateRealTimePitchMode();
                     Default.RecentSingers = Default.RecentSingers?
@@ -403,7 +404,7 @@ namespace OpenUtau.Core.Util {
             // Legacy
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public int? Theme;
-            public bool? PreferPortAudio = false;
+            public bool? PreferPortAudio = null;
 
             public void MigrateRealTimePitchMode() {
                 if (RealTimePitchGeneration && RealTimePitchMode == (int)LivePitchMode.Off) {

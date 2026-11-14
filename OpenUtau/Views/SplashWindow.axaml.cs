@@ -121,17 +121,24 @@ namespace OpenUtau.App.Views {
 
         private static void InitAudio() {
             Log.Information("Initializing audio.");
-            if (!OS.IsWindows() || Core.Util.Preferences.Default.PreferPortAudio == true) {
+            var backend = Core.Util.Preferences.Default.AudioBackEnd;
+            if (OS.IsWindows() && backend == 0) {
+                try {
+                    PlaybackManager.Inst.AudioOutput = new NAudioOutput();
+                } catch (Exception e0) {
+                    Log.Error(e0, "Failed to init NAudio");
+                }
+            } else if (backend == 2) {
+                try {
+                    PlaybackManager.Inst.AudioOutput = new Audio.SDL3AudioOutput();
+                } catch (Exception e2) {
+                    Log.Error(e2, "Failed to init SDL3 Audio");
+                }
+            } else {
                 try {
                     PlaybackManager.Inst.AudioOutput = new Audio.MiniAudioOutput();
                 } catch (Exception e1) {
                     Log.Error(e1, "Failed to init MiniAudio");
-                }
-            } else {
-                try {
-                    PlaybackManager.Inst.AudioOutput = new NAudioOutput();
-                } catch (Exception e2) {
-                    Log.Error(e2, "Failed to init NAudio");
                 }
             }
             Log.Information("Initialized audio.");

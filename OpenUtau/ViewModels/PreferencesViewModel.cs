@@ -61,7 +61,7 @@ namespace OpenUtau.App.ViewModels {
             set => this.RaiseAndSetIfChanged(ref audioOutputDevice, value);
         }
         [Reactive] public partial bool UseSystemDefaultDevice { get; set; }
-        [Reactive] public partial int PreferPortAudio { get; set; }
+        [Reactive] public partial uint AudioBackEnd { get; set; }
         [Reactive] public partial int LockStartTime { get; set; }
         [Reactive] public partial int PlaybackAutoScroll { get; set; }
         [Reactive] public partial double PlaybackVerticalFollowMargin { get; set; }
@@ -249,7 +249,7 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
                 } catch { }
             }
             UseSystemDefaultDevice = Preferences.Default.UseSystemDefaultAudioDevice;
-            PreferPortAudio = Preferences.Default.PreferPortAudio == true ? 1 : 0;
+            AudioBackEnd = Preferences.Default.AudioBackEnd;
             PlaybackAutoScroll = Preferences.Default.PlaybackAutoScroll;
             PlaybackVerticalFollowMargin = Preferences.Default.PlaybackVerticalFollowMargin;
             PlaybackVerticalFollowDamping = Preferences.Default.PlaybackVerticalFollowDamping;
@@ -397,9 +397,9 @@ public string AdditionalSingersPath => PathManager.Inst.AdditionalSingersPath;
                         }
                     }
                 });
-this.WhenAnyValue(vm => vm.PreferPortAudio)
+            this.WhenAnyValue(vm => vm.AudioBackEnd)
                 .Subscribe(index => {
-                    Preferences.Default.PreferPortAudio = index > 0;
+                    Preferences.Default.AudioBackEnd = index;
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.PlaybackAutoScroll)
