@@ -577,19 +577,20 @@ if (SineFallback) {
         }
 
         private static List<int[]> BuildSineGroups(NoteSource[] notes) {
-            var headNotes = notes
+            var leadNotes = notes
                 .Where(note => note.Extends == -1 && !note.OverlapError)
                 .ToArray();
-            int totalNotes = headNotes.Length;
-            int moraNotes = headNotes.Count(note => SineVowels.GetVowel(note.Lyric) != null);
+            int totalNotes = leadNotes.Length;
+            int moraNotes = leadNotes.Count(note => SineVowels.GetVowel(note.Lyric) != null);
             bool japaneseLyrics = totalNotes > 0 && moraNotes * 10 >= totalNotes * 3;
             var phrases = new List<int[]>();
             var group = new List<int>();
+            var headNotes = notes.Where(note => !note.OverlapError && !IsSlurExtension(note));
             foreach (var note in headNotes) {
                 var chain = new List<int> { note.Index };
                 int tail = note.Index;
                 int next = notes[tail].Next;
-                while (next != -1 && notes[next].Extends == tail) {
+                while (next != -1 && IsSlurExtension(notes[next])) {
                     chain.Add(next);
                     tail = next;
                     next = notes[next].Next;
@@ -651,6 +652,11 @@ var renderer = sineFallback ? SineRenderer.Instance : track.RendererSettings.Ren
                 DocManager.Inst.Revision,
                 generation, project, track, part, phonemes,
                 groups.Select(g => (g.Item1, g.Item2)).ToArray());
+        }
+
+        static bool IsSlurExtension(NoteSource note) {
+            var lyric = note.Lyric;
+            return note.Extends != -1 && (lyric.StartsWith("+~") || lyric.StartsWith("+*"));
         }
 
         // The musical notes of a phrase, including extension notes but not pitch-context neighbors.
