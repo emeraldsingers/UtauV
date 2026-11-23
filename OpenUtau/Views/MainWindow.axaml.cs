@@ -60,6 +60,7 @@ namespace OpenUtau.App.Views {
 
         // Time range selection state
         private bool isSelectingRange;
+        private bool rangeSelectDragged;
         private Point rangeSelectStartPoint = default;
         private const double RangeSelectThreshold = 5; // pixels
 
@@ -1450,6 +1451,7 @@ viewModel.NewProject();
                 viewModel.PlaybackViewModel.MovePlayPos(left);
             } else if (point.Properties.IsRightButtonPressed) {
                 isSelectingRange = true;
+                rangeSelectDragged = false;
                 rangeSelectStartPoint = point.Position;
                 viewModel.RefreshTimelineContextMenu(viewModel.TracksViewModel.PointToTick(point.Position));
             }
@@ -1464,6 +1466,7 @@ viewModel.NewProject();
             } else if (point.Properties.IsRightButtonPressed && isSelectingRange) {
                 double dx = Math.Abs(point.Position.X - rangeSelectStartPoint.X);
                 if (dx >= RangeSelectThreshold) {
+                    rangeSelectDragged = true;
                     UpdateRangeSelection(point.Position);
                 }
             }
@@ -1477,10 +1480,18 @@ viewModel.NewProject();
                 var point = args.GetCurrentPoint(control);
                 double dx = Math.Abs(point.Position.X - rangeSelectStartPoint.X);
                 if (dx >= RangeSelectThreshold) {
+                    rangeSelectDragged = true;
                     UpdateRangeSelection(point.Position);
                 }
             }
             args.Pointer.Capture(null);
+        }
+
+        public void TimelineContextMenuOpening(object sender, CancelEventArgs args) {
+            if (rangeSelectDragged) {
+                rangeSelectDragged = false;
+                args.Cancel = true;
+            }
         }
 
         public void TimelineDoubleTapped(object sender, TappedEventArgs args) {
