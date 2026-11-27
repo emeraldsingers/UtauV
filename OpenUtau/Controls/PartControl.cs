@@ -222,7 +222,7 @@ namespace OpenUtau.App.Controls {
                         if (i == phraseBlocks.Length - 1) endX = (int)((part.End - part.position) * tickWidth);
 
                         Point topLeft = new Point(startX, 1);
-                        Point bottomRight = new Point(endX, Height - 1);
+                        Point bottomRight = new Point(endX + 0.5f, Height - 1);
 
                         var rect = new Rect(topLeft, bottomRight);
                         phraseRects.Add(rect);
