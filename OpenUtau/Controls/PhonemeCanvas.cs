@@ -192,7 +192,13 @@ namespace OpenUtau.App.Controls {
                 if (!phoneme.Error) {
                     if (diffSinger) {
                         double xRight = Math.Round(viewModel.TickToneToPoint(phoneme.End, 0).X) + 0.5;
+                        var penBar = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentPen2 : ThemeManager.AccentPen1;
                         var brushBar = selectedNotes.Contains(phoneme.Parent) ? ThemeManager.AccentBrush2Semi : ThemeManager.AccentBrush1Semi;
+                        if (customTheme != null) {
+                            penBar = selectedNotes.Contains(phoneme.Parent) && customTheme.HasPhonemeColor2
+                                ? customTheme.GetPen(customTheme.PhonemeColor2)
+                                : customTheme.HasPhonemeColor ? customTheme.GetPen(customTheme.PhonemeColor) : penBar;
+                        }
                         if (customTheme?.HasTrackAccentColorLight == true &&
                             Color.TryParse(customTheme.TrackAccentColorLight, out var color)) {
                             brushBar = selectedNotes.Contains(phoneme.Parent) && customTheme.HasAccentColorSemi
@@ -200,9 +206,10 @@ namespace OpenUtau.App.Controls {
                                 : new SolidColorBrush(color) { Opacity = 0.5 };
                         }
                         if (trackColor != null) {
+                            penBar = selectedNotes.Contains(phoneme.Parent) ? trackSelectedPen! : trackPen!;
                             brushBar = trackColor.AccentColorLightSemi;
                         }
-                        context.DrawRectangle(brushBar, null, new Rect(x, y, xRight - x, height));
+                        context.DrawRectangle(brushBar, penBar, new Rect(x, y, xRight - x, height + 1));
                         goto DrawPosition;
                     }
                     double x0 = viewModel.TickToneToPoint(timeAxis.MsPosToTickPos(posMs + phoneme.envelope.data[0].X) - part.position, 0).X;
