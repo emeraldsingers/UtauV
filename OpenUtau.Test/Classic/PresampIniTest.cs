@@ -110,5 +110,46 @@ namespace OpenUtau.Classic {
             Assert.Contains("k", presamp.Priorities);
             Assert.Equal(" ", presamp.AliasRules.VCPAD);
         }
+
+        private static Presamp LoadInlineIni(string content) {
+            var dir = Path.Join(Path.GetTempPath(), "presampini_" + Path.GetRandomFileName());
+            Directory.CreateDirectory(dir);
+            try {
+                File.WriteAllText(Path.Join(dir, "presamp.ini"), content, new UTF8Encoding(false));
+                var presamp = new Presamp();
+                presamp.ReadPresampIni(dir, Encoding.UTF8);
+                return presamp;
+            } finally {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        [Theory]
+        [InlineData("[ALIAS]\nVCPAD= \nVCVPAD= \n")]
+        [InlineData("[ALIAS]\nVCPAD=\nVCVPAD=\n")]
+        [InlineData("[VCPAD]\n \n[VCVPAD]\n \n")]
+        public void BlankPadsKeepDefaultSpace(string content) {
+            var presamp = LoadInlineIni(content);
+
+            Assert.Equal(" ", presamp.AliasRules.VCPAD);
+            Assert.Equal(" ", presamp.AliasRules.VCVPAD);
+            Assert.Equal("%v% %CV%", presamp.AliasRules.VCV);
+        }
+
+        [Fact]
+        public void ExplicitPadsAreApplied() {
+            var presamp = LoadInlineIni("[ALIAS]\nVCPAD=_\nVCVPAD=_\n");
+
+            Assert.Equal("_", presamp.AliasRules.VCPAD);
+            Assert.Equal("_", presamp.AliasRules.VCVPAD);
+            Assert.Equal("%v%_%CV%", presamp.AliasRules.VCV);
+        }
+
+        [Fact]
+        public void PadBlockIsApplied() {
+            var presamp = LoadInlineIni("[VCPAD]\n_\n");
+
+            Assert.Equal("_", presamp.AliasRules.VCPAD);
+        }
     }
 }
